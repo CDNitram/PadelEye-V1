@@ -635,7 +635,7 @@ function updateHero() {
 // ══════════════════════════════════════════
 // PLAYER ROSTER
 // ══════════════════════════════════════════
-function allPlayers() { return [...BASE_PLAYERS, ...guestPlayers]; }
+function allPlayers() { return [...BASE_PLAYERS, ...guestPlayers].sort((a,b) => a.localeCompare(b, 'pt', {sensitivity:'base'})); }
 
 function renderPlayerGrid() {
   const grid = document.getElementById('player-grid');
