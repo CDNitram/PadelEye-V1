@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PadelEye · Mark Zero Import · V3</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#0a1628;--navy2:#0d1e3a;--gold:#C9933A;--gold2:#e0a84a;--green:#16a34a;--green-l:#dcfce7;--red:#dc2626;--red-l:#fee2e2;--amber:#d97706;--amber-l:#fef3c7;--muted:#7090b0;--rule:#dde6f0;--bg:#f4f7fc;--card:#fff;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'DM Sans',sans-serif;min-height:100vh;}
+  .hd{background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;}
+  .hd-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;letter-spacing:1px;}
+  .hd-logo em{color:var(--gold);font-style:normal;}
+  .hd-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+  .shell{max-width:880px;margin:0 auto;padding:24px 16px 60px;}
+  .hero{background:var(--navy2);border-radius:14px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+  .hero-left{}
+  .hero-title{font-family:'Bebas Neue',sans-serif;font-size:26px;color:#fff;letter-spacing:1px;}
+  .hero-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px;}
+  .kpis{display:flex;gap:20px;flex-wrap:wrap;}
+  .kpi{text-align:center;}
+  .kpi-v{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--gold);}
+  .kpi-l{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+  .status{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);min-height:44px;display:flex;align-items:center;gap:10px;transition:all .2s;}
+  .status.loading{color:var(--amber);border-color:var(--amber);background:var(--amber-l);}
+  .status.success{color:var(--green);border-color:var(--green);background:var(--green-l);}
+  .status.error{color:var(--red);border-color:var(--red);background:var(--red-l);}
+  .prog-wrap{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:14px 18px;margin-bottom:16px;}
+  .prog-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;}
+  .prog-bar{height:6px;background:var(--rule);border-radius:3px;overflow:hidden;}
+  .prog-fill{height:100%;background:var(--gold);border-radius:3px;transition:width .4s ease;width:0%;}
+  .actions{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .btn{padding:11px 20px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:7px;}
+  .btn-gold{background:var(--gold);color:#fff;}.btn-gold:hover{background:var(--gold2);}.btn-gold:disabled{background:var(--rule);color:var(--muted);cursor:not-allowed;}
+  .btn-out{background:#fff;color:var(--navy);border:1.5px solid var(--rule);}.btn-out:hover{border-color:var(--gold);color:var(--gold);}
+  .sec-title{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--navy);letter-spacing:1px;margin:24px 0 12px;display:flex;align-items:center;gap:10px;}
+  .sec-title::after{content:'';flex:1;height:1px;background:var(--rule);}
+  .grid{display:flex;flex-direction:column;gap:5px;}
+  .row{background:#fff;border:1px solid var(--rule);border-radius:9px;padding:10px 14px;display:flex;align-items:center;gap:12px;font-size:12px;border-left:3px solid var(--rule);transition:all .2s;}
+  .row.loading{border-left-color:var(--amber);background:var(--amber-l);}
+  .row.done{border-left-color:var(--green);}
+  .row.error{border-left-color:var(--red);background:var(--red-l);}
+  .r-num{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);min-width:36px;}
+  .r-date{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);min-width:92px;}
+  .r-info{flex:1;}
+  .r-mvp{font-weight:600;font-size:12px;color:var(--navy2);}
+  .r-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);margin-top:2px;}
+  .r-st{font-family:'DM Mono',monospace;font-size:10px;min-width:70px;text-align:right;}
+  .r-st.done{color:var(--green);}.r-st.loading{color:var(--amber);}.r-st.error{color:var(--red);}
+  .spin{display:inline-block;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div class="hd">
+  <div class="hd-logo">PADEL<em>EYE</em></div>
+  <div class="hd-tag">Mark Zero · Import Tool · V3 · Full Dataset + Connection Diagnostics</div>
+</div>
+<div class="shell">
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-title">Mark Zero — Full Import</div>
+      <div class="hero-sub">18 Sessions · S1 Oct 2024 → S18 Apr 2026 · Stats computed from match data</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-v">18</div><div class="kpi-l">Sessions</div></div>
+      <div class="kpi"><div class="kpi-v">130+</div><div class="kpi-l">Matches</div></div>
+      <div class="kpi"><div class="kpi-v">24</div><div class="kpi-l">Players</div></div>
+      <div class="kpi"><div class="kpi-v" id="done-count">0</div><div class="kpi-l">Imported</div></div>
+    </div>
+  </div>
+
+  <div id="status" class="status">⏳ Ready. Click "Import All" to populate Sessions + Stats + Ranking.</div>
+
+  <div class="prog-wrap">
+    <div class="prog-lbl"><span>PROGRESS</span><span id="prog-txt">0 / 18</span></div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-out" onclick="testConnection()" style="order:-1">🔌 Test Connection</button>
+    <button class="btn btn-gold" id="btn-all" onclick="runAll()">▶ Import All</button>
+    <button class="btn btn-out" onclick="checkDB()">🔍 Verify DB</button>
+  </div>
+  <div id="url-override" style="display:none;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+    <input id="url-input" type="text" placeholder="Paste new Apps Script URL here..." style="flex:1;min-width:200px;padding:10px 12px;border-radius:8px;border:1px solid #1a2d45;background:#0d1b2e;color:#fff;font-family:DM Mono,monospace;font-size:11px;">
+    <button class="btn btn-gold" onclick="applyNewURL()" style="flex-shrink:0">Apply URL</button>
+  </div>
+
+  <div class="sec-title">18 Sessions — Mark Zero</div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzGTJPV79cG26-mYiTuGv_V3MPOz7MAcr-fltnWRxb-X9wI9zXMuiRc1jJOgICG4F5Lew/exec";
+const FULL_DATA = [{"sessao": {"numero": "S1", "data": "2024-10-26", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 9, "total_partidas": 9, "formato": "Doubles · Rotating", "mvp": "Cristian"}, "stats": [{"jogador": "Cristian", "partidas": 4, "vitorias": 3, "derrotas": 1, "gf": 15, "ga": 10, "gd": 5, "mvp": "Yes"}, {"jogador": "Tiago", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 15, "ga": 13, "gd": 2, "mvp": "No"}, {"jogador": "Michel", "partidas": 3, "vitorias": 0, "derrotas": 3, "gf": 4, "ga": 12, "gd": -8, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 11, "ga": 15, "gd": -4, "mvp": "No"}, {"jogador": "João", "partidas": 4, "vitorias": 2, "derrotas": 2, "gf": 12, "ga": 12, "gd": 0, "mvp": "No"}, {"jogador": "Giuliano", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 15, "ga": 14, "gd": 1, "mvp": "No"}, {"jogador": "Martin", "partidas": 4, "vitorias": 3, "derrotas": 1, "gf": 12, "ga": 10, "gd": 2, "mvp": "No"}, {"jogador": "Nilton", "partidas": 4, "vitorias": 3, "derrotas": 1, "gf": 14, "ga": 8, "gd": 6, "mvp": "No"}, {"jogador": "Brendon", "partidas": 2, "vitorias": 0, "derrotas": 2, "gf": 4, "ga": 8, "gd": -4, "mvp": "No"}]}, {"sessao": {"numero": "S2", "data": "2024-12-14", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 9, "formato": "Doubles · Rotating", "mvp": "Alec"}, "stats": [{"jogador": "Fábio", "partidas": 7, "vitorias": 4, "derrotas": 3, "gf": 23, "ga": 15, "gd": 8, "mvp": "No"}, {"jogador": "Brendon", "partidas": 7, "vitorias": 4, "derrotas": 3, "gf": 20, "ga": 17, "gd": 3, "mvp": "No"}, {"jogador": "Martin", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 16, "ga": 18, "gd": -2, "mvp": "No"}, {"jogador": "Michel", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 11, "ga": 21, "gd": -10, "mvp": "No"}, {"jogador": "Alynelson", "partidas": 7, "vitorias": 4, "derrotas": 3, "gf": 16, "ga": 21, "gd": -5, "mvp": "No"}, {"jogador": "Alec", "partidas": 3, "vitorias": 2, "derrotas": 1, "gf": 10, "ga": 4, "gd": 6, "mvp": "Yes"}]}, {"sessao": {"numero": "S3", "data": "2025-01-18", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 7, "formato": "Doubles · Rotating", "mvp": "Astor"}, "stats": [{"jogador": "Alec", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 18, "ga": 16, "gd": 2, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 15, "ga": 13, "gd": 2, "mvp": "No"}, {"jogador": "Fábio", "partidas": 6, "vitorias": 4, "derrotas": 2, "gf": 18, "ga": 18, "gd": 0, "mvp": "No"}, {"jogador": "Michel", "partidas": 5, "vitorias": 0, "derrotas": 5, "gf": 10, "ga": 20, "gd": -10, "mvp": "No"}, {"jogador": "Astor", "partidas": 6, "vitorias": 4, "derrotas": 2, "gf": 21, "ga": 15, "gd": 6, "mvp": "Yes"}]}, {"sessao": {"numero": "S4", "data": "2025-01-25", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 9, "formato": "Doubles · Rotating", "mvp": "Nilton"}, "stats": [{"jogador": "Martin", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 16, "ga": 18, "gd": -2, "mvp": "No"}, {"jogador": "João", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 14, "ga": 16, "gd": -2, "mvp": "No"}, {"jogador": "Michel", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 15, "ga": 18, "gd": -3, "mvp": "No"}, {"jogador": "Giuliano", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 14, "ga": 19, "gd": -5, "mvp": "No"}, {"jogador": "Alec", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 17, "ga": 14, "gd": 3, "mvp": "No"}, {"jogador": "Nilton", "partidas": 7, "vitorias": 6, "derrotas": 1, "gf": 24, "ga": 15, "gd": 9, "mvp": "Yes"}]}, {"sessao": {"numero": "S5", "data": "2025-02-01", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 7, "total_partidas": 8, "formato": "Doubles · Rotating", "mvp": "Giuliano"}, "stats": [{"jogador": "Giuliano", "partidas": 6, "vitorias": 5, "derrotas": 1, "gf": 22, "ga": 12, "gd": 10, "mvp": "Yes"}, {"jogador": "Nilton", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 17, "ga": 17, "gd": 0, "mvp": "No"}, {"jogador": "Fabiano", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 18, "ga": 18, "gd": 0, "mvp": "No"}, {"jogador": "Martin", "partidas": 4, "vitorias": 1, "derrotas": 3, "gf": 9, "ga": 13, "gd": -4, "mvp": "No"}, {"jogador": "João", "partidas": 4, "vitorias": 1, "derrotas": 3, "gf": 11, "ga": 13, "gd": -2, "mvp": "No"}, {"jogador": "Michel", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 14, "ga": 15, "gd": -1, "mvp": "No"}, {"jogador": "Gabriel", "partidas": 1, "vitorias": 0, "derrotas": 1, "gf": 1, "ga": 4, "gd": -3, "mvp": "No"}]}, {"sessao": {"numero": "S6", "data": "2025-03-29", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 4, "total_partidas": 10, "formato": "Doubles · Rotating", "mvp": "Fabiano"}, "stats": [{"jogador": "Fabiano", "partidas": 10, "vitorias": 10, "derrotas": 0, "gf": 40, "ga": 12, "gd": 28, "mvp": "Yes"}, {"jogador": "Martin", "partidas": 10, "vitorias": 4, "derrotas": 6, "gf": 23, "ga": 29, "gd": -6, "mvp": "No"}, {"jogador": "Michel", "partidas": 10, "vitorias": 3, "derrotas": 7, "gf": 20, "ga": 32, "gd": -12, "mvp": "No"}, {"jogador": "Astor", "partidas": 10, "vitorias": 3, "derrotas": 7, "gf": 21, "ga": 31, "gd": -10, "mvp": "No"}]}, {"sessao": {"numero": "S7", "data": "2025-08-03", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 7, "formato": "Doubles · Rotating", "mvp": "Daniel"}, "stats": [{"jogador": "Martin", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 15, "ga": 22, "gd": -7, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 16, "ga": 12, "gd": 4, "mvp": "No"}, {"jogador": "Daniel", "partidas": 6, "vitorias": 5, "derrotas": 1, "gf": 23, "ga": 14, "gd": 9, "mvp": "Yes"}, {"jogador": "Gustavo", "partidas": 6, "vitorias": 4, "derrotas": 2, "gf": 18, "ga": 16, "gd": 2, "mvp": "No"}, {"jogador": "Bruno", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 10, "ga": 18, "gd": -8, "mvp": "No"}]}, {"sessao": {"numero": "S8", "data": "2025-08-16", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 8, "formato": "Doubles · Rotating", "mvp": "Felipe"}, "stats": [{"jogador": "Martin", "partidas": 7, "vitorias": 2, "derrotas": 5, "gf": 17, "ga": 22, "gd": -5, "mvp": "No"}, {"jogador": "Michel", "partidas": 7, "vitorias": 2, "derrotas": 5, "gf": 15, "ga": 24, "gd": -9, "mvp": "No"}, {"jogador": "Fábio", "partidas": 7, "vitorias": 3, "derrotas": 4, "gf": 18, "ga": 20, "gd": -2, "mvp": "No"}, {"jogador": "Cristian", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 18, "ga": 11, "gd": 7, "mvp": "No"}, {"jogador": "Felipe", "partidas": 6, "vitorias": 5, "derrotas": 1, "gf": 22, "ga": 13, "gd": 9, "mvp": "Yes"}]}, {"sessao": {"numero": "S9", "data": "2025-08-23", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 7, "formato": "Doubles · Rotating", "mvp": "Marcelo"}, "stats": [{"jogador": "Martin", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 15, "ga": 14, "gd": 1, "mvp": "No"}, {"jogador": "Marcelo", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 17, "ga": 12, "gd": 5, "mvp": "Yes"}, {"jogador": "Gustavo", "partidas": 5, "vitorias": 0, "derrotas": 5, "gf": 7, "ga": 20, "gd": -13, "mvp": "No"}, {"jogador": "Daniel", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 15, "ga": 12, "gd": 3, "mvp": "No"}, {"jogador": "Cristian", "partidas": 4, "vitorias": 3, "derrotas": 1, "gf": 14, "ga": 10, "gd": 4, "mvp": "No"}, {"jogador": "Osman", "partidas": 4, "vitorias": 1, "derrotas": 3, "gf": 12, "ga": 12, "gd": 0, "mvp": "No"}]}, {"sessao": {"numero": "S10", "data": "2025-09-27", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 8, "formato": "Doubles · Rotating", "mvp": "Fábio"}, "stats": [{"jogador": "Daniel", "partidas": 6, "vitorias": 4, "derrotas": 2, "gf": 19, "ga": 15, "gd": 4, "mvp": "No"}, {"jogador": "Cristian", "partidas": 6, "vitorias": 4, "derrotas": 2, "gf": 19, "ga": 15, "gd": 4, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 15, "ga": 11, "gd": 4, "mvp": "No"}, {"jogador": "Schmitt", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 9, "ga": 17, "gd": -8, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 18, "ga": 8, "gd": 10, "mvp": "Yes"}, {"jogador": "Gustavo", "partidas": 5, "vitorias": 0, "derrotas": 5, "gf": 6, "ga": 20, "gd": -14, "mvp": "No"}]}, {"sessao": {"numero": "S11", "data": "2025-10-04", "local": "EcoTenis · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 8, "formato": "Doubles · Rotating", "mvp": "Fabiano"}, "stats": [{"jogador": "Fabiano", "partidas": 6, "vitorias": 6, "derrotas": 0, "gf": 24, "ga": 7, "gd": 17, "mvp": "Yes"}, {"jogador": "Martin", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 14, "ga": 17, "gd": -3, "mvp": "No"}, {"jogador": "Astor", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 14, "ga": 14, "gd": 0, "mvp": "No"}, {"jogador": "Cristian", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 12, "ga": 16, "gd": -4, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 12, "ga": 17, "gd": -5, "mvp": "No"}, {"jogador": "Gustavo", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 12, "ga": 17, "gd": -5, "mvp": "No"}]}, {"sessao": {"numero": "S12", "data": "2026-03-30", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 8, "formato": "Doubles · Rotating", "mvp": "Fabiano"}, "stats": [{"jogador": "Fabiano", "partidas": 6, "vitorias": 5, "derrotas": 1, "gf": 22, "ga": 11, "gd": 11, "mvp": "Yes"}, {"jogador": "Dicésar", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 15, "ga": 18, "gd": -3, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 17, "ga": 12, "gd": 5, "mvp": "No"}, {"jogador": "Alex", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 10, "ga": 19, "gd": -9, "mvp": "No"}, {"jogador": "Daniel", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 15, "ga": 13, "gd": 2, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 11, "ga": 17, "gd": -6, "mvp": "No"}]}, {"sessao": {"numero": "S13", "data": "2026-04-02", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 6, "total_partidas": 8, "formato": "Doubles · Rotating", "mvp": "Fabiano"}, "stats": [{"jogador": "Fabiano", "partidas": 6, "vitorias": 5, "derrotas": 1, "gf": 22, "ga": 11, "gd": 11, "mvp": "Yes"}, {"jogador": "Dicésar", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 15, "ga": 18, "gd": -3, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 17, "ga": 12, "gd": 5, "mvp": "No"}, {"jogador": "Alex", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 10, "ga": 19, "gd": -9, "mvp": "No"}, {"jogador": "Daniel", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 15, "ga": 13, "gd": 2, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 11, "ga": 17, "gd": -6, "mvp": "No"}]}, {"sessao": {"numero": "S14", "data": "2026-04-06", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 6, "formato": "Doubles · Rotating", "mvp": "Alex"}, "stats": [{"jogador": "Dicésar", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 13, "ga": 17, "gd": -4, "mvp": "No"}, {"jogador": "Alex", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 19, "ga": 11, "gd": 8, "mvp": "Yes"}, {"jogador": "Daniel", "partidas": 4, "vitorias": 1, "derrotas": 3, "gf": 9, "ga": 14, "gd": -5, "mvp": "No"}, {"jogador": "Fábio", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 17, "ga": 15, "gd": 2, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 14, "ga": 15, "gd": -1, "mvp": "No"}]}, {"sessao": {"numero": "S15", "data": "2026-04-11", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 5, "formato": "Doubles · Rotating", "mvp": "Martin"}, "stats": [{"jogador": "Martin", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 18, "ga": 11, "gd": 7, "mvp": "Yes"}, {"jogador": "Farid", "partidas": 1, "vitorias": 1, "derrotas": 0, "gf": 4, "ga": 3, "gd": 1, "mvp": "No"}, {"jogador": "João", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 14, "ga": 15, "gd": -1, "mvp": "No"}, {"jogador": "Bruno", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 14, "ga": 15, "gd": -1, "mvp": "No"}, {"jogador": "Gustavo", "partidas": 4, "vitorias": 1, "derrotas": 3, "gf": 8, "ga": 14, "gd": -6, "mvp": "No"}]}, {"sessao": {"numero": "S16", "data": "2026-04-13", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 9, "formato": "Doubles · Rotating", "mvp": "Alex"}, "stats": [{"jogador": "Fabiano", "partidas": 8, "vitorias": 5, "derrotas": 3, "gf": 25, "ga": 18, "gd": 7, "mvp": "No"}, {"jogador": "Alex", "partidas": 7, "vitorias": 7, "derrotas": 0, "gf": 28, "ga": 7, "gd": 21, "mvp": "Yes"}, {"jogador": "Martin", "partidas": 7, "vitorias": 3, "derrotas": 4, "gf": 14, "ga": 24, "gd": -10, "mvp": "No"}, {"jogador": "Daniel", "partidas": 7, "vitorias": 2, "derrotas": 5, "gf": 17, "ga": 22, "gd": -5, "mvp": "No"}, {"jogador": "Fábio", "partidas": 7, "vitorias": 1, "derrotas": 6, "gf": 12, "ga": 25, "gd": -13, "mvp": "No"}]}, {"sessao": {"numero": "S17", "data": "2026-04-20", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 7, "formato": "Doubles · Rotating", "mvp": "Fabiano"}, "stats": [{"jogador": "Fabiano", "partidas": 6, "vitorias": 6, "derrotas": 0, "gf": 24, "ga": 10, "gd": 14, "mvp": "Yes"}, {"jogador": "Dicésar", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 13, "ga": 17, "gd": -4, "mvp": "No"}, {"jogador": "Fábio", "partidas": 6, "vitorias": 3, "derrotas": 3, "gf": 15, "ga": 18, "gd": -3, "mvp": "No"}, {"jogador": "Daniel", "partidas": 6, "vitorias": 2, "derrotas": 4, "gf": 17, "ga": 19, "gd": -2, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 11, "ga": 16, "gd": -5, "mvp": "No"}]}, {"sessao": {"numero": "S18", "data": "2026-04-25", "local": "EcoTenis · Outdoor Field · Foz do Iguaçu", "total_jogadores": 5, "total_partidas": 6, "formato": "Doubles · Rotating", "mvp": "Fabiano"}, "stats": [{"jogador": "Fabiano", "partidas": 5, "vitorias": 4, "derrotas": 1, "gf": 18, "ga": 12, "gd": 6, "mvp": "Yes"}, {"jogador": "Dicésar", "partidas": 5, "vitorias": 3, "derrotas": 2, "gf": 17, "ga": 12, "gd": 5, "mvp": "No"}, {"jogador": "Cristian", "partidas": 5, "vitorias": 1, "derrotas": 4, "gf": 10, "ga": 18, "gd": -8, "mvp": "No"}, {"jogador": "Martin", "partidas": 5, "vitorias": 2, "derrotas": 3, "gf": 12, "ga": 17, "gd": -5, "mvp": "No"}, {"jogador": "Daniel", "partidas": 4, "vitorias": 2, "derrotas": 2, "gf": 13, "ga": 11, "gd": 2, "mvp": "No"}]}];
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function now(){return new Date().toISOString();}
+function setStatus(msg,type=''){const el=document.getElementById('status');el.className='status'+(type?' '+type:'');el.innerHTML=msg;}
+function setRowStatus(i,type,msg){const r=document.getElementById('row-'+i);if(!r)return;r.className='row '+type;const st=r.querySelector('.r-st');if(st){st.className='r-st '+type;st.textContent=msg;}}
+function updateProgress(done){const pct=Math.round(done/FULL_DATA.length*100);document.getElementById('prog-fill').style.width=pct+'%';document.getElementById('prog-txt').textContent=done+' / '+FULL_DATA.length;document.getElementById('done-count').textContent=done;}
+
+let WEB_APP_URL_OVERRIDE = null;
+function getURL(){ return WEB_APP_URL_OVERRIDE || WEB_APP_URL; }
+
+async function send(action, data){
+  const res = await fetch(getURL(), {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},  // avoids CORS preflight
+    body: JSON.stringify({action, data, timestamp: now()})
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status + ' on ' + action);
+  const json = await res.json();
+  if (json.status === 'error') throw new Error(json.message || action + ' returned error');
+  return json;
+}
+async function get(action){
+  const res = await fetch(getURL() + '?action=' + action);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function testConnection(){
+  setStatus('<span class="spin">⟳</span> Testing Apps Script connection...', 'loading');
+  try {
+    const r = await get('get_sessoes');
+    const count = r.rows?.length ?? 0;
+    setStatus(`✅ Connected! ${count} session(s) already in DB. ${count===18?'All 18 already imported — use Verify DB to confirm.':'Ready to import.'}`, 'success');
+  } catch(e) {
+    setStatus(`❌ Connection failed: ${e.message} · Make sure the Apps Script is deployed as <b>Execute as: Me</b> + <b>Who has access: Anyone</b>. Re-deploy → New deployment → paste URL below.`, 'error');
+    document.getElementById('url-override').style.display = 'flex';
+  }
+}
+
+function applyNewURL(){
+  const val = document.getElementById('url-input').value.trim();
+  if (val.startsWith('https://script.google.com')){
+    WEB_APP_URL_OVERRIDE = val;
+    document.getElementById('url-override').style.display = 'none';
+    setStatus('✅ URL updated. Run Test Connection to verify.', 'success');
+  } else {
+    setStatus('❌ Invalid URL — must start with https://script.google.com', 'error');
+  }
+}
+
+function buildRanking(allStats){
+  const map={};
+  allStats.forEach(s=>{
+    if(!map[s.jogador])map[s.jogador]={jogador:s.jogador,sessoes:0,partidas:0,vitorias:0,derrotas:0,gf:0,ga:0,gd:0,mvp_count:0};
+    const r=map[s.jogador];r.sessoes++;r.partidas+=+s.partidas||0;r.vitorias+=+s.vitorias||0;r.derrotas+=+s.derrotas||0;r.gf+=+s.gf||0;r.ga+=+s.ga||0;r.gd+=+s.gd||0;r.mvp_count+=s.mvp==='Yes'?1:0;
+  });
+  return Object.values(map).map(r=>({...r,win_rate:r.partidas>0?Math.round(r.vitorias/r.partidas*100)+'%':'—',updated_at:now()})).sort((a,b)=>b.vitorias-a.vitorias||b.gd-a.gd);
+}
+
+function renderGrid(){
+  document.getElementById('grid').innerHTML=FULL_DATA.map((d,i)=>{
+    const s=d.sessao;
+    const players=d.stats.map(p=>p.jogador).join(', ');
+    return `<div class="row" id="row-${i}">
+      <div class="r-num">${s.numero}</div>
+      <div class="r-date">${s.data}</div>
+      <div class="r-info">
+        <div class="r-mvp">🏅 ${s.mvp} · ${d.stats.length} players</div>
+        <div class="r-meta">${s.total_partidas}M · ${s.local}</div>
+      </div>
+      <div class="r-st">⏳ pending</div>
+    </div>`;
+  }).join('');
+}
+
+async function runAll(){
+  document.getElementById('btn-all').disabled=true;
+  setStatus('<span class="spin">⟳</span> Starting full import — 18 sessions + all player stats...','loading');
+  let done=0,errors=0;
+  
+  for(let i=0;i<FULL_DATA.length;i++){
+    const d=FULL_DATA[i];const s=d.sessao;
+    setRowStatus(i,'loading','⟳ saving...');
+    setStatus('<span class="spin">⟳</span> ['+s.numero+'] Importing session + '+d.stats.length+' player stats...','loading');
+    
+    try{
+      const sessaoId=uid();
+      const sessRow={id:sessaoId,numero:s.numero,data:s.data,local:s.local,total_jogadores:s.total_jogadores,total_partidas:s.total_partidas,formato:s.formato,mvp:s.mvp,observacoes:'',created_at:now()};
+      const statsRows=d.stats.map(p=>({id:uid(),sessao_id:sessaoId,sessao_numero:s.numero,sessao_data:s.data,jogador:p.jogador,partidas:p.partidas,vitorias:p.vitorias,derrotas:p.derrotas,gf:p.gf,ga:p.ga,gd:p.gd,mvp:p.mvp,created_at:now()}));
+      
+      const [r1,r2]=await Promise.all([
+        send('insert_sessao',{row:sessRow}),
+        send('insert_sessao_stats',{rows:statsRows})
+      ]);
+      if(r1.status==='error'||r2.status==='error')throw new Error('API error');
+      setRowStatus(i,'done','✅ done');done++;
+    }catch(e){setRowStatus(i,'error','❌ error');errors++;}
+    
+    updateProgress(done);
+    await new Promise(r=>setTimeout(r,400));
+  }
+  
+  // Rebuild ranking — use local FULL_DATA (no extra fetch needed)
+  setStatus('<span class="spin">⟳</span> Rebuilding global ranking from local data...','loading');
+  try{
+    // Flatten all stats from FULL_DATA directly — no GET request needed
+    const allStats = FULL_DATA.flatMap(d =>
+      d.stats.map(p => ({
+        ...p,
+        sessao_numero: d.sessao.numero,
+        sessao_data: d.sessao.data,
+      }))
+    );
+    const rankingRows = buildRanking(allStats);
+    const r = await send('upsert_ranking', {rows: rankingRows});
+    if(r.status === 'error') throw new Error(r.message || 'upsert_ranking failed');
+    const totalStats = FULL_DATA.reduce((a,d)=>a+d.stats.length,0);
+    if(errors===0){
+      setStatus('✅ Done! 18 sessions · '+totalStats+' player stats · '+rankingRows.length+' players in ranking. Session Manager now shows real data.','success');
+    } else {
+      setStatus('⚠️ Import done with '+errors+' error(s). '+done+' sessions saved. Ranking rebuilt locally.','error');
+    }
+  }catch(e){
+    setStatus('⚠️ Sessions saved ('+done+'/18). Ranking failed: '+e.message+'. Try "Verify Database" to confirm data.','error');
+  }
+  
+  document.getElementById('btn-all').textContent='✅ Import Complete';
+}
+
+async function checkDB(){
+  setStatus('<span class="spin">⟳</span> Checking database...','loading');
+  try{
+    const data=await get('get_sessoes');
+    const rows=data.rows||[];
+    setStatus('✅ Database has '+rows.length+' session(s): '+rows.map(r=>r.numero).join(', '),'success');
+  }catch(e){setStatus('❌ Check failed: '+e.message,'error');}
+}
+
+renderGrid();
+</script>
+</body>
+</html>
