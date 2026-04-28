@@ -215,7 +215,7 @@ input,select,textarea{font-family:var(--font-b);}
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · V5</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -472,8 +472,8 @@ input,select,textarea{font-family:var(--font-b);}
 const USERS = [
   {name:'martin.cordoba@yahoo.com', pass:'344196', display:'MC'},
   {name:'martin',                   pass:'344196', display:'MC'},
-  {name:'Fabiano',                  pass:'fab123', display:'FA'},
-  {name:'Admin',                    pass:'admin',  display:'AD'},
+  {name:'fabiano',                  pass:'fab123', display:'FA'},
+  {name:'admin',                    pass:'admin',  display:'AD'},
 ];
 
 const BASE_PLAYERS = [
@@ -539,7 +539,7 @@ function getGrade(wr) {
 function doLogin() {
   const u = document.getElementById('l-user').value.trim().toLowerCase();
   const p = document.getElementById('l-pass').value;
-  const user = USERS.find(x => x.name.toLowerCase() === u && x.pass === p);
+  const user = USERS.find(x => x.name.toLowerCase() === u.toLowerCase() && x.pass === p);
   if (!user) { const errEl=document.getElementById('l-err'); errEl.style.display='block'; return; }
   currentUser = user;
   document.getElementById('l-err').style.display='none';
