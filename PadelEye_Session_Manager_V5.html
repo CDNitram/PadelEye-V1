@@ -1579,8 +1579,9 @@ function rkRenderTable() {
 function rkUpdateKPIs(data) {
   const totalM = data.reduce((s,p)=>s+(+p.partidas||0),0);
   const leader = [...data].sort((a,b)=>(+b.vitorias||0)-(+a.vitorias||0))[0];
+  const maxSess = data.length ? Math.max(...data.map(p=>+p.sessoes||0)) : 0;
   document.getElementById('rk-k-players').textContent = data.length;
-  document.getElementById('rk-k-sess').textContent    = 18;
+  document.getElementById('rk-k-sess').textContent    = maxSess;
   document.getElementById('rk-k-span').textContent    = 'Out 2024 → Abr 2026';
   document.getElementById('rk-k-matches').textContent = Math.round(totalM/2);
   document.getElementById('rk-k-leader').textContent  = leader?.jogador||'—';
