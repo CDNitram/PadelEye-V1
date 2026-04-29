@@ -1545,7 +1545,7 @@ function rkRenderConsistency() {
 }
 
 function rkRenderTable() {
-  const sorted = [...rkData].sort((a,b)=>{
+  const sorted = [...rkData].filter(p=>(+p.vitorias||0)>=3).sort((a,b)=>{
     if(rkSort==='win_rate')return rkWR(b.win_rate)-rkWR(a.win_rate);
     return (+b[rkSort]||0)-(+a[rkSort]||0);
   });
