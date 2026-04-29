@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Ecotenis MVP · Torneio Americano · V28 · SIMULATION</title>
+<title>PadelEye · Ecotenis MVP · Torneio Americano · V28</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -377,14 +377,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .kpi-row{grid-template-columns:repeat(3,1fr);}
   .panel{padding:14px;}
 }
-
-.sbtn{width:100%;padding:11px 14px;border:1px solid #2a4a6a;background:#0a1e34;color:#93C5FD;border-radius:8px;cursor:pointer;font-family:'DM Mono';font-size:11px;letter-spacing:1px;text-align:left;transition:all .2s;display:block;}
-.sbtn:hover{background:#1a3a5a;color:#fff;}
-.sbtn.green{border-color:#1a5a3a;background:#0a2a1a;color:#4ade80;}
-.sbtn.green:hover{background:#1a4a2a;}
-.sbtn.danger{border-color:#5a1a1a;background:#1a0a0a;color:#f87171;}
-.sbtn.danger:hover{background:#2a1a1a;}
-
 </style>
 </head>
 <body>
@@ -438,7 +430,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab-btn" onclick="showTab('scorecard',this)">🏅 Scorecard</button>
     <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico</button>
     <button class="tab-btn" onclick="showTab('cadastro',this)">👤 Cadastro</button>
-    <button class="tab-btn" style="color:#e74c3c;font-weight:700" onclick="openSim()">🎮 SIM</button>
   </div>
 
   <!-- ── SETUP ── -->
@@ -659,6 +650,18 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="alert" id="alert-game" style="margin:14px 0 0"></div>
     <div id="rounds-container">
       <div class="empty-panel"><div class="empty-icon">🏸</div><div>Configure e inicie o torneio no Setup.</div></div>
+    </div>
+    <!-- SIM BUTTONS -->
+    <div id="sim-buttons" style="display:none;padding:16px 0 8px;border-top:1px solid #eaf0f8;margin-top:16px">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin-bottom:10px">🎮 Simulação</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="simCurrentPhase()" style="width:100%;padding:12px;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#0a1628;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#0a1628'">
+          ⚡ Simular fase atual (placares aleatórios)
+        </button>
+        <button onclick="simAllRemaining()" style="width:100%;padding:12px;background:#0a1628;border:1.5px solid #0a1628;border-radius:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#C9933A;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.background='#132240'" onmouseout="this.style.background='#0a1628'">
+          🏁 Simular todas as fases restantes
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2303,198 +2306,79 @@ const PadelEyeDB = (() => {
 })();
 
 // ══════════════════════════════════════════
-// SIMULATION ENGINE · V28
+// SIM ENGINE — inline Rodadas buttons
 // ══════════════════════════════════════════
-const SIM_ROSTER = ['Fabiano','Martin','Fábio','Daniel','Alex','Dicésar','Cristian','Nilton',
-  'Michel','Astor','Giuliano','Alec','João','Gustavo','Felipe','Marcelo','Brendon','Alynelson'];
-
-function openSim(){ document.getElementById('sim-overlay').style.display='block'; }
-function closeSim(){ document.getElementById('sim-overlay').style.display='none'; }
-
-function simLog(msg){
-  const el=document.getElementById('sim-log');
-  el.style.display='block';
-  el.innerHTML+=msg+'\n';
-  el.scrollTop=el.scrollHeight;
-}
-
-function simScore(phaseIdx){
+function simScore(phaseIdx) {
   const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:6, tbAt:5};
   const max = cfg.maxScore || 6;
-  const tb  = cfg.tbAt || 5;
-  // Randomly decide: normal win or TB
-  const goTB = Math.random() < 0.15; // 15% chance of TB
+  const tb  = cfg.tbAt    || 5;
+  const goTB = Math.random() < 0.12;
   if (goTB) {
-    const tba = 7 + Math.floor(Math.random()*4);
+    const tba = 7 + Math.floor(Math.random()*3);
     const tbb = tba - 1 - Math.floor(Math.random()*3);
     return {sa:tb, sb:tb, tb:true, tba, tbb};
   }
-  const winner = max;
-  const loser  = Math.floor(Math.random()*tb); // 0 to tbAt-1
+  const loser = Math.floor(Math.random()*tb);
   return Math.random()>0.5
-    ? {sa:winner, sb:loser, tb:false, tba:null, tbb:null}
-    : {sa:loser, sb:winner, tb:false, tba:null, tbb:null};
+    ? {sa:max, sb:loser, tb:false, tba:null, tbb:null}
+    : {sa:loser, sb:max,  tb:false, tba:null, tbb:null};
 }
 
-function simFillSetup(n){
-  // Reset state
-  T = { started:false, name:'', date:'', courts:2, scoring:'', players:[], phases:[], currentPhase:0,
-    phaseConfig:[{maxScore:6,tbAt:5},{maxScore:6,tbAt:5},{maxScore:9,tbAt:9}] };
-  selectedPlayers = [];
-
-  // Fill form
-  document.getElementById('cfg-name').value = 'Simulação · Americano · '+new Date().toLocaleDateString('pt-BR');
-  document.getElementById('cfg-courts').value = n<=8?'2':'4';
-
-  // Select players
-  const pool = SIM_ROSTER.slice(0,n);
-  pool.forEach(p => {
-    if(!selectedPlayers.includes(p)) selectedPlayers.push(p);
-  });
-
-  // Update player chips UI if they exist
-  document.querySelectorAll('.p-chip,.player-chip').forEach(el => {
-    const name = el.dataset.name || el.querySelector('[class*="name"]')?.textContent?.trim();
-    if(name && pool.includes(name)) el.classList.add('on','active','selected');
-  });
-
-  renderPlayerCount?.();
-  simLog('✅ Setup: '+n+' jogadores — '+pool.join(', '));
-}
-
-function simPhase(phaseIdx){
-  if(!T.started){
-    simLog('⚠️ Torneio não iniciado. Use "Auto Completo" ou inicie pelo Setup.');
-    return;
-  }
+function simPhaseMatches(phaseIdx) {
   const ph = T.phases[phaseIdx];
-  if(!ph){ simLog('⚠️ Fase '+phaseIdx+' não existe ainda. Avance as fases anteriores.'); return; }
-  if(ph.complete){ simLog('ℹ️ Fase '+(phaseIdx+1)+' já completa.'); return; }
-
-  let count=0;
+  if (!ph) return 0;
+  let count = 0;
   ph.groups.forEach((group, gi) => {
-    // Generate all matches for this group (round-robin pairs)
-    const matches=[];
-    for(let i=0;i<group.length-1;i++)
-      for(let j=i+1;j<group.length;j++)
-        matches.push([group[i],group[j]]);
-    // For Americano: partners rotate — 3 matches for 4 players
-    const americanoMatches=[];
-    if(group.length===4){
-      const [a,b,c,d]=group;
-      americanoMatches.push([[a,b],[c,d]],[[a,c],[b,d]],[[a,d],[b,c]]);
+    const americano = [];
+    if (group.length === 4) {
+      const [a,b,c,d] = group;
+      americano.push([[a,b],[c,d]], [[a,c],[b,d]], [[a,d],[b,c]]);
     } else {
-      for(let i=0;i<group.length-1;i+=2)
-        if(i+3<=group.length) americanoMatches.push([[group[i],group[i+1]],[group[i+2],group[i+3]]]);
+      for (let i=0; i<group.length-1; i+=2)
+        if (i+3 <= group.length)
+          americano.push([[group[i],group[i+1]],[group[i+2],group[i+3]]]);
     }
-    americanoMatches.forEach(([[a1,a2],[b1,b2]], mi) => {
+    americano.forEach((_,mi) => {
       const key = phaseIdx+'-'+gi+'-'+mi;
-      if(T.phases[phaseIdx].results[key]?.saved) return;
-      const sc = simScore(phaseIdx);
-      T.phases[phaseIdx].results[key] = {...sc, saved:true};
-      simLog('  F'+(phaseIdx+1)+' G'+(gi+1)+' M'+(mi+1)+': '+a1+'/'+a2+' '+sc.sa+'×'+sc.sb+' '+b1+'/'+b2+(sc.tb?' (TB '+sc.tba+'×'+sc.tbb+')':''));
+      if (T.phases[phaseIdx].results[key]?.saved) return;
+      T.phases[phaseIdx].results[key] = {...simScore(phaseIdx), saved:true};
       count++;
     });
   });
-  simLog('✅ Fase '+(phaseIdx+1)+': '+count+' partidas simuladas.');
-  renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
-  // Check if phase is now complete
-  checkPhaseComplete(phaseIdx);
+  return count;
 }
 
-function checkPhaseComplete(phaseIdx){
-  const ph = T.phases[phaseIdx];
-  if(!ph) return;
-  const total = ph.groups.reduce((s,g)=>{
-    const n=g.length;
-    return s + (n===4?3:n===6?6:3);
-  },0);
-  const done = Object.values(ph.results).filter(r=>r.saved).length;
-  if(done>=total){
-    simLog('🏁 Fase '+(phaseIdx+1)+' completa! Avançando...');
-    if(phaseIdx < 2) {
-      try{ advancePhase?.(); } catch(e){ simLog('  advancePhase: '+e.message); }
-    }
-  }
+function simCurrentPhase() {
+  if (!T.started) { gameAlert('Inicie o torneio no Setup primeiro.','warn'); return; }
+  const pi = T.currentPhase;
+  if (!T.phases[pi]) { gameAlert('Fase não encontrada.','warn'); return; }
+  const count = simPhaseMatches(pi);
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard?.();
+  gameAlert('✅ '+count+' partidas simuladas na fase '+(pi+1)+'. Avance a fase para continuar.','ok');
 }
 
-async function simAllPhases(){
-  if(!T.started){ simLog('⚠️ Inicie o torneio primeiro.'); return; }
-  simLog('⚡ Simulando todas as fases...');
-  for(let i=0;i<3;i++){
-    if(!T.phases[i]) break;
-    simPhase(i);
-    await new Promise(r=>setTimeout(r,200));
+async function simAllRemaining() {
+  if (!T.started) { gameAlert('Inicie o torneio no Setup primeiro.','warn'); return; }
+  for (let i = T.currentPhase; i < 3; i++) {
+    if (!T.phases[i]) break;
+    simPhaseMatches(i);
+    renderRounds(); renderRanking(); renderHistorico();
+    // Try to advance phase
+    try { if (i < 2) advancePhase(); } catch(e) {}
+    await new Promise(r => setTimeout(r, 150));
   }
-  simLog('🏆 Simulação completa! Veja o Ranking e Scorecard.');
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard?.();
   showTab('scorecard', document.querySelector('[onclick*="scorecard"]'));
+  gameAlert('🏆 Simulação completa! Ver Scorecard.','ok');
 }
 
-async function simFullAuto(n){
-  document.getElementById('sim-log').innerHTML='';
-  document.getElementById('sim-log').style.display='block';
-  simLog('🚀 Auto Completo · '+n+' jogadores...');
-  simFillSetup(n);
-  await new Promise(r=>setTimeout(r,200));
-  // Trigger start
-  try {
-    document.getElementById('cfg-name').dispatchEvent(new Event('input'));
-    startTournament?.();
-    simLog('🏟 Torneio iniciado · '+T.players.length+' jogadores · '+T.phases.length+' fase(s)');
-  } catch(e){ simLog('❌ Erro ao iniciar: '+e.message); return; }
-  await new Promise(r=>setTimeout(r,300));
-  await simAllPhases();
-}
-
-function simReset(){
-  T = { started:false, name:'', date:'', courts:2, scoring:'', players:[], phases:[], currentPhase:0,
-    phaseConfig:[{maxScore:6,tbAt:5},{maxScore:6,tbAt:5},{maxScore:9,tbAt:9}] };
-  selectedPlayers=[];
-  document.getElementById('sim-log').innerHTML='';
-  document.getElementById('sim-log').style.display='none';
-  renderRounds?.(); renderRanking?.(); renderHistorico?.(); renderGrupos?.();
-  showTab('setup', document.querySelector('[onclick*="setup"]'));
-  simLog('🔄 Reset completo.');
-  openSim();
-}
+// Show/hide sim buttons when tournament starts
+const _origStart = startTournament;
+startTournament = function() {
+  _origStart();
+  document.getElementById('sim-buttons').style.display = 'block';
+};
 
 </script>
-
-<!-- ═══ SIM OVERLAY ═══ -->
-<div id="sim-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,10,20,.95);z-index:9999;overflow-y:auto;padding:20px;">
-  <div style="max-width:480px;margin:0 auto;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div style="font-family:'Bebas Neue';font-size:28px;color:#e74c3c;letter-spacing:2px">🎮 SIMULATION</div>
-      <button onclick="closeSim()" style="background:none;border:1px solid #3a5a7a;color:#7090b0;border-radius:8px;padding:6px 16px;cursor:pointer;font-family:'DM Mono';font-size:11px">✕ FECHAR</button>
-    </div>
-
-    <div style="background:#0d1e3a;border:1px solid #1a3a5a;border-radius:12px;padding:16px;margin-bottom:12px">
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#5a8aaa;text-transform:uppercase;margin-bottom:12px">⚡ One-Click · Full Auto</div>
-      <button class="sbtn danger" onclick="simFullAuto(8)">🚀 Auto Completo · 8 jogadores</button>
-      <button class="sbtn danger" style="margin-top:7px" onclick="simFullAuto(16)">🚀 Auto Completo · 16 jogadores</button>
-    </div>
-
-    <div style="background:#0d1e3a;border:1px solid #1a3a5a;border-radius:12px;padding:16px;margin-bottom:12px">
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#5a8aaa;text-transform:uppercase;margin-bottom:12px">Step 1 · Preencher Setup</div>
-      <button class="sbtn" onclick="simFillSetup(8)">🎯 Setup · 8 jogadores (2 grupos)</button>
-      <button class="sbtn" style="margin-top:7px" onclick="simFillSetup(16)">🎯 Setup · 16 jogadores (4 grupos)</button>
-    </div>
-
-    <div style="background:#0d1e3a;border:1px solid #1a3a5a;border-radius:12px;padding:16px;margin-bottom:12px">
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#5a8aaa;text-transform:uppercase;margin-bottom:12px">Step 2 · Simular Fase</div>
-      <button class="sbtn green" onclick="simPhase(0)">⚡ Simular Fase 1</button>
-      <button class="sbtn green" style="margin-top:7px" onclick="simPhase(1)">⚡ Simular Fase 2</button>
-      <button class="sbtn green" style="margin-top:7px" onclick="simPhase(2)">⚡ Simular Final</button>
-      <button class="sbtn green" style="margin-top:7px" onclick="simAllPhases()">🏁 Simular TODAS as Fases</button>
-    </div>
-
-    <button onclick="simReset()" style="width:100%;padding:11px;background:#111827;border:1px solid #374151;color:#6b7280;border-radius:9px;cursor:pointer;font-family:'DM Mono';font-size:11px;letter-spacing:1px;margin-bottom:12px">
-      🔄 RESET COMPLETO
-    </button>
-
-    <div id="sim-log" style="background:#040d14;border-radius:9px;padding:12px;font-family:'DM Mono';font-size:10px;color:#4a7a9a;line-height:1.8;max-height:220px;overflow-y:auto;display:none"></div>
-  </div>
-</div>
-
 </body>
 </html>
