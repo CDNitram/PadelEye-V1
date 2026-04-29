@@ -846,13 +846,24 @@ function addGuest() {
 // MATCH ENTRY
 // ══════════════════════════════════════════
 function updateMatchSelects() {
-  ['sel-a1','sel-a2','sel-b1','sel-b2'].forEach(id => {
+  const ids = ['sel-a1','sel-a2','sel-b1','sel-b2'];
+  ids.forEach(id => {
     const sel = document.getElementById(id);
     const cur = sel.value;
+    // Collect values of the other 3 selects
+    const others = ids.filter(x=>x!==id).map(x=>document.getElementById(x).value).filter(Boolean);
     sel.innerHTML = '<option value="">— Player —</option>' +
-      activePlayers.map(p=>`<option value="${p}" ${p===cur?'selected':''}>${p}</option>`).join('');
+      activePlayers.map(p => {
+        const taken = others.includes(p) && p !== cur;
+        return `<option value="${p}" ${p===cur?'selected':''} ${taken?'disabled style="color:#ccc"':''}>${p}${taken?' ✕':''}</option>`;
+      }).join('');
   });
 }
+
+// Re-filter selects whenever any dropdown changes
+document.addEventListener('change', e => {
+  if (['sel-a1','sel-a2','sel-b1','sel-b2'].includes(e.target.id)) updateMatchSelects();
+});
 
 function liveScore() {
   const maxSc = parseInt(document.getElementById('cfg-max-score')?.value||4);
