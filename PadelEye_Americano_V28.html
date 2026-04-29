@@ -1695,147 +1695,153 @@ function renderGrupos() {
     return;
   }
 
-  const MEDALS = ['🥇','🥈','🥉','4º'];
-  const QUAL_COLOR = '#1a7a44';
-  const phaseNames = ['Fase 1','Fase 2','Final'];
-  const phaseLetters = ['A','B','C','D','E','F','G','H'];
+  const all     = [...DB.map(p=>p.nome), ...extraPlayers];
+  const totalM  = T_groups.length * 3;
+  const MEDALS  = ['🥇','🥈','🥉','4º'];
+  const G_LETTERS = ['A','B','C','D','E','F','G','H'];
 
-  // Build phase tabs + content
-  let html = '';
-
-  // Phase sub-tabs
-  const activePhasesCount = T.phases.length;
-  html += `<div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">`;
+  // ── PHASE TABS ──
+  let html = `<div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">`;
   T.phases.forEach((ph, pi) => {
+    const done = isPhaseComplete(pi);
     html += `<button onclick="switchGrupoPhase(${pi})" id="gtab-${pi}"
-      style="padding:6px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:${pi===0?'#0a1628':'#f4f7fc'};color:${pi===0?'#fff':'#9ab0c8'};transition:all .2s">
-      ${ph.name}${ph.complete?' ✅':''}
+      style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:${pi===0?'#0a1628':'#f4f7fc'};color:${pi===0?'#fff':'#9ab0c8'};transition:all .2s">
+      ${ph.name}${done?' ✅':''}
     </button>`;
   });
   html += `</div>`;
 
-  // Phase panels
+  // ── PHASE PANELS ──
   T.phases.forEach((ph, pi) => {
-    const isComplete = isPhaseComplete(pi);
+    const hasResults = Object.values(ph.results||{}).some(r=>r.saved);
+    const complete   = isPhaseComplete(pi);
+    const qualify    = pi < 2 ? 2 : ph.groups[0]?.length || 4;
+
     html += `<div id="gphase-${pi}" style="display:${pi===0?'block':'none'}">`;
 
-    // Pre-start: show reshuffle for F1 only if no results yet
-    const hasResults = Object.values(ph.results||{}).some(r=>r.saved);
-    if (pi === 0 && !hasResults) {
-      html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <button onclick="reshuffleGroups()" style="padding:7px 14px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;color:#5a8aaa;cursor:pointer">🔀 Sortear novamente</button>
-        <span style="font-size:11px;color:#b0c4d8">ou vá para Rodadas para inserir resultados</span>
+    // Hero card — same as original
+    if (pi === 0) {
+      html += `<div class="card" style="background:linear-gradient(135deg,#0a1628,#1a3052);border-color:#0a1628;margin-bottom:14px">
+        <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px;margin-bottom:4px">
+          ${T.name} · Fase 1
+        </div>
+        <div style="font-size:12px;color:#93C5FD">
+          ${T.date} · ${T.players.length} jogadores · ${T_groups.length} grupos · ${totalM} partidas · 21 no total
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#5a8aaa">
+          ${seedList.length} seed${seedList.length!==1?'s':''} distribuído${seedList.length!==1?'s':''} — 1 por grupo.
+          Os 2 melhores de cada grupo avançam para a Fase 2.
+        </div>
       </div>`;
+
+      if (!hasResults) {
+        html += `<div class="grupos-info">
+          <strong>Cada grupo joga 3 partidas:</strong><br>
+          Partida 1: A+B vs C+D &nbsp;·&nbsp; Partida 2: A+C vs B+D &nbsp;·&nbsp; Partida 3: A+D vs B+C
+        </div>
+        <div class="grupos-actions" style="margin-bottom:16px">
+          <button class="btn-reshuffle" onclick="reshuffleGroups()">🔀 Sortear novamente</button>
+          <span style="font-size:11px;color:#b0c4d8">ou confirme e inicie</span>
+        </div>`;
+      }
     }
 
-    // Group sub-tabs
-    if (ph.groups.length > 1) {
-      html += `<div style="display:flex;gap:4px;margin-bottom:12px;overflow-x:auto">`;
-      ph.groups.forEach((_, gi) => {
-        const letter = phaseLetters[gi];
-        html += `<button onclick="switchGrupo(${pi},${gi})" id="gsubtab-${pi}-${gi}"
-          style="padding:5px 12px;border-radius:6px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer;border:1px solid #dde6f0;background:${gi===0?'#0a1628':'#fff'};color:${gi===0?'#fff':'#9ab0c8'};white-space:nowrap;flex-shrink:0">
-          Grupo ${letter}
-        </button>`;
-      });
-      html += `</div>`;
-    }
+    // Groups grid — original visual style
+    html += `<div class="grupos-grid">`;
 
-    // Group content panels
     ph.groups.forEach((group, gi) => {
-      const letter  = phaseLetters[gi];
       const color   = GROUP_COLORS[gi % GROUP_COLORS.length];
+      const letter  = G_LETTERS[gi];
       const stds    = groupStandings(group, pi, gi);
       const matches = groupMatches(group);
-      const qualify = pi < 2 ? 2 : group.length; // top 2 advance (F1,F2), all in Final
 
-      html += `<div id="ggroup-${pi}-${gi}" style="display:${gi===0?'block':'none'}">`;
-
-      // Standings table
-      html += `<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;overflow:hidden;margin-bottom:12px">
-        <div style="background:${color};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+      html += `<div class="grupo-card" style="border-color:${color}40">
+        <div class="grupo-header" style="background:${color}">
           <div>
-            <span style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:1px">Grupo ${letter}</span>
-            <span style="font-family:'DM Mono';font-size:10px;color:rgba(255,255,255,.6);margin-left:10px">${group.length} jogadores · ${matches.length} partidas</span>
+            <div class="grupo-letter">Grupo ${letter}</div>
+            <div class="grupo-count">${group.length} jogadores · ${matches.length} partidas</div>
           </div>
-          ${isComplete?'<span style="font-size:11px;color:rgba(255,255,255,.8)">✅ Completo</span>':''}
+          ${complete ? '<div style="font-size:10px;color:rgba(255,255,255,.8)">✅ Completo</div>' : ''}
         </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr style="background:#f8fafd">
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 12px;text-align:left;letter-spacing:1px;border-bottom:1px solid #eaf0f8">#</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 12px;text-align:left;letter-spacing:1px;border-bottom:1px solid #eaf0f8">Jogador</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 6px;text-align:center;letter-spacing:1px;border-bottom:1px solid #eaf0f8">M</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 6px;text-align:center;letter-spacing:1px;border-bottom:1px solid #eaf0f8">V</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 6px;text-align:center;letter-spacing:1px;border-bottom:1px solid #eaf0f8">D</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 6px;text-align:center;letter-spacing:1px;border-bottom:1px solid #eaf0f8">GF</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 6px;text-align:center;letter-spacing:1px;border-bottom:1px solid #eaf0f8">GD</th>
-              <th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:7px 8px;text-align:center;letter-spacing:1px;border-bottom:1px solid #eaf0f8">Status</th>
-            </tr>
-          </thead>
-          <tbody>`;
+        <div class="grupo-body">`;
 
+      // Players — original style + live stats if available
       stds.forEach((s, i) => {
+        const idx      = all.indexOf(s.name);
+        const isSeed   = seedList.includes(s.name);
+        const sIdx     = seedList.indexOf(s.name) + 1;
+        const dbEntry  = DB.find(p=>p.nome===s.name);
         const advances = i < qualify;
         const medal    = MEDALS[i] || (i+1)+'º';
-        const rowBg    = advances && hasResults ? 'rgba(26,122,68,.05)' : '';
-        const nameCol  = advances && hasResults ? QUAL_COLOR : '#0d1e3a';
-        const allColors = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A','#FF5722','#607D8B'];
-        const avCol = allColors[Math.abs([...group].indexOf(s.name)) % allColors.length];
-        const ini   = s.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-        const gdStr = s.gd >= 0 ? '+'+s.gd : ''+s.gd;
-        const gdCol = s.gd > 0 ? '#1a7a44' : s.gd < 0 ? '#c0392b' : '#9ab0c8';
+        const gdStr    = s.gd >= 0 ? '+'+s.gd : ''+s.gd;
+        const gdCol    = s.gd > 0 ? '#1a7a44' : s.gd < 0 ? '#c0392b' : '#9ab0c8';
+        const nameCol  = advances && hasResults ? '#1a7a44' : '#0d1e3a';
+        const rowBg    = advances && hasResults ? 'rgba(26,122,68,.04)' : '';
 
-        html += `<tr style="background:${rowBg};border-bottom:1px solid #f0f5fb">
-          <td style="padding:9px 12px;font-family:'DM Mono';font-size:12px;color:#9ab0c8">${medal}</td>
-          <td style="padding:9px 12px">
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="width:28px;height:28px;border-radius:50%;background:${avCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:11px;color:#fff;flex-shrink:0">${ini}</div>
-              <span style="font-weight:700;font-size:12px;color:${nameCol}">${s.name}</span>
-              ${advances && hasResults && pi<2 ? '<span style="font-size:9px;color:#1a7a44;font-family:DM Mono;margin-left:4px">→F'+(pi+2)+'</span>' : ''}
+        html += `<div class="grupo-player" style="background:${rowBg}">
+          <div class="grupo-av" style="background:${_COLORS[Math.abs(idx)%_COLORS.length]}">${_init(s.name)}</div>
+          <div style="flex:1">
+            <div class="grupo-name" style="color:${nameCol}">
+              ${hasResults ? medal+' ' : ''}${s.name}
+              ${advances && hasResults && pi<2 ? '<span style="font-size:9px;color:#1a7a44;font-family:DM Mono"> →F'+(pi+2)+'</span>' : ''}
             </div>
-          </td>
-          <td style="text-align:center;font-family:'DM Mono';font-size:12px;color:#0d1e3a;padding:9px 6px">${s.m}</td>
-          <td style="text-align:center;font-family:'DM Mono';font-size:12px;color:#1a7a44;font-weight:700;padding:9px 6px">${s.w}</td>
-          <td style="text-align:center;font-family:'DM Mono';font-size:12px;color:#9ab0c8;padding:9px 6px">${s.l}</td>
-          <td style="text-align:center;font-family:'DM Mono';font-size:12px;color:#0d1e3a;padding:9px 6px">${s.gf}</td>
-          <td style="text-align:center;font-family:'DM Mono';font-size:12px;color:${gdCol};font-weight:700;padding:9px 6px">${s.m>0?gdStr:'—'}</td>
-          <td style="text-align:center;padding:9px 8px">
-            ${s.m===0 ? '<span style="font-size:10px;color:#c0cdd8">—</span>'
-              : advances && pi<2 && isComplete ? '<span style="font-size:10px;color:#1a7a44;font-family:DM Mono">✅ avança</span>'
-              : !advances && isComplete ? '<span style="font-size:10px;color:#9ab0c8;font-family:DM Mono">eliminado</span>'
-              : '<span style="font-size:10px;color:#C9933A;font-family:DM Mono">em jogo</span>'}
-          </td>
-        </tr>`;
-      });
-
-      html += `</tbody></table></div>`;
-
-      // Match results for this group
-      html += `<div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin-bottom:8px">Partidas</div>`;
-      matches.forEach((match, mi) => {
-        const key = `${pi}-${gi}-${mi}`;
-        const res = ph.results[key];
-        const ta  = match.a.join(' + ');
-        const tb  = match.b.join(' + ');
-        const played = res?.saved;
-        const aWin   = played && res.sa > res.sb;
-        html += `<div style="background:#fff;border:1px solid ${played?'#c8e8d0':'#eaf0f8'};border-radius:9px;padding:9px 12px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px">
-          <div style="font-size:11px;font-weight:700;color:${played?(aWin?'#1a7a44':'#9ab0c8'):'#0d1e3a'}">${ta}</div>
-          <div style="text-align:center;font-family:'Bebas Neue';font-size:${played?'20px':'14px'};color:${played?'#0d1e3a':'#c0cdd8'};letter-spacing:1px;white-space:nowrap">
-            ${played
-              ? `<span style="color:${res.sa>res.sb?'#1a7a44':'#9ab0c8'}">${res.sa}</span> × <span style="color:${res.sb>res.sa?'#1a7a44':'#9ab0c8'}">${res.sb}</span>${res.tb?' <span style="font-size:10px;color:#C9933A">TB</span>':''}`
-              : 'vs'}
+            <div class="grupo-id">
+              ${hasResults
+                ? `${s.m}M · <span style="color:#1a7a44;font-weight:700">${s.w}V</span> · ${s.l}D · GF ${s.gf} · <span style="color:${gdCol};font-weight:700">GD ${s.m>0?gdStr:'—'}</span>`
+                : `ID ${dbEntry?.id||'—'}`}
+            </div>
           </div>
-          <div style="text-align:right;font-size:11px;font-weight:700;color:${played?(!aWin?'#1a7a44':'#9ab0c8'):'#0d1e3a'}">${tb}</div>
+          ${isSeed && !hasResults ? `<div class="grupo-seed-badge">🌱 S${sIdx}</div>` : ''}
+          ${!hasResults && !isSeed ? '' : ''}
+          ${hasResults && (i < qualify) ? `<div style="font-size:9px;color:#1a7a44;font-family:'DM Mono';padding:2px 6px;background:#E8F8EE;border-radius:5px">${complete?'avança':'em jogo'}</div>` : ''}
+          ${hasResults && (i >= qualify) && complete ? `<div style="font-size:9px;color:#9ab0c8;font-family:'DM Mono'">elim.</div>` : ''}
         </div>`;
       });
 
-      html += `</div>`; // ggroup
-    }); // groups
+      html += `</div>`; // grupo-body
+
+      // Matches compact — below each group, separated
+      if (hasResults || true) {
+        html += `<div style="border-top:1px solid #f0f5fb;padding:6px 10px;background:#fafbfd">
+          <div style="font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#c0cdd8;margin-bottom:4px">Partidas</div>`;
+        matches.forEach((match, mi) => {
+          const key    = `${pi}-${gi}-${mi}`;
+          const res    = ph.results[key];
+          const played = res?.saved;
+          const aWin   = played && res.sa > res.sb;
+          html += `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f4f7fb">
+            <div style="font-size:10px;font-weight:600;color:${played?(aWin?'#1a7a44':'#9ab0c8'):'#7090b0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${match.a.join('+')}</div>
+            <div style="text-align:center;font-family:'Bebas Neue';font-size:${played?'14px':'11px'};color:${played?'#0d1e3a':'#c0cdd8'};letter-spacing:1px;white-space:nowrap">
+              ${played
+                ? `<span style="color:${res.sa>res.sb?'#1a7a44':'#9ab0c8'}">${res.sa}</span>×<span style="color:${res.sb>res.sa?'#1a7a44':'#9ab0c8'}">${res.sb}</span>${res.tb?'<sup style="font-size:7px;color:#C9933A">TB</sup>':''}`
+                : 'vs'}
+            </div>
+            <div style="text-align:right;font-size:10px;font-weight:600;color:${played?(!aWin?'#1a7a44':'#9ab0c8'):'#7090b0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${match.b.join('+')}</div>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      html += `</div>`; // grupo-card
+    });
+
+    html += `</div>`; // grupos-grid
+
+    // Bottom CTA — original style, only F1 before results
+    if (pi === 0) {
+      html += `<div class="card" style="border-color:rgba(58,123,213,.2);background:#f0f8ff;margin-top:14px">
+        <div style="font-size:12px;color:#1a5276;margin-bottom:14px;line-height:1.7">
+          Os grupos estão definidos. As partidas da Fase 1 já foram geradas.<br>
+          <strong style="color:#0d1e3a">Total: 21 partidas</strong> — F1: 12 · F2: 6 · Final: 3
+        </div>
+        <button class="btn btn-gold btn-full" onclick="showTab('rodadas', document.querySelector('[onclick*=rodadas]'))" style="font-size:15px">
+          🏸 Ver Rodadas da Fase 1 →
+        </button>
+      </div>`;
+    }
 
     html += `</div>`; // gphase
-  }); // phases
+  });
 
   c.innerHTML = html;
 }
@@ -1846,22 +1852,6 @@ function switchGrupoPhase(pi) {
   const ph = document.getElementById('gphase-'+pi);
   const tb = document.getElementById('gtab-'+pi);
   if(ph) ph.style.display='block';
-  if(tb){ tb.style.background='#0a1628'; tb.style.color='#fff'; }
-}
-
-function switchGrupo(pi, gi) {
-  // Hide all group panels for this phase
-  const ph = T.phases[pi];
-  if(!ph) return;
-  ph.groups.forEach((_,i)=>{
-    const el = document.getElementById(`ggroup-${pi}-${i}`);
-    if(el) el.style.display='none';
-    const tb = document.getElementById(`gsubtab-${pi}-${i}`);
-    if(tb){ tb.style.background='#fff'; tb.style.color='#9ab0c8'; }
-  });
-  const el = document.getElementById(`ggroup-${pi}-${gi}`);
-  if(el) el.style.display='block';
-  const tb = document.getElementById(`gsubtab-${pi}-${gi}`);
   if(tb){ tb.style.background='#0a1628'; tb.style.color='#fff'; }
 }
 
