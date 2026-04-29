@@ -287,7 +287,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V5</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -1418,6 +1418,7 @@ async function saveNewPlayer() {
 let rkData = [];
 let rkSort = 'vitorias';
 let rkPeriod = 6;
+let rkTotalSessions = 19;
 
 const RK_COLS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A'];
 function rkCol(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return RK_COLS[h%RK_COLS.length];}
@@ -1579,9 +1580,8 @@ function rkRenderTable() {
 function rkUpdateKPIs(data) {
   const totalM = data.reduce((s,p)=>s+(+p.partidas||0),0);
   const leader = [...data].sort((a,b)=>(+b.vitorias||0)-(+a.vitorias||0))[0];
-  const maxSess = data.length ? Math.max(...data.map(p=>+p.sessoes||0)) : 0;
   document.getElementById('rk-k-players').textContent = data.length;
-  document.getElementById('rk-k-sess').textContent    = maxSess;
+  document.getElementById('rk-k-sess').textContent    = rkTotalSessions;
   document.getElementById('rk-k-span').textContent    = 'Out 2024 → Abr 2026';
   document.getElementById('rk-k-matches').textContent = Math.round(totalM/2);
   document.getElementById('rk-k-leader').textContent  = leader?.jogador||'—';
@@ -1595,18 +1595,25 @@ async function loadRanking() {
   btn.classList.add('spin'); dot.classList.add('rk-spin');
   stxt.textContent = 'Atualizando ranking...';
   try {
-    const res = await fetch(PadelEyeDB._url()+'?action=get_ranking');
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const data = await res.json();
-    const rows = data.rows||[];
+    // Fetch ranking + actual session count in parallel
+    const [rankRes, sessRes] = await Promise.all([
+      fetch(PadelEyeDB._url()+'?action=get_ranking'),
+      fetch(PadelEyeDB._url()+'?action=get_sessoes'),
+    ]);
+    if(!rankRes.ok) throw new Error('HTTP '+rankRes.status);
+    const rankJson = await rankRes.json();
+    const sessJson = sessRes.ok ? await sessRes.json() : {rows:[]};
+    const rows = rankJson.rows||[];
     if(!rows.length) throw new Error('empty');
     rkData = rows;
+    rkTotalSessions = (sessJson.rows||[]).length;
     const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR'):'';
     document.getElementById('rk-upd').textContent = ts?`Última atualização: ${ts}`:'';
-    stxt.textContent = `${rows.length} jogadores · ao vivo`;
+    stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
     dot.style.background='#27AE60';
   } catch(e) {
     rkData = RK_SNAPSHOT;
+    rkTotalSessions = 19;
     dot.style.background='#C9933A';
     stxt.textContent = 'Snapshot local · Sheets offline';
     document.getElementById('rk-upd').textContent = 'Usando dados locais';
