@@ -169,6 +169,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .save-kpi-l{font-size:9px;color:#9ab0c8;margin-top:2px;}
 .btn-save-session{width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
 .btn-save-session:hover{box-shadow:0 4px 16px rgba(201,147,58,.3);}
+.save-done-box{background:#E8F8EE;border:1.5px solid #c8e8d0;border-radius:12px;padding:18px 20px;display:none;}
+.save-done-title{font-family:'Bebas Neue';font-size:20px;color:#1a7a44;letter-spacing:1px;margin-bottom:4px;}
+.save-done-log{font-family:'DM Mono';font-size:11px;color:#2d8a50;line-height:1.8;}
 
 
 /* ══ ADD PLAYER MODAL ══ */
@@ -530,7 +533,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:5px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Notes</label>
         <input class="team-select" id="cfg-notes" placeholder="e.g. Great session, 6 players, sunny afternoon...">
       </div>
-      <button class="btn-save-session" onclick="saveSession()">💾 Save Session to Google Sheets</button>
+      <div class="save-done-box" id="save-done-box">
+        <div class="save-done-title">✅ Session Saved</div>
+        <div class="save-done-log" id="save-done-log"></div>
+      </div>
+      <button class="btn-save-session" id="btn-save-session" onclick="saveSession()">💾 Save Session to Google Sheets</button>
     </div>
   </div>
 
@@ -693,6 +700,7 @@ const pc = name => COLORS[Math.abs([...BASE_PLAYERS].indexOf(name)) % COLORS.len
 const init = name => name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 
 let currentUser   = null;
+let sessionSaved  = false;
 let activePlayers = [];      // players checked in for today
 let guestPlayers  = [];      // added guests
 let matches       = [];      // [{teamA, teamB, sa, sb, tb, tba, tbb}]
@@ -744,6 +752,10 @@ function doLogout() {
   showTab('session', document.querySelector('.tab'));
   ['tab-match','tab-scoreboard','tab-save'].forEach(id=>{document.getElementById(id)?.classList.add('disabled');});
   document.getElementById('btn-close-session').style.display='none';
+  sessionSaved = false;
+  document.getElementById('btn-save-session').style.display='block';
+  document.getElementById('save-done-box').style.display='none';
+  document.getElementById('save-done-log').innerHTML='';
 }
 
 // ══════════════════════════════════════════
@@ -1031,6 +1043,7 @@ function updateSaveTab() {
 }
 
 async function saveSession() {
+  if (sessionSaved) { showAlert('alert-save','This session was already saved to Google Sheets.','warn'); return; }
   if (!matches.length) { showAlert('alert-save','Add at least one match before saving.','warn'); return; }
 
   const num    = document.getElementById('cfg-num')?.textContent?.trim() || 'S?';
@@ -1072,7 +1085,15 @@ async function saveSession() {
   try {
     const result = await PadelEyeDB.saveSessao(sessaoData, partidasData, statsData);
     if (result.sessaoId) {
-      showAlert('alert-save', `✅ Session ${num} saved! ${matches.length} matches · ${activePlayers.length} players → Google Sheets`, 'ok');
+      sessionSaved = true;
+      // Hide save button, show confirmation log
+      document.getElementById('btn-save-session').style.display = 'none';
+      const savedAt = new Date().toLocaleString('pt-BR');
+      const doneBox = document.getElementById('save-done-box');
+      const doneLog = document.getElementById('save-done-log');
+      doneBox.style.display = 'block';
+      doneLog.innerHTML = `Session: <strong>${num}</strong><br>Saved at: <strong>${savedAt}</strong><br>Matches: <strong>${matches.length}</strong> · Players: <strong>${activePlayers.length}</strong> · MVP: <strong>${mvp || '—'}</strong>`;
+      showAlert('alert-save', `✅ ${num} saved and locked. Cannot be saved again.`, 'ok');
       // Refresh ranking in background
       setTimeout(()=>loadRanking(), 2000);
     }
