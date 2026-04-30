@@ -1082,22 +1082,21 @@ function renderMatchLog() {
     const tbTag     = !isPending && m.tb ? `<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>` : '';
 
     const scoreCenter = isPending
-      ? `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
-          <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px">SCORE</div>
+      ? `<div class="match-score" style="display:flex;flex-direction:column;align-items:center;gap:4px">
           <div style="display:flex;align-items:center;gap:6px">
             <input type="number" min="0" max="9" placeholder="—" id="ps-a-${i}"
-              style="width:48px;height:44px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd"
+              style="width:46px;height:42px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd;transition:border-color .2s"
               oninput="pendingScore(${i})">
             <span style="font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">×</span>
             <input type="number" min="0" max="9" placeholder="—" id="ps-b-${i}"
-              style="width:48px;height:44px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd"
+              style="width:46px;height:42px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd;transition:border-color .2s"
               oninput="pendingScore(${i})">
           </div>
           <button id="ps-btn-${i}" onclick="logPending(${i})"
-            style="padding:5px 16px;background:#0a1628;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;opacity:.4;pointer-events:none">
-            Log Result
+            style="padding:4px 14px;background:#0a1628;color:#fff;border:none;border-radius:6px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer;opacity:.35;pointer-events:none;transition:all .2s;text-transform:uppercase">
+            Log ✓
           </button>
-          <button onclick="deleteMatch(${i})" style="background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:11px">✕ Remove</button>
+          <button onclick="deleteMatch(${i})" style="background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:10px;font-family:'DM Mono'">✕</button>
         </div>`
       : `<div class="match-score">
           <div class="match-score-main">
@@ -1130,13 +1129,13 @@ function renderMatchLog() {
       ondragend="onDragEnd(event)"
       id="match-row-${i}">
       <div class="drag-handle" title="Drag to reorder">⠿</div>
-      <div class="match-team ${isPending?'':''+( aWin?'win':'lose')}">
-        <span class="match-num">Team A</span>
+      <div class="match-team ${isPending?'':''+(aWin?'win':'lose')}" style="text-align:left">
+        <span class="match-num" style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#9ab0c8;display:block;margin-bottom:2px">Team A</span>
         ${m.teamA.join('<br>')}
       </div>
       ${scoreCenter}
-      <div class="match-team right ${isPending?'':''+(!aWin?'win':'lose')}">
-        <span class="match-num">Team B</span>
+      <div class="match-team right ${isPending?'':''+(aWin?'lose':'win')}" style="text-align:right">
+        <span class="match-num" style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#9ab0c8;display:block;margin-bottom:2px">Team B</span>
         ${m.teamB.join('<br>')}
       </div>
       ${editForm}
