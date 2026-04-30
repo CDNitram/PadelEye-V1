@@ -490,7 +490,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
       </div>
     </div>
-    <div class="match-builder">
+    <div class="match-builder" id="manual-form">
       <div class="mb-title">New Match · Select 4 players</div>
       <div class="team-row">
         <div>
@@ -525,8 +525,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
         </div>
       </div>
-      <button class="btn-add-match" onclick="addMatch()" id="btn-add-match">+ Add Match</button>
+      <button class="btn-add-match" onclick="addMatch()" id="btn-add-match" style="background:#1a7a44">✓ Save Match</button>
     </div>
+
+    <!-- Standalone Add Match -->
+    <button class="btn-add-match" onclick="addBlankMatch()" style="margin-bottom:12px;background:#f4f7fc;color:#0a1628;border:1.5px solid #dde6f0">+ Add New Match</button>
 
 
     <!-- Match log -->
@@ -881,6 +884,7 @@ function doLogout() {
   document.getElementById('btn-save-session').style.display='block';
   document.getElementById('save-done-box').style.display='none';
   document.getElementById('save-done-log').innerHTML='';
+  const _form = document.getElementById('manual-form'); if(_form) _form.style.display='block';
 }
 
 // ══════════════════════════════════════════
@@ -1081,24 +1085,47 @@ function renderMatchLog() {
     const aWin      = !isPending && m.sa > m.sb;
     const tbTag     = !isPending && m.tb ? `<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>` : '';
 
-    const scoreCenter = isPending
-      ? `<div class="match-score" style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <input type="number" min="0" max="9" placeholder="—" id="ps-a-${i}"
-              style="width:46px;height:42px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd;transition:border-color .2s"
-              oninput="pendingScore(${i})">
-            <span style="font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">×</span>
-            <input type="number" min="0" max="9" placeholder="—" id="ps-b-${i}"
-              style="width:46px;height:42px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd;transition:border-color .2s"
-              oninput="pendingScore(${i})">
+    // PENDING: render as form clone
+    if (isPending) {
+      return `<div class="match-builder" style="border:1.5px dashed #C9933A;background:#fffbf5;margin-bottom:10px;position:relative"
+        draggable="true" ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div class="mb-title" style="margin-bottom:0">Match ${i+1} · Awaiting Score</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="cursor:grab;color:#c0cdd8;font-size:16px" title="Drag to reorder">⠿</span>
+            <button onclick="deleteMatch(${i})" style="background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:13px">✕</button>
           </div>
-          <button id="ps-btn-${i}" onclick="logPending(${i})"
-            style="padding:4px 14px;background:#0a1628;color:#fff;border:none;border-radius:6px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer;opacity:.35;pointer-events:none;transition:all .2s;text-transform:uppercase">
-            Log ✓
-          </button>
-          <button onclick="deleteMatch(${i})" style="background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:10px;font-family:'DM Mono'">✕</button>
-        </div>`
-      : `<div class="match-score">
+        </div>
+        <div class="team-row">
+          <div>
+            <label style="font-size:9px;color:#9ab0c8;display:block;margin-bottom:4px;font-family:'DM Mono'">TEAM A · P1</label>
+            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamA[0]}</div>
+            <label style="font-size:9px;color:#9ab0c8;display:block;margin:6px 0 4px;font-family:'DM Mono'">TEAM A · P2</label>
+            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamA[1]}</div>
+          </div>
+          <div class="vs-label">VS</div>
+          <div>
+            <label style="font-size:9px;color:#9ab0c8;display:block;margin-bottom:4px;font-family:'DM Mono'">TEAM B · P1</label>
+            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamB[0]}</div>
+            <label style="font-size:9px;color:#9ab0c8;display:block;margin:6px 0 4px;font-family:'DM Mono'">TEAM B · P2</label>
+            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamB[1]}</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-bottom:8px">
+          <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1.5px;margin-bottom:8px">SCORE</div>
+          <div class="score-row">
+            <input class="score-input" type="number" min="0" max="9" placeholder="—" id="ps-a-${i}" oninput="pendingScore(${i})">
+            <div class="score-x">×</div>
+            <input class="score-input" type="number" min="0" max="9" placeholder="—" id="ps-b-${i}" oninput="pendingScore(${i})">
+          </div>
+        </div>
+        <button id="ps-btn-${i}" onclick="logPending(${i})" class="btn-add-match"
+          style="background:#1a7a44;opacity:.35;pointer-events:none;transition:all .2s">✓ Save Match</button>
+      </div>`;
+    }
+
+    // SAVED: normal row
+    const scoreCell = `<div class="match-score">
           <div class="match-score-main">
             <span style="color:${m.sa>m.sb?'#1a7a44':'#9ab0c8'}">${m.sa}</span>
             <span style="color:#c0cdd8;font-size:14px"> × </span>
@@ -1120,20 +1147,13 @@ function renderMatchLog() {
         <button class="btn-edit-cancel" onclick="cancelEdit()">✕</button>
       </div>` : '';
 
-    return `<div class="match-item ${isPending?'':'saved'} ${isEdit?'editing':''}"
-      style="${isPending?'border:1.5px dashed #C9933A;background:#fffbf5;':'border-color:#e2e8f0;background:#fff;'}"
-      draggable="true"
-      ondragstart="onDragStart(event,${i})"
-      ondragover="onDragOver(event,${i})"
-      ondrop="onDrop(event,${i})"
-      ondragend="onDragEnd(event)"
-      id="match-row-${i}">
+    return `<div class="match-item saved ${isEdit?'editing':''}" style="border-color:#e2e8f0;background:#fff;"
+      draggable="true" ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)">
       <div class="drag-handle" title="Drag to reorder">⠿</div>
       <div class="match-team ${isPending?'':''+(aWin?'win':'lose')}" style="text-align:left">
         <span class="match-num" style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#9ab0c8;display:block;margin-bottom:2px">Team A</span>
         ${m.teamA.join('<br>')}
       </div>
-      ${scoreCenter}
       <div class="match-team right ${isPending?'':''+(aWin?'lose':'win')}" style="text-align:right">
         <span class="match-num" style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#9ab0c8;display:block;margin-bottom:2px">Team B</span>
         ${m.teamB.join('<br>')}
@@ -1853,16 +1873,18 @@ function generateRandom(mode) {
 }
 
 function confirmRandom() {
-  // Add all pending matches to the log as "awaiting score"
   _pendingRandom.forEach(m => {
     matches.push({ teamA: m.teamA, teamB: m.teamB, sa: null, sb: null, tb: false, tba: null, tbb: null, pending: true });
   });
   _pendingRandom = [];
   cancelRandom();
+  // Hide manual form, show match log
+  const form = document.getElementById('manual-form');
+  if (form) form.style.display = 'none';
   renderMatchLog();
   document.getElementById('btn-close-session').style.display = 'block';
   document.getElementById('btn-close').disabled = false;
-  showAlert('alert-match', `✅ ${matches.length} match(es) added. Enter scores below.`, 'ok');
+  showAlert('alert-match', `✅ ${matches.length} match(es) loaded. Enter scores below.`, 'ok');
 }
 
 function cancelRandom() {
@@ -1871,7 +1893,23 @@ function cancelRandom() {
   document.getElementById('random-preview-list').innerHTML = '';
 }
 
-// ── PENDING MATCH SCORE ───────────────────
+// ── ADD BLANK MATCH SLOT ─────────────────
+function addBlankMatch() {
+  // Just clear the form and focus — standard flow
+  ['sel-a1','sel-a2','sel-b1','sel-b2'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  const sc_a = document.getElementById('sc-a');
+  const sc_b = document.getElementById('sc-b');
+  if(sc_a) sc_a.value = '';
+  if(sc_b) sc_b.value = '';
+  updateMatchSelects();
+  document.getElementById('sel-a1')?.scrollIntoView({behavior:'smooth', block:'center'});
+  document.getElementById('sel-a1')?.focus();
+}
+
+// ── PENDING MATCH SCORE ─────────────────
 function pendingScore(i) {
   const sa = +document.getElementById('ps-a-'+i)?.value;
   const sb = +document.getElementById('ps-b-'+i)?.value;
