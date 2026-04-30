@@ -1748,6 +1748,84 @@ async function loadRanking() {
   btn.classList.remove('spin'); dot.classList.remove('rk-spin');
 }
 
+// ══════════════════════════════════════════
+// RANDOM MATCH GENERATOR
+// ══════════════════════════════════════════
+let _pendingRandom = [];
+
+function generateRandom(mode) {
+  const players = [...activePlayers];
+  if (players.length < 4) { showAlert('alert-match', 'Need at least 4 players selected.', 'warn'); return; }
+
+  const pending = [];
+
+  if (mode === 'americano') {
+    const shuffled = [...players].sort(() => Math.random() - 0.5);
+    for (let i = 0; i + 3 < shuffled.length; i += 4) {
+      const [a, b, c, d] = shuffled.slice(i, i + 4);
+      pending.push({ teamA:[a,b], teamB:[c,d] });
+      pending.push({ teamA:[a,c], teamB:[b,d] });
+      pending.push({ teamA:[a,d], teamB:[b,c] });
+    }
+  } else {
+    const used = new Set();
+    const combos = [];
+    for (let i=0; i<players.length-1; i++)
+      for (let j=i+1; j<players.length; j++)
+        combos.push([players[i], players[j]]);
+    for (let i=0; i<combos.length-1; i++) {
+      for (let j=i+1; j<combos.length; j++) {
+        const [a1,a2] = combos[i];
+        const [b1,b2] = combos[j];
+        if ([a1,a2].some(p=>[b1,b2].includes(p))) continue;
+        const key = [a1,a2,b1,b2].sort().join('|');
+        if (used.has(key)) continue;
+        used.add(key);
+        pending.push({ teamA:[a1,a2], teamB:[b1,b2] });
+      }
+    }
+  }
+
+  // Filter already played
+  const played = new Set(matches.map(m=>[...m.teamA,...m.teamB].sort().join('|')));
+  const filtered = pending.filter(m => !played.has([...m.teamA,...m.teamB].sort().join('|')));
+
+  if (!filtered.length) { showAlert('alert-match','All possible matches already played!','warn'); return; }
+
+  _pendingRandom = filtered;
+
+  const preview = document.getElementById('random-preview');
+  const label   = document.getElementById('random-preview-label');
+  const list    = document.getElementById('random-preview-list');
+  label.textContent = filtered.length + ' matches · ' + mode;
+  list.innerHTML = filtered.map(m=>
+    `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:5px 10px;background:#fff;border:1px solid #eaf0f8;border-radius:7px;font-size:11px">
+      <span style="font-weight:600">${m.teamA.join(' + ')}</span>
+      <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">vs</span>
+      <span style="font-weight:600;text-align:right">${m.teamB.join(' + ')}</span>
+    </div>`
+  ).join('');
+  preview.style.display = 'block';
+}
+
+function confirmRandom() {
+  _pendingRandom.forEach(m => {
+    matches.push({ teamA:m.teamA, teamB:m.teamB, sa:null, sb:null, tb:false, tba:null, tbb:null });
+  });
+  _pendingRandom = [];
+  cancelRandom();
+  renderMatchLog();
+  renderLiveSB();
+  document.getElementById('btn-close').disabled = matches.length === 0;
+  showAlert('alert-match', '✅ ' + matches.length + ' matches added.', 'ok');
+}
+
+function cancelRandom() {
+  _pendingRandom = [];
+  document.getElementById('random-preview').style.display = 'none';
+  document.getElementById('random-preview-list').innerHTML = '';
+}
+
 </script>
 </body>
 </html>
