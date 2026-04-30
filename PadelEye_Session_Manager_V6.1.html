@@ -293,6 +293,21 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rec-body{font-size:12px;color:#4a6080;line-height:1.7;}
 .rec-okr{margin-top:8px;background:#f4f7fc;border-radius:8px;padding:8px 12px;font-size:11px;color:#0d1e3a;border-left:3px solid #C9933A;}
 
+
+/* ── DRAG & DROP ── */
+.match-item{cursor:grab;}
+.match-item.dragging{opacity:.4;cursor:grabbing;transform:scale(.98);}
+.match-item.drag-over{border-top:3px solid #C9933A !important;}
+.drag-handle{color:#c0cdd8;font-size:14px;cursor:grab;padding:0 4px;user-select:none;flex-shrink:0;}
+.drag-handle:hover{color:#9ab0c8;}
+
+
+/* ── DRAG & DROP ── */
+.match-item{cursor:grab;}
+.match-item.dragging{opacity:.4;cursor:grabbing;}
+.match-item.drag-over{border-top:3px solid #C9933A !important;}
+.drag-handle{color:#c0cdd8;font-size:14px;cursor:grab;padding:0 4px;user-select:none;flex-shrink:0;}
+.drag-handle:hover{color:#C9933A;}
 </style>
 </head>
 <body>
@@ -1061,9 +1076,42 @@ function renderMatchLog() {
     return;
   }
   c.innerHTML = matches.map((m,i) => {
-    const aWin   = m.sa > m.sb;
-    const isEdit = (window._editingMatch === i);
-    const tbTag  = m.tb ? `<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>` : '';
+    const isPending = m.sa === null;
+    const isEdit    = (!isPending && window._editingMatch === i);
+    const aWin      = !isPending && m.sa > m.sb;
+    const tbTag     = !isPending && m.tb ? `<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>` : '';
+
+    const scoreCenter = isPending
+      ? `<div style="display:flex;flex-direction:column;align-items:center;gap:6px">
+          <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px">SCORE</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" min="0" max="9" placeholder="—" id="ps-a-${i}"
+              style="width:48px;height:44px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd"
+              oninput="pendingScore(${i})">
+            <span style="font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">×</span>
+            <input type="number" min="0" max="9" placeholder="—" id="ps-b-${i}"
+              style="width:48px;height:44px;text-align:center;font-family:'Bebas Neue';font-size:24px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd"
+              oninput="pendingScore(${i})">
+          </div>
+          <button id="ps-btn-${i}" onclick="logPending(${i})"
+            style="padding:5px 16px;background:#0a1628;color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;opacity:.4;pointer-events:none">
+            Log Result
+          </button>
+          <button onclick="deleteMatch(${i})" style="background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:11px">✕ Remove</button>
+        </div>`
+      : `<div class="match-score">
+          <div class="match-score-main">
+            <span style="color:${m.sa>m.sb?'#1a7a44':'#9ab0c8'}">${m.sa}</span>
+            <span style="color:#c0cdd8;font-size:14px"> × </span>
+            <span style="color:${m.sb>m.sa?'#1a7a44':'#9ab0c8'}">${m.sb}</span>
+          </div>
+          ${tbTag}
+          <div style="display:flex;gap:2px;justify-content:center;margin-top:2px">
+            <button class="btn-edit" onclick="startEdit(${i})" title="Edit">✏️</button>
+            <button class="btn-del"  onclick="deleteMatch(${i})" title="Remove">✕</button>
+          </div>
+        </div>`;
+
     const editForm = isEdit ? `
       <div class="edit-form">
         <input class="edit-score-input" id="edit-sa-${i}" type="number" min="0" max="9" value="${m.sa}" oninput="previewEdit(${i})">
@@ -1072,24 +1120,22 @@ function renderMatchLog() {
         <button class="btn-edit-save" onclick="saveEdit(${i})">✓ Save</button>
         <button class="btn-edit-cancel" onclick="cancelEdit()">✕</button>
       </div>` : '';
-    return `<div class="match-item saved ${isEdit?'editing':''}">
-      <div class="match-team ${aWin?'win':'lose'}">
+
+    return `<div class="match-item ${isPending?'':'saved'} ${isEdit?'editing':''}"
+      style="${isPending?'border:1.5px dashed #C9933A;background:#fffbf5;':'border-color:#e2e8f0;background:#fff;'}"
+      draggable="true"
+      ondragstart="onDragStart(event,${i})"
+      ondragover="onDragOver(event,${i})"
+      ondrop="onDrop(event,${i})"
+      ondragend="onDragEnd(event)"
+      id="match-row-${i}">
+      <div class="drag-handle" title="Drag to reorder">⠿</div>
+      <div class="match-team ${isPending?'':''+( aWin?'win':'lose')}">
         <span class="match-num">Team A</span>
         ${m.teamA.join('<br>')}
       </div>
-      <div class="match-score">
-        <div class="match-score-main">
-          <span style="color:${m.sa>m.sb?'#1a7a44':'#9ab0c8'}">${m.sa}</span>
-          <span style="color:#c0cdd8;font-size:14px"> × </span>
-          <span style="color:${m.sb>m.sa?'#1a7a44':'#9ab0c8'}">${m.sb}</span>
-        </div>
-        ${tbTag}
-        <div style="display:flex;gap:2px;justify-content:center;margin-top:2px">
-          <button class="btn-edit" onclick="startEdit(${i})" title="Edit score">✏️</button>
-          <button class="btn-del"  onclick="deleteMatch(${i})" title="Remove">✕</button>
-        </div>
-      </div>
-      <div class="match-team right ${aWin?'lose':'win'}">
+      ${scoreCenter}
+      <div class="match-team right ${isPending?'':''+(!aWin?'win':'lose')}">
         <span class="match-num">Team B</span>
         ${m.teamB.join('<br>')}
       </div>
@@ -1807,50 +1853,115 @@ function generateRandom(mode) {
   preview.style.display = 'block';
 }
 
-let _randomQueue = [];
-
 function confirmRandom() {
-  _randomQueue = [..._pendingRandom];
+  // Add all pending matches to the log as "awaiting score"
+  _pendingRandom.forEach(m => {
+    matches.push({ teamA: m.teamA, teamB: m.teamB, sa: null, sb: null, tb: false, tba: null, tbb: null, pending: true });
+  });
   _pendingRandom = [];
   cancelRandom();
-  loadNextFromQueue();
-}
-
-function loadNextFromQueue() {
-  if (!_randomQueue.length) {
-    showAlert('alert-match', '✅ All random matches queued. Add scores and log each one.', 'ok');
-    return;
-  }
-  const m = _randomQueue.shift();
-  // Populate the form dropdowns
-  const selA1 = document.getElementById('sel-a1');
-  const selA2 = document.getElementById('sel-a2');
-  const selB1 = document.getElementById('sel-b1');
-  const selB2 = document.getElementById('sel-b2');
-  if (selA1) selA1.value = m.teamA[0];
-  if (selA2) selA2.value = m.teamA[1];
-  if (selB1) selB1.value = m.teamB[0];
-  if (selB2) selB2.value = m.teamB[1];
-  // Reset score
-  const sa = document.getElementById('score-a');
-  const sb = document.getElementById('score-b');
-  if (sa) sa.value = '';
-  if (sb) sb.value = '';
-  updateMatchSelects();
-  // Show queue info
-  const remaining = _randomQueue.length;
-  showAlert('alert-match',
-    `🎲 Match loaded: ${m.teamA.join(' + ')} vs ${m.teamB.join(' + ')}${remaining > 0 ? ' · ' + remaining + ' more in queue' : ' · Last match'}`,
-    'ok'
-  );
-  // Scroll to form
-  document.getElementById('sel-a1')?.scrollIntoView({ behavior:'smooth', block:'center' });
+  renderMatchLog();
+  document.getElementById('btn-close-session').style.display = 'block';
+  document.getElementById('btn-close').disabled = false;
+  showAlert('alert-match', `✅ ${matches.length} match(es) added. Enter scores below.`, 'ok');
 }
 
 function cancelRandom() {
   _pendingRandom = [];
   document.getElementById('random-preview').style.display = 'none';
   document.getElementById('random-preview-list').innerHTML = '';
+}
+
+// ── PENDING MATCH SCORE ───────────────────
+function pendingScore(i) {
+  const sa = +document.getElementById('ps-a-'+i)?.value;
+  const sb = +document.getElementById('ps-b-'+i)?.value;
+  const btn = document.getElementById('ps-btn-'+i);
+  const valid = !isNaN(sa) && !isNaN(sb) &&
+    document.getElementById('ps-a-'+i)?.value !== '' &&
+    document.getElementById('ps-b-'+i)?.value !== '' &&
+    sa !== sb;
+  if (btn) {
+    btn.style.opacity = valid ? '1' : '.4';
+    btn.style.pointerEvents = valid ? 'auto' : 'none';
+    btn.style.background = valid ? '#1a7a44' : '#0a1628';
+  }
+}
+
+function logPending(i) {
+  const sa = +document.getElementById('ps-a-'+i)?.value;
+  const sb = +document.getElementById('ps-b-'+i)?.value;
+  if (isNaN(sa)||isNaN(sb)||sa===sb) return;
+  matches[i].sa = sa;
+  matches[i].sb = sb;
+  matches[i].pending = false;
+  renderMatchLog();
+  renderLiveSB();
+  showAlert('alert-match', `✅ Match ${i+1} logged: ${sa} × ${sb}`, 'ok');
+}
+
+// ══════════════════════════════════════════
+// DRAG & DROP MATCH REORDER
+// ══════════════════════════════════════════
+let _dragIdx = null;
+
+function onDragStart(e, i) {
+  _dragIdx = i;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // Highlight target
+  document.querySelectorAll('.match-item').forEach(el => el.classList.remove('drag-over'));
+  if (i !== _dragIdx) e.currentTarget.classList.add('drag-over');
+}
+
+function onDrop(e, i) {
+  e.preventDefault();
+  if (_dragIdx === null || _dragIdx === i) return;
+  // Reorder matches array
+  const moved = matches.splice(_dragIdx, 1)[0];
+  matches.splice(i, 0, moved);
+  _dragIdx = null;
+  renderMatchLog();
+  renderLiveSB();
+}
+
+function onDragEnd(e) {
+  _dragIdx = null;
+  document.querySelectorAll('.match-item').forEach(el => {
+    el.classList.remove('dragging', 'drag-over');
+  });
+}
+
+// ── DRAG & DROP MATCH REORDER ─────────────
+function dragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.match-item').forEach((el,idx) => {
+    el.classList.toggle('drag-over', idx === i && idx !== _dragIdx);
+  });
+}
+
+function dropMatch(e, i) {
+  e.preventDefault();
+  if (_dragIdx === null || _dragIdx === i) return;
+  // Reorder matches array
+  const moved = matches.splice(_dragIdx, 1)[0];
+  matches.splice(i, 0, moved);
+  _dragIdx = null;
+  renderMatchLog();
+  renderLiveSB();
+}
+
+function dragEnd(e) {
+  _dragIdx = null;
+  document.querySelectorAll('.match-item').forEach(el => {
+    el.classList.remove('dragging', 'drag-over');
+  });
 }
 
 </script>
