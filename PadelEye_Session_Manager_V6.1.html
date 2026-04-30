@@ -1132,6 +1132,9 @@ function renderMatchLog() {
           </div>
           ${tbTag}
           <div style="display:flex;gap:2px;justify-content:center;margin-top:2px">
+            <button onclick="repeatMatch(${i})" title="Repeat same players"
+              style="background:none;border:1.5px solid #93C5FD;border-radius:6px;color:#3a7bd5;cursor:pointer;font-size:11px;padding:2px 6px;transition:all .2s"
+              onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='none'">🔁</button>
             <button class="btn-edit" onclick="startEdit(${i})" title="Edit">✏️</button>
             <button class="btn-del"  onclick="deleteMatch(${i})" title="Remove">✕</button>
           </div>
@@ -1932,7 +1935,7 @@ function logPending(i) {
   matches[i].sb = sb;
   matches[i].pending = false;
   renderMatchLog();
-  renderLiveSB();
+  renderScoreboard();
   showAlert('alert-match', `✅ Match ${i+1} logged: ${sa} × ${sb}`, 'ok');
 }
 
@@ -1963,7 +1966,7 @@ function onDrop(e, i) {
   matches.splice(i, 0, moved);
   _dragIdx = null;
   renderMatchLog();
-  renderLiveSB();
+  renderScoreboard();
 }
 
 function onDragEnd(e) {
@@ -1990,7 +1993,7 @@ function dropMatch(e, i) {
   matches.splice(i, 0, moved);
   _dragIdx = null;
   renderMatchLog();
-  renderLiveSB();
+  renderScoreboard();
 }
 
 function dragEnd(e) {
@@ -1998,6 +2001,27 @@ function dragEnd(e) {
   document.querySelectorAll('.match-item').forEach(el => {
     el.classList.remove('dragging', 'drag-over');
   });
+}
+
+// ── REPEAT MATCH ─────────────────────────
+function repeatMatch(i) {
+  const m = matches[i];
+  if (!m) return;
+  // Add a new pending match with same players
+  matches.push({
+    teamA: [...m.teamA],
+    teamB: [...m.teamB],
+    sa: null, sb: null,
+    tb: false, tba: null, tbb: null,
+    pending: true
+  });
+  renderMatchLog();
+  renderScoreboard();
+  // Scroll to bottom
+  setTimeout(() => {
+    document.getElementById('match-log')?.lastElementChild?.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+  showAlert('alert-match', `🔁 Match repeated: ${m.teamA.join(' + ')} vs ${m.teamB.join(' + ')}`, 'ok');
 }
 
 </script>
