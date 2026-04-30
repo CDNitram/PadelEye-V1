@@ -450,6 +450,31 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <!-- ── ADD MATCH TAB ── -->
   <div class="panel" id="p-match">
     <div class="alert" id="alert-match"></div>
+    <!-- GENERATE RANDOM MATCHES -->
+    <div class="card" style="border:1.5px dashed #dde6f0;background:#f8fafd;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div class="card-title" style="margin-bottom:2px">🎲 Generate Random Matches</div>
+          <div style="font-size:11px;color:var(--sub)">No repeats · All pairs · Based on selected players</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;flex:1" onmouseover="this.style.background='#1a3052'" onmouseout="this.style.background='#0a1628'">
+          🎯 Americano Rotation
+        </button>
+        <button onclick="generateRandom('round')" style="padding:9px 16px;background:#fff;color:#0a1628;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;flex:1" onmouseover="this.style.borderColor='#C9933A'" onmouseout="this.style.borderColor='#dde6f0'">
+          🔄 Round Robin
+        </button>
+      </div>
+      <div id="random-preview" style="margin-top:10px;display:none">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin-bottom:6px" id="random-preview-label"></div>
+        <div id="random-preview-list" style="display:flex;flex-direction:column;gap:5px"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="confirmRandom()" style="flex:1;padding:10px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🎲 Load Matches into Form</button>
+          <button onclick="cancelRandom()" style="padding:10px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;cursor:pointer;color:#7090b0">✕</button>
+        </div>
+      </div>
+    </div>
     <div class="match-builder">
       <div class="mb-title">New Match · Select 4 players</div>
       <div class="team-row">
@@ -488,32 +513,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="btn-add-match" onclick="addMatch()" id="btn-add-match">+ Add Match</button>
     </div>
 
-    <!-- RANDOM MATCHES -->
-    <div class="card" id="random-card" style="border:1.5px dashed #dde6f0;background:#f8fafd">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div>
-          <div class="card-title" style="margin-bottom:2px">🎲 Generate Random Matches</div>
-          <div style="font-size:11px;color:var(--sub)">No repeats · All pairs · Based on selected players</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;flex:1" onmouseover="this.style.background='#1a3052'" onmouseout="this.style.background='#0a1628'">
-          🎯 Americano Rotation
-        </button>
-        <button onclick="generateRandom('round')" style="padding:9px 16px;background:#fff;color:#0a1628;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;flex:1" onmouseover="this.style.borderColor='#C9933A'" onmouseout="this.style.borderColor='#dde6f0'">
-          🔄 Round Robin
-        </button>
-      </div>
-      <div id="random-preview" style="margin-top:10px;display:none">
-        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px" id="random-preview-label"></div>
-        <div id="random-preview-list" style="display:flex;flex-direction:column;gap:5px"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="confirmRandom()" style="flex:1;padding:10px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✓ Add All to Session</button>
-          <button onclick="cancelRandom()" style="padding:10px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;cursor:pointer;color:var(--sub)">✕</button>
-        </div>
-      </div>
-    </div
-    </div>
 
     <!-- Match log -->
     <div class="card">
@@ -1808,16 +1807,44 @@ function generateRandom(mode) {
   preview.style.display = 'block';
 }
 
+let _randomQueue = [];
+
 function confirmRandom() {
-  _pendingRandom.forEach(m => {
-    matches.push({ teamA:m.teamA, teamB:m.teamB, sa:null, sb:null, tb:false, tba:null, tbb:null });
-  });
+  _randomQueue = [..._pendingRandom];
   _pendingRandom = [];
   cancelRandom();
-  renderMatchLog();
-  renderLiveSB();
-  document.getElementById('btn-close').disabled = matches.length === 0;
-  showAlert('alert-match', '✅ ' + matches.length + ' matches added.', 'ok');
+  loadNextFromQueue();
+}
+
+function loadNextFromQueue() {
+  if (!_randomQueue.length) {
+    showAlert('alert-match', '✅ All random matches queued. Add scores and log each one.', 'ok');
+    return;
+  }
+  const m = _randomQueue.shift();
+  // Populate the form dropdowns
+  const selA1 = document.getElementById('sel-a1');
+  const selA2 = document.getElementById('sel-a2');
+  const selB1 = document.getElementById('sel-b1');
+  const selB2 = document.getElementById('sel-b2');
+  if (selA1) selA1.value = m.teamA[0];
+  if (selA2) selA2.value = m.teamA[1];
+  if (selB1) selB1.value = m.teamB[0];
+  if (selB2) selB2.value = m.teamB[1];
+  // Reset score
+  const sa = document.getElementById('score-a');
+  const sb = document.getElementById('score-b');
+  if (sa) sa.value = '';
+  if (sb) sb.value = '';
+  updateMatchSelects();
+  // Show queue info
+  const remaining = _randomQueue.length;
+  showAlert('alert-match',
+    `🎲 Match loaded: ${m.teamA.join(' + ')} vs ${m.teamB.join(' + ')}${remaining > 0 ? ' · ' + remaining + ' more in queue' : ' · Last match'}`,
+    'ok'
+  );
+  // Scroll to form
+  document.getElementById('sel-a1')?.scrollIntoView({ behavior:'smooth', block:'center' });
 }
 
 function cancelRandom() {
