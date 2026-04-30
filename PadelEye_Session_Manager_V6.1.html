@@ -1090,7 +1090,9 @@ function renderMatchLog() {
         draggable="true" ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
           <div class="mb-title" style="margin-bottom:0">Match ${i+1} · Awaiting Score</div>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <button onclick="repeatMatch(${i})" title="Repeat same players"
+              style="background:none;border:1.5px solid #93C5FD;border-radius:7px;color:#3a7bd5;cursor:pointer;font-size:13px;padding:2px 8px">🔁</button>
             <span style="cursor:grab;color:#c0cdd8;font-size:16px" title="Drag to reorder">⠿</span>
             <button onclick="deleteMatch(${i})" style="background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:13px">✕</button>
           </div>
@@ -1098,16 +1100,16 @@ function renderMatchLog() {
         <div class="team-row">
           <div>
             <label style="font-size:9px;color:#9ab0c8;display:block;margin-bottom:4px;font-family:'DM Mono'">TEAM A · P1</label>
-            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamA[0]}</div>
+            ${m.blank ? `<select class="team-select" id="bl-a1-${i}" onchange="updateBlankMatch(${i})"><option value="">— Player —</option>${activePlayers.map(p=>'<option>'+p+'</option>').join('')}</select>` : `<div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff">${m.teamA[0]}</div>`}
             <label style="font-size:9px;color:#9ab0c8;display:block;margin:6px 0 4px;font-family:'DM Mono'">TEAM A · P2</label>
-            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamA[1]}</div>
+            ${m.blank ? `<select class="team-select" id="bl-a2-${i}" onchange="updateBlankMatch(${i})"><option value="">— Player —</option>${activePlayers.map(p=>'<option>'+p+'</option>').join('')}</select>` : `<div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff">${m.teamA[1]}</div>`}
           </div>
           <div class="vs-label">VS</div>
           <div>
             <label style="font-size:9px;color:#9ab0c8;display:block;margin-bottom:4px;font-family:'DM Mono'">TEAM B · P1</label>
-            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamB[0]}</div>
+            ${m.blank ? `<select class="team-select" id="bl-b1-${i}" onchange="updateBlankMatch(${i})"><option value="">— Player —</option>${activePlayers.map(p=>'<option>'+p+'</option>').join('')}</select>` : `<div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff">${m.teamB[0]}</div>`}
             <label style="font-size:9px;color:#9ab0c8;display:block;margin:6px 0 4px;font-family:'DM Mono'">TEAM B · P2</label>
-            <div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff;cursor:default">${m.teamB[1]}</div>
+            ${m.blank ? `<select class="team-select" id="bl-b2-${i}" onchange="updateBlankMatch(${i})"><option value="">— Player —</option>${activePlayers.map(p=>'<option>'+p+'</option>').join('')}</select>` : `<div class="team-select" style="font-weight:700;color:#0d1e3a;background:#fff">${m.teamB[1]}</div>`}
           </div>
         </div>
         <div style="text-align:center;margin-bottom:8px">
@@ -1897,15 +1899,19 @@ function cancelRandom() {
 
 // ── ADD BLANK MATCH SLOT ─────────────────
 function addBlankMatch() {
-  // Just clear the form and focus — standard flow
+  // If there are pending/random matches in log, add a blank pending slot
+  if (matches.length > 0) {
+    matches.push({ teamA:['?','?'], teamB:['?','?'], sa:null, sb:null, tb:false, tba:null, tbb:null, blank:true });
+    renderMatchLog();
+    showAlert('alert-match','➕ New match slot added. Select players and enter score.','ok');
+    setTimeout(() => document.getElementById('match-log')?.lastElementChild?.scrollIntoView({behavior:'smooth'}), 100);
+    return;
+  }
+  // Otherwise focus the manual form
   ['sel-a1','sel-a2','sel-b1','sel-b2'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.value = '';
   });
-  const sc_a = document.getElementById('sc-a');
-  const sc_b = document.getElementById('sc-b');
-  if(sc_a) sc_a.value = '';
-  if(sc_b) sc_b.value = '';
   updateMatchSelects();
   document.getElementById('sel-a1')?.scrollIntoView({behavior:'smooth', block:'center'});
   document.getElementById('sel-a1')?.focus();
@@ -2001,6 +2007,21 @@ function dragEnd(e) {
   document.querySelectorAll('.match-item').forEach(el => {
     el.classList.remove('dragging', 'drag-over');
   });
+}
+
+// ── BLANK MATCH UPDATER ──────────────────
+function updateBlankMatch(i) {
+  const a1 = document.getElementById('bl-a1-'+i)?.value;
+  const a2 = document.getElementById('bl-a2-'+i)?.value;
+  const b1 = document.getElementById('bl-b1-'+i)?.value;
+  const b2 = document.getElementById('bl-b2-'+i)?.value;
+  if (a1) matches[i].teamA[0] = a1;
+  if (a2) matches[i].teamA[1] = a2;
+  if (b1) matches[i].teamB[0] = b1;
+  if (b2) matches[i].teamB[1] = b2;
+  // Enable score if all 4 selected and no duplicates
+  const all = [a1,a2,b1,b2].filter(Boolean);
+  if (all.length===4 && new Set(all).size===4) matches[i].blank = false;
 }
 
 // ── REPEAT MATCH ─────────────────────────
