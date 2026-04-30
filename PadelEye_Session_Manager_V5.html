@@ -295,11 +295,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="login-error" id="login-err">Incorrect credentials. Try again.</div>
     <div class="lfield">
       <label>Username</label>
-      <input type="text" id="l-user" placeholder="email or username" value="martin.cordoba@yahoo.com" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="text" id="l-user" placeholder="email or username" value="organizer@padeleye.com" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div class="lfield">
       <label>Password</label>
-      <input type="password" id="l-pass" placeholder="••••••••" value="344196" onkeydown="if(event.key==='Enter')doLogin()">
+      <input type="password" id="l-pass" placeholder="••••••••" value="654321" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <button class="btn-login" onclick="doLogin()">Open Session →</button>
   </div>
@@ -471,7 +471,34 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
         </div>
       </div>
-      <button class="btn-add-match" onclick="addMatch()">+ Add Match</button>
+      <button class="btn-add-match" onclick="addMatch()" id="btn-add-match">+ Add Match</button>
+    </div>
+
+    <!-- RANDOM MATCHES -->
+    <div class="card" id="random-card" style="border:1.5px dashed #dde6f0;background:#f8fafd">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div class="card-title" style="margin-bottom:2px">🎲 Generate Random Matches</div>
+          <div style="font-size:11px;color:var(--sub)">No repeats · All pairs · Based on selected players</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;flex:1" onmouseover="this.style.background='#1a3052'" onmouseout="this.style.background='#0a1628'">
+          🎯 Americano Rotation
+        </button>
+        <button onclick="generateRandom('round')" style="padding:9px 16px;background:#fff;color:#0a1628;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;flex:1" onmouseover="this.style.borderColor='#C9933A'" onmouseout="this.style.borderColor='#dde6f0'">
+          🔄 Round Robin
+        </button>
+      </div>
+      <div id="random-preview" style="margin-top:10px;display:none">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px" id="random-preview-label"></div>
+        <div id="random-preview-list" style="display:flex;flex-direction:column;gap:5px"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="confirmRandom()" style="flex:1;padding:10px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✓ Add All to Session</button>
+          <button onclick="cancelRandom()" style="padding:10px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;cursor:pointer;color:var(--sub)">✕</button>
+        </div>
+      </div>
+    </div
     </div>
 
     <!-- Match log -->
@@ -678,7 +705,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 // ══════════════════════════════════════════
 const USERS = {
   'martin':                   { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
-  'martin.cordoba@yahoo.com': { pass:'344196',    name:'Martin Cordoba',  av:'MC' },
+  'organizer@padeleye.com': { pass:'654321',    name:'Martin Cordoba',  av:'MC' },
   'marcio':                   { pass:'987654',    name:'Márcio Carrenho', av:'MR' },
   'marciocarrenho@hotmail.com':{ pass:'987654',   name:'Márcio Carrenho', av:'MR' },
   'organizador':              { pass:'padel2026', name:'Organizer',       av:'OR' },
