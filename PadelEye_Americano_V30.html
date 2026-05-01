@@ -373,6 +373,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 @media (max-width:640px) {
   .welcome{flex-direction:column;align-items:flex-start;}
   .row2,.row3{grid-template-columns:1fr;}
+  .row4cfg{grid-template-columns:1fr 1fr !important;}
   .db-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
   .kpi-row{grid-template-columns:repeat(3,1fr);}
   .panel{padding:14px;}
@@ -628,7 +629,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             style="cursor:pointer;color-scheme:light">
         </div>
       </div>
-      <div class="row3">
+      <div class="row4cfg" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+        <div class="field">
+          <label>Categoria</label>
+          <select class="finput" id="cfg-categoria">
+            <option value="8a" selected>8ª Categoria</option>
+            <option value="7a">7ª Categoria</option>
+            <option value="6a">6ª Categoria</option>
+            <option value="5a">5ª Categoria</option>
+          </select>
+        </div>
         <div class="field">
           <label>Vagas no Torneio</label>
           <select class="finput" id="cfg-vagas" onchange="updateVagas()">
@@ -780,7 +790,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
       <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px;line-height:1.6">
         Dos jogadores selecionados no passo anterior, clique para designar as cabeças de chave.
-        Máximo <strong style="color:#0d1e3a">4 seeds</strong> — 1 por grupo (A · B · C · D).
+        Máximo <strong style="color:#0d1e3a" id="seed-max-label">4 seeds</strong> — 1 por grupo. Calculado automaticamente.
         O sistema distribui automaticamente ao iniciar o torneio.
         <div style="margin-top:5px;font-size:10px;color:#c0cdd8">Quando houver histórico de pontos acumulados, o sistema poderá sugerir seeds automaticamente.</div>
       </div>
@@ -1172,8 +1182,9 @@ function toggleSeed(name) {
     seedList = seedList.filter(s=>s!==name);
     safeAlert(`🌱 ${name} removido como seed.`,'ok');
   } else {
-    if (seedList.length >= 4) {
-      safeAlert('Máximo de 4 seeds atingido (1 por grupo A · B · C · D).','warn');
+    const _maxSeeds = Math.max(1, Math.floor(selectedPlayers.length / 4));
+    if (seedList.length >= _maxSeeds) {
+      safeAlert('Máximo de ' + _maxSeeds + ' seeds atingido (1 por grupo).','warn');
       return;
     }
     seedList.push(name);
@@ -1276,9 +1287,9 @@ function updateSummary() {
 // AUTO-DISTRIBUTE GROUPS
 // ══════════════════════════════════
 function autoDistributeGroups(players, seeds) {
-  const seeded   = seeds.filter(s=>players.includes(s)).slice(0,4);
+  const numG     = Math.max(1, Math.floor(players.length / 4));
+  const seeded   = seeds.filter(s=>players.includes(s)).slice(0, numG);
   const nonSeeds = players.filter(p=>!seeded.includes(p)).sort(()=>Math.random()-.5);
-  const numG     = Math.min(4,Math.max(1,Math.ceil(players.length/4)));
   const groups   = Array.from({length:numG},(_,i)=>seeded[i]?[seeded[i]]:[]);
   nonSeeds.forEach(p=>{
     const min = groups.reduce((m,g,i)=>g.length<groups[m].length?i:m,0);
@@ -2737,15 +2748,17 @@ let _raffleGroups  = [];   // array of 4 arrays (one per group)
 let _raffleIdx     = 0;    // current draw pointer
 let _raffleTimer   = null; // interval handle
 let _raffleCountdown = 10;
-const RAFFLE_LETTERS = ['A','B','C','D'];
-const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A'];
+const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
+const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
 
 function startRaffle() {
   // Pull config
   T.started     = true;
   T.name        = document.getElementById('cfg-name').value || 'Torneio Americano';
+  T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
   T.date        = getCfgDate();
   T.courts      = parseInt(document.getElementById('cfg-courts').value);
+  T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
   T.scoring     = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
   T.players     = [...selectedPlayers];
   T.currentPhase = 0;
@@ -2761,11 +2774,13 @@ function startRaffle() {
                      .sort(() => Math.random() - 0.5);
   _raffleQueue   = [...seeds, ...nonSeeds];
   _raffleIdx     = 0;
-  _raffleGroups  = [[], [], [], []];
+  const _numG = Math.max(1, Math.floor(selectedPlayers.length / 4));
+  _raffleGroups  = Array.from({length: _numG}, () => []);
 
   // Render group cards
   const gc = document.getElementById('raffle-groups');
-  gc.innerHTML = RAFFLE_LETTERS.map((l,i) =>
+  gc.style.gridTemplateColumns = _numG <= 2 ? '1fr 1fr' : _numG <= 4 ? '1fr 1fr' : 'repeat(auto-fill,minmax(140px,1fr))';
+  gc.innerHTML = RAFFLE_LETTERS.slice(0, _numG).map((l,i) =>
     `<div class="raffle-group-card" id="rg-${l}" style="border-color:${RAFFLE_COLORS[i]}22">
       <div class="raffle-group-header" style="color:${RAFFLE_COLORS[i]}">GRUPO ${l}</div>
       <div id="rg-players-${l}"></div>
