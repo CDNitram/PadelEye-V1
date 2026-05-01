@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.2.d</title>
+<title>PadelEye · Session Manager · V6.2.e</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -400,7 +400,7 @@ input[type=number] { -moz-appearance: textfield; }
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V6.2.d</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V6.2.e</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -2192,17 +2192,14 @@ function rkUpdateKPIs(data) {
   document.getElementById('rk-k-leader-sub').textContent = leader?`${leader.vitorias}V · ${leader.win_rate} WR`:'—';
 }
 
-// ── DB READ HELPER (POST avoids Apps Script CORS redirect issue) ──
+// ── DB READ HELPER — GET request (Apps Script doGet handles reads) ──
 async function fetchDB(action, params) {
   const url = PadelEyeDB._url();
-  const body = params
-    ? JSON.stringify({ action, ...params })
-    : JSON.stringify({ action });
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body
-  });
+  let qs = '?action=' + encodeURIComponent(action);
+  if (params) {
+    Object.entries(params).forEach(([k,v]) => { qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(v); });
+  }
+  const res = await fetch(url + qs);
   return res.json();
 }
 
@@ -3152,8 +3149,8 @@ async function histOpen(numero) {
       fetchDB('get_sessao_stats'),
       fetchDB('get_sessoes'),
     ]);
-    const allStats = (await stRes.json()).rows || [];
-    const allSess  = (await pRes.json()).rows  || [];
+    const allStats = stRes.rows || [];
+    const allSess  = pRes.rows  || [];
 
     const sess   = allSess.find(s => s.numero === numero) || {};
     const stats  = allStats.filter(s => s.sessao_numero === numero);
@@ -3234,7 +3231,7 @@ async function histOpen(numero) {
     // ── Matches tab — fetch partidas ──
     try {
       const pRes2 = await fetchDB('get_sessao_partidas', { numero });
-      const partidas = ((await pRes2.json()).rows || []).filter(p => p.sessao_numero === numero);
+      const partidas = (pRes2.rows || []).filter(p => p.sessao_numero === numero);
       const matchHtml = partidas.length ? `
         <div style="border:1px solid #eaf0f8;border-radius:10px;overflow:hidden">
           ${partidas.map((p,i) => {
