@@ -861,7 +861,13 @@ input[type=number] { -moz-appearance: textfield; }
         <div class="rk-th r" id="rk-th-gd">GD</div>
         <div class="rk-th r" id="rk-th-mvp">MVP</div>
       </div>
-      <div id="rk-body"></div>
+      <div id="rk-body">
+        <div id="rk-empty-cta" style="text-align:center;padding:40px 20px">
+          <div style="font-size:32px;margin-bottom:12px">📊</div>
+          <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;margin-bottom:16px">Season Rankings não carregados ainda</div>
+          <button onclick="loadRanking()" style="padding:10px 24px;background:#0a1628;color:#fff;border:none;border-radius:10px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Rankings</button>
+        </div>
+      </div>
     </div>
     <div class="rk-upd" id="rk-upd"></div>
 
@@ -1066,12 +1072,16 @@ input[type=number] { -moz-appearance: textfield; }
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
         <div>
           <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px">Session History</div>
-          <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px" id="hist-subtitle">Loading sessions...</div>
+          <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px" id="hist-subtitle">Clique para carregar</div>
         </div>
         <button onclick="loadHistory()" style="padding:6px 12px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:9px;color:#5a8aaa;cursor:pointer">↺ Refresh</button>
       </div>
       <div id="hist-sessions-grid" style="display:flex;flex-direction:column;gap:8px">
-        <div class="empty-panel"><div class="empty-icon">📋</div><div>Carregando sessões...</div></div>
+        <div id="hist-empty-cta" style="text-align:center;padding:40px 20px">
+          <div style="font-size:32px;margin-bottom:12px">📋</div>
+          <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;margin-bottom:16px">Session History não carregado ainda</div>
+          <button onclick="loadHistory()" style="padding:10px 24px;background:#0a1628;color:#fff;border:none;border-radius:10px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Histórico</button>
+        </div>
       </div>
     </div>
 
@@ -2186,6 +2196,8 @@ async function loadRanking() {
     if (stxt) stxt.textContent = 'Snapshot local · Sheets offline';
     const updEl = document.getElementById('rk-upd'); if(updEl) updEl.textContent = 'Usando dados locais';
   }
+  const rkCta = document.getElementById('rk-empty-cta');
+  if (rkCta) rkCta.style.display = 'none';
   rkUpdateKPIs(rkData);
   rkRenderTable();
   rkRenderConsistency();
@@ -3012,6 +3024,8 @@ async function loadHistory() {
       statsMap[s.sessao_numero].push(s);
     });
 
+    const hCta = document.getElementById('hist-empty-cta');
+    if (hCta) hCta.style.display = 'none';
     grid.innerHTML = _histSessions.map(s => {
       const stats = statsMap[s.numero] || [];
       const mvp   = s.mvp || stats.find(st=>st.mvp==='Yes')?.jogador || '—';
