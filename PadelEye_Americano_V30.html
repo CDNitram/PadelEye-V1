@@ -1392,25 +1392,31 @@ function groupMatches(g) {
 function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const phase = T.phases[phaseIdx];
   const stats = {};
-  groupPlayers.forEach(p => stats[p] = { name:p, w:0, l:0, gf:0, ga:0, m:0, tbw:0 });
+  // seed each player with a random tiebreak value for final draw
+  groupPlayers.forEach(p => stats[p] = { name:p, w:0, l:0, gw:0, gl:0, m:0, tbw:0, tbl:0, rand:Math.random() });
   groupMatches(groupPlayers).forEach((match, mi) => {
     const key = `${phaseIdx}-${groupIdx}-${mi}`;
     const res = phase.results[key];
     if (!res || !res.saved) return;
     const { sa, sb } = res;
     const aWin = sa > sb;
-    match.a.forEach(p => { if(stats[p]){stats[p].gf+=sa; stats[p].ga+=sb; stats[p].m++; aWin?stats[p].w++:stats[p].l++;} });
-    match.b.forEach(p => { if(stats[p]){stats[p].gf+=sb; stats[p].ga+=sa; stats[p].m++; !aWin?stats[p].w++:stats[p].l++;} });
-    // TB tiebreaker count
+    match.a.forEach(p => { if(stats[p]){ stats[p].gw+=sa; stats[p].gl+=sb; stats[p].m++; aWin?stats[p].w++:stats[p].l++; }});
+    match.b.forEach(p => { if(stats[p]){ stats[p].gw+=sb; stats[p].gl+=sa; stats[p].m++; !aWin?stats[p].w++:stats[p].l++; }});
+    // TB points saldo: tbw = TB wins, tbl = TB losses → saldo = tbw - tbl
     if (res.tb && res.tba !== null && res.tbb !== null) {
       const tbWinA = res.tba > res.tbb;
-      match.a.forEach(p => { if(stats[p]) stats[p].tbw += tbWinA ? 1 : 0; });
-      match.b.forEach(p => { if(stats[p]) stats[p].tbw += tbWinA ? 0 : 1; });
+      match.a.forEach(p => { if(stats[p]){ tbWinA ? stats[p].tbw++ : stats[p].tbl++; }});
+      match.b.forEach(p => { if(stats[p]){ tbWinA ? stats[p].tbl++ : stats[p].tbw++; }});
     }
   });
   return Object.values(stats)
-    .map(s => ({ ...s, gd: s.gf - s.ga }))
-    .sort((a,b) => b.w - a.w || b.gd - a.gd || b.tbw - a.tbw);
+    .map(s => ({ ...s, gd: s.gw - s.gl, tbsaldo: s.tbw - s.tbl }))
+    .sort((a, b) =>
+      b.w       - a.w       ||  // 1. Vitórias
+      b.gd - a.gd      ||  // 2. Saldo de games (GW − GA)
+      b.tbsaldo - a.tbsaldo ||  // 3. Saldo de pontos tie-break (TB wins − TB losses)
+      a.rand    - b.rand        // 4. Sorteio (random seed por rodada)
+    );
 }
 
 // ── PHASE COMPLETE? ──
@@ -1436,9 +1442,9 @@ function advancePhase() {
     // F1 → F2: cross pairing dynamically
     // With N groups: 1st of odd groups + 2nd of even groups → group X
     //                2nd of odd groups + 1st of even groups → group Y
-    // For 2 groups: 1A+2B → GE, 2A+1B → GF (standard)
-    // For 3 groups: 1A+2B+1C → GE, 2A+1B+2C → GF (best 4 players)
-    // For 4 groups: 1A+2B+1C+2D → GE, 2A+1B+2C+1D → GF (original)
+    // For 2 groups: 1A+2B → GE, 2A+1B → GW (standard)
+    // For 3 groups: 1A+2B+1C → GE, 2A+1B+2C → GW (best 4 players)
+    // For 4 groups: 1A+2B+1C+2D → GE, 2A+1B+2C+1D → GW (original)
     const nGroups = qualifiers.length;
     const grpE = [], grpF = [];
     for (let i = 0; i < nGroups; i++) {
@@ -1712,7 +1718,7 @@ function renderRounds() {
         <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${_pc(s.name)};margin-right:5px"></span>${s.name}</td>
         <td style="text-align:right">${s.w}</td>
         <td style="text-align:right;${s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':''}">${s.gd>0?'+':''}${s.gd}</td>
-        <td style="text-align:right;font-family:'Bebas Neue';font-size:14px;color:#C9933A">${s.m>0?s.gf:'—'}</td>
+        <td style="text-align:right;font-family:'Bebas Neue';font-size:14px;color:#C9933A">${s.m>0?s.gw:'—'}</td>
       </tr>`;
     });
     html += `</table></div></div>`;
@@ -1892,7 +1898,7 @@ function _renderEstatRows(mode) {
   tbody.innerHTML = ranked.map((p,i) => {
     const medal   = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="rank-pos">${i+1}</span>`;
     const gdCls   = p.gd>0?'gd-pos':p.gd<0?'gd-neg':'';
-    const barW    = maxGW>0 ? Math.round(p.games_won/maxGW*100) : 0;
+    const barW    = maxGW>0 ? Math.round(p.glmes_won/maxGW*100) : 0;
     const wrColor = p.set_pct>=60?'#27AE60':p.set_pct>=40?'#C9933A':'#c0392b';
     return `<tr class="${i===0&&p.sets_played>0?'leader':''}">
       <td style="text-align:center">${medal}</td>
@@ -1910,9 +1916,9 @@ function _renderEstatRows(mode) {
       <td class="r" style="color:#5a7090">${p.sets_played}</td>
       <td class="r" style="color:#27AE60;font-weight:700">${p.sets_won}</td>
       <td class="r" style="color:#9ab0c8">${p.sets_lost}</td>
-      <td class="r" style="color:#5a7090">${p.games_played}</td>
-      <td class="r" style="color:#C9933A;font-weight:700">${p.games_won}</td>
-      <td class="r" style="color:#9ab0c8">${p.games_lost}</td>
+      <td class="r" style="color:#5a7090">${p.glmes_played}</td>
+      <td class="r" style="color:#C9933A;font-weight:700">${p.glmes_won}</td>
+      <td class="r" style="color:#9ab0c8">${p.glmes_lost}</td>
       <td class="r ${gdCls}">${p.gd>0?'+':''}${p.gd}</td>
       <td class="r" style="color:${wrColor};font-weight:700">${p.sets_played>0?p.set_pct+'%':'—'}</td>
     </tr>`;
@@ -2070,7 +2076,7 @@ function renderGrupos() {
             </div>
             <div class="grupo-id">
               ${hasResults
-                ? `${s.m}M · <span style="color:#1a7a44;font-weight:700">${s.w}V</span> · ${s.l}D · GF ${s.gf} · <span style="color:${gdCol};font-weight:700">GD ${s.m>0?gdStr:'—'}</span>`
+                ? `${s.m}M · <span style="color:#1a7a44;font-weight:700">${s.w}V</span> · ${s.l}D · GW ${s.gw} · <span style="color:${gdCol};font-weight:700">GD ${s.m>0?gdStr:'—'}</span>`
                 : `ID ${dbEntry?.id||'—'}`}
             </div>
           </div>
@@ -2207,10 +2213,11 @@ function showTab(id, el) {
   const panel = document.getElementById('p-' + id);
   if (panel) panel.classList.add('on');
   // Render game panels on demand
-  if (id === 'rodadas')   renderRounds();
-  if (id === 'ranking')   renderRanking();
-  if (id === 'historico') renderHistorico();
-  if (id === 'grupos')    renderGrupos();
+  if (id === 'rodadas')    renderRounds();
+  if (id === 'ranking')    renderRanking();
+  if (id === 'historico')  renderHistorico();
+  if (id === 'grupos')     renderGrupos();
+  if (id === 'scorecard')  renderScorecard();
 }
 
 // ══════════════════════════════════
