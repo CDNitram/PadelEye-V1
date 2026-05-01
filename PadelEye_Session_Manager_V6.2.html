@@ -1171,11 +1171,11 @@ function doLogin() {
   const numEl = document.getElementById('cfg-num');
   const numLl = document.getElementById('cfg-num-loading');
   if (numLl) numLl.textContent = '⏳';
-  // Reset tab data flags and preload ranking + history in background
-  _rankingLoaded = false;
-  _historyLoaded = false;
-  setTimeout(() => { _rankingLoaded = true; loadRanking(); }, 800);
-  setTimeout(() => { _historyLoaded = true; loadHistory(); }, 1200);
+  // Fetch ranking + history immediately on login — no delay, no flags blocking
+  _rankingLoaded = true;
+  _historyLoaded = true;
+  loadRanking();
+  loadHistory();
 
   PadelEyeDB.fetchNextSessionNumber().then(n => {
     if (numEl) numEl.textContent = n;
