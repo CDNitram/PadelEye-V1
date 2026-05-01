@@ -641,7 +641,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
         <div class="field">
           <label>Vagas no Torneio</label>
-          <select class="finput" id="cfg-vagas" onchange="updateVagas()">
+          <select class="finput" id="cfg-vagas" onchange="updateVagas(); updateFasesToggle()">
             <option value="4">4 jogadores</option>
             <option value="8">8 jogadores</option>
             <option value="12">12 jogadores</option>
@@ -650,6 +650,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <option value="24">24 jogadores</option>
             <option value="28">28 jogadores</option>
             <option value="32">32 jogadores</option>
+          </select>
+        </div>
+        <div class="field" id="field-num-fases" style="display:none">
+          <label>Número de Fases</label>
+          <select class="finput" id="cfg-num-fases" onchange="updateSummary()">
+            <option value="3" selected>3 Fases (F1 → F2 → Final)</option>
+            <option value="2">2 Fases (F1 → Final)</option>
           </select>
         </div>
         <div class="field">
@@ -699,7 +706,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
         </div>
         <div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd">
-          <div class="phase-cfg-label" style="color:#0a1628">Fase 2</div>
+          <div class="phase-cfg-label" style="color:#0a1628" id="f2-config-row">Fase 2</div>
           <div class="phase-cfg-sub">2 GRUPOS · 3 PARTIDAS</div>
           <div class="field" style="margin-bottom:8px">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Score máximo</label>
@@ -1316,9 +1323,10 @@ function launch() {
   const courts  = document.getElementById('cfg-courts').value;
   const scoring = document.getElementById('cfg-scoring');
   const pts     = scoring.options[scoring.selectedIndex].text;
-  const f1G     = Math.floor(n/4);
-  const f2G     = Math.floor(f1G/2);
-  const totalM  = (f1G*3) + (f2G*3) + 3;
+  const f1G         = Math.floor(n/4);
+  const f2G         = Math.floor(f1G/2);
+  const numFasesVal = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  const totalM      = numFasesVal===2 ? (f1G*3) + 3 : (f1G*3) + (f2G*3) + 3;
 
   document.getElementById('ok-details').innerHTML = [
     ['Torneio',          name],
@@ -1327,7 +1335,7 @@ function launch() {
     ['Inscritos',        n+' confirmados'],
     ['Pontuação',        pts],
     ['Quadras',          courts+' quadra(s)'],
-    ['Estrutura',        `F1: ${f1G*3} · F2: ${f2G*3} · Final: 3`],
+    ['Estrutura',        numFasesVal===2 ? `F1: ${f1G*3} · Final: 3 (2 fases)` : `F1: ${f1G*3} · F2: ${f2G*3} · Final: 3`],
     ['Total Partidas',   totalM],
     ['Config por fase',    (() => {
       const m1=document.getElementById('cfg-max-f1')?.value||6,    t1=document.getElementById('cfg-tb-f1')?.value||5;
@@ -2237,10 +2245,13 @@ const SC_PTS = { f1:10, f2:50, final:100, champ:300, runner:200, third:100 };
 function computeScorecard() {
   if (!T.started || !T.players.length) return [];
 
-  const f2Players    = T.phases[1] ? T.phases[1].groups.flat() : [];
-  const finalPlayers = T.phases[2] ? T.phases[2].groups[0]    : [];
-  const finalStandings = T.phases[2] && isPhaseComplete(2)
-    ? groupStandings(T.phases[2].groups[0], 2, 0) : [];
+  const _2phase = (T.numFases === 2);
+  // In 2-phase mode: T.phases[1] IS the final; in 3-phase: T.phases[2] is the final
+  const finalPhaseIdx = _2phase ? 1 : 2;
+  const f2Players    = (!_2phase && T.phases[1]) ? T.phases[1].groups.flat() : [];
+  const finalPlayers = T.phases[finalPhaseIdx] ? T.phases[finalPhaseIdx].groups[0] : [];
+  const finalStandings = T.phases[finalPhaseIdx] && isPhaseComplete(finalPhaseIdx)
+    ? groupStandings(T.phases[finalPhaseIdx].groups[0], finalPhaseIdx, 0) : [];
 
   return T.players.map(name => {
     const inFinal = finalPlayers.includes(name);
@@ -2254,7 +2265,7 @@ function computeScorecard() {
       else if (pos === 1) bonus = SC_PTS.runner;
       else if (pos === 2) bonus = SC_PTS.third;
     } else if (inF2) {
-      basePts = SC_PTS.f2; phaseLabel = 'Fase 2'; phaseKey = 'f2';
+      basePts = SC_PTS.f2; phaseLabel = _2phase ? 'Final' : 'Fase 2'; phaseKey = 'f2';
     } else {
       basePts = SC_PTS.f1; phaseLabel = 'Fase 1'; phaseKey = 'f1';
     }
@@ -2787,6 +2798,7 @@ function startRaffle() {
   T.started     = true;
   T.name        = document.getElementById('cfg-name').value || 'Torneio Americano';
   T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
+  T.numFases    = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
   T.date        = getCfgDate();
   T.courts      = parseInt(document.getElementById('cfg-courts').value);
   T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
@@ -3110,6 +3122,38 @@ function _updateSubButtons() {
     if (btn) btn.style.display = T.started ? 'block' : 'none';
   });
 }
+
+
+// ══════════════════════════════════════════
+// NÚMERO DE FASES — toggle para 8 jogadores
+// ══════════════════════════════════════════
+function updateFasesToggle() {
+  const vagas = parseInt(document.getElementById('cfg-vagas')?.value || 16);
+  const fieldFases  = document.getElementById('field-num-fases');
+  const f2ConfigRow = document.getElementById('f2-config-row')?.closest('.phase-cfg-row') ||
+                      document.getElementById('f2-config-row')?.parentElement;
+
+  if (vagas === 8) {
+    // Show the fases toggle for 8 players only
+    if (fieldFases) fieldFases.style.display = 'block';
+  } else {
+    // For other player counts: always 3 phases, hide toggle
+    if (fieldFases) fieldFases.style.display = 'none';
+    const sel = document.getElementById('cfg-num-fases');
+    if (sel) sel.value = '3';
+  }
+
+  // Show/hide F2 config row
+  const numFases = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  const f2Parent = document.getElementById('f2-config-row')?.closest('.phase-cfg-item') ||
+                   document.getElementById('f2-config-row')?.parentElement?.parentElement;
+  if (f2Parent) f2Parent.style.display = (numFases === 2) ? 'none' : '';
+}
+
+// Hook: also call on fases select change
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cfg-num-fases')?.addEventListener('change', updateFasesToggle);
+});
 
 </script>
 
