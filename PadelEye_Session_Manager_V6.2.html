@@ -1230,8 +1230,14 @@ function showTab(id, el) {
   if (id === 'match')      updateMatchSelects();
   if (id === 'scoreboard') renderScoreboard();
   if (id === 'save')       updateSaveTab();
-  if (id === 'ranking')    { if (!_rankingLoaded) { _rankingLoaded = true; loadRanking(); } }
-  if (id === 'history')    { if (!_historyLoaded) { _historyLoaded = true; loadHistory(); } else { /* already loaded — refresh only if stale */ } }
+  if (id === 'ranking') {
+    const hasData = document.getElementById('rk-body')?.children.length > 0;
+    if (!_rankingLoaded || !hasData) { _rankingLoaded = true; loadRanking(); }
+  }
+  if (id === 'history') {
+    const hasData = document.getElementById('hist-sessions-grid')?.children.length > 0;
+    if (!_historyLoaded || !hasData) { _historyLoaded = true; loadHistory(); }
+  }
 }
 
 // ══════════════════════════════════════════
@@ -2150,11 +2156,12 @@ function rkUpdateKPIs(data) {
 }
 
 async function loadRanking() {
-  const btn = document.getElementById('rk-ref-btn');
-  const dot = document.getElementById('rk-dot');
+  const btn  = document.getElementById('rk-ref-btn');
+  const dot  = document.getElementById('rk-dot');
   const stxt = document.getElementById('rk-stxt');
-  btn.classList.add('spin'); dot.classList.add('rk-spin');
-  stxt.textContent = 'Atualizando ranking...';
+  if (btn)  btn.classList.add('spin');
+  if (dot)  dot.classList.add('rk-spin');
+  if (stxt) stxt.textContent = 'Atualizando ranking...';
   try {
     // Fetch ranking + actual session count in parallel
     const [rankRes, sessRes] = await Promise.all([
@@ -2170,19 +2177,20 @@ async function loadRanking() {
     rkTotalSessions = (sessJson.rows||[]).length;
     const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR'):'';
     document.getElementById('rk-upd').textContent = ts?`Última atualização: ${ts}`:'';
-    stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
-    dot.style.background='#27AE60';
+    if (stxt) stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
+    if (dot)  dot.style.background='#27AE60';
   } catch(e) {
     rkData = RK_SNAPSHOT;
     rkTotalSessions = 19;
-    dot.style.background='#C9933A';
-    stxt.textContent = 'Snapshot local · Sheets offline';
-    document.getElementById('rk-upd').textContent = 'Usando dados locais';
+    if (dot)  dot.style.background='#C9933A';
+    if (stxt) stxt.textContent = 'Snapshot local · Sheets offline';
+    const updEl = document.getElementById('rk-upd'); if(updEl) updEl.textContent = 'Usando dados locais';
   }
   rkUpdateKPIs(rkData);
   rkRenderTable();
   rkRenderConsistency();
-  btn.classList.remove('spin'); dot.classList.remove('rk-spin');
+  if (btn)  btn.classList.remove('spin');
+  if (dot)  dot.classList.remove('rk-spin');
 }
 
 // ══════════════════════════════════════════
