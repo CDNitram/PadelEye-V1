@@ -1731,7 +1731,11 @@ const PadelEyeDB = (() => {
 
   async function get(action) {
     try {
-      const res = await fetch(`${WEB_APP_URL}?action=${action}`);
+      const res = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action })
+      });
       return await res.json();
     } catch(e) { return {status:'error',rows:[]}; }
   }
@@ -1811,7 +1815,11 @@ const PadelEyeDB = (() => {
 
   async function fetchNextSessionNumber() {
     try {
-      const res  = await fetch(`${WEB_APP_URL}?action=get_sessoes`);
+      const res  = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'get_sessoes' })
+      });
       const data = await res.json();
       const rows = data.rows || [];
       if (!rows.length) return `S${MARK_ZERO_LAST + 1}`;
@@ -2165,6 +2173,20 @@ function rkUpdateKPIs(data) {
   document.getElementById('rk-k-leader-sub').textContent = leader?`${leader.vitorias}V · ${leader.win_rate} WR`:'—';
 }
 
+// ── DB READ HELPER (POST avoids Apps Script CORS redirect issue) ──
+async function fetchDB(action, params) {
+  const url = PadelEyeDB._url();
+  const body = params
+    ? JSON.stringify({ action, ...params })
+    : JSON.stringify({ action });
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body
+  });
+  return res.json();
+}
+
 async function loadRanking() {
   const btn  = document.getElementById('rk-ref-btn');
   const dot  = document.getElementById('rk-dot');
@@ -2175,8 +2197,8 @@ async function loadRanking() {
   try {
     // Fetch ranking + actual session count in parallel
     const [rankRes, sessRes] = await Promise.all([
-      fetch(PadelEyeDB._url()+'?action=get_ranking'),
-      fetch(PadelEyeDB._url()+'?action=get_sessoes'),
+      fetchDB('get_ranking'),
+      fetchDB('get_sessoes'),
     ]);
     if(!rankRes.ok) throw new Error('HTTP '+rankRes.status);
     const rankJson = await rankRes.json();
@@ -2999,8 +3021,8 @@ async function loadHistory() {
 
   try {
     const [sRes, stRes] = await Promise.all([
-      fetch(PadelEyeDB._url() + '?action=get_sessoes'),
-      fetch(PadelEyeDB._url() + '?action=get_sessao_stats'),
+      fetchDB('get_sessoes'),
+      fetchDB('get_sessao_stats'),
     ]);
     const sessions  = (await sRes.json()).rows  || [];
     const allStats  = (await stRes.json()).rows || [];
@@ -3066,8 +3088,8 @@ async function histOpen(numero) {
 
   try {
     const [stRes, pRes] = await Promise.all([
-      fetch(PadelEyeDB._url() + '?action=get_sessao_stats'),
-      fetch(PadelEyeDB._url() + '?action=get_sessoes'),
+      fetchDB('get_sessao_stats'),
+      fetchDB('get_sessoes'),
     ]);
     const allStats = (await stRes.json()).rows || [];
     const allSess  = (await pRes.json()).rows  || [];
@@ -3150,7 +3172,7 @@ async function histOpen(numero) {
 
     // ── Matches tab — fetch partidas ──
     try {
-      const pRes2 = await fetch(PadelEyeDB._url() + '?action=get_sessao_partidas&numero=' + encodeURIComponent(numero));
+      const pRes2 = await fetchDB('get_sessao_partidas', { numero });
       const partidas = ((await pRes2.json()).rows || []).filter(p => p.sessao_numero === numero);
       const matchHtml = partidas.length ? `
         <div style="border:1px solid #eaf0f8;border-radius:10px;overflow:hidden">
