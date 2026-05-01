@@ -231,7 +231,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rk-ptab:hover{border-color:#C9933A;color:#C9933A;}
 .rk-ptab.on{background:#0a1628;color:#fff;border-color:#0a1628;}
 .rk-crows{display:flex;flex-direction:column;gap:6px;}
-.rk-crow{display:grid;grid-template-columns:130px 1fr 70px 70px 65px;align-items:center;gap:10px;}
+.rk-crow{display:grid;grid-template-columns:130px 1fr 60px 70px 55px;align-items:center;gap:10px;}
 .rk-cname{font-size:12px;font-weight:600;color:#0d1e3a;display:flex;align-items:center;gap:6px;}
 .rk-bar-wrap{position:relative;height:7px;background:#f0f5fb;border-radius:4px;overflow:visible;}
 .rk-bar-avg{position:absolute;top:-3px;width:2px;height:13px;background:#0a1628;border-radius:1px;z-index:2;}
@@ -278,7 +278,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .rk-kpi-grid{grid-template-columns:repeat(2,1fr);}
   .rk-thd,.rk-prow{grid-template-columns:32px 1fr 48px 52px 56px;}
   .rk-hide{display:none;}
-  .rk-crow{grid-template-columns:110px 1fr 55px;}
+  .rk-crow{grid-template-columns:100px 1fr 48px 56px 46px;}
   .rk-cscore{display:none;}
 }
 
@@ -436,8 +436,8 @@ input[type=number] { -moz-appearance: textfield; }
     <button class="tab disabled" id="tab-match" onclick="showTab('match',this)">🏸 Matches</button>
     <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Scoreboard &amp; MVP</button>
     <button class="tab disabled" id="tab-save" onclick="showTab('save',this)">💾 Save</button>
-    <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()">📊 Season Rankings</button>
-    <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()">📋 Session History</button>
+    <button class="tab" id="tab-ranking" onclick="showTab('ranking',this)">📊 Season Rankings</button>
+    <button class="tab" id="tab-history" onclick="showTab('history',this)">📋 Session History</button>
   </div>
 
   <!-- ── SESSION TAB ── -->
@@ -878,11 +878,11 @@ input[type=number] { -moz-appearance: textfield; }
         <button class="rk-ptab" onclick="rkSetPeriod(36,this)">36M</button>
       </div>
       <div id="rk-period-label" style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:6px;margin-bottom:10px"></div>
-      <div style="display:grid;grid-template-columns:130px 1fr 70px 70px 65px;gap:10px;padding:0 0 6px;border-bottom:1px solid #eaf0f8;margin-bottom:6px">
+      <div style="display:grid;grid-template-columns:130px 1fr 60px 70px 55px;gap:10px;padding:0 0 6px;border-bottom:1px solid #eaf0f8;margin-bottom:6px">
         <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px">JOGADOR</div>
         <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px">WIN RATE</div>
         <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">WR%</div>
-        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">VS MÉDIA</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">VS MEDIA</div>
         <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">SCORE</div>
       </div>
       <div class="rk-crows" id="rk-crows"></div>
@@ -1104,6 +1104,10 @@ input[type=number] { -moz-appearance: textfield; }
 // ══════════════════════════════════════════
 // CONSTANTS & STATE
 // ══════════════════════════════════════════
+// ── TAB DATA FLAGS ──
+let _rankingLoaded = false;
+let _historyLoaded = false;
+
 const USERS = {
   'martin':                   { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
   'organizer@padeleye.com': { pass:'654321',    name:'Martin Cordoba',  av:'MC' },
@@ -1156,6 +1160,12 @@ function doLogin() {
   const numEl = document.getElementById('cfg-num');
   const numLl = document.getElementById('cfg-num-loading');
   if (numLl) numLl.textContent = '⏳';
+  // Reset tab data flags and preload ranking + history in background
+  _rankingLoaded = false;
+  _historyLoaded = false;
+  setTimeout(() => { _rankingLoaded = true; loadRanking(); }, 800);
+  setTimeout(() => { _historyLoaded = true; loadHistory(); }, 1200);
+
   PadelEyeDB.fetchNextSessionNumber().then(n => {
     if (numEl) numEl.textContent = n;
     if (numLl) numLl.textContent = 'AUTO';
@@ -1198,6 +1208,8 @@ function doLogout() {
   document.getElementById('l-pass').value = '';
   showTab('session', document.querySelector('.tab'));
   ['tab-match','tab-scoreboard','tab-save'].forEach(id=>{document.getElementById(id)?.classList.add('disabled');});
+  _rankingLoaded = false;
+  _historyLoaded = false;
   document.getElementById('btn-close-session').style.display='none';
   sessionSaved = false;
   document.getElementById('btn-save-session').style.display='block';
@@ -1214,9 +1226,11 @@ function showTab(id, el) {
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
   if (el) el.classList.add('on');
   document.getElementById('p-'+id).classList.add('on');
-  if (id === 'match')       updateMatchSelects();
-  if (id === 'scoreboard')  renderScoreboard();
-  if (id === 'save')        updateSaveTab();
+  if (id === 'match')      updateMatchSelects();
+  if (id === 'scoreboard') renderScoreboard();
+  if (id === 'save')       updateSaveTab();
+  if (id === 'ranking')    { if (!_rankingLoaded) { _rankingLoaded = true; loadRanking(); } }
+  if (id === 'history')    { if (!_historyLoaded) { _historyLoaded = true; loadHistory(); } else { /* already loaded — refresh only if stale */ } }
 }
 
 // ══════════════════════════════════════════
@@ -1624,8 +1638,9 @@ async function saveSession() {
       doneBox.style.display = 'block';
       doneLog.innerHTML = `Session: <strong>${num}</strong><br>Saved at: <strong>${savedAt}</strong><br>Matches: <strong>${matches.length}</strong> · Players: <strong>${activePlayers.length}</strong> · MVP: <strong>${mvp || '—'}</strong>`;
       showAlert('alert-save', `✅ ${num} saved and locked. Cannot be saved again.`, 'ok');
-      // Refresh ranking in background
+      // Refresh ranking + history in background after save
       setTimeout(()=>loadRanking(), 2000);
+      setTimeout(()=>{ _historyLoaded = false; loadHistory(); }, 3000);
     }
   } catch(e) {
     showAlert('alert-save', '⚠️ Error saving. Check console for details.', 'err');
@@ -2082,7 +2097,8 @@ function rkRenderConsistency() {
         <div class="rk-bar-avg" style="left:${Math.min(100,avg)}%" title="Média do grupo: ${avg.toFixed(0)}%"></div>
         <div class="rk-bar-personal" style="left:${Math.min(100,r.personalAvg)}%" title="Média pessoal: ${r.personalAvg.toFixed(0)}%"></div>
       </div>
-      <div class="rk-cwr" style="color:${rkWCol(r.wr)}">${r.wr.toFixed(0)}%<div style="font-size:9px;color:#9ab0c8">${r.diff>=0?'+':''}${r.diff.toFixed(1)}%</div></div>
+      <div style="font-family:'DM Mono';font-size:15px;font-weight:800;color:${rkWCol(r.wr)};text-align:right">${r.wr.toFixed(0)}%</div>
+      <div style="font-family:'DM Mono';font-size:13px;font-weight:700;color:${r.diff>=0?'#27AE60':'#E74C3C'};text-align:right">${r.diff>=0?'+':''}${r.diff.toFixed(1)}%</div>
       <div class="rk-cscore" style="${sCol}">${r.score}</div>
     </div>`;
   }).join('');
