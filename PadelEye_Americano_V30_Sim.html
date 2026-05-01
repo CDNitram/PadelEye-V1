@@ -1439,19 +1439,35 @@ function advancePhase() {
   const phIdx = T.currentPhase;
   if (!isPhaseComplete(phIdx)) return;
 
-  // Get top-2 from each group
+  // Top-2 per group
   const qualifiers = T.phases[phIdx].groups.map((g, gi) =>
     groupStandings(g, phIdx, gi).slice(0, 2).map(s => s.name)
   );
 
   if (phIdx === 0) {
-    // F1→F2: cross pairing (1ºA+2ºB+1ºC+2ºD → G.E, 2ºA+1ºB+2ºC+1ºD → G.F)
-    const E = [qualifiers[0][0], qualifiers[1][1], qualifiers[2][0], qualifiers[3][1]];
-    const F = [qualifiers[0][1], qualifiers[1][0], qualifiers[2][1], qualifiers[3][0]];
-    T.phases[1] = { name:'Fase 2', groups:[E, F], results:{}, complete:false };
+    // F1 → F2: cross pairing dynamically
+    // With N groups: 1st of odd groups + 2nd of even groups → group X
+    //                2nd of odd groups + 1st of even groups → group Y
+    // For 2 groups: 1A+2B → GE, 2A+1B → GF (standard)
+    // For 3 groups: 1A+2B+1C → GE, 2A+1B+2C → GF (best 4 players)
+    // For 4 groups: 1A+2B+1C+2D → GE, 2A+1B+2C+1D → GF (original)
+    const nGroups = qualifiers.length;
+    const grpE = [], grpF = [];
+    for (let i = 0; i < nGroups; i++) {
+      if (i % 2 === 0) { grpE.push(qualifiers[i][0]); grpF.push(qualifiers[i][1]); }
+      else             { grpE.push(qualifiers[i][1]); grpF.push(qualifiers[i][0]); }
+    }
+    // Ensure exactly 4 per group for F2 (pad from remaining if needed)
+    const allQ = qualifiers.flat();
+    while (grpE.length < 4 && allQ.length > grpE.length + grpF.length) grpE.push(allQ[grpE.length + grpF.length] || '');
+    while (grpF.length < 4 && allQ.length > grpE.length + grpF.length) grpF.push(allQ[grpE.length + grpF.length] || '');
+    const f2Groups = nGroups === 1
+      ? [qualifiers[0]]            // 4 players, 1 group goes straight to F2
+      : [grpE.filter(Boolean), grpF.filter(Boolean)];
+    T.phases[1] = { name:'Fase 2', groups: f2Groups, results:{}, complete:false };
   } else if (phIdx === 1) {
-    // F2→Final: top 2 from each F2 group
-    const finalists = qualifiers.flat();
+    // F2 → Final: top 2 from each F2 group → 1 final group of 4
+    const finalists = qualifiers.flat().slice(0, 4);
     T.phases[2] = { name:'Final', groups:[finalists], results:{}, complete:false };
   }
 
@@ -1459,7 +1475,9 @@ function advancePhase() {
   T.currentPhase = phIdx + 1;
   renderRounds();
   renderRanking();
+  renderHistorico();
   renderScorecard();
+  renderGrupos();
 }
 
 
@@ -2968,6 +2986,7 @@ function raffleFinish() {
   renderRounds();
   renderRanking();
   renderHistorico();
+  renderScorecard();
 
   // Navigate to Rodadas
   document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
