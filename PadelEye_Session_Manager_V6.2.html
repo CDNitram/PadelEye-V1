@@ -1083,6 +1083,7 @@ input[type=number] { -moz-appearance: textfield; }
           <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px" id="hist-detail-num"></div>
           <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8" id="hist-detail-meta"></div>
         </div>
+        <button id="btn-hist-share" onclick="shareHistSession()" style="margin-left:auto;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">🔗 Share</button>
       </div>
 
       <!-- Sub-tabs -->
@@ -3055,6 +3056,8 @@ async function histOpen(numero) {
 
     document.getElementById('hist-detail-meta').textContent =
       date + (sess.local ? ' · ' + sess.local : '');
+    const _sb = document.getElementById('btn-hist-share');
+    if (_sb) _sb.dataset.date = sess.data || '';
 
     _histCurrent = { numero, sess, stats };
 
@@ -3177,6 +3180,17 @@ function histSwitch(tab) {
 // ══════════════════════════════════════════
 // SHARE / PUBLIC VIEW
 // ══════════════════════════════════════════
+function shareHistSession() {
+  const btn     = document.getElementById('btn-hist-share');
+  const num     = document.getElementById('hist-detail-num')?.textContent?.trim() || 'S?';
+  const dateRaw = btn?.dataset?.date || '';
+  const url     = window.location.href.split('?')[0] + '?share=' + encodeURIComponent(num) + '&date=' + encodeURIComponent(dateRaw);
+  navigator.clipboard?.writeText(url).then(() => {
+    if (btn) { btn.textContent = '✅ Copied!'; btn.style.background = '#1a7a44'; }
+    setTimeout(() => { if (btn) { btn.textContent = '🔗 Share'; btn.style.background = '#0a1628'; } }, 2500);
+  }).catch(() => prompt('Copy this link:', url));
+}
+
 function shareSession() {
   const num  = document.getElementById('cfg-num')?.textContent?.trim() || 'S?';
   const dateRaw = document.getElementById('cfg-date-hidden')?.value || '';
