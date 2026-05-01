@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.1.d</title>
+<title>PadelEye · Session Manager · V6.1.e</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -27,7 +27,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .login-card-sub{font-size:11px;color:#9ab0c8;margin-bottom:22px;}
 .lfield{margin-bottom:14px;}
 .lfield label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
-.lfield input{width:100%;background:#f4f7fc;border:1px solid #dde6f0;border-radius:10px;color:#0d1e3a;font-family:'DM Sans';font-size:14px;padding:12px 14px;outline:none;transition:all .2s;}
+.lfield input{width:100%;background:#f4f7fc;border:1px solid #dde6f0;border-radius:10px;color:#0d1e3a;font-family:'Outfit';font-size:14px;padding:12px 14px;outline:none;transition:all .2s;}
 .lfield input:focus{border-color:#C9933A;background:#fff;}
 .lfield input::placeholder{color:#c0cdd8;}
 .btn-login{width:100%;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;font-weight:700;font-size:14px;padding:14px;border:none;border-radius:10px;cursor:pointer;margin-top:4px;transition:all .2s;}
@@ -130,7 +130,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
    MATCH LOG
 ══════════════════════════════ */
 .match-log{display:flex;flex-direction:column;gap:8px;}
-.match-item{background:#fff;border:1px solid #eaf0f8;border-radius:10px;padding:12px 14px;display:grid;grid-template-columns:16px 1fr auto 1fr;align-items:center;gap:10px;}
+.match-item{background:#fff;border:1px solid #eaf0f8;border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:16px 1fr;align-items:start;gap:8px;}
 .match-item.saved{border-color:#e2e8f0;background:#fff;}
 .match-team{font-size:13px;font-weight:700;line-height:1.5;color:#0d1e3a;}
 .match-team.right{text-align:right;}
@@ -312,6 +312,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 /* Prevent page scroll when using scroll on score inputs */
 input[type=number]:focus { outline: 2px solid #C9933A; }
 input[type=number] { -moz-appearance: textfield; }
+
+.match-row-actions{display:flex;gap:5px;justify-content:center;margin-top:4px;opacity:0;transition:opacity .15s;}
+.match-row:hover .match-row-actions{opacity:1;}
 </style>
 </head>
 <body>
@@ -320,7 +323,7 @@ input[type=number] { -moz-appearance: textfield; }
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V6.1.d</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V6.1.e</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -583,8 +586,15 @@ input[type=number] { -moz-appearance: textfield; }
 
     <!-- Match log -->
     <div class="card">
-      <div class="card-title">Match Log · <span id="match-count">0 matches</span></div>
-      <div class="match-log" id="match-log">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div class="card-title" style="margin-bottom:0">Match Log · <span id="match-count">0 matches</span></div>
+        <div id="match-log-actions" style="display:none;gap:5px">
+          <button onclick="repeatMatch(_lastIdx||0)" title="Repeat" style="width:24px;height:24px;border-radius:6px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#3b82f6;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">↺</button>
+          <button onclick="startEdit(_lastIdx||0)" title="Edit" style="width:24px;height:24px;border-radius:6px;border:1.5px solid #fed7aa;background:#fff7ed;color:#f97316;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✎</button>
+          <button onclick="deleteMatch(_lastIdx||0)" title="Delete" style="width:24px;height:24px;border-radius:6px;border:1.5px solid #fecaca;background:#fff1f2;color:#ef4444;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
+      </div>
+      <div class="match-log" id="match-log" style="border:1px solid #eaf0f8;border-radius:10px;overflow:hidden">
         <div class="empty"><div class="empty-icon">🏸</div>No matches yet.<br>Use the form above to record results.</div>
       </div>
     </div>
@@ -1073,11 +1083,7 @@ function liveScore() {
   if (!isNaN(sa) && !isNaN(sb)) {
     inA.className = 'score-input ' + (sa>sb?'win':sa<sb?'lose':'');
     inB.className = 'score-input ' + (sb>sa?'win':sb<sa?'lose':'');
-    // auto-enable TB if equal
-    if (sa === tbAt && sb === tbAt) {
-      document.getElementById('tb-btn').classList.add('on');
-      document.getElementById('tb-inputs').classList.add('show');
-    }
+    // TB is manual only — never auto-open
   }
 }
 
@@ -1111,7 +1117,9 @@ function addMatch() {
   const hasTB = document.getElementById('tb-btn').classList.contains('on');
   const tba   = hasTB ? parseInt(document.getElementById('tb-a').value)||null : null;
   const tbb   = hasTB ? parseInt(document.getElementById('tb-b').value)||null : null;
-  if (sa===_tbAt && sb===_tbAt && !hasTB) { showAlert('alert-match',`Score ${_tbAt}×${_tbAt} — activate Tie-Break first.`,'warn'); return; }
+  if (sa===_tbAt && sb===_tbAt && !hasTB) {
+    if (!confirm(`Score is ${_tbAt}×${_tbAt}. Save without Tie-Break? Click OK to save as-is, or Cancel to add a TB score.`)) return;
+  }
   if (sa===sb && sa!==_tbAt) { showAlert('alert-match','Draws are not allowed.','warn'); return; }
 
   matches.push({ teamA:[a1,a2], teamB:[b1,b2], sa, sb, tb:hasTB, tba, tbb });
@@ -1207,25 +1215,14 @@ function renderMatchLog() {
       </div>`;
     }
 
-    // SAVED: normal row
-    const scoreCell = `<div class="match-score">
-          <div class="match-score-main">
-            <span style="color:${m.sa>m.sb?'#1a7a44':'#9ab0c8'}">${m.sa}</span>
-            <span style="color:#c0cdd8;font-size:14px"> × </span>
-            <span style="color:${m.sb>m.sa?'#1a7a44':'#9ab0c8'}">${m.sb}</span>
-          </div>
-          ${tbTag}
-          <div style="display:flex;gap:2px;justify-content:center;margin-top:2px">
-            <button onclick="repeatMatch(${i})" title="Repeat same players"
-              style="background:none;border:1.5px solid #93C5FD;border-radius:6px;color:#3a7bd5;cursor:pointer;font-size:11px;padding:2px 6px;transition:all .2s"
-              onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='none'">🔁</button>
-            <button class="btn-edit" onclick="startEdit(${i})" title="Edit">✏️</button>
-            <button class="btn-del"  onclick="deleteMatch(${i})" title="Remove">✕</button>
-          </div>
-        </div>`;
+    // SAVED: compact match log — buttons reveal on hover
+    const pillA = m.teamA.map(n=>`<span style="display:inline-block;padding:3px 10px;border-radius:20px;background:${pc(n)};color:#fff;font-family:'DM Sans';font-size:11px;font-weight:700;white-space:nowrap;margin:0 1px">${n}</span>`).join('');
+    const pillB = m.teamB.map(n=>`<span style="display:inline-block;padding:3px 10px;border-radius:20px;background:${pc(n)};color:#fff;font-family:'DM Sans';font-size:11px;font-weight:700;white-space:nowrap;margin:0 1px">${n}</span>`).join('');
+    const wrapA = aWin ? 'style="display:inline-flex;align-items:center;gap:2px;padding:3px 6px;border-radius:30px;border:3px solid #27AE60;background:rgba(39,174,96,.08)"' : 'style="display:inline-flex;align-items:center;gap:2px"';
+    const wrapB = !aWin ? 'style="display:inline-flex;align-items:center;gap:2px;padding:3px 6px;border-radius:30px;border:3px solid #27AE60;background:rgba(39,174,96,.08)"' : 'style="display:inline-flex;align-items:center;gap:2px"';
 
     const editForm = isEdit ? `
-      <div class="edit-form">
+      <div class="edit-form" style="grid-column:1/-1">
         <input class="edit-score-input" onwheel="scrollScore(event,this)" id="edit-sa-${i}" type="number" min="0" max="9" value="${m.sa}" oninput="previewEdit(${i})">
         <span style="font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">×</span>
         <input class="edit-score-input" onwheel="scrollScore(event,this)" id="edit-sb-${i}" type="number" min="0" max="9" value="${m.sb}" oninput="previewEdit(${i})">
@@ -1233,18 +1230,24 @@ function renderMatchLog() {
         <button class="btn-edit-cancel" onclick="cancelEdit()">✕</button>
       </div>` : '';
 
-    return `<div class="match-item saved ${isEdit?'editing':''}" style="border-color:#e2e8f0;background:#fff;"
+    return `<div class="match-row" style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:#fff;border-bottom:1px solid #f0f4f8;padding:8px 12px;"
       draggable="true" ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)">
-      <div class="drag-handle" title="Drag to reorder">⠿</div>
-      <div class="match-team ${aWin?'win':'lose'}">
-        <span class="match-num">Team A</span>
-        ${m.teamA.join('<br>')}
+      <div style="display:flex;align-items:center"><div ${wrapA}>${pillA}</div></div>
+      <div style="text-align:center;min-width:90px">
+        <div style="font-family:'DM Mono';font-size:8px;color:#c0cdd8;letter-spacing:1px;margin-bottom:2px">MATCH ${i+1}</div>
+        <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1">
+          <span style="color:${m.sa>m.sb?'#1a7a44':'#9ab0c8'}">${m.sa}</span>
+          <span style="color:#c0cdd8;font-size:14px"> × </span>
+          <span style="color:${m.sb>m.sa?'#1a7a44':'#9ab0c8'}">${m.sb}</span>
+        </div>
+        ${m.tb?`<div style="font-size:9px;color:#C9933A;font-family:'DM Mono';margin-top:1px">🏓 TB ${m.tba}×${m.tbb}</div>`:''}
+        <div style="display:flex;flex-direction:row;gap:4px;justify-content:center;margin-top:5px">
+          <button onclick="repeatMatch(${i})" style="width:22px;height:22px;border-radius:5px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#3b82f6;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">↺</button>
+          <button onclick="startEdit(${i})"   style="width:22px;height:22px;border-radius:5px;border:1.5px solid #fed7aa;background:#fff7ed;color:#f97316;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">✎</button>
+          <button onclick="deleteMatch(${i})" style="width:22px;height:22px;border-radius:5px;border:1.5px solid #fecaca;background:#fff1f2;color:#ef4444;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center">✕</button>
+        </div>
       </div>
-      ${scoreCell}
-      <div class="match-team right ${aWin?'lose':'win'}">
-        <span class="match-num">Team B</span>
-        ${m.teamB.join('<br>')}
-      </div>
+      <div style="display:flex;align-items:center;justify-content:flex-end"><div ${wrapB}>${pillB}</div></div>
       ${editForm}
     </div>`;
   }).join('');
@@ -2026,8 +2029,11 @@ function pendingScore(i) {
 function logPending(i) {
   const sa  = +document.getElementById('ps-a-'+i)?.value;
   const sb  = +document.getElementById('ps-b-'+i)?.value;
-  if (isNaN(sa)||isNaN(sb)||sa===sb) return;
+  if (isNaN(sa)||isNaN(sb)) return;
   const tbOn = document.getElementById('ps-tb-'+i)?.checked || false;
+  if (sa===sb && !tbOn) {
+    if (!confirm(`Score is ${sa}×${sb}. Save without Tie-Break? Click OK to save as-is, or Cancel to add a TB score.`)) return;
+  }
   const tba  = tbOn ? (+document.getElementById('ps-tba-'+i)?.value||null) : null;
   const tbb  = tbOn ? (+document.getElementById('ps-tbb-'+i)?.value||null) : null;
   matches[i].sa = sa;
