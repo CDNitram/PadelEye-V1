@@ -826,6 +826,16 @@ input[type=number] { -moz-appearance: textfield; }
 
   <!-- ── RANKING TAB ── -->
   <div class="panel" id="p-ranking">
+    <!-- Load trigger bar -->
+    <div id="rk-load-bar" style="background:#f0f5ff;border:1.5px solid #dde6f0;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+      <button onclick="loadRanking()" id="rk-load-btn" style="padding:8px 18px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Rankings</button>
+      <div id="rk-load-status" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;flex:1">Clique para carregar os dados da temporada.</div>
+    </div>
+    <!-- Error box -->
+    <div id="rk-error-box" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+      <div style="font-family:'DM Mono';font-size:10px;font-weight:700;color:#c0392b;margin-bottom:4px">⚠️ Erro ao carregar rankings</div>
+      <div id="rk-error-msg" style="font-family:'DM Mono';font-size:10px;color:#a04040;word-break:break-all"></div>
+    </div>
     <div class="rk-status-row">
       <div class="rk-dot" id="rk-dot"></div>
       <div class="rk-stxt" id="rk-stxt">—</div>
@@ -1069,12 +1079,21 @@ input[type=number] { -moz-appearance: textfield; }
 
     <!-- List view -->
     <div id="hist-list-view">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div>
           <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px">Session History</div>
           <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px" id="hist-subtitle">Clique para carregar</div>
         </div>
-        <button onclick="loadHistory()" style="padding:6px 12px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:9px;color:#5a8aaa;cursor:pointer">↺ Refresh</button>
+      </div>
+      <!-- Load trigger bar -->
+      <div id="hist-load-bar" style="background:#f0f5ff;border:1.5px solid #dde6f0;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+        <button onclick="loadHistory()" id="hist-load-btn" style="padding:8px 18px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Histórico</button>
+        <div id="hist-load-status" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;flex:1">Clique para carregar o histórico de sessões.</div>
+      </div>
+      <!-- Error box -->
+      <div id="hist-error-box" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:16px">
+        <div style="font-family:'DM Mono';font-size:10px;font-weight:700;color:#c0392b;margin-bottom:4px">⚠️ Erro ao carregar histórico</div>
+        <div id="hist-error-msg" style="font-family:'DM Mono';font-size:10px;color:#a04040;word-break:break-all"></div>
       </div>
       <div id="hist-sessions-grid" style="display:flex;flex-direction:column;gap:8px">
         <div id="hist-empty-cta" style="text-align:center;padding:40px 20px">
@@ -2188,43 +2207,69 @@ async function fetchDB(action, params) {
 }
 
 async function loadRanking() {
-  const btn  = document.getElementById('rk-ref-btn');
-  const dot  = document.getElementById('rk-dot');
-  const stxt = document.getElementById('rk-stxt');
-  if (btn)  btn.classList.add('spin');
+  const btn      = document.getElementById('rk-load-btn');
+  const statusEl = document.getElementById('rk-load-status');
+  const errorBox = document.getElementById('rk-error-box');
+  const errorMsg = document.getElementById('rk-error-msg');
+  const dot      = document.getElementById('rk-dot');
+  const stxt     = document.getElementById('rk-stxt');
+
+  // Loading state
+  if (btn) { btn.textContent = '⏳ Carregando...'; btn.disabled = true; }
+  if (statusEl) statusEl.textContent = 'Conectando ao banco de dados...';
+  if (errorBox) errorBox.style.display = 'none';
   if (dot)  dot.classList.add('rk-spin');
-  if (stxt) stxt.textContent = 'Atualizando ranking...';
+
   try {
-    // Fetch ranking + actual session count in parallel
-    const [rankRes, sessRes] = await Promise.all([
+    if (statusEl) statusEl.textContent = 'Buscando ranking...';
+    const [rankJson, sessJson] = await Promise.all([
       fetchDB('get_ranking'),
       fetchDB('get_sessoes'),
     ]);
-    if(!rankRes.ok) throw new Error('HTTP '+rankRes.status);
-    const rankJson = await rankRes.json();
-    const sessJson = sessRes.ok ? await sessRes.json() : {rows:[]};
-    const rows = rankJson.rows||[];
-    if(!rows.length) throw new Error('empty');
-    rkData = rows;
-    rkTotalSessions = (sessJson.rows||[]).length;
-    const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR'):'';
-    document.getElementById('rk-upd').textContent = ts?`Última atualização: ${ts}`:'';
-    if (stxt) stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
-    if (dot)  dot.style.background='#27AE60';
+
+    const rows = rankJson.rows || [];
+    if (!rows.length) {
+      // No live data — use snapshot but mark clearly
+      rkData = RK_SNAPSHOT;
+      rkTotalSessions = 19;
+      if (statusEl) statusEl.textContent = '⚠️ Sem dados no banco — exibindo snapshot local.';
+      if (dot) dot.style.background = '#C9933A';
+      const updEl = document.getElementById('rk-upd');
+      if (updEl) updEl.textContent = 'Usando snapshot local (banco vazio)';
+    } else {
+      rkData = rows;
+      rkTotalSessions = (sessJson.rows || []).length;
+      const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR') : '';
+      const updEl = document.getElementById('rk-upd');
+      if (updEl) updEl.textContent = ts ? `Última atualização: ${ts}` : '';
+      if (statusEl) statusEl.textContent = `✅ ${rows.length} jogadores · ${rkTotalSessions} sessões carregadas.`;
+      if (dot) dot.style.background = '#27AE60';
+      if (stxt) stxt.textContent = `${rows.length} jogadores · ao vivo`;
+    }
+
+    const rkCta = document.getElementById('rk-empty-cta');
+    if (rkCta) rkCta.style.display = 'none';
+    rkUpdateKPIs(rkData);
+    rkRenderTable();
+    rkRenderConsistency();
+
   } catch(e) {
+    if (errorBox) errorBox.style.display = 'block';
+    if (errorMsg) errorMsg.textContent = e.message || String(e);
+    if (statusEl) statusEl.textContent = '❌ Falha ao conectar. Veja o erro abaixo.';
+    if (dot) dot.style.background = '#e74c3c';
+    // Still render snapshot so page is not empty
     rkData = RK_SNAPSHOT;
     rkTotalSessions = 19;
-    if (dot)  dot.style.background='#C9933A';
-    if (stxt) stxt.textContent = 'Snapshot local · Sheets offline';
-    const updEl = document.getElementById('rk-upd'); if(updEl) updEl.textContent = 'Usando dados locais';
+    const rkCta = document.getElementById('rk-empty-cta');
+    if (rkCta) rkCta.style.display = 'none';
+    rkUpdateKPIs(rkData);
+    rkRenderTable();
+    rkRenderConsistency();
   }
-  const rkCta = document.getElementById('rk-empty-cta');
-  if (rkCta) rkCta.style.display = 'none';
-  rkUpdateKPIs(rkData);
-  rkRenderTable();
-  rkRenderConsistency();
-  if (btn)  btn.classList.remove('spin');
-  if (dot)  dot.classList.remove('rk-spin');
+
+  if (btn) { btn.textContent = '↻ Carregar Rankings'; btn.disabled = false; }
+  if (dot) dot.classList.remove('rk-spin');
 }
 
 // ══════════════════════════════════════════
@@ -3015,17 +3060,27 @@ let _histSessions = [];
 let _histCurrent  = null;
 
 async function loadHistory() {
-  const grid = document.getElementById('hist-sessions-grid');
-  const sub  = document.getElementById('hist-subtitle');
-  grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Loading sessions...</div></div>';
+  const grid      = document.getElementById('hist-sessions-grid');
+  const sub       = document.getElementById('hist-subtitle');
+  const btn       = document.getElementById('hist-load-btn');
+  const statusEl  = document.getElementById('hist-load-status');
+  const errorBox  = document.getElementById('hist-error-box');
+  const errorMsg  = document.getElementById('hist-error-msg');
+
+  // Loading state
+  if (btn) { btn.textContent = '⏳ Carregando...'; btn.disabled = true; }
+  if (statusEl) statusEl.textContent = 'Conectando ao banco de dados...';
+  if (errorBox) errorBox.style.display = 'none';
+  grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Buscando sessões...</div></div>';
 
   try {
+    if (statusEl) statusEl.textContent = 'Buscando sessões e estatísticas...';
     const [sRes, stRes] = await Promise.all([
       fetchDB('get_sessoes'),
       fetchDB('get_sessao_stats'),
     ]);
-    const sessions  = (await sRes.json()).rows  || [];
-    const allStats  = (await stRes.json()).rows || [];
+    const sessions  = sRes.rows  || [];
+    const allStats  = stRes.rows || [];
 
     _histSessions = sessions.sort((a,b) => {
       const na = parseInt((a.numero||'').replace(/\D/g,'')), nb = parseInt((b.numero||'').replace(/\D/g,''));
@@ -3033,6 +3088,7 @@ async function loadHistory() {
     });
 
     if (sub) sub.textContent = _histSessions.length + ' sessions · click to explore';
+    if (statusEl) statusEl.textContent = `✅ ${_histSessions.length} sessões carregadas.`;
 
     if (!_histSessions.length) {
       grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">📋</div><div>No sessions found in database.</div></div>';
@@ -3069,7 +3125,12 @@ async function loadHistory() {
     }).join('');
 
   } catch(e) {
-    grid.innerHTML = `<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Error loading: ${e.message}</div></div>`;
+    grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Erro ao carregar sessões.</div></div>';
+    if (errorBox) errorBox.style.display = 'block';
+    if (errorMsg) errorMsg.textContent = e.message || String(e);
+    if (statusEl) statusEl.textContent = '❌ Falha ao conectar. Veja o erro abaixo.';
+  } finally {
+    if (btn) { btn.textContent = '↻ Carregar Histórico'; btn.disabled = false; }
   }
 }
 
