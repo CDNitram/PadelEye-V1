@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.1.c</title>
+<title>PadelEye · Session Manager · V6.1.d</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -320,7 +320,7 @@ input[type=number] { -moz-appearance: textfield; }
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V6.1.c</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V6.1.d</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -390,20 +390,14 @@ input[type=number] { -moz-appearance: textfield; }
           <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">SESSION #</label>
           <div id="cfg-num-display" style="background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:8px;padding:8px 12px;font-family:'Bebas Neue';font-size:20px;color:#C9933A;letter-spacing:2px;display:flex;align-items:center;gap:8px;">
             <span id="cfg-num">—</span>
-            <span id="cfg-num-loading" style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;letter-spacing:1px">LOADING...</span>
+            <span id="cfg-num-loading" style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;letter-spacing:1px"></span>
           </div>
         </div>
         <div>
           <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">DATE</label>
-          <div style="position:relative;display:flex;align-items:center">
+          <input type="date" class="team-select" id="cfg-date-hidden"
+              oninput="syncDateBR(this.value)" style="cursor:pointer">
             <input type="hidden" id="cfg-date-iso">
-            <input type="date" id="cfg-date-hidden"
-              class="team-select" style="opacity:0;position:absolute;inset:0;width:100%;cursor:pointer"
-              oninput="syncDateBR(this.value)">
-            <input type="text" class="team-select" id="cfg-date-br" placeholder="DD/MM/AAAA"
-              maxlength="10" style="cursor:pointer;pointer-events:none"
-              oninput="parseDateBR(this.value)" onblur="parseDateBR(this.value)">
-          </div>
         </div>
       </div>
       <div style="margin-bottom:10px">
@@ -908,15 +902,19 @@ function doLogin() {
   document.getElementById('s-app').classList.add('active');
   document.getElementById('tb-av').textContent = currentUser.av;
 
-  // Session number — S19 fallback, update from DB
+  // Session number — fetch from DB, S19 fallback
   const numEl = document.getElementById('cfg-num');
   const numLl = document.getElementById('cfg-num-loading');
-  if (numEl) numEl.textContent = 'S19';
-  if (numLl) numLl.textContent = 'AUTO';
+  if (numLl) numLl.textContent = '⏳';
   PadelEyeDB.fetchNextSessionNumber().then(n => {
     if (numEl) numEl.textContent = n;
+    if (numLl) numLl.textContent = 'AUTO';
     updateHero();
-  }).catch(() => {});
+  }).catch(() => {
+    if (numEl) numEl.textContent = 'S19';
+    if (numLl) numLl.textContent = 'AUTO';
+    updateHero();
+  });
 
   // Date — BR format
   const _t   = new Date();
