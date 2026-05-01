@@ -1120,6 +1120,18 @@ function renderMatchLog() {
             <input class="score-input" type="number" min="0" max="9" placeholder="—" id="ps-b-${i}" oninput="pendingScore(${i})">
           </div>
         </div>
+        <div style="text-align:center;margin-bottom:8px">
+          <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-family:'DM Mono';font-size:10px;color:#9ab0c8">
+            <input type="checkbox" id="ps-tb-${i}" onchange="togglePendingTB(${i})"> TB Tie-Break
+          </label>
+          <div id="ps-tb-scores-${i}" style="display:none;justify-content:center;align-items:center;gap:8px;margin-top:6px">
+            <input type="number" min="0" max="99" placeholder="—" id="ps-tba-${i}"
+              style="width:46px;height:36px;text-align:center;font-family:'Bebas Neue';font-size:20px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd">
+            <span style="font-family:'Bebas Neue';font-size:16px;color:#c0cdd8">×</span>
+            <input type="number" min="0" max="99" placeholder="—" id="ps-tbb-${i}"
+              style="width:46px;height:36px;text-align:center;font-family:'Bebas Neue';font-size:20px;border:1.5px solid #dde6f0;border-radius:8px;outline:none;background:#f8fafd">
+          </div>
+        </div>
         <button id="ps-btn-${i}" onclick="logPending(${i})" class="btn-add-match"
           style="background:#1a7a44;opacity:.35;pointer-events:none;transition:all .2s">✓ Save Match</button>
       </div>`;
@@ -1917,6 +1929,13 @@ function addBlankMatch() {
   document.getElementById('sel-a1')?.focus();
 }
 
+// ── PENDING TB TOGGLE ─────────────────────
+function togglePendingTB(i) {
+  const on  = document.getElementById('ps-tb-'+i)?.checked;
+  const box = document.getElementById('ps-tb-scores-'+i);
+  if (box) box.style.display = on ? 'flex' : 'none';
+}
+
 // ── PENDING MATCH SCORE ─────────────────
 function pendingScore(i) {
   const sa = +document.getElementById('ps-a-'+i)?.value;
@@ -1934,15 +1953,22 @@ function pendingScore(i) {
 }
 
 function logPending(i) {
-  const sa = +document.getElementById('ps-a-'+i)?.value;
-  const sb = +document.getElementById('ps-b-'+i)?.value;
+  const sa  = +document.getElementById('ps-a-'+i)?.value;
+  const sb  = +document.getElementById('ps-b-'+i)?.value;
   if (isNaN(sa)||isNaN(sb)||sa===sb) return;
+  const tbOn = document.getElementById('ps-tb-'+i)?.checked || false;
+  const tba  = tbOn ? (+document.getElementById('ps-tba-'+i)?.value||null) : null;
+  const tbb  = tbOn ? (+document.getElementById('ps-tbb-'+i)?.value||null) : null;
   matches[i].sa = sa;
   matches[i].sb = sb;
+  matches[i].tb  = tbOn;
+  matches[i].tba = tba;
+  matches[i].tbb = tbb;
   matches[i].pending = false;
   renderMatchLog();
   renderScoreboard();
-  showAlert('alert-match', `✅ Match ${i+1} logged: ${sa} × ${sb}`, 'ok');
+  const tbStr = tbOn && tba!==null ? ` (TB ${tba}×${tbb})` : '';
+  showAlert('alert-match', `✅ Match ${i+1} logged: ${sa} × ${sb}${tbStr}`, 'ok');
 }
 
 // ══════════════════════════════════════════
