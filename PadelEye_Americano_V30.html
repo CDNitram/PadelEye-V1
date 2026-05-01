@@ -966,7 +966,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="ok-title">Torneio Criado!</div>
     <div class="ok-sub">O torneio foi configurado com sucesso.</div>
     <div class="ok-details" id="ok-details"></div>
-    <button class="btn btn-gold btn-full" onclick="startRaffle()">🎱 Sortear Grupos & Iniciar</button>
+    <button class="btn btn-gold btn-full" onclick="startRaffle()">🎱 Sortear Grupos &amp; Iniciar</button>
   </div>
 </div>
 
@@ -978,7 +978,7 @@ const USERS = {
   'organizador':                {pass:'padel2026', name:'Carlos Mendes',   club:'H7 Local · Foz do Iguaçu',      role:'organizer'},
   'gerente':                    {pass:'padel2026', name:'Carlos Mendes',   club:'H7 Local · Foz do Iguaçu',      role:'organizer'},
   'martin':                     {pass:'padel2026', name:'Martin Cordoba',  club:'PadelEye, By TechNigma AI Lab',  role:'admin'},
-  'organizer@padeleye.com': {pass:'654321', name:'Martin Cordoba', av:'MC'},
+  'organizer@padeleye.com': {pass:'654321', name:'Martin Cordoba', club:'EcoTenis · Foz do Iguaçu', role:'admin', av:'MC'},
   'marciocarrenho@hotmail.com': {pass:'987654',    name:'Márcio Carrenho', club:'EcoTenis · Organizador',         role:'organizer'},
   'marcio':                     {pass:'987654',    name:'Márcio Carrenho', club:'EcoTenis · Organizador',         role:'organizer'},
   'admin':                      {pass:'admin123',  name:'Administrador',   club:'PadelEye Admin',                 role:'admin'},
@@ -2736,8 +2736,8 @@ let _raffleGroups  = [];   // array of 4 arrays (one per group)
 let _raffleIdx     = 0;    // current draw pointer
 let _raffleTimer   = null; // interval handle
 let _raffleCountdown = 10;
-const GROUP_LETTERS = ['A','B','C','D'];
-const GROUP_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A'];
+const RAFFLE_LETTERS = ['A','B','C','D'];
+const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A'];
 
 function startRaffle() {
   // Pull config
@@ -2764,9 +2764,9 @@ function startRaffle() {
 
   // Render group cards
   const gc = document.getElementById('raffle-groups');
-  gc.innerHTML = GROUP_LETTERS.map((l,i) =>
-    `<div class="raffle-group-card" id="rg-${l}" style="border-color:${GROUP_COLORS[i]}22">
-      <div class="raffle-group-header" style="color:${GROUP_COLORS[i]}">GRUPO ${l}</div>
+  gc.innerHTML = RAFFLE_LETTERS.map((l,i) =>
+    `<div class="raffle-group-card" id="rg-${l}" style="border-color:${RAFFLE_COLORS[i]}22">
+      <div class="raffle-group-header" style="color:${RAFFLE_COLORS[i]}">GRUPO ${l}</div>
       <div id="rg-players-${l}"></div>
     </div>`
   ).join('');
@@ -2829,18 +2829,18 @@ function raffleDrawOne() {
   document.getElementById('raffle-ball-content').style.display = 'flex';
   document.getElementById('raffle-ball-seed').textContent  = isSeed ? '🌱 SEED' : '';
   document.getElementById('raffle-ball-name').textContent  = name;
-  document.getElementById('raffle-ball-grp').textContent   = '→ GRUPO ' + GROUP_LETTERS[groupIdx];
-  document.getElementById('raffle-ball').style.borderColor = GROUP_COLORS[groupIdx];
-  document.getElementById('raffle-ball').style.boxShadow   = `0 0 40px ${GROUP_COLORS[groupIdx]}55, 0 0 80px ${GROUP_COLORS[groupIdx]}22`;
+  document.getElementById('raffle-ball-grp').textContent   = '→ GRUPO ' + RAFFLE_LETTERS[groupIdx];
+  document.getElementById('raffle-ball').style.borderColor = RAFFLE_COLORS[groupIdx];
+  document.getElementById('raffle-ball').style.boxShadow   = `0 0 40px ${RAFFLE_COLORS[groupIdx]}55, 0 0 80px ${RAFFLE_COLORS[groupIdx]}22`;
 
   // Update group card
-  const grpEl = document.getElementById('rg-players-' + GROUP_LETTERS[groupIdx]);
+  const grpEl = document.getElementById('rg-players-' + RAFFLE_LETTERS[groupIdx]);
   const div   = document.createElement('div');
   div.className = 'raffle-group-player';
   div.innerHTML = `${isSeed?'<span class="raffle-seed-star">🌱</span>':''}<span>${name}</span>`;
   grpEl.appendChild(div);
   // Light up the group card
-  const card = document.getElementById('rg-' + GROUP_LETTERS[groupIdx]);
+  const card = document.getElementById('rg-' + RAFFLE_LETTERS[groupIdx]);
   card.classList.add('lit');
   setTimeout(() => card.classList.remove('lit'), 800);
 
@@ -2903,7 +2903,7 @@ function raffleSkip() {
   }
   _raffleRenderQueue();
   // Refresh all group cards
-  GROUP_LETTERS.forEach((l, gi) => {
+  RAFFLE_LETTERS.forEach((l, gi) => {
     const el = document.getElementById('rg-players-' + l);
     el.innerHTML = _raffleGroups[gi].map(p =>
       `<div class="raffle-group-player">${p.seed?'<span class="raffle-seed-star">🌱</span>':''}<span>${p.name}</span></div>`
