@@ -3030,17 +3030,25 @@ async function loadHistory() {
       log('stats: '+((j2.rows||[]).length));
     } catch(e){ log('stats err: '+e.message); }
 
-    grid.innerHTML = _histSessions.map(s=>{
-      const st=statsMap[s.numero]||[];
-      const mvp=s.mvp||st.find(x=>x.mvp==='Yes')?.jogador||'—';
-      const np=s.total_jogadores||st.length||'—';
-      const nm=s.total_partidas||'—';
-      const dt=formatDateBR(s.data);
-      return '<div onclick="histOpen(''+s.numero+'')" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px" onmouseover="this.style.borderColor='#C9933A'" onmouseout="this.style.borderColor='#e2e8f0'">'
-        +'<div style="font-family:'Bebas Neue';font-size:28px;color:#C9933A;letter-spacing:1px;min-width:50px">'+s.numero+'</div>'
-        +'<div><div style="font-size:13px;font-weight:700;color:#0d1e3a">'+dt+' · '+(s.local||'—')+'</div>'
-        +'<div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:3px">'+np+' players · '+nm+' matches · MVP: '+mvp+'</div></div>'
-        +'<div style="font-family:'DM Mono';font-size:11px;color:#c0cdd8">→</div></div>';
+    grid.innerHTML = _histSessions.map(function(s){
+      var st  = statsMap[s.numero] || [];
+      var mvp = s.mvp || (st.find(function(x){return x.mvp==='Yes';}) || {}).jogador || '—';
+      var np  = s.total_jogadores || st.length || '—';
+      var nm  = s.total_partidas || '—';
+      var dt  = formatDateBR(s.data);
+      var num = s.numero;
+      var loc = s.local || '—';
+      var row = '<div onclick="histOpen(\'' + num + '\')" ';
+      row += 'style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px" ';
+      row += 'onmouseover="this.style.borderColor=\'#C9933A\'" onmouseout="this.style.borderColor=\'#e2e8f0\'">';
+      row += '<div style="font-family:serif;font-size:28px;color:#C9933A;letter-spacing:1px;min-width:50px">' + num + '</div>';
+      row += '<div>';
+      row += '<div style="font-size:13px;font-weight:700;color:#0d1e3a">' + dt + ' · ' + loc + '</div>';
+      row += '<div style="font-size:10px;color:#9ab0c8;margin-top:3px">' + np + ' players · ' + nm + ' matches · MVP: ' + mvp + '</div>';
+      row += '</div>';
+      row += '<div style="font-size:11px;color:#c0cdd8">&#x2192;</div>';
+      row += '</div>';
+      return row;
     }).join('');
     log('✅ '+_histSessions.length+' sessões renderizadas');
 
