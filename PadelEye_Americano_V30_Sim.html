@@ -780,7 +780,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
       <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px;line-height:1.6">
         Dos jogadores selecionados no passo anterior, clique para designar as cabeças de chave.
-        Máximo <strong style="color:#0d1e3a">4 seeds</strong> — 1 por grupo (A · B · C · D).
+        Máximo <strong style="color:#0d1e3a" id="seed-max-label">4 seeds</strong> — 1 por grupo. Calculado automaticamente.
         O sistema distribui automaticamente ao iniciar o torneio.
         <div style="margin-top:5px;font-size:10px;color:#c0cdd8">Quando houver histórico de pontos acumulados, o sistema poderá sugerir seeds automaticamente.</div>
       </div>
@@ -818,7 +818,19 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div id="rounds-container">
       <div class="empty-panel"><div class="empty-icon">🏸</div><div>Configure e inicie o torneio no Setup.</div></div>
     </div>
-  </div>
+  
+    <!-- SIM BUTTONS — V30_Sim only -->
+    <div id="sim-buttons" style="display:none;padding:16px 0 8px;border-top:1px solid #eaf0f8;margin-top:16px">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin-bottom:10px">Simulação</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button onclick="simCurrentPhase()" style="width:100%;padding:12px;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#0a1628;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#0a1628'">
+          ⚡ Simular fase atual (placares aleatórios)
+        </button>
+        <button onclick="simAllRemaining()" style="width:100%;padding:12px;background:#0a1628;border:1.5px solid #0a1628;border-radius:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#C9933A;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.background='#132240'" onmouseout="this.style.background='#0a1628'">
+          🏁 Simular todas as fases restantes
+        </button>
+      </div>
+    </div></div>
 
   <!-- ── RANKING ── -->
   <div class="panel" id="p-ranking">
@@ -1172,8 +1184,9 @@ function toggleSeed(name) {
     seedList = seedList.filter(s=>s!==name);
     safeAlert(`🌱 ${name} removido como seed.`,'ok');
   } else {
-    if (seedList.length >= 4) {
-      safeAlert('Máximo de 4 seeds atingido (1 por grupo A · B · C · D).','warn');
+    const _maxSeeds = Math.max(1, Math.floor(selectedPlayers.length / 4));
+    if (seedList.length >= _maxSeeds) {
+      safeAlert('Máximo de ' + _maxSeeds + ' seeds atingido (1 por grupo).','warn');
       return;
     }
     seedList.push(name);
@@ -1276,9 +1289,9 @@ function updateSummary() {
 // AUTO-DISTRIBUTE GROUPS
 // ══════════════════════════════════
 function autoDistributeGroups(players, seeds) {
-  const seeded   = seeds.filter(s=>players.includes(s)).slice(0,4);
+  const numG     = Math.max(1, Math.floor(players.length / 4));
+  const seeded   = seeds.filter(s=>players.includes(s)).slice(0, numG);
   const nonSeeds = players.filter(p=>!seeded.includes(p)).sort(()=>Math.random()-.5);
-  const numG     = Math.min(4,Math.max(1,Math.ceil(players.length/4)));
   const groups   = Array.from({length:numG},(_,i)=>seeded[i]?[seeded[i]]:[]);
   nonSeeds.forEach(p=>{
     const min = groups.reduce((m,g,i)=>g.length<groups[m].length?i:m,0);
@@ -2737,8 +2750,8 @@ let _raffleGroups  = [];   // array of 4 arrays (one per group)
 let _raffleIdx     = 0;    // current draw pointer
 let _raffleTimer   = null; // interval handle
 let _raffleCountdown = 10;
-const RAFFLE_LETTERS = ['A','B','C','D'];
-const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A'];
+const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
+const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
 
 function startRaffle() {
   // Pull config
@@ -2761,11 +2774,13 @@ function startRaffle() {
                      .sort(() => Math.random() - 0.5);
   _raffleQueue   = [...seeds, ...nonSeeds];
   _raffleIdx     = 0;
-  _raffleGroups  = [[], [], [], []];
+  const _numG = Math.max(1, Math.floor(selectedPlayers.length / 4));
+  _raffleGroups  = Array.from({length: _numG}, () => []);
 
   // Render group cards
   const gc = document.getElementById('raffle-groups');
-  gc.innerHTML = RAFFLE_LETTERS.map((l,i) =>
+  gc.style.gridTemplateColumns = _numG <= 2 ? '1fr 1fr' : _numG <= 4 ? '1fr 1fr' : 'repeat(auto-fill,minmax(140px,1fr))';
+  gc.innerHTML = RAFFLE_LETTERS.slice(0, _numG).map((l,i) =>
     `<div class="raffle-group-card" id="rg-${l}" style="border-color:${RAFFLE_COLORS[i]}22">
       <div class="raffle-group-header" style="color:${RAFFLE_COLORS[i]}">GRUPO ${l}</div>
       <div id="rg-players-${l}"></div>
@@ -2948,6 +2963,84 @@ function raffleFinish() {
   document.querySelector('[onclick*="rodadas"]').classList.add('on');
   document.getElementById('p-rodadas').classList.add('on');
 }
+
+
+// ══════════════════════════════════════════
+// SIMULATION — V30_Sim
+// ══════════════════════════════════════════
+function simScore(phaseIdx) {
+  const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:6, tbAt:5};
+  const max = cfg.maxScore || 6;
+  const tb  = cfg.tbAt    || 5;
+  const goTB = Math.random() < 0.12;
+  if (goTB) {
+    const tba = 7 + Math.floor(Math.random()*3);
+    const tbb = tba - 1 - Math.floor(Math.random()*3);
+    return {sa:tb, sb:tb, tb:true, tba, tbb};
+  }
+  const loser = Math.floor(Math.random()*tb);
+  return Math.random()>0.5
+    ? {sa:max, sb:loser, tb:false, tba:null, tbb:null}
+    : {sa:loser, sb:max,  tb:false, tba:null, tbb:null};
+}
+
+function simPhaseMatches(phaseIdx) {
+  const ph = T.phases[phaseIdx];
+  if (!ph) return 0;
+  let count = 0;
+  ph.groups.forEach((group, gi) => {
+    const americano = [];
+    if (group.length === 4) {
+      const [a,b,c,d] = group;
+      americano.push([[a,b],[c,d]], [[a,c],[b,d]], [[a,d],[b,c]]);
+    } else {
+      for (let i=0; i<group.length-1; i+=2)
+        if (i+3 <= group.length)
+          americano.push([[group[i],group[i+1]],[group[i+2],group[i+3]]]);
+    }
+    americano.forEach((_,mi) => {
+      const key = phaseIdx+'-'+gi+'-'+mi;
+      if (T.phases[phaseIdx].results[key]?.saved) return;
+      T.phases[phaseIdx].results[key] = {...simScore(phaseIdx), saved:true};
+      count++;
+    });
+  });
+  return count;
+}
+
+function simCurrentPhase() {
+  if (!T.started) { safeAlert('Inicie o torneio primeiro.','warn'); return; }
+  const pi = T.currentPhase;
+  if (!T.phases[pi]) { safeAlert('Fase não encontrada.','warn'); return; }
+  const count = simPhaseMatches(pi);
+  renderRounds(); renderRanking(); renderHistorico();
+  safeAlert('✅ '+count+' partidas simuladas na fase '+(pi+1)+'. Avance a fase para continuar.','ok');
+}
+
+async function simAllRemaining() {
+  if (!T.started) { safeAlert('Inicie o torneio primeiro.','warn'); return; }
+  for (let i = T.currentPhase; i < 3; i++) {
+    if (!T.phases[i]) break;
+    simPhaseMatches(i);
+    renderRounds(); renderRanking(); renderHistorico();
+    try { if (i < 2) advancePhase(); } catch(e) {}
+    await new Promise(r => setTimeout(r, 150));
+  }
+  renderRounds(); renderRanking(); renderHistorico();
+  const scTab = document.querySelector('[onclick*="scorecard"]');
+  if (scTab) showTab('scorecard', scTab);
+  safeAlert('🏆 Simulação completa! Ver Scorecard.','ok');
+}
+
+// Show sim buttons when raffle finishes and tournament starts
+const _origRaffleFinish = raffleFinish;
+raffleFinish = function() {
+  _origRaffleFinish();
+  setTimeout(() => {
+    const sb = document.getElementById('sim-buttons');
+    if (sb) sb.style.display = 'block';
+  }, 300);
+};
 
 </script>
 </body>
