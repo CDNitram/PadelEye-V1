@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.1.b</title>
+<title>PadelEye · Session Manager · V6.1.c</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -308,6 +308,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .match-item.drag-over{border-top:3px solid #C9933A !important;}
 .drag-handle{color:#c0cdd8;font-size:14px;cursor:grab;padding:0 4px;user-select:none;flex-shrink:0;}
 .drag-handle:hover{color:#C9933A;}
+
+/* Prevent page scroll when using scroll on score inputs */
+input[type=number]:focus { outline: 2px solid #C9933A; }
+input[type=number] { -moz-appearance: textfield; }
 </style>
 </head>
 <body>
@@ -316,7 +320,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V6.1.b</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V6.1.c</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -557,9 +561,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div style="text-align:center;margin-bottom:8px">
         <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1.5px;margin-bottom:8px">SCORE</div>
         <div class="score-row">
-          <input class="score-input" type="number" min="0" max="9" id="sc-a" placeholder="—" oninput="liveScore()">
+          <input class="score-input" type="number" onwheel="this.focus();event.preventDefault()" min="0" max="9" id="sc-a" placeholder="—" oninput="liveScore()">
           <div class="score-x">×</div>
-          <input class="score-input" type="number" min="0" max="9" id="sc-b" placeholder="—" oninput="liveScore()">
+          <input class="score-input" type="number" onwheel="this.focus();event.preventDefault()" min="0" max="9" id="sc-b" placeholder="—" oninput="liveScore()">
         </div>
         <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
           <button class="tb-toggle" id="tb-btn" onclick="toggleTB()">TB Tie-Break</button>
@@ -1161,9 +1165,9 @@ function renderMatchLog() {
         <div style="text-align:center;margin-bottom:8px">
           <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1.5px;margin-bottom:8px">SCORE</div>
           <div class="score-row">
-            <input class="score-input" type="number" min="0" max="9" placeholder="—" id="ps-a-${i}" oninput="pendingScore(${i})">
+            <input class="score-input" type="number" onwheel="this.focus();event.preventDefault()" min="0" max="9" placeholder="—" id="ps-a-${i}" oninput="pendingScore(${i})" onwheel="this.focus();event.preventDefault()">
             <div class="score-x">×</div>
-            <input class="score-input" type="number" min="0" max="9" placeholder="—" id="ps-b-${i}" oninput="pendingScore(${i})">
+            <input class="score-input" type="number" onwheel="this.focus();event.preventDefault()" min="0" max="9" placeholder="—" id="ps-b-${i}" oninput="pendingScore(${i})" onwheel="this.focus();event.preventDefault()">
           </div>
         </div>
         <div style="text-align:center;margin-bottom:8px">
@@ -1202,9 +1206,9 @@ function renderMatchLog() {
 
     const editForm = isEdit ? `
       <div class="edit-form">
-        <input class="edit-score-input" id="edit-sa-${i}" type="number" min="0" max="9" value="${m.sa}" oninput="previewEdit(${i})">
+        <input class="edit-score-input" onwheel="this.focus();event.preventDefault()" id="edit-sa-${i}" type="number" min="0" max="9" value="${m.sa}" oninput="previewEdit(${i})">
         <span style="font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">×</span>
-        <input class="edit-score-input" id="edit-sb-${i}" type="number" min="0" max="9" value="${m.sb}" oninput="previewEdit(${i})">
+        <input class="edit-score-input" onwheel="this.focus();event.preventDefault()" id="edit-sb-${i}" type="number" min="0" max="9" value="${m.sb}" oninput="previewEdit(${i})">
         <button class="btn-edit-save" onclick="saveEdit(${i})">✓ Save</button>
         <button class="btn-edit-cancel" onclick="cancelEdit()">✕</button>
       </div>` : '';
@@ -1212,12 +1216,13 @@ function renderMatchLog() {
     return `<div class="match-item saved ${isEdit?'editing':''}" style="border-color:#e2e8f0;background:#fff;"
       draggable="true" ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event,${i})" ondrop="onDrop(event,${i})" ondragend="onDragEnd(event)">
       <div class="drag-handle" title="Drag to reorder">⠿</div>
-      <div class="match-team ${isPending?'':''+(aWin?'win':'lose')}" style="text-align:left">
-        <span class="match-num" style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#9ab0c8;display:block;margin-bottom:2px">Team A</span>
+      <div class="match-team ${aWin?'win':'lose'}">
+        <span class="match-num">Team A</span>
         ${m.teamA.join('<br>')}
       </div>
-      <div class="match-team right ${isPending?'':''+(aWin?'lose':'win')}" style="text-align:right">
-        <span class="match-num" style="font-family:'DM Mono';font-size:8px;letter-spacing:1px;text-transform:uppercase;color:#9ab0c8;display:block;margin-bottom:2px">Team B</span>
+      ${scoreCell}
+      <div class="match-team right ${aWin?'lose':'win'}">
+        <span class="match-num">Team B</span>
         ${m.teamB.join('<br>')}
       </div>
       ${editForm}
