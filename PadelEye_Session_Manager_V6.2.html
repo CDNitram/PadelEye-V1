@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.2.e</title>
+<title>PadelEye · Session Manager · V6.2.f</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -400,7 +400,9 @@ input[type=number] { -moz-appearance: textfield; }
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V6.2.e</div>
+    <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1.5px;margin-top:6px">Gestão inteligente de sessões de padel</div>
+    <div style="height:1em"></div>
+    <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1.5px">Ecotenis MVP</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -416,7 +418,7 @@ input[type=number] { -moz-appearance: textfield; }
     </div>
     <button class="btn-login" onclick="doLogin()">Open Session →</button>
   </div>
-  <div class="login-footer">PADELEYE · SESSION MANAGER · BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">Session Manager V6.2.f - BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -826,22 +828,12 @@ input[type=number] { -moz-appearance: textfield; }
 
   <!-- ── RANKING TAB ── -->
   <div class="panel" id="p-ranking">
-    <!-- Load trigger bar -->
-    <div id="rk-load-bar" style="background:#f0f5ff;border:1.5px solid #dde6f0;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-      <button onclick="loadRanking()" id="rk-load-btn" style="padding:8px 18px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Rankings</button>
-      <div id="rk-load-status" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;flex:1">Clique para carregar os dados da temporada.</div>
+    <div id="rk-debug" style="background:#0a1628;color:#93C5FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-family:'DM Mono';font-size:10px;line-height:1.8;display:none"></div>
+    <div style="margin-bottom:16px">
+      <button id="rk-main-btn" onclick="loadRanking()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:'DM Mono';font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer">↻ CARREGAR SEASON RANKINGS</button>
     </div>
-    <!-- Error box -->
-    <div id="rk-error-box" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-      <div style="font-family:'DM Mono';font-size:10px;font-weight:700;color:#c0392b;margin-bottom:4px">⚠️ Erro ao carregar rankings</div>
-      <div id="rk-error-msg" style="font-family:'DM Mono';font-size:10px;color:#a04040;word-break:break-all"></div>
-    </div>
-    <div class="rk-status-row">
-      <div class="rk-dot" id="rk-dot"></div>
-      <div class="rk-stxt" id="rk-stxt">—</div>
-      <button class="rk-ref-btn" id="rk-ref-btn" onclick="loadRanking()" title="Refresh" style="margin-left:auto">↻</button>
-    </div>
-
+    <div id="rk-error" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-family:'DM Mono';font-size:11px;color:#c0392b"></div>
+    <div class="rk-status-row"><div class="rk-dot" id="rk-dot"></div><div class="rk-stxt" id="rk-stxt">—</div><button class="rk-ref-btn" id="rk-ref-btn" onclick="loadRanking()" title="Refresh" style="margin-left:auto">↻</button></div>
     <div class="rk-sec">Temporada 2024–2026</div>
     <div class="rk-kpi-grid">
       <div class="rk-kpi"><div class="rk-kpi-v" id="rk-k-players">—</div><div class="rk-kpi-l">Jogadores</div><div class="rk-kpi-sub">na temporada</div></div>
@@ -849,7 +841,6 @@ input[type=number] { -moz-appearance: textfield; }
       <div class="rk-kpi"><div class="rk-kpi-v" id="rk-k-matches">—</div><div class="rk-kpi-l">Partidas</div><div class="rk-kpi-sub">total registradas</div></div>
       <div class="rk-kpi"><div class="rk-kpi-v gold" id="rk-k-leader">—</div><div class="rk-kpi-l">Líder</div><div class="rk-kpi-sub" id="rk-k-leader-sub">—</div></div>
     </div>
-
     <div class="rk-sec">Ranking Completo</div>
     <div class="rk-sort-bar">
       <button class="rk-sbtn on" onclick="rkSetSort('vitorias',this)">🏆 Vitórias</button>
@@ -861,37 +852,21 @@ input[type=number] { -moz-appearance: textfield; }
     </div>
     <div class="rk-tbl">
       <div class="rk-thd">
-        <div class="rk-th">#</div>
-        <div class="rk-th">Jogador</div>
-        <div class="rk-th r rk-hide" id="rk-th-s">Sess</div>
-        <div class="rk-th r rk-hide" id="rk-th-p">Part</div>
-        <div class="rk-th r rk-hide" id="rk-th-v">V</div>
-        <div class="rk-th r rk-hide">D</div>
-        <div class="rk-th r" id="rk-th-wr">WR%</div>
-        <div class="rk-th r" id="rk-th-gd">GD</div>
-        <div class="rk-th r" id="rk-th-mvp">MVP</div>
+        <div class="rk-th">#</div><div class="rk-th">Jogador</div>
+        <div class="rk-th r rk-hide" id="rk-th-s">Sess</div><div class="rk-th r rk-hide" id="rk-th-p">Part</div>
+        <div class="rk-th r rk-hide" id="rk-th-v">V</div><div class="rk-th r rk-hide">D</div>
+        <div class="rk-th r" id="rk-th-wr">WR%</div><div class="rk-th r" id="rk-th-gd">GD</div><div class="rk-th r" id="rk-th-mvp">MVP</div>
       </div>
-      <div id="rk-body">
-        <div id="rk-empty-cta" style="text-align:center;padding:40px 20px">
-          <div style="font-size:32px;margin-bottom:12px">📊</div>
-          <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;margin-bottom:16px">Season Rankings não carregados ainda</div>
-          <button onclick="loadRanking()" style="padding:10px 24px;background:#0a1628;color:#fff;border:none;border-radius:10px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Rankings</button>
-        </div>
-      </div>
+      <div id="rk-body"><div style="text-align:center;padding:30px;color:#9ab0c8;font-family:'DM Mono';font-size:11px">Clique em CARREGAR acima.</div></div>
     </div>
     <div class="rk-upd" id="rk-upd"></div>
-
     <div class="rk-sec">Consistência por Período</div>
     <div class="cb-band">
       <div class="cb-band-title">Consistency Score</div>
       <div class="cb-band-sub">Proximidade à win rate média do grupo. Score 100 = na média exata.</div>
-
       <div class="rk-period-tabs">
-        <button class="rk-ptab on" onclick="rkSetPeriod(6,this)">6M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(9,this)">9M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(12,this)">12M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(24,this)">24M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(36,this)">36M</button>
+        <button class="rk-ptab on" onclick="rkSetPeriod(6,this)">6M</button><button class="rk-ptab" onclick="rkSetPeriod(9,this)">9M</button>
+        <button class="rk-ptab" onclick="rkSetPeriod(12,this)">12M</button><button class="rk-ptab" onclick="rkSetPeriod(24,this)">24M</button><button class="rk-ptab" onclick="rkSetPeriod(36,this)">36M</button>
       </div>
       <div id="rk-period-label" style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:6px;margin-bottom:10px"></div>
       <div style="display:grid;grid-template-columns:130px 1fr 60px 70px 55px;gap:10px;padding:0 0 6px;border-bottom:1px solid #eaf0f8;margin-bottom:6px">
@@ -908,7 +883,6 @@ input[type=number] { -moz-appearance: textfield; }
         <div class="rk-avg-line2"></div><span style="color:#C9933A">Média pessoal (histórico total)</span>
       </div>
     </div>
-
   </div>
 
 
@@ -1075,36 +1049,17 @@ input[type=number] { -moz-appearance: textfield; }
   </div>
   <!-- ── SESSION HISTORY ── -->
   <div class="panel" id="p-history">
-    <div class="alert" id="alert-history"></div>
-
-    <!-- List view -->
+    <div id="hist-debug" style="background:#0a1628;color:#93C5FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-family:'DM Mono';font-size:10px;line-height:1.8;display:none"></div>
     <div id="hist-list-view">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div>
-          <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px">Session History</div>
-          <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px" id="hist-subtitle">Clique para carregar</div>
-        </div>
+      <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:12px">Session History</div>
+      <div style="margin-bottom:16px">
+        <button id="hist-main-btn" onclick="loadHistory()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:'DM Mono';font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer">↻ CARREGAR SESSION HISTORY</button>
       </div>
-      <!-- Load trigger bar -->
-      <div id="hist-load-bar" style="background:#f0f5ff;border:1.5px solid #dde6f0;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-        <button onclick="loadHistory()" id="hist-load-btn" style="padding:8px 18px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Histórico</button>
-        <div id="hist-load-status" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;flex:1">Clique para carregar o histórico de sessões.</div>
-      </div>
-      <!-- Error box -->
-      <div id="hist-error-box" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:16px">
-        <div style="font-family:'DM Mono';font-size:10px;font-weight:700;color:#c0392b;margin-bottom:4px">⚠️ Erro ao carregar histórico</div>
-        <div id="hist-error-msg" style="font-family:'DM Mono';font-size:10px;color:#a04040;word-break:break-all"></div>
-      </div>
+      <div id="hist-error" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-family:'DM Mono';font-size:11px;color:#c0392b"></div>
       <div id="hist-sessions-grid" style="display:flex;flex-direction:column;gap:8px">
-        <div id="hist-empty-cta" style="text-align:center;padding:40px 20px">
-          <div style="font-size:32px;margin-bottom:12px">📋</div>
-          <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;margin-bottom:16px">Session History não carregado ainda</div>
-          <button onclick="loadHistory()" style="padding:10px 24px;background:#0a1628;color:#fff;border:none;border-radius:10px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">↻ Carregar Histórico</button>
-        </div>
+        <div style="text-align:center;padding:30px;color:#9ab0c8;font-family:'DM Mono';font-size:11px">Clique em CARREGAR acima.</div>
       </div>
     </div>
-
-    <!-- Detail view -->
     <div id="hist-detail-view" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
         <button onclick="histBack()" style="padding:7px 12px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;cursor:pointer;color:#5a8aaa">← Back</button>
@@ -1112,22 +1067,18 @@ input[type=number] { -moz-appearance: textfield; }
           <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px" id="hist-detail-num"></div>
           <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8" id="hist-detail-meta"></div>
         </div>
-        <button id="btn-hist-share" onclick="shareHistSession()" style="margin-left:auto;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">🔗 Share</button>
+        <button id="btn-hist-share" onclick="shareHistSession()" style="margin-left:auto;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">🔗 Share</button>
       </div>
-
-      <!-- Sub-tabs -->
       <div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">
-        <button id="hstab-matches" onclick="histSwitch('matches')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff;transition:all .2s">🎯 Matches</button>
-        <button id="hstab-scoreboard" onclick="histSwitch('scoreboard')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">🏆 Scoreboard</button>
-        <button id="hstab-stats" onclick="histSwitch('stats')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">📊 Stats</button>
+        <button id="hstab-matches" onclick="histSwitch('matches')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff">🎯 Matches</button>
+        <button id="hstab-scoreboard" onclick="histSwitch('scoreboard')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8">🏆 Scoreboard</button>
+        <button id="hstab-stats" onclick="histSwitch('stats')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8">📊 Stats</button>
       </div>
-
       <div id="hist-tab-matches"></div>
       <div id="hist-tab-scoreboard" style="display:none"></div>
       <div id="hist-tab-stats" style="display:none"></div>
     </div>
   </div>
-
 </div><!-- /s-app -->
 
 <script>
@@ -2204,69 +2155,49 @@ async function fetchDB(action, params) {
 }
 
 async function loadRanking() {
-  const btn      = document.getElementById('rk-load-btn');
-  const statusEl = document.getElementById('rk-load-status');
-  const errorBox = document.getElementById('rk-error-box');
-  const errorMsg = document.getElementById('rk-error-msg');
-  const dot      = document.getElementById('rk-dot');
-  const stxt     = document.getElementById('rk-stxt');
+  const btn  = document.getElementById('rk-main-btn');
+  const dbg  = document.getElementById('rk-debug');
+  const errEl = document.getElementById('rk-error');
+  const body = document.getElementById('rk-body');
+  const BASE = "https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec";
 
-  // Loading state
-  if (btn) { btn.textContent = '⏳ Carregando...'; btn.disabled = true; }
-  if (statusEl) statusEl.textContent = 'Conectando ao banco de dados...';
-  if (errorBox) errorBox.style.display = 'none';
-  if (dot)  dot.classList.add('rk-spin');
+  function log(msg) { if(dbg){dbg.style.display='block';dbg.innerHTML+=msg+'<br>';} console.log('[RK]',msg); }
+
+  if (btn)  { btn.textContent='⏳ Carregando...'; btn.disabled=true; }
+  if (dbg)  { dbg.style.display='none'; dbg.innerHTML=''; }
+  if (errEl) errEl.style.display='none';
+  if (body) body.innerHTML='<div style="text-align:center;padding:20px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Buscando...</div>';
 
   try {
-    if (statusEl) statusEl.textContent = 'Buscando ranking...';
-    const [rankJson, sessJson] = await Promise.all([
-      fetchDB('get_ranking'),
-      fetchDB('get_sessoes'),
-    ]);
-
-    const rows = rankJson.rows || [];
-    if (!rows.length) {
-      // No live data — use snapshot but mark clearly
-      rkData = RK_SNAPSHOT;
-      rkTotalSessions = 19;
-      if (statusEl) statusEl.textContent = '⚠️ Sem dados no banco — exibindo snapshot local.';
-      if (dot) dot.style.background = '#C9933A';
-      const updEl = document.getElementById('rk-upd');
-      if (updEl) updEl.textContent = 'Usando snapshot local (banco vazio)';
-    } else {
-      rkData = rows;
-      rkTotalSessions = (sessJson.rows || []).length;
-      const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR') : '';
-      const updEl = document.getElementById('rk-upd');
-      if (updEl) updEl.textContent = ts ? `Última atualização: ${ts}` : '';
-      if (statusEl) statusEl.textContent = `✅ ${rows.length} jogadores · ${rkTotalSessions} sessões carregadas.`;
-      if (dot) dot.style.background = '#27AE60';
-      if (stxt) stxt.textContent = `${rows.length} jogadores · ao vivo`;
-    }
-
-    const rkCta = document.getElementById('rk-empty-cta');
-    if (rkCta) rkCta.style.display = 'none';
-    rkUpdateKPIs(rkData);
-    rkRenderTable();
-    rkRenderConsistency();
-
+    log('GET '+BASE+'?action=get_ranking');
+    const r1 = await fetch(BASE+'?action=get_ranking');
+    log('status: '+r1.status);
+    const t1 = await r1.text();
+    log('preview: '+t1.slice(0,100));
+    const j1 = JSON.parse(t1);
+    const rows = j1.rows||[];
+    log('rows: '+rows.length);
+    rkData = rows.length ? rows : RK_SNAPSHOT;
+    if (!rows.length) { if(errEl){errEl.style.display='block';errEl.textContent='Banco vazio — snapshot local.';} }
   } catch(e) {
-    if (errorBox) errorBox.style.display = 'block';
-    if (errorMsg) errorMsg.textContent = e.message || String(e);
-    if (statusEl) statusEl.textContent = '❌ Falha ao conectar. Veja o erro abaixo.';
-    if (dot) dot.style.background = '#e74c3c';
-    // Still render snapshot so page is not empty
+    log('ERRO: '+e.message);
+    if(errEl){errEl.style.display='block';errEl.textContent='Erro: '+e.message;}
     rkData = RK_SNAPSHOT;
-    rkTotalSessions = 19;
-    const rkCta = document.getElementById('rk-empty-cta');
-    if (rkCta) rkCta.style.display = 'none';
-    rkUpdateKPIs(rkData);
-    rkRenderTable();
-    rkRenderConsistency();
+    log('fallback snapshot');
   }
 
-  if (btn) { btn.textContent = '↻ Carregar Rankings'; btn.disabled = false; }
-  if (dot) dot.classList.remove('rk-spin');
+  try {
+    const r2 = await fetch(BASE+'?action=get_sessoes');
+    const j2 = JSON.parse(await r2.text());
+    rkTotalSessions = (j2.rows||[]).length||19;
+    log('sessoes: '+rkTotalSessions);
+  } catch(e) { rkTotalSessions=19; }
+
+  rkUpdateKPIs(rkData);
+  rkRenderTable();
+  rkRenderConsistency();
+  updatePeriodLabel();
+  if (btn) { btn.textContent='↻ CARREGAR SEASON RANKINGS'; btn.disabled=false; }
 }
 
 // ══════════════════════════════════════════
@@ -3057,77 +2988,68 @@ let _histSessions = [];
 let _histCurrent  = null;
 
 async function loadHistory() {
-  const grid      = document.getElementById('hist-sessions-grid');
-  const sub       = document.getElementById('hist-subtitle');
-  const btn       = document.getElementById('hist-load-btn');
-  const statusEl  = document.getElementById('hist-load-status');
-  const errorBox  = document.getElementById('hist-error-box');
-  const errorMsg  = document.getElementById('hist-error-msg');
+  const btn   = document.getElementById('hist-main-btn');
+  const dbg   = document.getElementById('hist-debug');
+  const errEl = document.getElementById('hist-error');
+  const grid  = document.getElementById('hist-sessions-grid');
+  const BASE  = "https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec";
 
-  // Loading state
-  if (btn) { btn.textContent = '⏳ Carregando...'; btn.disabled = true; }
-  if (statusEl) statusEl.textContent = 'Conectando ao banco de dados...';
-  if (errorBox) errorBox.style.display = 'none';
-  grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Buscando sessões...</div></div>';
+  function log(msg) { if(dbg){dbg.style.display='block';dbg.innerHTML+=msg+'<br>';} console.log('[HIST]',msg); }
+
+  if (btn)  { btn.textContent='⏳ Carregando...'; btn.disabled=true; }
+  if (dbg)  { dbg.style.display='none'; dbg.innerHTML=''; }
+  if (errEl) errEl.style.display='none';
+  grid.innerHTML='<div style="text-align:center;padding:20px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Buscando...</div>';
 
   try {
-    if (statusEl) statusEl.textContent = 'Buscando sessões e estatísticas...';
-    const [sRes, stRes] = await Promise.all([
-      fetchDB('get_sessoes'),
-      fetchDB('get_sessao_stats'),
-    ]);
-    const sessions  = sRes.rows  || [];
-    const allStats  = stRes.rows || [];
+    log('GET '+BASE+'?action=get_sessoes');
+    const r1 = await fetch(BASE+'?action=get_sessoes');
+    log('status: '+r1.status);
+    const t1 = await r1.text();
+    log('preview: '+t1.slice(0,100));
+    const j1 = JSON.parse(t1);
+    const sessions = j1.rows||[];
+    log('sessions: '+sessions.length);
 
-    _histSessions = sessions.sort((a,b) => {
-      const na = parseInt((a.numero||'').replace(/\D/g,'')), nb = parseInt((b.numero||'').replace(/\D/g,''));
-      return nb - na;
-    });
-
-    if (sub) sub.textContent = _histSessions.length + ' sessions · click to explore';
-    if (statusEl) statusEl.textContent = `✅ ${_histSessions.length} sessões carregadas.`;
-
-    if (!_histSessions.length) {
-      grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">📋</div><div>No sessions found in database.</div></div>';
+    if (!sessions.length) {
+      grid.innerHTML='<div style="text-align:center;padding:30px;color:#9ab0c8;font-family:DM Mono,monospace">Nenhuma sessão encontrada.</div>';
+      if(errEl){errEl.style.display='block';errEl.textContent='Banco retornou vazio.';}
       return;
     }
 
-    // Build stats map per session
-    const statsMap = {};
-    allStats.forEach(s => {
-      if (!statsMap[s.sessao_numero]) statsMap[s.sessao_numero] = [];
-      statsMap[s.sessao_numero].push(s);
+    _histSessions = sessions.sort((a,b)=>{
+      const na=parseInt((a.numero||'').replace(/[^0-9]/g,'')), nb=parseInt((b.numero||'').replace(/[^0-9]/g,''));
+      return nb-na;
     });
 
-    const hCta = document.getElementById('hist-empty-cta');
-    if (hCta) hCta.style.display = 'none';
-    grid.innerHTML = _histSessions.map(s => {
-      const stats = statsMap[s.numero] || [];
-      const mvp   = s.mvp || stats.find(st=>st.mvp==='Yes')?.jogador || '—';
-      const nPlayers = s.total_jogadores || stats.length || '—';
-      const nMatches = s.total_partidas || '—';
-      const date = formatDateBR(s.data);
+    let statsMap={};
+    try {
+      const r2=await fetch(BASE+'?action=get_sessao_stats');
+      const j2=JSON.parse(await r2.text());
+      (j2.rows||[]).forEach(s=>{ if(!statsMap[s.sessao_numero])statsMap[s.sessao_numero]=[]; statsMap[s.sessao_numero].push(s); });
+      log('stats: '+((j2.rows||[]).length));
+    } catch(e){ log('stats err: '+e.message); }
 
-      return `<div onclick="histOpen('${s.numero}')" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px"
-        onmouseover="this.style.borderColor='#C9933A';this.style.background='#fffbf5'"
-        onmouseout="this.style.borderColor='#e2e8f0';this.style.background='#fff'">
-        <div style="font-family:'Bebas Neue';font-size:28px;color:#C9933A;letter-spacing:1px;min-width:50px">${s.numero}</div>
-        <div>
-          <div style="font-size:13px;font-weight:700;color:#0d1e3a">${date} · ${s.local||'—'}</div>
-          <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:3px">${nPlayers} players · ${nMatches} matches · MVP: ${mvp}</div>
-          ${s.observacoes?`<div style="font-size:11px;color:#7090b0;margin-top:3px;font-style:italic">${s.observacoes}</div>`:''}
-        </div>
-        <div style="font-family:'DM Mono';font-size:11px;color:#c0cdd8">→</div>
-      </div>`;
+    grid.innerHTML = _histSessions.map(s=>{
+      const st=statsMap[s.numero]||[];
+      const mvp=s.mvp||st.find(x=>x.mvp==='Yes')?.jogador||'—';
+      const np=s.total_jogadores||st.length||'—';
+      const nm=s.total_partidas||'—';
+      const dt=formatDateBR(s.data);
+      return '<div onclick="histOpen(''+s.numero+'')" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px" onmouseover="this.style.borderColor='#C9933A'" onmouseout="this.style.borderColor='#e2e8f0'">'
+        +'<div style="font-family:'Bebas Neue';font-size:28px;color:#C9933A;letter-spacing:1px;min-width:50px">'+s.numero+'</div>'
+        +'<div><div style="font-size:13px;font-weight:700;color:#0d1e3a">'+dt+' · '+(s.local||'—')+'</div>'
+        +'<div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:3px">'+np+' players · '+nm+' matches · MVP: '+mvp+'</div></div>'
+        +'<div style="font-family:'DM Mono';font-size:11px;color:#c0cdd8">→</div></div>';
     }).join('');
+    log('✅ '+_histSessions.length+' sessões renderizadas');
 
   } catch(e) {
-    grid.innerHTML = '<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Erro ao carregar sessões.</div></div>';
-    if (errorBox) errorBox.style.display = 'block';
-    if (errorMsg) errorMsg.textContent = e.message || String(e);
-    if (statusEl) statusEl.textContent = '❌ Falha ao conectar. Veja o erro abaixo.';
+    log('ERRO: '+e.message);
+    if(errEl){errEl.style.display='block';errEl.textContent='Erro: '+e.message;}
+    grid.innerHTML='<div style="text-align:center;padding:30px;color:#c0392b;font-family:DM Mono,monospace;font-size:11px">Erro ao carregar.</div>';
   } finally {
-    if (btn) { btn.textContent = '↻ Carregar Histórico'; btn.disabled = false; }
+    if(btn){btn.textContent='↻ CARREGAR SESSION HISTORY';btn.disabled=false;}
   }
 }
 
