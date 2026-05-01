@@ -1926,7 +1926,14 @@ let rkTotalSessions = 19;
 const RK_COLS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A'];
 function rkCol(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return RK_COLS[h%RK_COLS.length];}
 function rkIni(name){return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
-function rkWR(v){return parseInt(String(v).replace('%',''))||0;}
+function rkWR(v) {
+  if (v === undefined || v === null || v === '—') return 0;
+  const s = String(v).replace('%','').trim();
+  const n = parseFloat(s);
+  if (isNaN(n)) return 0;
+  // If stored as decimal (0.83) convert to percent
+  return n > 0 && n <= 1 ? Math.round(n * 100) : Math.round(n);
+}
 function rkWCol(w){return w>=70?'#27AE60':w>=50?'#C9933A':w>=35?'#9ab0c8':'#E74C3C';}
 
 // Consistency data (same as Season Ranking V2)
@@ -2880,6 +2887,41 @@ function renderRecomendacoes() {
 
 
 
+
+// ── SMART DATE PARSER ────────────────────
+function parseSmartDate(raw) {
+  if (!raw) return null;
+  const s = raw.trim();
+
+  // ISO: 2026-04-29
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return new Date(s + 'T12:00:00');
+
+  // BR: 29/04/2026 or 29-04-2026
+  const brMatch = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (brMatch) {
+    const [, dd, mm, yyyy] = brMatch;
+    return new Date(`${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}T12:00:00`);
+  }
+
+  // US: 04/29/2026
+  const usMatch = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (usMatch) {
+    const [, mm, dd, yyyy] = usMatch;
+    const d = new Date(`${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}T12:00:00`);
+    if (!isNaN(d)) return d;
+  }
+
+  // Fallback
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+function formatDateBR(raw, opts) {
+  const d = parseSmartDate(raw);
+  if (!d || isNaN(d)) return '—';
+  return d.toLocaleDateString('pt-BR', opts || {day:'2-digit', month:'short', year:'numeric'});
+}
+
 // ══════════════════════════════════════════
 // SESSION HISTORY
 // ══════════════════════════════════════════
@@ -2923,7 +2965,7 @@ async function loadHistory() {
       const mvp   = s.mvp || stats.find(st=>st.mvp==='Yes')?.jogador || '—';
       const nPlayers = s.total_jogadores || stats.length || '—';
       const nMatches = s.total_partidas || '—';
-      const date = s.data ? new Date(s.data+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+      const date = formatDateBR(s.data);
 
       return `<div onclick="histOpen('${s.numero}')" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px"
         onmouseover="this.style.borderColor='#C9933A';this.style.background='#fffbf5'"
@@ -2966,7 +3008,7 @@ async function histOpen(numero) {
 
     const sess   = allSess.find(s => s.numero === numero) || {};
     const stats  = allStats.filter(s => s.sessao_numero === numero);
-    const date   = sess.data ? new Date(sess.data+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase() : '—';
+    const date = formatDateBR(sess.data, {weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
 
     document.getElementById('hist-detail-meta').textContent =
       date + (sess.local ? ' · ' + sess.local : '');
