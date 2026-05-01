@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.2.b</title>
+<title>PadelEye · Session Manager · V6.2.c</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -231,7 +231,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rk-ptab:hover{border-color:#C9933A;color:#C9933A;}
 .rk-ptab.on{background:#0a1628;color:#fff;border-color:#0a1628;}
 .rk-crows{display:flex;flex-direction:column;gap:6px;}
-.rk-crow{display:grid;grid-template-columns:130px 1fr 70px 65px;align-items:center;gap:10px;}
+.rk-crow{display:grid;grid-template-columns:130px 1fr 70px 70px 65px;align-items:center;gap:10px;}
 .rk-cname{font-size:12px;font-weight:600;color:#0d1e3a;display:flex;align-items:center;gap:6px;}
 .rk-bar-wrap{position:relative;height:7px;background:#f0f5fb;border-radius:4px;overflow:visible;}
 .rk-bar-avg{position:absolute;top:-3px;width:2px;height:13px;background:#0a1628;border-radius:1px;z-index:2;}
@@ -400,7 +400,7 @@ input[type=number] { -moz-appearance: textfield; }
 <div class="screen active" id="s-login">
   <div class="login-brand">
     <div class="login-logo">PADEL<em>EYE</em></div>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V6.2.b</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V6.2.c</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Session Organizer Login</div>
@@ -691,7 +691,13 @@ input[type=number] { -moz-appearance: textfield; }
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="card-title" style="margin-bottom:0">Live Scoreboard</div>
-        <span class="badge gold" id="sb-session-label">—</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="badge gold" id="sb-session-label">—</span>
+          <button id="btn-share" onclick="shareSession()" style="display:none;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#C9933A'" onmouseout="this.style.background='#0a1628'">
+            🔗 Share
+          </button>
+        </div>
+      </div>
       </div>
       <div class="scoreboard" id="scoreboard">
         <div class="empty"><div class="empty-icon">🏆</div>Scoreboard updates<br>as matches are added.</div>
@@ -863,12 +869,21 @@ input[type=number] { -moz-appearance: textfield; }
     <div class="cb-band">
       <div class="cb-band-title">Consistency Score</div>
       <div class="cb-band-sub">Proximidade à win rate média do grupo. Score 100 = na média exata.</div>
+
       <div class="rk-period-tabs">
         <button class="rk-ptab on" onclick="rkSetPeriod(6,this)">6M</button>
         <button class="rk-ptab" onclick="rkSetPeriod(9,this)">9M</button>
         <button class="rk-ptab" onclick="rkSetPeriod(12,this)">12M</button>
         <button class="rk-ptab" onclick="rkSetPeriod(24,this)">24M</button>
         <button class="rk-ptab" onclick="rkSetPeriod(36,this)">36M</button>
+      </div>
+      <div id="rk-period-label" style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:6px;margin-bottom:10px"></div>
+      <div style="display:grid;grid-template-columns:130px 1fr 70px 70px 65px;gap:10px;padding:0 0 6px;border-bottom:1px solid #eaf0f8;margin-bottom:6px">
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px">JOGADOR</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px">WIN RATE</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">WR%</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">VS MÉDIA</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:1px;text-align:right">SCORE</div>
       </div>
       <div class="rk-crows" id="rk-crows"></div>
       <div class="rk-avg-ind">
@@ -1072,13 +1087,13 @@ input[type=number] { -moz-appearance: textfield; }
 
       <!-- Sub-tabs -->
       <div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">
-        <button id="hstab-scoreboard" onclick="histSwitch('scoreboard')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff;transition:all .2s">🏆 Scoreboard</button>
-        <button id="hstab-matches" onclick="histSwitch('matches')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">🎯 Matches</button>
+        <button id="hstab-matches" onclick="histSwitch('matches')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff;transition:all .2s">🎯 Matches</button>
+        <button id="hstab-scoreboard" onclick="histSwitch('scoreboard')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">🏆 Scoreboard</button>
         <button id="hstab-stats" onclick="histSwitch('stats')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">📊 Stats</button>
       </div>
 
-      <div id="hist-tab-scoreboard"></div>
-      <div id="hist-tab-matches" style="display:none"></div>
+      <div id="hist-tab-matches"></div>
+      <div id="hist-tab-scoreboard" style="display:none"></div>
       <div id="hist-tab-stats" style="display:none"></div>
     </div>
   </div>
@@ -1110,6 +1125,7 @@ const BASE_PLAYERS = [
 
 const COLORS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A','#FF5722','#607D8B','#795548','#009688','#673AB7','#FF9800'];
 const pc = name => COLORS[Math.abs([...BASE_PLAYERS].indexOf(name)) % COLORS.length] || COLORS[Math.abs(name.charCodeAt(0)) % COLORS.length];
+const _init = name => (name||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 const init = name => name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 
 let currentUser   = null;
@@ -2018,6 +2034,17 @@ function rkSetPeriod(m, el) {
   document.querySelectorAll('.rk-ptab').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
   rkRenderConsistency();
+  updatePeriodLabel();
+}
+
+function updatePeriodLabel() {
+  const el = document.getElementById('rk-period-label');
+  if (!el) return;
+  const now = new Date();
+  const from = new Date(now);
+  from.setMonth(from.getMonth() - rkPeriod);
+  const fmt = d => d.toLocaleDateString('pt-BR', {month:'short', year:'numeric'}).toUpperCase();
+  el.textContent = `(${fmt(from)} → ${fmt(now)})`;
 }
 
 function rkSetSort(key, el) {
@@ -2996,7 +3023,7 @@ async function histOpen(numero) {
     const el = document.getElementById('hist-tab-'+t);
     if (el) el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Loading...</div></div>';
   });
-  histSwitch('scoreboard');
+  histSwitch('matches');
 
   try {
     const [stRes, pRes] = await Promise.all([
@@ -3130,6 +3157,135 @@ function histSwitch(tab) {
     if (btn) { btn.style.background = t===tab?'#0a1628':'#f4f7fc'; btn.style.color = t===tab?'#fff':'#9ab0c8'; }
   });
 }
+
+// ══════════════════════════════════════════
+// SHARE / PUBLIC VIEW
+// ══════════════════════════════════════════
+function shareSession() {
+  const num  = document.getElementById('cfg-num')?.textContent?.trim() || 'S?';
+  const dateRaw = document.getElementById('cfg-date-hidden')?.value || '';
+  const dateLabel = formatDateBR(dateRaw) || new Date().toLocaleDateString('pt-BR');
+  const url  = window.location.href.split('?')[0] + '?share=' + encodeURIComponent(num) + '&date=' + encodeURIComponent(dateRaw);
+  navigator.clipboard?.writeText(url).then(() => {
+    const btn = document.getElementById('btn-share');
+    if (btn) { btn.textContent = '✅ Copied!'; btn.style.background='#1a7a44'; }
+    setTimeout(() => { if(btn){btn.textContent='🔗 Share';btn.style.background='#0a1628';} }, 2500);
+  }).catch(() => {
+    prompt('Copy this link to share:', url);
+  });
+}
+
+async function initShareMode(sessionNum) {
+  // Hide app, show public view
+  document.getElementById('s-login').style.display = 'none';
+  document.getElementById('s-app').style.display   = 'none';
+
+  const pubDiv = document.createElement('div');
+  pubDiv.id = 's-public';
+  pubDiv.style.cssText = 'min-height:100vh;background:#f0f5fb;padding:16px;max-width:700px;margin:0 auto;';
+  // Set page title
+  const dateParam = params.get('date') || '';
+  const dateLabel = formatDateBR(dateParam) || '';
+  document.title = 'PadelEye Session Report ' + sessionNum + (dateLabel?' · '+dateLabel:'');
+
+  pubDiv.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-family:'Bebas Neue';font-size:28px;color:#0a1628;letter-spacing:2px">PADEL<span style="color:#C9933A">EYE</span></div>
+      <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px">Session Report · ${sessionNum}${dateLabel?' · '+dateLabel:''}</div>
+    </div>
+    <div id="pub-content"><div style="text-align:center;padding:40px;color:#9ab0c8;font-family:'DM Mono'">⏳ Loading session data...</div></div>
+    <div style="margin-top:20px;text-align:center;font-family:'DM Mono';font-size:9px;color:#c0cdd8">
+      Powered by PadelEye · <a href="${window.location.href.split('?')[0]}" style="color:#C9933A;text-decoration:none">Open App</a>
+    </div>`;
+  document.body.appendChild(pubDiv);
+
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec";
+  const pub = document.getElementById('pub-content');
+
+  try {
+    const [stRes, rankRes, sessRes] = await Promise.all([
+      fetch(WEB_APP_URL + '?action=get_sessao_stats'),
+      fetch(WEB_APP_URL + '?action=get_ranking'),
+      fetch(WEB_APP_URL + '?action=get_sessoes'),
+    ]);
+    const allStats = (await stRes.json()).rows   || [];
+    const ranking  = (await rankRes.json()).rows || [];
+    const sessions = (await sessRes.json()).rows || [];
+
+    const stats  = allStats.filter(s => s.sessao_numero === sessionNum);
+    const sess   = sessions.find(s => s.numero === sessionNum) || {};
+    const date   = formatDateBR(sess.data, {weekday:'long',day:'2-digit',month:'long',year:'numeric'})?.toUpperCase() || '—';
+    const ranked = [...stats].sort((a,b) => (+b.vitorias||0)-(+a.vitorias||0) || (+b.gd||0)-(+a.gd||0));
+    const mvp    = ranked.find(s=>s.mvp==='Yes') || ranked[0];
+    const medals = ['🥇','🥈','🥉'];
+
+    // ── Scoreboard ──
+    let html = `
+      <div style="background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:14px;padding:18px;margin-bottom:16px">
+        <div style="font-family:'Bebas Neue';font-size:26px;color:#C9933A;letter-spacing:2px">${sessionNum}</div>
+        <div style="font-size:11px;color:#93C5FD;margin-top:3px">${date}${sess.local?' · '+sess.local:''}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px">
+          ${[{v:stats.length,l:'Players'},{v:sess.total_partidas||'—',l:'Matches'},{v:mvp?.jogador||'—',l:'MVP'}].map(k=>`
+            <div style="text-align:center">
+              <div style="font-family:'Bebas Neue';font-size:24px;color:#C9933A">${k.v}</div>
+              <div style="font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px">${k.l}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin-bottom:10px">🏆 Session Scoreboard</div>
+      ${ranked.map((p,i) => {
+        const m=(+p.partidas||0), w=(+p.vitorias||0), l=(+p.derrotas||0);
+        const wr=m>0?Math.round(w/m*100):0, gd=+p.gd||0;
+        const colors=['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
+        const col = colors[Math.abs([...p.jogador].reduce((a,c)=>a+c.charCodeAt(0),0))%colors.length];
+        const ini = p.jogador.split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+        return `<div style="background:#fff;border:1px solid ${i===0?'#e8c870':'#e2e8f0'};border-radius:10px;padding:10px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px;${i===0?'background:linear-gradient(135deg,#fffbf0,#fff8e0)':''}">
+          <div style="font-size:${i<3?'20px':'13px'};min-width:24px;text-align:center">${medals[i]||i+1}</div>
+          <div style="width:30px;height:30px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:#fff;flex-shrink:0">${ini}</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">${p.jogador}${p.mvp==='Yes'?' <span style="font-size:10px;color:#C9933A;font-family:DM Mono">MVP</span>':''}</div>
+            <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:1px">${m}M · ${w}V · ${l}D · GD ${gd>=0?'+':''}${gd}</div>
+          </div>
+          <div style="font-family:'Bebas Neue';font-size:22px;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'}">${wr}<span style="font-size:11px;color:#9ab0c8">%</span></div>
+        </div>`;
+      }).join('')}`;
+
+    // ── Season Rankings ──
+    const topRanking = [...ranking].sort((a,b)=>rkWR(b.win_rate)-rkWR(a.win_rate)).slice(0,10);
+    html += `
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin:20px 0 10px">📊 Season Rankings · Top 10 · Win Rate</div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
+        ${topRanking.map((p,i) => {
+          const wr = rkWR(p.win_rate), gd=+p.gd||0;
+          const colors=['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
+          const col = colors[Math.abs([...(p.jogador||'')].reduce((a,c)=>a+c.charCodeAt(0),0))%colors.length];
+          const ini = (p.jogador||'?').split(' ').map(x=>x[0]).join('').toUpperCase().slice(0,2);
+          return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f0f4f8">
+            <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;min-width:20px;text-align:center">${i+1}</div>
+            <div style="width:26px;height:26px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:10px;color:#fff;flex-shrink:0">${ini}</div>
+            <div style="flex:1;font-size:12px;font-weight:700;color:#0d1e3a">${p.jogador}</div>
+            <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">${p.vitorias}V · ${p.sessoes}S</div>
+            <div style="font-family:'Bebas Neue';font-size:18px;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'};min-width:40px;text-align:right">${wr}%</div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    pub.innerHTML = html;
+
+  } catch(e) {
+    pub.innerHTML = `<div style="text-align:center;padding:40px;color:#c0392b;font-family:'DM Mono'">⚠️ Could not load data.<br><small>${e.message}</small></div>`;
+  }
+}
+
+// ── CHECK FOR SHARE MODE ON LOAD ──
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const shareNum = params.get('share');
+  if (shareNum) {
+    document.addEventListener('DOMContentLoaded', () => initShareMode(shareNum));
+  }
+})();
 
 </script>
 </body>
