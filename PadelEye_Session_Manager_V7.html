@@ -748,14 +748,7 @@ const USERS = {
 };
 
 // Base player roster — PadelGenius regular players + Liga 7ma
-const BASE_PLAYERS = [
-  // ── Today's session players (EcoTenis · 25 Apr 2026) ──
-  'Daniel','Fabiano','Martin','Dicésar','Cristian','Alex',
-  // ── Regular roster ──
-  'Fábio','Cláudio',
-  'Mahdi','Omar','Julio W','Karim','João G','Michel','Gamarra',
-  'Pedro H','Nathan','Gabriel M','Ricardo B','Claudio O','Vitor Bauer','João Lima','Roberto Carlos',
-];
+const BASE_PLAYERS = []; // loaded from database on login
 
 const COLORS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A','#FF5722','#607D8B','#795548','#009688','#673AB7','#FF9800'];
 const pc = name => COLORS[Math.abs([...BASE_PLAYERS].indexOf(name)) % COLORS.length] || COLORS[Math.abs(name.charCodeAt(0)) % COLORS.length];
@@ -801,7 +794,7 @@ function doLogin() {
   });
 
   updateHero();
-  renderPlayerGrid();
+  loadPlayersFromDB();
   PadelEyeDB.logSession(user, 'session_login', 'session_manager', { name: currentUser.name });
 }
 
@@ -868,6 +861,11 @@ function allPlayers() { return [...BASE_PLAYERS, ...guestPlayers].sort((a,b)=>a.
 
 function renderPlayerGrid() {
   const grid = document.getElementById('player-grid');
+  if (!allPlayers().length) {
+    grid.innerHTML = "<div style='text-align:center;padding:24px;color:#9ab0c8;font-family:monospace;font-size:11px'>Nenhum jogador cadastrado ainda.<br>Use o botão ➕ abaixo para adicionar.</div>";
+    document.getElementById('player-count-badge').textContent = '0 selected';
+    return;
+  }
   grid.innerHTML = allPlayers().map(name => {
     const on = activePlayers.includes(name);
     return `<div class="player-chip ${on?'active':''}" onclick="togglePlayer('${name.replace(/'/g,"\\'")}')">
@@ -1403,10 +1401,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ADD PLAYER FLOW
 // ══════════════════════════════════════════
 
-let PLAYER_REGISTRY = [...BASE_PLAYERS.map((nome,i) => ({
-  id: 2601 + i, nome, sobrenome:'', nickname:nome, categoria:'Masculina',
-  cidade:'', nacionalidade:'', email:'', celular:''
-}))];
+let PLAYER_REGISTRY = []; // loaded from database on login
 
 function nextPlayerId() {
   return Math.max(...PLAYER_REGISTRY.map(p => p.id), 2616) + 1;
@@ -2611,6 +2606,35 @@ function parseSmartDate(raw) {
     document.addEventListener('DOMContentLoaded', () => initShareMode(shareNum));
   }
 })();
+
+
+// ══════════════════════════════════════════
+// LOAD PLAYERS FROM DATABASE
+// ══════════════════════════════════════════
+async function loadPlayersFromDB() {
+  const grid = document.getElementById('player-grid');
+  if (grid) grid.innerHTML = "<div style='text-align:center;padding:20px;font-family:monospace;font-size:11px;color:#9ab0c8'>⏳ Carregando jogadores...</div>";
+  try {
+    const res  = await fetch(PadelEyeDB._url() + '?action=get_jogadores');
+    const json = await res.json();
+    const rows = json.rows || [];
+    if (rows.length) {
+      PLAYER_REGISTRY = rows;
+      BASE_PLAYERS.length = 0;
+      rows.forEach(p => {
+        const display = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+        if (display && !BASE_PLAYERS.includes(display)) BASE_PLAYERS.push(display);
+      });
+      console.log('[V7] Loaded ' + rows.length + ' players from DB');
+    } else {
+      console.warn('[V7] No players in DB yet');
+    }
+  } catch(e) {
+    console.warn('[V7] Could not load players from DB:', e.message);
+  }
+  renderPlayerGrid();
+  updateMatchSelects();
+}
 
 </script>
 </body>
