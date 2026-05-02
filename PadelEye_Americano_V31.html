@@ -2789,7 +2789,7 @@ let _raffleQueue   = [];   // draw order: seeds first, then shuffled rest
 let _raffleGroups  = [];   // array of 4 arrays (one per group)
 let _raffleIdx     = 0;    // current draw pointer
 let _raffleTimer   = null; // interval handle
-let _raffleCountdown = 10;
+let _raffleCountdown = 3;
 const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
 const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
 
@@ -2919,7 +2919,7 @@ function raffleDrawOne() {
   }
 
   // Start countdown for next
-  _raffleCountdown = 10;
+  _raffleCountdown = 3;
   _raffleUpdateCountdown();
   _raffleTimer = setInterval(() => {
     _raffleCountdown--;
@@ -2936,7 +2936,7 @@ function _raffleUpdateCountdown() {
   const prog = document.getElementById('raffle-prog');
   el.textContent = _raffleCountdown + 's';
   el.className   = 'raffle-countdown' + (_raffleCountdown <= 3 ? ' urgent' : '');
-  prog.style.width = (_raffleCountdown / 10 * 100) + '%';
+  prog.style.width = (_raffleCountdown / 3 * 100) + '%';
 }
 
 function raffleNext() {
