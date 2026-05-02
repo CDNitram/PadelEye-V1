@@ -632,7 +632,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
 <!-- ADD PLAYER MODAL -->
 <div id="add-player-modal" onclick="closeAddPlayer(event)">
-  <div class="ap-box">
+  <div class="ap-box" onclick="event.stopPropagation()">
     <div class="ap-title">Novo Jogador</div>
     <div class="ap-sub">Preencha os dados. Campos marcados com * são obrigatórios.</div>
 
