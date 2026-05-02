@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PadelEye · AI Import Terminal · V1</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;background:#f0f5fb;font-family:"DM Sans",sans-serif;font-size:14px;color:#0d1e3a;}
+
+.topbar{background:#0a1628;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.tb-logo{font-family:"Bebas Neue";font-size:22px;color:#fff;letter-spacing:1px;}
+.tb-logo em{color:#C9933A;font-style:normal;}
+.tb-right{font-family:"DM Mono";font-size:9px;color:#5a8aaa;letter-spacing:1px;}
+
+.page{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
+
+.hero{background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:16px;padding:24px;margin-bottom:24px;}
+.hero-title{font-family:"Bebas Neue";font-size:28px;color:#C9933A;letter-spacing:2px;}
+.hero-sub{font-family:"DM Mono";font-size:10px;color:#5a8aaa;letter-spacing:1px;margin-top:4px;}
+.hero-desc{font-size:12px;color:#9ab0c8;margin-top:10px;line-height:1.7;}
+
+.sec{font-family:"DM Mono";font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin:20px 0 10px;display:flex;align-items:center;gap:10px;}
+.sec::after{content:"";flex:1;height:1px;background:#dde6f0;}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;}
+
+/* Terminal input */
+.terminal-wrap{position:relative;}
+.terminal-textarea{width:100%;min-height:220px;background:#0a1628;color:#e2e8f0;font-family:"DM Mono",monospace;font-size:12px;line-height:1.7;padding:16px;border:2px solid #1a3052;border-radius:10px;outline:none;resize:vertical;transition:border-color .2s;}
+.terminal-textarea:focus{border-color:#C9933A;}
+.terminal-textarea::placeholder{color:#2a4a6a;}
+.terminal-char-count{position:absolute;bottom:10px;right:12px;font-family:"DM Mono";font-size:9px;color:#2a4a6a;}
+
+/* Type selector */
+.type-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.type-tab{padding:7px 16px;border-radius:8px;font-family:"DM Mono";font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1.5px solid #dde6f0;background:#f4f7fc;color:#7090b0;transition:all .15s;}
+.type-tab:hover{border-color:#C9933A;color:#C9933A;}
+.type-tab.on{background:#0a1628;color:#C9933A;border-color:#0a1628;}
+
+/* Parse button */
+.btn-parse{width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:"DM Mono";font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.btn-parse:hover{box-shadow:0 4px 16px rgba(201,147,58,.3);}
+.btn-parse:disabled{opacity:.5;cursor:not-allowed;}
+
+/* Status bar */
+.status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-family:"DM Mono";font-size:10px;margin-bottom:14px;}
+.status-bar.loading{background:#e8f0fa;color:#3a7bd5;border:1px solid #b0c8f0;}
+.status-bar.success{background:#e8f8ee;color:#1a7a44;border:1px solid #b0e0c0;}
+.status-bar.error{background:#fff0f0;color:#c0392b;border:1px solid #f5c0c0;}
+.status-bar.idle{background:#f4f7fc;color:#9ab0c8;border:1px solid #e2e8f0;}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.loading .status-dot{background:#3a7bd5;animation:pulse .7s ease infinite alternate;}
+.success .status-dot{background:#27AE60;}
+.error .status-dot{background:#E74C3C;}
+.idle .status-dot{background:#9ab0c8;}
+@keyframes pulse{to{opacity:.3;}}
+
+/* Preview */
+.preview-section{display:none;}
+.preview-section.show{display:block;}
+
+.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.preview-title{font-family:"Bebas Neue";font-size:20px;color:#0a1628;letter-spacing:1px;}
+
+/* Players preview */
+.player-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.player-chip-preview{padding:4px 12px;border-radius:99px;font-size:11px;font-weight:600;color:#fff;display:flex;align-items:center;gap:5px;}
+.chip-new{background:#1a7a44;}
+.chip-existing{background:#3a7bd5;}
+
+/* Matches preview */
+.match-preview{background:#f8fafd;border:1px solid #eaf0f8;border-radius:8px;padding:10px 14px;margin-bottom:6px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;font-size:12px;}
+.match-team{font-weight:600;color:#0d1e3a;}
+.match-team.right{text-align:right;}
+.match-score{font-family:"Bebas Neue";font-size:20px;color:#0a1628;text-align:center;letter-spacing:1px;}
+.match-winner{color:#1a7a44;}
+
+/* Phase badges */
+.phase-badge{display:inline-block;padding:3px 10px;border-radius:5px;font-family:"DM Mono";font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.phase-f1{background:#e8f0fa;color:#3a7bd5;}
+.phase-final{background:#FFF8E0;color:#865a10;}
+
+/* Confirm buttons */
+.btn-row{display:flex;gap:10px;margin-top:16px;}
+.btn-confirm{flex:2;padding:13px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-family:"DM Mono";font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.btn-confirm:hover{background:#C9933A;color:#0a1628;}
+.btn-confirm:disabled{opacity:.5;cursor:not-allowed;}
+.btn-discard{flex:1;padding:13px;background:#f4f7fc;color:#7090b0;border:1px solid #dde6f0;border-radius:10px;font-family:"DM Mono";font-size:10px;cursor:pointer;}
+
+/* Save log */
+.save-log{background:#0a1628;color:#4CAF50;font-family:"DM Mono";font-size:11px;padding:14px;border-radius:8px;line-height:1.8;display:none;max-height:200px;overflow-y:auto;}
+.save-log.show{display:block;}
+
+/* JSON viewer */
+.json-toggle{font-family:"DM Mono";font-size:9px;color:#9ab0c8;cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;}
+.json-view{display:none;background:#f4f7fc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-family:"DM Mono";font-size:10px;color:#5a7090;overflow-x:auto;margin-top:8px;white-space:pre-wrap;}
+
+/* Tone selector */
+.hint-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.hint-chip{padding:4px 10px;border-radius:99px;font-family:"DM Mono";font-size:9px;background:#f0f5fb;border:1px solid #dde6f0;color:#7090b0;cursor:pointer;transition:all .15s;}
+.hint-chip:hover{border-color:#C9933A;color:#C9933A;}
+
+@media(max-width:480px){.btn-row{flex-direction:column;}.match-preview{grid-template-columns:1fr;gap:4px;}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-logo">PADEL<em>EYE</em></div>
+  <div class="tb-right">AI IMPORT TERMINAL · V1</div>
+</div>
+
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-title">AI IMPORT TERMINAL</div>
+    <div class="hero-sub">Powered by Claude · TechNigma AI Lab</div>
+    <div class="hero-desc">
+      Cole aqui qualquer relatório, ficha de jogo, resumo de campeonato ou texto narrativo.<br>
+      O AI vai extrair os dados, mostrar um preview e salvar no banco automaticamente.
+    </div>
+  </div>
+
+  <!-- STEP 1: INPUT -->
+  <div class="sec">1 · Tipo de Dados</div>
+  <div class="card">
+    <div class="type-tabs">
+      <button class="type-tab on" onclick="setType('tournament',this)">🏆 Torneio</button>
+      <button class="type-tab" onclick="setType('session',this)">🎾 Sessão Avulsa</button>
+      <button class="type-tab" onclick="setType('players',this)">👥 Jogadores</button>
+      <button class="type-tab" onclick="setType('auto',this)">🤖 Auto-detectar</button>
+    </div>
+
+    <div class="sec" style="margin-top:0">Exemplos rápidos</div>
+    <div class="hint-chips" id="hint-chips"></div>
+
+    <div class="terminal-wrap">
+      <textarea class="terminal-textarea" id="report-input"
+        placeholder="Cole aqui o relatório, ficha de jogo, texto narrativo, WhatsApp log, etc...&#10;&#10;Exemplo:&#10;Liga Eco de Padel · 6ª Categoria&#10;Grupo A: Fabio, Matheus, João S., Mahdi&#10;(Fabio+Matheus) vs (João S.+Mahdi) 6/2&#10;..."
+        oninput="updateCount()"></textarea>
+      <div class="terminal-char-count" id="char-count">0 chars</div>
+    </div>
+  </div>
+
+  <!-- STEP 2: PARSE -->
+  <div class="sec">2 · Processar com AI</div>
+  <div class="card">
+    <div class="status-bar idle" id="status-bar">
+      <div class="status-dot"></div>
+      <span id="status-text">Pronto para processar. Cole o relatório acima e clique em Processar.</span>
+    </div>
+    <button class="btn-parse" id="btn-parse" onclick="parseReport()">
+      🤖 Processar Relatório com AI
+    </button>
+  </div>
+
+  <!-- STEP 3: PREVIEW & CONFIRM -->
+  <div class="preview-section" id="preview-section">
+    <div class="sec">3 · Preview dos Dados Extraídos</div>
+    <div class="card" id="preview-card">
+      <div class="preview-header">
+        <div class="preview-title" id="preview-title">—</div>
+        <div id="preview-meta" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8"></div>
+      </div>
+      <div id="preview-body"></div>
+      <div class="json-toggle" onclick="toggleJSON()">{ ver JSON completo }</div>
+      <div class="json-view" id="json-view"></div>
+      <div class="btn-row">
+        <button class="btn-discard" onclick="discardPreview()">✕ Descartar</button>
+        <button class="btn-confirm" id="btn-confirm" onclick="confirmSave()">💾 Confirmar e Salvar no Banco</button>
+      </div>
+    </div>
+
+    <div class="save-log" id="save-log"></div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec";
+let currentType   = "tournament";
+let parsedData    = null;
+
+// ── Hints per type ──
+const HINTS = {
+  tournament: [
+    "Liga Eco · 6ª Cat · Grupo A: Fabio, Matheus...",
+    "Torneio com 2 grupos de 4, fase final",
+    "Colar ficha de jogo completa",
+  ],
+  session: [
+    "Sessão avulsa EcoTenis · 6 jogadores",
+    "WhatsApp log de resultados",
+    "Resumo da sessão S21",
+  ],
+  players: [
+    "Adicionar lista de jogadores",
+    "Fabio Silva, 7a Cat, Masculino",
+    "Importar roster do campeonato",
+  ],
+  auto: [
+    "Qualquer texto · AI detecta o tipo",
+    "Relatório completo do campeonato",
+    "Ficha de jogo + lista de jogadores",
+  ],
+};
+
+function setType(type, el) {
+  currentType = type;
+  document.querySelectorAll(".type-tab").forEach(t=>t.classList.remove("on"));
+  el.classList.add("on");
+  renderHints();
+}
+
+function renderHints() {
+  const hints = HINTS[currentType] || [];
+  document.getElementById("hint-chips").innerHTML = hints.map(h =>
+    `<div class="hint-chip" onclick="setHintText(this)">${h}</div>`
+  ).join("");
+}
+
+function setHintText(el) {
+  document.getElementById("report-input").value = el.textContent;
+  updateCount();
+}
+
+function updateCount() {
+  const len = document.getElementById("report-input").value.length;
+  document.getElementById("char-count").textContent = len.toLocaleString("pt-BR") + " chars";
+}
+
+function setStatus(type, text) {
+  const bar = document.getElementById("status-bar");
+  bar.className = "status-bar " + type;
+  bar.innerHTML = `<div class="status-dot"></div><span>${text}</span>`;
+}
+
+// ── PARSE with Claude ──
+async function parseReport() {
+  const input = document.getElementById("report-input").value.trim();
+  if (!input) { setStatus("error", "Cole um relatório antes de processar."); return; }
+
+  const btn = document.getElementById("btn-parse");
+  btn.disabled = true;
+  btn.textContent = "⏳ Processando...";
+  setStatus("loading", "Enviando para o AI · Aguarde...");
+  document.getElementById("preview-section").classList.remove("show");
+  parsedData = null;
+
+  const typeInstructions = {
+    tournament: "Extrair dados de TORNEIO: nome, data, categoria, grupos (nome do grupo + jogadores), todas as partidas (equipa_a, equipa_b, score_a, score_b), classificados por grupo, fase final se houver.",
+    session:    "Extrair dados de SESSÃO AVULSA: data, local, jogadores, todas as partidas (teamA[p1,p2] vs teamB[p1,p2], score_a, score_b, tie_break), MVP se mencionado.",
+    players:    "Extrair lista de JOGADORES: para cada um: nome, sobrenome, nickname, categoria (8a/7a/6a/5a), genero (Masculino/Feminino), cidade, celular, email.",
+    auto:       "Analisa o texto e determina automaticamente se é um TORNEIO, SESSÃO AVULSA ou lista de JOGADORES, depois extrai todos os dados estruturados.",
+  };
+
+  const systemPrompt = `Você é um parser de dados esportivos de padel. ${typeInstructions[currentType]}
+
+REGRAS IMPORTANTES:
+- Responda APENAS com JSON válido, sem texto adicional, sem backticks
+- Use null para campos desconhecidos
+- Datas em formato ISO (YYYY-MM-DD) se possível
+- Nomes exatamente como aparecem no texto
+- Para partidas: score_a e score_b são inteiros
+- Para torneio inclua: { "type": "tournament", "nome": "...", "data": null, "categoria": "...", "fases": [ { "nome": "Fase 1", "grupos": [ { "letra": "A", "jogadores": [...], "partidas": [ { "equipa_a": ["p1","p2"], "equipa_b": ["p3","p4"], "score_a": 6, "score_b": 2 } ], "classificados": [...] } ] }, { "nome": "Final", ... } ], "scorecard": [ { "jogador": "...", "posicao": 1, "fase": "Final" } ] }
+- Para sessão inclua: { "type": "session", "data": null, "local": null, "jogadores": [...], "partidas": [ { "teamA": ["p1","p2"], "teamB": ["p3","p4"], "sa": 6, "sb": 2, "tb": false } ], "mvp": null }
+- Para jogadores inclua: { "type": "players", "jogadores": [ { "nome": "...", "sobrenome": "...", "nickname": "...", "categoria": "...", "genero": "...", "cidade": "...", "email": null, "celular": null } ] }`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: "user", content: input }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || "";
+    const clean = text.replace(/```json|```/g, "").trim();
+    parsedData = JSON.parse(clean);
+    setStatus("success", "✅ Dados extraídos com sucesso! Verifique o preview abaixo.");
+    renderPreview(parsedData);
+    document.getElementById("preview-section").classList.add("show");
+  } catch(e) {
+    setStatus("error", "❌ Erro ao processar: " + e.message);
+    console.error(e);
+  }
+
+  btn.disabled = false;
+  btn.textContent = "🤖 Processar Relatório com AI";
+}
+
+// ── RENDER PREVIEW ──
+function renderPreview(data) {
+  const COLORS = ["#3498DB","#2ECC71","#E74C3C","#F39C12","#9B59B6","#1ABC9C","#E67E22","#E91E63"];
+  const col = (name, i) => COLORS[(name.charCodeAt(0) + i) % COLORS.length];
+
+  let titleText = "", metaText = "", bodyHtml = "";
+
+  if (data.type === "tournament") {
+    titleText = data.nome || "Torneio";
+    metaText  = [data.data, data.categoria].filter(Boolean).join(" · ");
+
+    (data.fases || []).forEach(fase => {
+      bodyHtml += `<div class="phase-badge ${fase.nome.toLowerCase().includes("final") ? "phase-final" : "phase-f1"}">${fase.nome}</div>`;
+      (fase.grupos || []).forEach(grupo => {
+        bodyHtml += `<div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px;margin:8px 0 5px">GRUPO ${grupo.letra || ""} — ${(grupo.jogadores||[]).join(", ")}</div>`;
+        (grupo.partidas || []).forEach(p => {
+          const aWin = p.score_a > p.score_b;
+          bodyHtml += `<div class="match-preview">
+            <div class="match-team ${aWin?"match-winner":""}">${(p.equipa_a||[]).join(" + ")}</div>
+            <div class="match-score">${p.score_a} × ${p.score_b}</div>
+            <div class="match-team right ${!aWin?"match-winner":""}">${(p.equipa_b||[]).join(" + ")}</div>
+          </div>`;
+        });
+        if (grupo.classificados?.length) {
+          bodyHtml += `<div style="font-size:11px;color:#1a7a44;font-family:'DM Mono';margin:4px 0 10px">✅ Classificados: ${grupo.classificados.join(", ")}</div>`;
+        }
+      });
+    });
+
+    // Scorecard
+    if (data.scorecard?.length) {
+      bodyHtml += `<div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px;margin:12px 0 6px">SCORECARD FINAL</div>`;
+      const medals = ["🥇","🥈","🥉","4º"];
+      data.scorecard.forEach((s,i) => {
+        bodyHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:12px">
+          <span style="font-size:16px">${medals[i]||"#"+(i+1)}</span>
+          <span style="font-weight:700">${s.jogador}</span>
+          <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-left:auto">${s.fase||""}</span>
+        </div>`;
+      });
+    }
+
+  } else if (data.type === "session") {
+    titleText = "Sessão Avulsa";
+    metaText  = [data.data, data.local].filter(Boolean).join(" · ");
+
+    const players = data.jogadores || [];
+    bodyHtml += `<div class="player-chips">${players.map((p,i)=>`<div class="player-chip-preview" style="background:${col(p,i)}">${p}</div>`).join("")}</div>`;
+    (data.partidas||[]).forEach((p,i) => {
+      const aWin = p.sa > p.sb;
+      bodyHtml += `<div class="match-preview">
+        <div class="match-team ${aWin?"match-winner":""}">${(p.teamA||[]).join(" + ")}</div>
+        <div class="match-score">${p.sa} × ${p.sb}${p.tb?`<div style="font-size:9px;color:#C9933A">TB</div>`:""}</div>
+        <div class="match-team right ${!aWin?"match-winner":""}">${(p.teamB||[]).join(" + ")}</div>
+      </div>`;
+    });
+    if (data.mvp) bodyHtml += `<div style="margin-top:10px;font-family:'DM Mono';font-size:11px;color:#C9933A">🏅 MVP: ${data.mvp}</div>`;
+
+  } else if (data.type === "players") {
+    titleText = "Jogadores";
+    metaText  = (data.jogadores||[]).length + " jogadores";
+    bodyHtml += `<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#f4f7fc">
+        <th style="padding:7px 8px;text-align:left;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Nome</th>
+        <th style="padding:7px 8px;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Cat</th>
+        <th style="padding:7px 8px;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Género</th>
+        <th style="padding:7px 8px;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Cidade</th>
+      </tr></thead><tbody>`;
+    (data.jogadores||[]).forEach(p => {
+      const nome = p.nickname || (p.nome + (p.sobrenome?" "+p.sobrenome:"")).trim();
+      bodyHtml += `<tr style="border-bottom:1px solid #f0f4f8">
+        <td style="padding:7px 8px;font-weight:700">${nome}</td>
+        <td style="padding:7px 8px;font-family:'DM Mono';font-size:10px;color:#9ab0c8">${p.categoria||"—"}</td>
+        <td style="padding:7px 8px;font-family:'DM Mono';font-size:10px;color:#9ab0c8">${p.genero||"—"}</td>
+        <td style="padding:7px 8px;color:#9ab0c8">${p.cidade||"—"}</td>
+      </tr>`;
+    });
+    bodyHtml += "</tbody></table>";
+  }
+
+  document.getElementById("preview-title").textContent = titleText;
+  document.getElementById("preview-meta").textContent  = metaText;
+  document.getElementById("preview-body").innerHTML    = bodyHtml;
+  document.getElementById("json-view").textContent     = JSON.stringify(data, null, 2);
+}
+
+function toggleJSON() {
+  const el = document.getElementById("json-view");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+}
+
+function discardPreview() {
+  parsedData = null;
+  document.getElementById("preview-section").classList.remove("show");
+  setStatus("idle", "Preview descartado. Cole um novo relatório.");
+}
+
+// ── SAVE TO DB ──
+async function confirmSave() {
+  if (!parsedData) return;
+  const btn = document.getElementById("btn-confirm");
+  const log = document.getElementById("save-log");
+  btn.disabled = true;
+  btn.textContent = "⏳ Salvando...";
+  log.classList.add("show");
+  log.textContent = "";
+
+  function addLog(msg) {
+    log.textContent += msg + "\n";
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const uid = () => "pe_" + Date.now() + "_" + Math.random().toString(36).substr(2,6);
+  const now = new Date().toISOString();
+
+  async function post(action, data) {
+    const res = await fetch(WEB_APP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action, data, timestamp: now })
+    });
+    return res.json();
+  }
+
+  try {
+    if (parsedData.type === "players") {
+      addLog("→ Salvando " + parsedData.jogadores.length + " jogadores...");
+      for (const p of parsedData.jogadores) {
+        const nome = p.nickname || (p.nome + (p.sobrenome?" "+p.sobrenome:"")).trim();
+        const row = {
+          id: uid(), nome: p.nome||nome, sobrenome: p.sobrenome||"",
+          nickname: p.nickname||nome, categoria: p.categoria||"", genero: p.genero||"",
+          cidade: p.cidade||"", nacionalidade: p.nacionalidade||"",
+          email: p.email||"", celular: p.celular||"",
+          created_at: now, ativo: true
+        };
+        await post("insert_jogador", { row });
+        addLog("  ✅ " + nome);
+      }
+      addLog("\n🏁 " + parsedData.jogadores.length + " jogadores salvos.");
+
+    } else if (parsedData.type === "tournament") {
+      const tornId = uid();
+      addLog("→ Criando torneio: " + parsedData.nome);
+      await post("insert_torneio", { row: {
+        id: tornId, nome: parsedData.nome||"Torneio", data: parsedData.data||now.slice(0,10),
+        formato: "Americano", organizador: "AI Import", vagas: 0,
+        scoring: "Normal", status: "Finalizado", created_at: now
+      }});
+      addLog("  ✅ Torneio criado ID: " + tornId);
+
+      // Save all matches from all phases
+      let totalPartidas = 0;
+      for (const fase of (parsedData.fases||[])) {
+        for (const grupo of (fase.grupos||[])) {
+          for (const p of (grupo.partidas||[])) {
+            await post("insert_partida", { row: {
+              id: uid(), torneio_id: tornId, fase: fase.nome, grupo: grupo.letra||"",
+              partida: ++totalPartidas,
+              equipa_a: (p.equipa_a||[]).join(" / "), equipa_b: (p.equipa_b||[]).join(" / "),
+              score_a: p.score_a, score_b: p.score_b,
+              tie_break: "No", tb_a: "", tb_b: "",
+              saved_at: now
+            }});
+          }
+        }
+        addLog("  ✅ " + fase.nome + ": partidas salvas");
+      }
+
+      // Save scorecard
+      if (parsedData.scorecard?.length) {
+        const scRows = parsedData.scorecard.map((s,i) => ({
+          id: uid(), torneio_id: tornId, torneio_nome: parsedData.nome,
+          data: parsedData.data||now.slice(0,10),
+          jogador: s.jogador, pts_base: [100,50,10][i]||0,
+          pts_bonus: i===0?300:i===1?200:i===2?100:0,
+          pts_total: i===0?400:i===1?250:i===2?110:10,
+          fase_atingida: s.fase||"", posicao: s.posicao||i+1,
+          created_at: now
+        }));
+        await post("insert_scorecard", { rows: scRows });
+        addLog("  ✅ Scorecard: " + scRows.length + " registros");
+      }
+      addLog("\n🏆 Torneio salvo — " + totalPartidas + " partidas.");
+
+    } else if (parsedData.type === "session") {
+      const sessId  = uid();
+      const sessNum = "S-AI-" + Date.now().toString().slice(-4);
+      addLog("→ Criando sessão " + sessNum);
+      await post("insert_sessao", { row: {
+        id: sessId, numero: sessNum, data: parsedData.data||now.slice(0,10),
+        local: parsedData.local||"", total_jogadores: (parsedData.jogadores||[]).length,
+        total_partidas: (parsedData.partidas||[]).length,
+        formato: "Doubles · Rotating", mvp: parsedData.mvp||"",
+        observacoes: "Importado via AI Terminal", created_at: now
+      }});
+
+      const partRows = (parsedData.partidas||[]).map((p,i) => ({
+        id: uid(), sessao_id: sessId, sessao_numero: sessNum, numero: i+1,
+        equipa_a: (p.teamA||[]).join(" / "), equipa_b: (p.teamB||[]).join(" / "),
+        score_a: p.sa, score_b: p.sb,
+        tie_break: p.tb?"Yes":"No", tb_a: p.tba||"", tb_b: p.tbb||"",
+        created_at: now
+      }));
+      if (partRows.length) await post("insert_sessao_partidas", { rows: partRows });
+
+      addLog("  ✅ " + partRows.length + " partidas salvas");
+      addLog("\n🎾 Sessão " + sessNum + " salva.");
+    }
+
+    btn.textContent = "✅ Salvo com sucesso!";
+    btn.style.background = "#1a7a44";
+    btn.style.color = "#fff";
+    btn.style.borderColor = "#1a7a44";
+    setStatus("success", "✅ Dados salvos no banco com sucesso!");
+
+  } catch(e) {
+    addLog("\n❌ ERRO: " + e.message);
+    setStatus("error", "❌ Erro ao salvar: " + e.message);
+    btn.disabled = false;
+    btn.textContent = "💾 Confirmar e Salvar no Banco";
+  }
+}
+
+// ── INIT ──
+renderHints();
+updateCount();
+</script>
+</body>
+</html>
