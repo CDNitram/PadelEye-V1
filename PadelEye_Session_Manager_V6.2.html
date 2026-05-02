@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V6.2.f</title>
+<title>PadelEye · Session Manager · V6.2.g</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -418,7 +418,7 @@ input[type=number] { -moz-appearance: textfield; }
     </div>
     <button class="btn-login" onclick="doLogin()">Open Session →</button>
   </div>
-  <div class="login-footer">Session Manager V6.2.f - BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">Session Manager V6.2.g - BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -2156,48 +2156,50 @@ async function fetchDB(action, params) {
 
 async function loadRanking() {
   const btn  = document.getElementById('rk-main-btn');
-  const dbg  = document.getElementById('rk-debug');
+  const dot  = document.getElementById('rk-dot');
+  const stxt = document.getElementById('rk-stxt');
   const errEl = document.getElementById('rk-error');
-  const body = document.getElementById('rk-body');
   const BASE = "https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec";
 
-  function log(msg) { if(dbg){dbg.style.display='block';dbg.innerHTML+=msg+'<br>';} console.log('[RK]',msg); }
-
   if (btn)  { btn.textContent='⏳ Carregando...'; btn.disabled=true; }
-  if (dbg)  { dbg.style.display='none'; dbg.innerHTML=''; }
+  if (dot)  dot.classList.add('rk-spin');
+  if (stxt) stxt.textContent='Atualizando ranking...';
   if (errEl) errEl.style.display='none';
-  if (body) body.innerHTML='<div style="text-align:center;padding:20px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Buscando...</div>';
 
   try {
-    log('GET '+BASE+'?action=get_ranking');
-    const r1 = await fetch(BASE+'?action=get_ranking');
-    log('status: '+r1.status);
-    const t1 = await r1.text();
-    log('preview: '+t1.slice(0,100));
-    const j1 = JSON.parse(t1);
-    const rows = j1.rows||[];
-    log('rows: '+rows.length);
-    rkData = rows.length ? rows : RK_SNAPSHOT;
-    if (!rows.length) { if(errEl){errEl.style.display='block';errEl.textContent='Banco vazio — snapshot local.';} }
+    const [rankRes, sessRes] = await Promise.all([
+      fetch(BASE+'?action=get_ranking'),
+      fetch(BASE+'?action=get_sessoes'),
+    ]);
+    if (!rankRes.ok) throw new Error('HTTP '+rankRes.status);
+    const rankJson = await rankRes.json();
+    const sessJson = sessRes.ok ? await sessRes.json() : {rows:[]};
+    const rows = rankJson.rows || [];
+    if (!rows.length) throw new Error('empty');
+    rkData = rows;
+    rkTotalSessions = (sessJson.rows||[]).length;
+    const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR') : '';
+    const updEl = document.getElementById('rk-upd');
+    if (updEl) updEl.textContent = ts ? 'Última atualização: '+ts : '';
+    if (stxt) stxt.textContent = rows.length+' jogadores · '+rkTotalSessions+' sessões · ao vivo';
+    if (dot)  dot.style.background='#27AE60';
   } catch(e) {
-    log('ERRO: '+e.message);
-    if(errEl){errEl.style.display='block';errEl.textContent='Erro: '+e.message;}
     rkData = RK_SNAPSHOT;
-    log('fallback snapshot');
+    rkTotalSessions = 19;
+    if (dot)  dot.style.background='#C9933A';
+    if (stxt) stxt.textContent='Snapshot local · Sheets offline';
+    const updEl = document.getElementById('rk-upd');
+    if (updEl) updEl.textContent='Usando dados locais';
+    if (errEl) { errEl.style.display='block'; errEl.textContent='Erro ao conectar: '+e.message; }
   }
 
-  try {
-    const r2 = await fetch(BASE+'?action=get_sessoes');
-    const j2 = JSON.parse(await r2.text());
-    rkTotalSessions = (j2.rows||[]).length||19;
-    log('sessoes: '+rkTotalSessions);
-  } catch(e) { rkTotalSessions=19; }
-
+  // Always render — snapshot or live
   rkUpdateKPIs(rkData);
   rkRenderTable();
   rkRenderConsistency();
   updatePeriodLabel();
-  if (btn) { btn.textContent='↻ CARREGAR SEASON RANKINGS'; btn.disabled=false; }
+  if (btn)  { btn.textContent='↻ CARREGAR SEASON RANKINGS'; btn.disabled=false; }
+  if (dot)  dot.classList.remove('rk-spin');
 }
 
 // ══════════════════════════════════════════
@@ -3053,9 +3055,8 @@ async function loadHistory() {
     log('✅ '+_histSessions.length+' sessões renderizadas');
 
   } catch(e) {
-    log('ERRO: '+e.message);
     if(errEl){errEl.style.display='block';errEl.textContent='Erro: '+e.message;}
-    grid.innerHTML='<div style="text-align:center;padding:30px;color:#c0392b;font-family:DM Mono,monospace;font-size:11px">Erro ao carregar.</div>';
+    grid.innerHTML='<div style="text-align:center;padding:30px;font-family:DM Mono,monospace;font-size:11px;color:#c0392b">Erro ao conectar: '+e.message+'</div>';
   } finally {
     if(btn){btn.textContent='↻ CARREGAR SESSION HISTORY';btn.disabled=false;}
   }
