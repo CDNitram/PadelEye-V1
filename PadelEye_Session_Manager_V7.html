@@ -418,7 +418,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <span class="badge gray" id="player-count-badge">0 selected</span>
       </div>
       <div class="player-grid" id="player-grid"></div>
-      <button onclick="openAddPlayer()" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;background:#fff;border:1.5px dashed #9ab0c8;border-radius:8px;font-size:12px;font-weight:600;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .2s" onmouseover="this.style.borderColor='#3a7bd5';this.style.color='#0d1e3a'" onmouseout="this.style.borderColor='#9ab0c8';this.style.color='#5a7090'">➕ Add New Player to Database</button>
+      <button onclick="openAddPlayer()" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;background:#fff;border:1.5px dashed #9ab0c8;border-radius:8px;font-size:12px;font-weight:600;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .2s" onmouseover="this.style.borderColor='#3a7bd5';this.style.color='#0d1e3a'" onmouseout="this.style.borderColor='#9ab0c8';this.style.color='#5a7090'">➕ Novo Jogador to Database</button>
       <!-- Add guest -->
       <div style="display:flex;gap:8px;margin-top:8px">
         <input class="team-select" id="guest-input" placeholder="Add guest player..." maxlength="20" onkeydown="if(event.key==='Enter')addGuest()">
@@ -633,67 +633,74 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <!-- ADD PLAYER MODAL -->
 <div id="add-player-modal" onclick="closeAddPlayer(event)">
   <div class="ap-box">
-    <div class="ap-title">Add New Player</div>
-    <div class="ap-sub">Fill in the details. Fields marked * are required.</div>
+    <div class="ap-title">Novo Jogador</div>
+    <div class="ap-sub">Preencha os dados. Campos marcados com * são obrigatórios.</div>
 
-    <div class="ap-id">ID <strong id="ap-id-preview">Will be assigned on save</strong></div>
+    <div class="ap-id">ID <strong id="ap-id-preview">Será atribuído ao salvar</strong></div>
 
-    <div class="ap-section">Identity *</div>
+    <div class="ap-section">Identidade *</div>
     <div class="ap-grid">
       <div class="ap-field">
-        <label>First Name <span class="ap-req">*</span></label>
-        <input class="team-select" id="ap-nome" placeholder="First name">
+        <label>Nome <span class="ap-req">*</span></label>
+        <input class="team-select" id="ap-nome" placeholder="Nome">
       </div>
       <div class="ap-field">
-        <label>Last Name <span class="ap-req">*</span></label>
-        <input class="team-select" id="ap-sobrenome" placeholder="Last name">
+        <label>Sobrenome <span class="ap-req">*</span></label>
+        <input class="team-select" id="ap-sobrenome" placeholder="Sobrenome">
       </div>
     </div>
     <div class="ap-field">
-      <label>Nickname <span class="ap-opt">optional</span></label>
-      <input class="team-select" id="ap-nickname" placeholder="e.g. Negão, Gordão...">
+      <label>Apelido <span class="ap-opt">opcional</span></label>
+      <input class="team-select" id="ap-nickname" placeholder="ex: Gordão, Baixinho...">
     </div>
 
-    <div class="ap-section">Category *</div>
-    <div class="ap-field">
-      <label>Category <span class="ap-req">*</span></label>
-      <select class="team-select" id="ap-categoria">
-        <option value="">Select category...</option>
-        <option value="Masculina">Masculina</option>
-        <option value="Feminina">Feminina</option>
-        <option value="Mista">Mista</option>
-        <option value="Júnior Masculino">Júnior Masculino</option>
-        <option value="Júnior Feminino">Júnior Feminino</option>
-        <option value="Sênior Masculino">Sênior Masculino</option>
-        <option value="Sênior Feminino">Sênior Feminino</option>
-      </select>
+    <div class="ap-section">Categoria *</div>
+    <div class="ap-grid">
+      <div class="ap-field">
+        <label>Categoria Atual <span class="ap-req">*</span></label>
+        <select class="team-select" id="ap-categoria">
+          <option value="">Selecione...</option>
+          <option value="8a">8ª Categoria</option>
+          <option value="7a">7ª Categoria</option>
+          <option value="6a">6ª Categoria</option>
+          <option value="5a">5ª Categoria</option>
+        </select>
+      </div>
+      <div class="ap-field">
+        <label>Género <span class="ap-req">*</span></label>
+        <select class="team-select" id="ap-genero">
+          <option value="">Selecione...</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Feminino">Feminino</option>
+        </select>
+      </div>
     </div>
 
     <div class="ap-section">Location & Contact <span class="ap-opt">optional</span></div>
     <div class="ap-grid">
       <div class="ap-field">
-        <label>City <span class="ap-opt">optional</span></label>
-        <input class="team-select" id="ap-cidade" placeholder="e.g. Foz do Iguaçu">
+        <label>Cidade <span class="ap-opt">opcional</span></label>
+        <input class="team-select" id="ap-cidade" placeholder="ex: Foz do Iguaçu">
       </div>
       <div class="ap-field">
-        <label>Nationality <span class="ap-opt">optional</span></label>
-        <input class="team-select" id="ap-nacionalidade" placeholder="e.g. Brasileiro">
+        <label>Nacionalidade <span class="ap-opt">opcional</span></label>
+        <input class="team-select" id="ap-nacionalidade" placeholder="ex: Brasileiro">
       </div>
     </div>
     <div class="ap-grid">
       <div class="ap-field">
-        <label>Email <span class="ap-opt">optional</span></label>
+        <label>E-mail <span class="ap-opt">opcional</span></label>
         <input class="team-select" id="ap-email" type="email" placeholder="email@...">
       </div>
       <div class="ap-field">
-        <label>Phone <span class="ap-opt">optional</span></label>
+        <label>Celular <span class="ap-opt">opcional</span></label>
         <input class="team-select" id="ap-celular" placeholder="+55 (45)...">
       </div>
     </div>
 
     <div class="ap-actions">
-      <button class="btn-ap-cancel" onclick="closeAddPlayer()">Cancel</button>
-      <button class="btn-ap-save" onclick="saveNewPlayer()">💾 Save to Database</button>
+      <button class="btn-ap-cancel" onclick="closeAddPlayer()">Cancelar</button>
+      <button class="btn-ap-save" onclick="saveNewPlayer()">💾 Salvar no Banco de Dados</button>
     </div>
     <div class="ap-status" id="ap-status"></div>
   </div>
@@ -1404,13 +1411,15 @@ document.addEventListener('DOMContentLoaded', () => {
 let PLAYER_REGISTRY = []; // loaded from database on login
 
 function nextPlayerId() {
-  return Math.max(...PLAYER_REGISTRY.map(p => p.id), 2616) + 1;
+  // Scalable: timestamp + random — no need to load all players
+  return 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 }
 
 function openAddPlayer() {
   ['ap-nome','ap-sobrenome','ap-nickname','ap-cidade','ap-nacionalidade','ap-email','ap-celular']
     .forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
   document.getElementById('ap-categoria').value = '';
+  document.getElementById('ap-genero').value = '';
   document.getElementById('ap-id-preview').textContent = `#${nextPlayerId()} (assigned on save)`;
   document.getElementById('ap-status').style.display = 'none';
   document.getElementById('add-player-modal').classList.add('show');
@@ -1427,10 +1436,12 @@ async function saveNewPlayer() {
   const nome      = document.getElementById('ap-nome').value.trim();
   const sobrenome = document.getElementById('ap-sobrenome').value.trim();
   const categoria = document.getElementById('ap-categoria').value;
+  const genero    = document.getElementById('ap-genero').value;
 
-  if (!nome)      { document.getElementById('ap-nome').focus();      showAlert('alert-session','First name is required.','warn'); return; }
-  if (!sobrenome) { document.getElementById('ap-sobrenome').focus(); showAlert('alert-session','Last name is required.','warn'); return; }
-  if (!categoria) { document.getElementById('ap-categoria').focus(); showAlert('alert-session','Category is required.','warn'); return; }
+  if (!nome)      { document.getElementById('ap-nome').focus();      showAlert('alert-session','Nome é obrigatório.','warn'); return; }
+  if (!sobrenome) { document.getElementById('ap-sobrenome').focus(); showAlert('alert-session','Sobrenome é obrigatório.','warn'); return; }
+  if (!categoria) { document.getElementById('ap-categoria').focus(); showAlert('alert-session','Categoria é obrigatória.','warn'); return; }
+  if (!genero)    { document.getElementById('ap-genero').focus();    showAlert('alert-session','Género é obrigatório.','warn'); return; }
 
   const newId   = nextPlayerId();
   const nickname = document.getElementById('ap-nickname').value.trim();
@@ -1442,6 +1453,7 @@ async function saveNewPlayer() {
     sobrenome,
     nickname,
     categoria,
+    genero,
     cidade:        document.getElementById('ap-cidade').value.trim(),
     nacionalidade: document.getElementById('ap-nacionalidade').value.trim(),
     email:         document.getElementById('ap-email').value.trim(),
@@ -1457,14 +1469,14 @@ async function saveNewPlayer() {
 
   // Show saving status
   const st = document.getElementById('ap-status');
-  st.textContent = 'Saving to database...';
+  st.textContent = 'Salvando no banco de dados...';
   st.style.cssText = 'display:block;color:#3a7bd5;font-size:11px;margin-top:8px;text-align:center';
 
   // Push to Google Sheets
   const result = await PadelEyeDB.registerPlayer(player);
 
   if (result.status !== 'error') {
-    st.textContent = `✅ ${displayName} added (ID #${newId}) — already selected for today.`;
+    st.textContent = `✅ ${displayName} added (ID #${newId}) — já selecionado para hoje.`;
     st.style.color = '#1a7a44';
     setTimeout(() => {
       document.getElementById('add-player-modal').classList.remove('show');
@@ -1472,7 +1484,7 @@ async function saveNewPlayer() {
       updateMatchSelects();
     }, 1500);
   } else {
-    st.textContent = '⚠️ Saved locally. Could not reach database — check connection.';
+    st.textContent = '⚠️ Salvo localmente. Banco inacessível — verifique a conexão.';
     st.style.color = '#f97316';
     setTimeout(() => {
       document.getElementById('add-player-modal').classList.remove('show');
@@ -1767,7 +1779,7 @@ function closeModals() {
 function saveClub() {
   const name = document.getElementById('new-club-name').value.trim();
   const city = document.getElementById('new-club-city').value.trim();
-  if (!name || !city) { alert('Fill in Club name and City.'); return; }
+  if (!name || !city) { alert('Preencha o nome do clube e a cidade.'); return; }
   if (!clubs.find(c=>c.name===name)) clubs.push({name, city});
   closeModals();
 }
@@ -1775,7 +1787,7 @@ function saveClub() {
 function saveCourt() {
   const club = document.getElementById('new-court-club').value;
   const type = document.getElementById('new-court-type').value;
-  if (!club) { alert('Select a club first.'); return; }
+  if (!club) { alert('Selecione um clube primeiro.'); return; }
   const clubObj = clubs.find(c=>c.name===club);
   if (!courts.find(c=>c.club===club&&c.type===type)) {
     courts.push({ club, type, city: clubObj?.city||'' });
@@ -2162,7 +2174,7 @@ function openAddCourt() {
 function saveClub() {
   const name = document.getElementById('new-club-name').value.trim();
   const city = document.getElementById('new-club-city').value.trim();
-  if (!name || !city) { alert('Fill in Club name and City.'); return; }
+  if (!name || !city) { alert('Preencha o nome do clube e a cidade.'); return; }
   if (!clubs.find(c=>c.name===name)) clubs.push({name, city});
   closeModals();
 }
@@ -2170,7 +2182,7 @@ function saveClub() {
 function saveCourt() {
   const club = document.getElementById('new-court-club').value;
   const type = document.getElementById('new-court-type').value;
-  if (!club) { alert('Select a club first.'); return; }
+  if (!club) { alert('Selecione um clube primeiro.'); return; }
   const clubObj = clubs.find(c=>c.name===club);
   if (!courts.find(c=>c.club===club&&c.type===type)) {
     courts.push({ club, type, city: clubObj?.city||'' });
