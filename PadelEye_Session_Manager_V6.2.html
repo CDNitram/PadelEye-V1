@@ -1834,6 +1834,11 @@ const PadelEyeDB = (() => {
 
 // ── INIT ──
 document.addEventListener('DOMContentLoaded', () => {
+  // Pre-render ranking with snapshot so tab is never blank
+  rkUpdateKPIs(RK_SNAPSHOT);
+  rkRenderTable();
+  rkRenderConsistency();
+  updatePeriodLabel();
   // Wire config inputs to hero update
   ['cfg-num','cfg-date-hidden','cfg-local'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', updateHero);
@@ -1944,10 +1949,11 @@ async function saveNewPlayer() {
 // ══════════════════════════════════════════
 // RANKING TAB
 // ══════════════════════════════════════════
-let rkData = [];
+let rkData = RK_SNAPSHOT; // pre-populated — updated live after fetch
 let rkSort = 'vitorias';
 let rkPeriod = 6;
 let rkTotalSessions = 19;
+
 
 const RK_COLS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A'];
 function rkCol(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xffff;return RK_COLS[h%RK_COLS.length];}
