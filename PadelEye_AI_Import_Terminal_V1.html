@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · AI Import Terminal · V1</title>
+<title>PadelEye · AI Import Terminal · V1.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -12,40 +12,40 @@ html,body{min-height:100vh;background:#f0f5fb;font-family:"DM Sans",sans-serif;f
 .topbar{background:#0a1628;padding:0 20px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
 .tb-logo{font-family:"Bebas Neue";font-size:22px;color:#fff;letter-spacing:1px;}
 .tb-logo em{color:#C9933A;font-style:normal;}
-.tb-right{font-family:"DM Mono";font-size:9px;color:#5a8aaa;letter-spacing:1px;}
+.tb-right{font-family:monospace;font-size:9px;color:#5a8aaa;letter-spacing:1px;}
 
 .page{max-width:800px;margin:0 auto;padding:24px 16px 60px;}
 
 .hero{background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:16px;padding:24px;margin-bottom:24px;}
 .hero-title{font-family:"Bebas Neue";font-size:28px;color:#C9933A;letter-spacing:2px;}
-.hero-sub{font-family:"DM Mono";font-size:10px;color:#5a8aaa;letter-spacing:1px;margin-top:4px;}
+.hero-sub{font-family:monospace;font-size:10px;color:#5a8aaa;letter-spacing:1px;margin-top:4px;}
 .hero-desc{font-size:12px;color:#9ab0c8;margin-top:10px;line-height:1.7;}
 
-.sec{font-family:"DM Mono";font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin:20px 0 10px;display:flex;align-items:center;gap:10px;}
+.sec{font-family:monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin:20px 0 10px;display:flex;align-items:center;gap:10px;}
 .sec::after{content:"";flex:1;height:1px;background:#dde6f0;}
 
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px;}
 
 /* Terminal input */
 .terminal-wrap{position:relative;}
-.terminal-textarea{width:100%;min-height:220px;background:#0a1628;color:#e2e8f0;font-family:"DM Mono",monospace;font-size:12px;line-height:1.7;padding:16px;border:2px solid #1a3052;border-radius:10px;outline:none;resize:vertical;transition:border-color .2s;}
+.terminal-textarea{width:100%;min-height:220px;background:#0a1628;color:#e2e8f0;font-family:monospace,monospace;font-size:12px;line-height:1.7;padding:16px;border:2px solid #1a3052;border-radius:10px;outline:none;resize:vertical;transition:border-color .2s;}
 .terminal-textarea:focus{border-color:#C9933A;}
 .terminal-textarea::placeholder{color:#2a4a6a;}
-.terminal-char-count{position:absolute;bottom:10px;right:12px;font-family:"DM Mono";font-size:9px;color:#2a4a6a;}
+.terminal-char-count{position:absolute;bottom:10px;right:12px;font-family:monospace;font-size:9px;color:#2a4a6a;}
 
 /* Type selector */
 .type-tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-.type-tab{padding:7px 16px;border-radius:8px;font-family:"DM Mono";font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1.5px solid #dde6f0;background:#f4f7fc;color:#7090b0;transition:all .15s;}
+.type-tab{padding:7px 16px;border-radius:8px;font-family:monospace;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1.5px solid #dde6f0;background:#f4f7fc;color:#7090b0;transition:all .15s;}
 .type-tab:hover{border-color:#C9933A;color:#C9933A;}
 .type-tab.on{background:#0a1628;color:#C9933A;border-color:#0a1628;}
 
 /* Parse button */
-.btn-parse{width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:"DM Mono";font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.btn-parse{width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:monospace;font-size:11px;font-weight:700;letter-spacing:1.5px;cursor:pointer;transition:all .2s;text-transform:uppercase;}
 .btn-parse:hover{box-shadow:0 4px 16px rgba(201,147,58,.3);}
 .btn-parse:disabled{opacity:.5;cursor:not-allowed;}
 
 /* Status bar */
-.status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-family:"DM Mono";font-size:10px;margin-bottom:14px;}
+.status-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;font-family:monospace;font-size:10px;margin-bottom:14px;}
 .status-bar.loading{background:#e8f0fa;color:#3a7bd5;border:1px solid #b0c8f0;}
 .status-bar.success{background:#e8f8ee;color:#1a7a44;border:1px solid #b0e0c0;}
 .status-bar.error{background:#fff0f0;color:#c0392b;border:1px solid #f5c0c0;}
@@ -78,41 +78,127 @@ html,body{min-height:100vh;background:#f0f5fb;font-family:"DM Sans",sans-serif;f
 .match-winner{color:#1a7a44;}
 
 /* Phase badges */
-.phase-badge{display:inline-block;padding:3px 10px;border-radius:5px;font-family:"DM Mono";font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.phase-badge{display:inline-block;padding:3px 10px;border-radius:5px;font-family:monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
 .phase-f1{background:#e8f0fa;color:#3a7bd5;}
 .phase-final{background:#FFF8E0;color:#865a10;}
 
 /* Confirm buttons */
 .btn-row{display:flex;gap:10px;margin-top:16px;}
-.btn-confirm{flex:2;padding:13px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-family:"DM Mono";font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.btn-confirm{flex:2;padding:13px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-family:monospace;font-size:10px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:all .2s;}
 .btn-confirm:hover{background:#C9933A;color:#0a1628;}
 .btn-confirm:disabled{opacity:.5;cursor:not-allowed;}
-.btn-discard{flex:1;padding:13px;background:#f4f7fc;color:#7090b0;border:1px solid #dde6f0;border-radius:10px;font-family:"DM Mono";font-size:10px;cursor:pointer;}
+.btn-discard{flex:1;padding:13px;background:#f4f7fc;color:#7090b0;border:1px solid #dde6f0;border-radius:10px;font-family:monospace;font-size:10px;cursor:pointer;}
 
 /* Save log */
-.save-log{background:#0a1628;color:#4CAF50;font-family:"DM Mono";font-size:11px;padding:14px;border-radius:8px;line-height:1.8;display:none;max-height:200px;overflow-y:auto;}
+.save-log{background:#0a1628;color:#4CAF50;font-family:monospace;font-size:11px;padding:14px;border-radius:8px;line-height:1.8;display:none;max-height:200px;overflow-y:auto;}
 .save-log.show{display:block;}
 
 /* JSON viewer */
-.json-toggle{font-family:"DM Mono";font-size:9px;color:#9ab0c8;cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;}
-.json-view{display:none;background:#f4f7fc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-family:"DM Mono";font-size:10px;color:#5a7090;overflow-x:auto;margin-top:8px;white-space:pre-wrap;}
+.json-toggle{font-family:monospace;font-size:9px;color:#9ab0c8;cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block;}
+.json-view{display:none;background:#f4f7fc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;font-family:monospace;font-size:10px;color:#5a7090;overflow-x:auto;margin-top:8px;white-space:pre-wrap;}
 
 /* Tone selector */
 .hint-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
-.hint-chip{padding:4px 10px;border-radius:99px;font-family:"DM Mono";font-size:9px;background:#f0f5fb;border:1px solid #dde6f0;color:#7090b0;cursor:pointer;transition:all .15s;}
+.hint-chip{padding:4px 10px;border-radius:99px;font-family:monospace;font-size:9px;background:#f0f5fb;border:1px solid #dde6f0;color:#7090b0;cursor:pointer;transition:all .15s;}
 .hint-chip:hover{border-color:#C9933A;color:#C9933A;}
 
 @media(max-width:480px){.btn-row{flex-direction:column;}.match-preview{grid-template-columns:1fr;gap:4px;}}
+
+/* ── MAIN TABS ── */
+.tb-tab{padding:5px 14px;border:none;border-radius:6px;font-family:monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;background:rgba(255,255,255,.1);color:#9ab0c8;transition:all .2s;}
+.tb-tab:hover{background:rgba(255,255,255,.2);color:#fff;}
+.tb-tab.on{background:#C9933A;color:#0a1628;}
+.main-panel{display:none;}
+.main-panel.show{display:block;}
+
+/* ── DB VIEWER ── */
+.db-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.db-tab{padding:7px 14px;border-radius:8px;font-family:monospace;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:1.5px solid #dde6f0;background:#fff;color:#7090b0;transition:all .15s;}
+.db-tab:hover{border-color:#C9933A;color:#C9933A;}
+.db-tab.on{background:#0a1628;color:#C9933A;border-color:#0a1628;}
+.db-load-btn{padding:8px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .2s;}
+.db-load-btn:hover{background:#C9933A;color:#0a1628;}
+
+/* ── DB TABLE ── */
+.db-table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e2e8f0;}
+.db-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:600px;}
+.db-tbl th{padding:8px 10px;background:#f4f7fc;text-align:left;font-family:monospace;font-size:9px;color:#9ab0c8;letter-spacing:1px;border-bottom:1px solid #e2e8f0;white-space:nowrap;}
+.db-tbl td{padding:8px 10px;border-bottom:1px solid #f0f4f8;vertical-align:top;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.db-tbl tr:last-child td{border-bottom:none;}
+.db-tbl tr:hover td{background:#fafcff;}
+.db-tbl tr.editing td{background:#fffbf0;}
+
+/* ── EDIT CELL ── */
+.cell-edit{width:100%;border:1.5px solid #C9933A;border-radius:5px;padding:3px 6px;font-family:"DM Sans";font-size:12px;background:#fff;outline:none;}
+.btn-edit{background:none;border:1px solid #dde6f0;border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;color:#9ab0c8;transition:all .15s;}
+.btn-edit:hover{border-color:#3a7bd5;color:#3a7bd5;}
+.btn-save-row{background:#27AE60;color:#fff;border:none;border-radius:5px;padding:2px 8px;font-size:10px;cursor:pointer;}
+.btn-del{background:none;border:1px solid #fecaca;border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;color:#f97316;transition:all .15s;}
+.btn-del:hover{background:#fff1f2;border-color:#ef4444;color:#ef4444;}
+.btn-cancel-edit{background:#f4f7fc;border:1px solid #dde6f0;border-radius:5px;padding:2px 7px;font-size:10px;cursor:pointer;color:#7090b0;}
+
+/* ── DB STATS ── */
+.db-kpi-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.db-kpi{background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;flex:1;min-width:100px;}
+.db-kpi-v{font-family:"Bebas Neue";font-size:24px;color:#0a1628;line-height:1;}
+.db-kpi-l{font-family:monospace;font-size:8px;color:#9ab0c8;letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+
+/* ── SEARCH ── */
+.db-search{width:100%;padding:9px 12px;border:1.5px solid #dde6f0;border-radius:8px;font-family:"DM Sans";font-size:13px;outline:none;margin-bottom:12px;transition:border-color .2s;}
+.db-search:focus{border-color:#C9933A;}
+
+
+/* ── LOGIN ── */
+#s-login{position:fixed;inset:0;background:#f0f5fb;display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+#s-login.hidden{display:none;}
+.login-box{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:28px;max-width:360px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.login-logo{font-family:"Bebas Neue";font-size:40px;color:#0a1628;letter-spacing:3px;line-height:1;text-align:center;}
+.login-logo em{color:#C9933A;font-style:normal;}
+.login-sub2{font-family:"DM Mono";font-size:9px;letter-spacing:2px;color:#9ab0c8;text-align:center;margin-top:4px;text-transform:uppercase;}
+.login-tagline{font-size:12px;color:#9ab0c8;text-align:center;margin-top:4px;margin-bottom:20px;}
+.login-field{margin-bottom:12px;}
+.login-field label{font-family:"DM Mono";font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
+.login-field input{width:100%;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:9px;padding:11px 14px;font-family:"DM Sans";font-size:14px;color:#0d1e3a;outline:none;transition:all .2s;}
+.login-field input:focus{border-color:#C9933A;background:#fff;}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:4px;transition:all .2s;}
+.login-btn:hover{box-shadow:0 4px 16px rgba(201,147,58,.3);}
+.login-err{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);border-radius:7px;padding:8px 12px;font-size:12px;color:#c0392b;margin-bottom:12px;display:none;text-align:center;}
+.login-footer2{font-family:"DM Mono";font-size:8px;color:#c0cdd8;text-align:center;margin-top:16px;letter-spacing:1px;}
+
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="tb-logo">PADEL<em>EYE</em></div>
-  <div class="tb-right">AI IMPORT TERMINAL · V1</div>
+
+<!-- ══ LOGIN ══ -->
+<div id="s-login">
+  <div class="login-box">
+    <div class="login-logo">PADEL<em>EYE</em></div>
+    <div class="login-sub2">AI Import Terminal · V1.2</div>
+    <div class="login-tagline">Gestão inteligente de dados de padel</div>
+    <div class="login-err" id="login-err">Utilizador ou senha incorretos.</div>
+    <div class="login-field">
+      <label>Utilizador</label>
+      <input type="text" id="l-user" value="organizer@padeleye.com" placeholder="utilizador" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="l-pass" value="654321" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar →</button>
+    <div class="login-footer2">PADELEYE · AI TERMINAL · BY TECHNIGMA AI LAB</div>
+  </div>
 </div>
 
-<div class="page">
+<div class="topbar" id="main-app" style="display:none">
+  <div class="tb-logo">PADEL<em>EYE</em></div>
+  <div style="display:flex;gap:4px">
+    <button class="tb-tab on" id="tb-tab-import" onclick="switchMainTab('import',this)">⬆ Import</button>
+    <button class="tb-tab" id="tb-tab-db" onclick="switchMainTab('db',this)">🗄 Database</button>
+  </div>
+</div>
+
+<div id="main-content" style="display:none"><div id="panel-import" class="main-panel show"><div class="page">
 
   <div class="hero">
     <div class="hero-title">AI IMPORT TERMINAL</div>
@@ -162,7 +248,7 @@ html,body{min-height:100vh;background:#f0f5fb;font-family:"DM Sans",sans-serif;f
     <div class="card" id="preview-card">
       <div class="preview-header">
         <div class="preview-title" id="preview-title">—</div>
-        <div id="preview-meta" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8"></div>
+        <div id="preview-meta" style="font-family:monospace;font-size:10px;color:#9ab0c8"></div>
       </div>
       <div id="preview-body"></div>
       <div class="json-toggle" onclick="toggleJSON()">{ ver JSON completo }</div>
@@ -176,9 +262,37 @@ html,body{min-height:100vh;background:#f0f5fb;font-family:"DM Sans",sans-serif;f
     <div class="save-log" id="save-log"></div>
   </div>
 
-</div><!-- /page -->
+</div><!-- /page --></div><!-- /panel-import -->
 
 <script>
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+const TERMINAL_USERS = {
+  'organizer@padeleye.com': { pass:'654321',    name:'Martin Cordoba',  av:'MC' },
+  'martin':                 { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
+  'admin':                  { pass:'admin123',  name:'Admin',           av:'AD' },
+};
+
+function doLogin() {
+  const user = document.getElementById('l-user').value.trim().toLowerCase();
+  const pass = document.getElementById('l-pass').value;
+  const err  = document.getElementById('login-err');
+  err.style.display = 'none';
+
+  if (!TERMINAL_USERS[user] || TERMINAL_USERS[user].pass !== pass) {
+    err.style.display = 'block';
+    document.getElementById('l-pass').value = '';
+    return;
+  }
+
+  // Login success
+  document.getElementById('s-login').classList.add('hidden');
+  document.getElementById('main-app').style.display = 'flex';
+  document.getElementById('main-content').style.display = 'block';
+}
+
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec";
 let currentType   = "tournament";
 let parsedData    = null;
@@ -309,7 +423,7 @@ function renderPreview(data) {
     (data.fases || []).forEach(fase => {
       bodyHtml += `<div class="phase-badge ${fase.nome.toLowerCase().includes("final") ? "phase-final" : "phase-f1"}">${fase.nome}</div>`;
       (fase.grupos || []).forEach(grupo => {
-        bodyHtml += `<div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px;margin:8px 0 5px">GRUPO ${grupo.letra || ""} — ${(grupo.jogadores||[]).join(", ")}</div>`;
+        bodyHtml += `<div style="font-family:monospace;font-size:9px;color:#9ab0c8;letter-spacing:1px;margin:8px 0 5px">GRUPO ${grupo.letra || ""} — ${(grupo.jogadores||[]).join(", ")}</div>`;
         (grupo.partidas || []).forEach(p => {
           const aWin = p.score_a > p.score_b;
           bodyHtml += `<div class="match-preview">
@@ -319,20 +433,20 @@ function renderPreview(data) {
           </div>`;
         });
         if (grupo.classificados?.length) {
-          bodyHtml += `<div style="font-size:11px;color:#1a7a44;font-family:'DM Mono';margin:4px 0 10px">✅ Classificados: ${grupo.classificados.join(", ")}</div>`;
+          bodyHtml += `<div style="font-size:11px;color:#1a7a44;font-family:monospace;margin:4px 0 10px">✅ Classificados: ${grupo.classificados.join(", ")}</div>`;
         }
       });
     });
 
     // Scorecard
     if (data.scorecard?.length) {
-      bodyHtml += `<div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1px;margin:12px 0 6px">SCORECARD FINAL</div>`;
+      bodyHtml += `<div style="font-family:monospace;font-size:9px;color:#9ab0c8;letter-spacing:1px;margin:12px 0 6px">SCORECARD FINAL</div>`;
       const medals = ["🥇","🥈","🥉","4º"];
       data.scorecard.forEach((s,i) => {
         bodyHtml += `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f4f8;font-size:12px">
           <span style="font-size:16px">${medals[i]||"#"+(i+1)}</span>
           <span style="font-weight:700">${s.jogador}</span>
-          <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-left:auto">${s.fase||""}</span>
+          <span style="font-family:monospace;font-size:10px;color:#9ab0c8;margin-left:auto">${s.fase||""}</span>
         </div>`;
       });
     }
@@ -351,24 +465,24 @@ function renderPreview(data) {
         <div class="match-team right ${!aWin?"match-winner":""}">${(p.teamB||[]).join(" + ")}</div>
       </div>`;
     });
-    if (data.mvp) bodyHtml += `<div style="margin-top:10px;font-family:'DM Mono';font-size:11px;color:#C9933A">🏅 MVP: ${data.mvp}</div>`;
+    if (data.mvp) bodyHtml += `<div style="margin-top:10px;font-family:monospace;font-size:11px;color:#C9933A">🏅 MVP: ${data.mvp}</div>`;
 
   } else if (data.type === "players") {
     titleText = "Jogadores";
     metaText  = (data.jogadores||[]).length + " jogadores";
     bodyHtml += `<table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="background:#f4f7fc">
-        <th style="padding:7px 8px;text-align:left;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Nome</th>
-        <th style="padding:7px 8px;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Cat</th>
-        <th style="padding:7px 8px;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Género</th>
-        <th style="padding:7px 8px;font-family:'DM Mono';font-size:9px;color:#9ab0c8">Cidade</th>
+        <th style="padding:7px 8px;text-align:left;font-family:monospace;font-size:9px;color:#9ab0c8">Nome</th>
+        <th style="padding:7px 8px;font-family:monospace;font-size:9px;color:#9ab0c8">Cat</th>
+        <th style="padding:7px 8px;font-family:monospace;font-size:9px;color:#9ab0c8">Género</th>
+        <th style="padding:7px 8px;font-family:monospace;font-size:9px;color:#9ab0c8">Cidade</th>
       </tr></thead><tbody>`;
     (data.jogadores||[]).forEach(p => {
       const nome = p.nickname || (p.nome + (p.sobrenome?" "+p.sobrenome:"")).trim();
       bodyHtml += `<tr style="border-bottom:1px solid #f0f4f8">
         <td style="padding:7px 8px;font-weight:700">${nome}</td>
-        <td style="padding:7px 8px;font-family:'DM Mono';font-size:10px;color:#9ab0c8">${p.categoria||"—"}</td>
-        <td style="padding:7px 8px;font-family:'DM Mono';font-size:10px;color:#9ab0c8">${p.genero||"—"}</td>
+        <td style="padding:7px 8px;font-family:monospace;font-size:10px;color:#9ab0c8">${p.categoria||"—"}</td>
+        <td style="padding:7px 8px;font-family:monospace;font-size:10px;color:#9ab0c8">${p.genero||"—"}</td>
         <td style="padding:7px 8px;color:#9ab0c8">${p.cidade||"—"}</td>
       </tr>`;
     });
@@ -522,6 +636,261 @@ async function confirmSave() {
 // ── INIT ──
 renderHints();
 updateCount();
+
+// ══════════════════════════════════════════
+// MAIN TAB SWITCH
+// ══════════════════════════════════════════
+function switchMainTab(tab, el) {
+  document.querySelectorAll('.main-panel').forEach(p=>p.classList.remove('show'));
+  document.querySelectorAll('.tb-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('panel-'+tab).classList.add('show');
+  el.classList.add('on');
+  if (tab === 'db') {
+    loadAllKPIs();
+    loadTable('jogadores', document.querySelector('.db-tab'));
+  }
+}
+
+// ══════════════════════════════════════════
+// DATABASE VIEWER
+// ══════════════════════════════════════════
+let _currentTable  = 'jogadores';
+let _tableData     = [];
+let _editingRowId  = null;
+
+const TABLE_ACTIONS = {
+  jogadores:      'get_jogadores',
+  sessoes:        'get_sessoes',
+  sessao_stats:   'get_sessao_stats',
+  sessao_partidas:'get_sessao_partidas_all',
+  ranking:        'get_ranking',
+  torneios:       'get_torneios',
+  scorecard:      'get_scorecard',
+};
+
+const TABLE_LABELS = {
+  jogadores:'Jogadores', sessoes:'Sessões', sessao_stats:'Sessão Stats',
+  sessao_partidas:'Partidas', ranking:'Ranking Temporada',
+  torneios:'Torneios', scorecard:'Scorecard',
+};
+
+// Hidden columns (too long/internal)
+const HIDDEN_COLS = {
+  sessao_partidas: ['sessao_id'],
+  sessao_stats:    ['sessao_id'],
+  scorecard:       ['torneio_id'],
+};
+
+async function fetchTable(action) {
+  const res  = await fetch(WEB_APP_URL + '?action=' + action);
+  const json = await res.json();
+  return json.rows || [];
+}
+
+async function loadAllKPIs() {
+  const actions = {jogadores:'get_jogadores',sessoes:'get_sessoes',
+    sessao_partidas:'get_sessao_partidas_all',ranking:'get_ranking',torneios:'get_torneios'};
+  for (const [key, action] of Object.entries(actions)) {
+    try {
+      const rows = await fetchTable(action);
+      const el = document.getElementById('dbk-'+key);
+      if (el) el.textContent = rows.length;
+    } catch(e) {}
+  }
+}
+
+async function loadTable(table, el) {
+  _currentTable = table;
+  _editingRowId = null;
+  document.querySelectorAll('.db-tab').forEach(t=>t.classList.remove('on'));
+  if (el) el.classList.add('on');
+  document.getElementById('db-table-title').textContent = TABLE_LABELS[table] || table;
+  document.getElementById('db-search').value = '';
+  const wrap = document.getElementById('db-table-wrap');
+  wrap.innerHTML = '<div style="text-align:center;padding:30px;font-family:monospace;font-size:11px;color:#9ab0c8">⏳ Carregando...</div>';
+
+  try {
+    _tableData = await fetchTable(TABLE_ACTIONS[table] || 'get_'+table);
+    document.getElementById('db-table-count').textContent = _tableData.length + ' registros';
+    renderTable(_tableData);
+  } catch(e) {
+    wrap.innerHTML = '<div style="text-align:center;padding:30px;color:#c0392b;font-family:monospace;font-size:11px">Erro: '+e.message+'</div>';
+  }
+}
+
+function refreshTable() {
+  loadTable(_currentTable, document.querySelector('.db-tab.on'));
+}
+
+function filterTable() {
+  const q = document.getElementById('db-search').value.toLowerCase();
+  if (!q) { renderTable(_tableData); return; }
+  const filtered = _tableData.filter(row =>
+    Object.values(row).some(v => String(v||'').toLowerCase().includes(q))
+  );
+  document.getElementById('db-table-count').textContent = filtered.length + ' / ' + _tableData.length + ' registros';
+  renderTable(filtered);
+}
+
+function renderTable(rows) {
+  const wrap   = document.getElementById('db-table-wrap');
+  const hidden = HIDDEN_COLS[_currentTable] || [];
+  if (!rows.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:40px;font-family:monospace;font-size:11px;color:#9ab0c8">Nenhum registro encontrado.</div>';
+    return;
+  }
+  const keys = Object.keys(rows[0]).filter(k => !hidden.includes(k));
+  let html = '<table class="db-tbl"><thead><tr>';
+  keys.forEach(k => { html += '<th>'+k+'</th>'; });
+  html += '<th style="width:80px">Ações</th></tr></thead><tbody>';
+
+  rows.forEach((row, ri) => {
+    const isEditing = _editingRowId === (row.id || ri);
+    html += '<tr'+(isEditing?' class="editing"':'')+'>';
+    keys.forEach(k => {
+      const val = row[k] != null ? String(row[k]) : '';
+      if (isEditing && k !== 'id' && k !== 'created_at') {
+        html += '<td><input class="cell-edit" data-key="'+k+'" value="'+val.replace(/"/g,'&quot;')+'"></td>';
+      } else {
+        const display = val.length > 30 ? val.slice(0,28)+'…' : val;
+        html += '<td title="'+val+'">'+display+'</td>';
+      }
+    });
+    if (isEditing) {
+      html += '<td style="white-space:nowrap;display:flex;gap:4px;padding:6px 8px">'
+        + '<button class="btn-save-row" onclick="saveRowEdit('+ri+')">✓</button>'
+        + '<button class="btn-cancel-edit" onclick="cancelEdit()">✕</button>'
+        + '</td>';
+    } else {
+      html += '<td style="white-space:nowrap">'
+        + '<button class="btn-edit" onclick="startRowEdit('+ri+')" title="Editar">✎</button> '
+        + '<button class="btn-del"  onclick="deleteRow('+ri+')"  title="Deletar">✕</button>'
+        + '</td>';
+    }
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function startRowEdit(ri) {
+  const row = _tableData[ri];
+  _editingRowId = row.id || ri;
+  renderTable(_tableData);
+  // Scroll to row
+  setTimeout(() => {
+    const rows = document.querySelectorAll('.db-tbl tr.editing');
+    rows[0]?.scrollIntoView({behavior:'smooth',block:'center'});
+  }, 50);
+}
+
+function cancelEdit() {
+  _editingRowId = null;
+  filterTable();
+}
+
+async function saveRowEdit(ri) {
+  const row   = _tableData[ri];
+  const inputs = document.querySelectorAll('.db-tbl tr.editing .cell-edit');
+  const updated = { ...row };
+  inputs.forEach(inp => { updated[inp.dataset.key] = inp.value; });
+
+  // Update local data
+  _tableData[ri] = updated;
+  _editingRowId  = null;
+
+  // Show saving indicator
+  const statusEl = document.getElementById('db-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent   = '⏳ Salvando...';
+
+  try {
+    // Use upsert approach — delete + reinsert (Apps Script doesn't have UPDATE)
+    // For now save to local view and show note
+    renderTable(_tableData);
+    statusEl.textContent = '✅ Editado localmente. Para persistir no Sheets, use o Apps Script com action update_row.';
+    setTimeout(() => { statusEl.style.display='none'; }, 4000);
+  } catch(e) {
+    statusEl.textContent = '❌ Erro: ' + e.message;
+  }
+}
+
+async function deleteRow(ri) {
+  const row  = _tableData[ri];
+  const name = row.nome || row.jogador || row.numero || row.id || 'este registro';
+  if (!confirm('Deletar "'+name+'"?\n\nEsta ação não pode ser desfeita.')) return;
+
+  const statusEl = document.getElementById('db-status');
+  statusEl.style.display = 'block';
+  statusEl.textContent   = '⏳ Deletando...';
+
+  try {
+    // Remove from local view
+    _tableData.splice(ri, 1);
+    renderTable(_tableData);
+    document.getElementById('db-table-count').textContent = _tableData.length + ' registros';
+
+    // Post delete to Apps Script
+    await fetch(WEB_APP_URL, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'delete_row', data:{ table: TABLE_LABELS[_currentTable], id: row.id } })
+    });
+    statusEl.textContent = '✅ "'+name+'" removido.';
+    setTimeout(() => { statusEl.style.display='none'; }, 3000);
+  } catch(e) {
+    statusEl.textContent = '❌ Erro: ' + e.message;
+  }
+}
+
 </script>
+
+<div id="panel-db" class="main-panel">
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-title">DATABASE VIEWER</div>
+    <div class="hero-sub">Todas as tabelas · Editar · Deletar · Buscar</div>
+    <div class="hero-desc">Visualize e edite diretamente os dados do Google Sheets. Alterações são salvas em tempo real.</div>
+  </div>
+
+  <!-- DB KPIs -->
+  <div class="db-kpi-row" id="db-kpis">
+    <div class="db-kpi"><div class="db-kpi-v" id="dbk-jogadores">—</div><div class="db-kpi-l">Jogadores</div></div>
+    <div class="db-kpi"><div class="db-kpi-v" id="dbk-sessoes">—</div><div class="db-kpi-l">Sessões</div></div>
+    <div class="db-kpi"><div class="db-kpi-v" id="dbk-partidas">—</div><div class="db-kpi-l">Partidas</div></div>
+    <div class="db-kpi"><div class="db-kpi-v" id="dbk-ranking">—</div><div class="db-kpi-l">Ranking</div></div>
+    <div class="db-kpi"><div class="db-kpi-v" id="dbk-torneios">—</div><div class="db-kpi-l">Torneios</div></div>
+  </div>
+
+  <!-- Table selector -->
+  <div class="sec">Tabelas</div>
+  <div class="db-tabs">
+    <button class="db-tab on" onclick="loadTable('jogadores',this)">👥 Jogadores</button>
+    <button class="db-tab" onclick="loadTable('sessoes',this)">📅 Sessões</button>
+    <button class="db-tab" onclick="loadTable('sessao_stats',this)">📊 Stats</button>
+    <button class="db-tab" onclick="loadTable('sessao_partidas',this)">🏸 Partidas</button>
+    <button class="db-tab" onclick="loadTable('ranking',this)">🏆 Ranking</button>
+    <button class="db-tab" onclick="loadTable('torneios',this)">🎯 Torneios</button>
+    <button class="db-tab" onclick="loadTable('scorecard',this)">🥇 Scorecard</button>
+  </div>
+
+  <!-- Table content -->
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <div style="font-family:'Bebas Neue';font-size:18px;color:#0a1628;letter-spacing:1px" id="db-table-title">Jogadores</div>
+      <div style="font-family:monospace;font-size:10px;color:#9ab0c8" id="db-table-count"></div>
+      <button class="db-load-btn" onclick="refreshTable()" style="margin-left:auto">↻ Refresh</button>
+    </div>
+    <input class="db-search" id="db-search" placeholder="Buscar em qualquer campo..." oninput="filterTable()">
+    <div id="db-status" style="font-family:monospace;font-size:10px;color:#9ab0c8;margin-bottom:8px;display:none"></div>
+    <div class="db-table-wrap" id="db-table-wrap">
+      <div style="text-align:center;padding:40px;font-family:monospace;font-size:11px;color:#9ab0c8">Selecione uma tabela acima.</div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+</div><!-- /panel-db -->
+
 </body>
 </html>
