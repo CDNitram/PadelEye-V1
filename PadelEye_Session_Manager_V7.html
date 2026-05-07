@@ -588,21 +588,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="rk-kpi"><div class="rk-kpi-v gold" id="rk-k-leader">—</div><div class="rk-kpi-l">Líder</div><div class="rk-kpi-sub" id="rk-k-leader-sub">—</div></div>
     </div>
 
-    <div class="rk-sec">Consistência por Período</div>
-    <div class="cb-band">
-      <div class="cb-band-title">Consistency Score</div>
-      <div class="cb-band-sub">Proximidade à win rate média do grupo. Score 100 = na média exata.</div>
-      <div class="rk-period-tabs">
-        <button class="rk-ptab on" onclick="rkSetPeriod(6,this)">6M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(9,this)">9M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(12,this)">12M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(24,this)">24M</button>
-        <button class="rk-ptab" onclick="rkSetPeriod(36,this)">36M</button>
-      </div>
-      <div class="rk-crows" id="rk-crows"></div>
-      <div class="rk-avg-ind"><div class="rk-avg-line"></div><span>Linha = média do grupo no período</span></div>
-    </div>
-
     <div class="rk-sec">Ranking Completo</div>
     <div class="rk-sort-bar">
       <button class="rk-sbtn on" onclick="rkSetSort('vitorias',this)">🏆 Vitórias</button>
@@ -627,6 +612,21 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div id="rk-body"></div>
     </div>
     <div class="rk-upd" id="rk-upd"></div>
+
+    <div class="rk-sec">Consistência por Período</div>
+    <div class="cb-band">
+      <div class="cb-band-title">Consistency Score</div>
+      <div class="cb-band-sub">Proximidade à win rate média do grupo. Score 100 = na média exata.</div>
+      <div class="rk-period-tabs">
+        <button class="rk-ptab on" onclick="rkSetPeriod(6,this)">6M</button>
+        <button class="rk-ptab" onclick="rkSetPeriod(9,this)">9M</button>
+        <button class="rk-ptab" onclick="rkSetPeriod(12,this)">12M</button>
+        <button class="rk-ptab" onclick="rkSetPeriod(24,this)">24M</button>
+        <button class="rk-ptab" onclick="rkSetPeriod(36,this)">36M</button>
+      </div>
+      <div class="rk-crows" id="rk-crows"></div>
+      <div class="rk-avg-ind"><div class="rk-avg-line"></div><span>Linha = média do grupo no período</span></div>
+    </div>
   </div>
 
 
@@ -1059,16 +1059,16 @@ function renderMatchLog() {
 // STATS & SCOREBOARD
 // ══════════════════════════════════════════
 function getPlayerStats(name) {
-  const s = { m:0, w:0, l:0, gf:0, ga:0 };
+  const s = { m:0, w:0, l:0, gw:0, gl:0 };
   matches.forEach(m => {
     const inA = m.teamA.includes(name);
     const inB = m.teamB.includes(name);
     if (!inA && !inB) return;
     s.m++;
-    if (inA) { s.gf+=m.sa; s.ga+=m.sb; if(m.sa>m.sb) s.w++; else s.l++; }
-    if (inB) { s.gf+=m.sb; s.ga+=m.sa; if(m.sb>m.sa) s.w++; else s.l++; }
+    if (inA) { s.gw+=m.sa; s.gl+=m.sb; if(m.sa>m.sb) s.w++; else s.l++; }
+    if (inB) { s.gw+=m.sb; s.gl+=m.sa; if(m.sb>m.sa) s.w++; else s.l++; }
   });
-  return { ...s, gd: s.gf - s.ga };
+  return { ...s, gd: s.gw - s.gl };
 }
 
 function renderScoreboard() {
@@ -1083,7 +1083,7 @@ function renderScoreboard() {
 
   const ranked = activePlayers
     .map(name => ({ name, ...getPlayerStats(name) }))
-    .sort((a,b) => b.w-a.w || b.gd-a.gd || b.gf-a.gf);
+    .sort((a,b) => b.w-a.w || b.gd-a.gd || b.gw-a.gw);
 
   const maxW = ranked[0]?.w || 1;
   const medal = ['🥇','🥈','🥉'];
@@ -1098,7 +1098,7 @@ function renderScoreboard() {
         <div class="sb-stats">${p.m}M · ${p.w}W · ${p.l}L · GD <span style="${gdClass}">${p.gd>0?'+':''}${p.gd}</span></div>
         <div class="sb-bar"><div class="sb-bar-fill" style="width:${p.w/maxW*100}%;background:${pc(p.name)}"></div></div>
       </div>
-      <div class="sb-pts ${i===0&&p.w>0?'leader':''}">${p.gf}</div>
+      <div class="sb-pts ${i===0&&p.w>0?'leader':''}">${p.gw}</div>
     </div>`;
   }).join('');
 
@@ -1289,7 +1289,7 @@ const PadelEyeDB = (() => {
     return stats.map(s => ({
       id:uid(), sessao_id:sessaoId, sessao_numero:num, sessao_data:data,
       jogador:s.jogador||s.name, partidas:s.m||0, vitorias:s.w||0,
-      derrotas:s.l||0, gf:s.gf||0, ga:s.ga||0, gd:s.gd||0,
+      derrotas:s.l||0, gw:s.gw||0, gl:s.gl||0, gd:s.gd||0,
       mvp:s.mvp?'Yes':'No', created_at:now(),
     }));
   }
@@ -1297,10 +1297,10 @@ const PadelEyeDB = (() => {
   function buildRanking(allStats) {
     const map = {};
     allStats.forEach(s => {
-      if(!map[s.jogador]) map[s.jogador]={jogador:s.jogador,sessoes:0,partidas:0,vitorias:0,derrotas:0,gf:0,ga:0,gd:0,mvp_count:0};
+      if(!map[s.jogador]) map[s.jogador]={jogador:s.jogador,sessoes:0,partidas:0,vitorias:0,derrotas:0,gw:0,gl:0,gd:0,mvp_count:0};
       const r=map[s.jogador];
       r.sessoes++; r.partidas+=+s.partidas||0; r.vitorias+=+s.vitorias||0;
-      r.derrotas+=+s.derrotas||0; r.gf+=+s.gf||0; r.ga+=+s.ga||0;
+      r.derrotas+=+s.derrotas||0; r.gw+=+s.gw||0; r.gl+=+s.gl||0;
       r.gd+=+s.gd||0; r.mvp_count+=s.mvp==='Yes'?1:0;
     });
     return Object.values(map)
@@ -1969,7 +1969,7 @@ async function histOpen(numero) {
               <td style="text-align:center">${m}</td>
               <td style="text-align:center;color:#1a7a44;font-weight:700">${w}</td>
               <td style="text-align:center;color:#9ab0c8">${p.derrotas||0}</td>
-              <td style="text-align:center">${p.gf||0}</td>
+              <td style="text-align:center">${p.gw||0}</td>
               <td style="text-align:center;font-weight:700;color:${gd>0?'#1a7a44':gd<0?'#c0392b':'#9ab0c8'}">${gd>=0?'+':''}${gd}</td>
               <td style="text-align:center;font-weight:700;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'}">${wr}%</td>
               <td style="text-align:center">${p.mvp==='Yes'?'🏅':''}</td>
@@ -2267,7 +2267,7 @@ function renderScoreboardExtras() {
   ranked.forEach(p => {
     const m = p.w+p.l;
     const wr = m>0 ? Math.round(p.w/m*100) : 0;
-    const gd = p.gf-p.gc;
+    const gd = p.gw-p.gc;
     const grade = getGrade(wr);
     const col = pc(p.name);
     const partners = [...new Set(saved.flatMap(match =>
@@ -2278,12 +2278,12 @@ function renderScoreboardExtras() {
       <div style="flex:1">
         <div style="font-size:14px;font-weight:800;color:#0d1e3a;margin-bottom:6px">${p.name} <span class="grade-${grade}" style="font-size:10px">${grade}</span></div>
         <div style="display:flex;gap:5px;flex-wrap:wrap">
-          ${[['M',m],['W',p.w,'#27AE60'],['L',p.l],['GF',p.gf],['GD',(gd>=0?'+':'')+gd,gd>0?'#27AE60':gd<0?'#E74C3C':''],['WIN%',wr+'%',wr>=60?'#27AE60':wr<25?'#E74C3C':'']].map(([l,v,c])=>`<div class="stat-pill"><div class="stat-pill-v" ${c?`style="color:${c}"`:''}>${v}</div><div class="stat-pill-l">${l}</div></div>`).join('')}
+          ${[['M',m],['W',p.w,'#27AE60'],['L',p.l],['GF',p.gw],['GD',(gd>=0?'+':'')+gd,gd>0?'#27AE60':gd<0?'#E74C3C':''],['WIN%',wr+'%',wr>=60?'#27AE60':wr<25?'#E74C3C':'']].map(([l,v,c])=>`<div class="stat-pill"><div class="stat-pill-v" ${c?`style="color:${c}"`:''}>${v}</div><div class="stat-pill-l">${l}</div></div>`).join('')}
         </div>
         <div style="font-size:10px;color:#b0c4d8;margin-top:6px;font-family:'DM Mono'">Partners: ${partners}</div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-family:'Bebas Neue';font-size:30px;color:${col};line-height:1">${p.gf}</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;color:${col};line-height:1">${p.gw}</div>
         <div style="font-size:9px;color:#b0c4d8;font-family:'DM Mono'">GAMES</div>
       </div>
     </div>`;
@@ -2352,7 +2352,7 @@ function renderTradDashboard() {
     return wrB-wrA || (b.gf-b.gc)-(a.gf-a.gc);
   });
   const mvp = ranked[0];
-  const maxGD = Math.max(...ranked.map(p=>p.gf-p.gc));
+  const maxGD = Math.max(...ranked.map(p=>p.gw-p.gc));
 
   // KPI strip
   const kpis = [
@@ -2361,7 +2361,7 @@ function renderTradDashboard() {
     {l:'Games',v:totalGames,s:'totais'},
     {l:'Tie-Breaks',v:tbs,s:'na sessão'},
     {l:'MVP',v:mvp?mvp.name.split(' ')[0]:'—',s:mvp?(Math.round(mvp.w/(mvp.w+mvp.l)*100))+'% WR':''},
-    {l:'Melhor GD',v:(maxGD>=0?'+':'')+maxGD,s:ranked.find(p=>p.gf-p.gc===maxGD)?.name||''},
+    {l:'Melhor GD',v:(maxGD>=0?'+':'')+maxGD,s:ranked.find(p=>p.gw-p.gc===maxGD)?.name||''},
   ];
   document.getElementById('trad-kpi').innerHTML = kpis.map(k=>`
     <div class="trad-kpi-cell">
@@ -2375,18 +2375,18 @@ function renderTradDashboard() {
   rb.innerHTML = '';
   ranked.forEach((p,i) => {
     const m = p.w+p.l, wr = m>0?Math.round(p.w/m*100):0;
-    const gd = p.gf-p.gc, gdS = (gd>=0?'+':'')+gd;
+    const gd = p.gw-p.gc, gdS = (gd>=0?'+':'')+gd;
     const grade = getGrade(wr);
     const seq = p.seq.map(s=>s==='W'?`<span style="color:${pc(p.name)}">■</span>`:`<span style="color:#dde6f0">·</span>`).join('');
-    const totalG = p.gf+p.gc;
-    const ptsP = totalG>0?Math.round(p.gf/totalG*100):0;
+    const totalG = p.gw+p.gc;
+    const ptsP = totalG>0?Math.round(p.gw/totalG*100):0;
     rb.innerHTML += `<tr>
       <td><span class="grade-${grade}" style="font-size:10px">#${i+1}</span></td>
       <td style="font-weight:700">${p.name}</td>
       <td><span style="font-family:monospace;letter-spacing:2px">${seq}</span></td>
       <td>${m}</td><td style="color:#1a7a44;font-weight:700">${p.w}</td><td>${p.l}</td>
       <td style="color:${wr>=60?'#1a7a44':wr<25?'#c0392b':'#0d1e3a'};font-weight:700">${wr}%</td>
-      <td>${p.gf}</td><td>${p.gc}</td>
+      <td>${p.gw}</td><td>${p.gc}</td>
       <td style="font-weight:700;color:${gd>0?'#1a7a44':gd<0?'#c0392b':'#9ab0c8'}">${gdS}</td>
       <td>${ptsP}%</td>
       <td><span class="grade-${grade}" style="font-size:10px">${grade}</span></td>
@@ -2423,17 +2423,17 @@ function renderTradDashboard() {
   });
 
   // GC Chart
-  const maxG = Math.max(...ranked.map(p=>p.gf),1);
+  const maxG = Math.max(...ranked.map(p=>p.gw),1);
   const gcc = document.getElementById('trad-gc-chart');
   gcc.innerHTML = ranked.map(p => {
-    const gd = p.gf-p.gc, gdS=(gd>=0?'+':'')+gd;
+    const gd = p.gw-p.gc, gdS=(gd>=0?'+':'')+gd;
     const col = pc(p.name);
     return `<div style="display:flex;align-items:center;gap:8px">
       <div style="width:60px;font-size:11px;font-weight:700;color:#0d1e3a;flex-shrink:0">${p.name}</div>
       <div style="flex:1">
         <div style="display:flex;gap:2px;align-items:center;margin-bottom:2px">
-          <div style="height:7px;border-radius:3px;background:${col};width:${p.gf/maxG*100}%"></div>
-          <span style="font-size:10px;color:#1a7a44;font-weight:700;margin-left:2px">${p.gf}</span>
+          <div style="height:7px;border-radius:3px;background:${col};width:${p.gw/maxG*100}%"></div>
+          <span style="font-size:10px;color:#1a7a44;font-weight:700;margin-left:2px">${p.gw}</span>
         </div>
         <div style="display:flex;gap:2px;align-items:center">
           <div style="height:7px;border-radius:3px;background:#e0a0a0;width:${p.gc/maxG*100}%"></div>
@@ -2451,7 +2451,7 @@ function renderTradDashboard() {
   // MVP
   if (mvp) {
     const m=mvp.w+mvp.l, wr=Math.round(mvp.w/m*100);
-    highlights.push({p:`${mvp.name} — ${mvp.w}V/${mvp.l}D · MVP da sessão`,f:'MVP',g:`${wr}% WR · GD ${mvp.gf-mvp.gc>=0?'+':''}${mvp.gf-mvp.gc}`,c:pc(mvp.name)});
+    highlights.push({p:`${mvp.name} — ${mvp.w}V/${mvp.l}D · MVP da sessão`,f:'MVP',g:`${wr}% WR · GD ${mvp.gw-mvp.gc>=0?'+':''}${mvp.gw-mvp.gc}`,c:pc(mvp.name)});
   }
   // Best pair
   const bestPair = Object.values(pairs).sort((a,b)=>b.w-a.w||b.gd-a.gd)[0];
@@ -2491,10 +2491,10 @@ function renderRecomendacoes() {
 
   ranked.forEach((p,i) => {
     const m=p.w+p.l, wr=Math.round(p.w/m*100);
-    const gd=p.gf-p.gc, gdS=(gd>=0?'+':'')+gd;
+    const gd=p.gw-p.gc, gdS=(gd>=0?'+':'')+gd;
     const grade=getGrade(wr);
     const col=pc(p.name);
-    const totalG=p.gf+p.gc, ptsP=totalG>0?Math.round(p.gf/totalG*100):0;
+    const totalG=p.gw+p.gc, ptsP=totalG>0?Math.round(p.gw/totalG*100):0;
 
     // Grade-based analysis
     const gradeColors={S:'#1a7a44',A:'#185FA5',B:'#C9933A',C:'#7090b0',D:'#c0392b'};
