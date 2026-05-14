@@ -1082,9 +1082,7 @@ function doLogout() {
   document.getElementById('l-user').value = '';
   document.getElementById('l-pass').value = '';
   loadPlayersFromDB(); renderSeedPicker(); updateVagas(); updateSummary();
-  // Sim: pre-select all 8 players
-  selectedPlayers = REGISTRY.map(p => p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim());
-  renderCadastroPanel();
+
 }
 
 // ══════════════════════════════════
