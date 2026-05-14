@@ -499,7 +499,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <button onclick="cancelRandom()" style="padding:10px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;cursor:pointer;color:var(--sub)">✕</button>
         </div>
       </div>
-    </div
+    </div>
     </div>
 
     <!-- Match log -->
@@ -1771,7 +1771,7 @@ async function loadHistory() {
     }
 
     _histSessions = sessions.sort((a,b)=>{
-      const na=parseInt((a.numero||'').replace(/[^0-9]/g,'')), nb=parseInt((b.numero||'').replace(/[^0-9]/g,''));
+      const na=parseInt(String(a.numero||0).replace(/[^0-9]/g,'')), nb=parseInt(String(b.numero||0).replace(/[^0-9]/g,''));
       return nb-na;
     });
 
@@ -1834,8 +1834,8 @@ async function histOpen(numero) {
     const allStats = stRes.rows || [];
     const allSess  = pRes.rows  || [];
 
-    const sess   = allSess.find(s => s.numero === numero) || {};
-    const stats  = allStats.filter(s => s.sessao_numero === numero);
+    const sess   = allSess.find(s => String(s.numero) === String(numero)) || {};
+    const stats  = allStats.filter(s => String(s.sessao) === String(numero));
     const date = formatDateBR(sess.data, {weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
 
     document.getElementById('hist-detail-meta').textContent =
@@ -1913,7 +1913,7 @@ async function histOpen(numero) {
     // ── Matches tab — fetch partidas ──
     try {
       const pRes2 = await fetchDB('get_sessao_partidas', { numero });
-      const partidas = (pRes2.rows || []).filter(p => p.sessao_numero === numero);
+      const partidas = (pRes2.rows || []).filter(p => String(p.sessao) === String(numero));
       const matchHtml = partidas.length ? `
         <div style="border:1px solid #eaf0f8;border-radius:10px;overflow:hidden">
           ${partidas.map((p,i) => {
@@ -2023,7 +2023,7 @@ async function initShareMode(sessionNum) {
     const ranking  = (await rankRes.json()).rows || [];
     const sessions = (await sessRes.json()).rows || [];
 
-    const stats  = allStats.filter(s => s.sessao_numero === sessionNum);
+    const stats  = allStats.filter(s => String(s.sessao) === String(sessionNum));
     const sess   = sessions.find(s => s.numero === sessionNum) || {};
     const date   = formatDateBR(sess.data, {weekday:'long',day:'2-digit',month:'long',year:'numeric'})?.toUpperCase() || '—';
     const ranked = [...stats].sort((a,b) => (+b.vitorias||0)-(+a.vitorias||0) || (+b.gd||0)-(+a.gd||0));
