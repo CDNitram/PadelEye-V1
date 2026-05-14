@@ -1526,13 +1526,17 @@ function rkSetSort(key, el) {
 function rkRenderConsistency() {
   const now = new Date();
   const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth() - rkPeriod);
-  // rkSessData comes from Stats_Sessões: {data, jogador, partidas, vitorias}
-  const filtered = rkSessData.filter(r => new Date(r.data) >= cutoff);
+  // rkSessData from Stats_Sessões: {sessao, data, jogador, partidas, vitorias}
+  const filtered = rkSessData.filter(r => {
+    var d = r.data || '';
+    return d && new Date(d) >= cutoff;
+  });
   const el = document.getElementById('rk-crows');
   if (!filtered.length) { el.innerHTML='<div style="font-size:11px;color:#9ab0c8;padding:8px 0">Sem dados para este período.</div>'; return; }
   const map = {};
   filtered.forEach(r => {
-    const p = r.jogador; const m = +r.partidas||0; const w = +r.vitorias||0;
+    const p = r.jogador; const m = +(r.partidas||0); const w = +(r.vitorias||0);
+    if(!p) return;
     if(!map[p]) map[p]={m:0,w:0};
     map[p].m+=m; map[p].w+=w;
   });
@@ -1564,7 +1568,7 @@ function rkRenderTable() {
   ['rk-th-s','rk-th-p','rk-th-v','rk-th-wr','rk-th-gd','rk-th-mvp'].forEach(id=>document.getElementById(id)?.classList.remove('on'));
   if(hmap[rkSort])document.getElementById(hmap[rkSort])?.classList.add('on');
   document.getElementById('rk-body').innerHTML = sorted.map((p,i)=>{
-    const wr=rkWR(p.win_rate), gd=+p.gd||0, mvp=+p.mvp_count||0;
+    const wr=rkWR(p.win_rate), gd=parseInt(String(p.gd||0).replace('+',''))||0, mvp=+p.mvp_count||0;
     const rk=i===0?'g':i===1?'s':i===2?'b':'';
     const rl=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
     const sh=k=>rkSort===k?'rk-sh':'';
@@ -1605,20 +1609,23 @@ async function loadRanking() {
   const stxt = document.getElementById('rk-stxt');
   btn.classList.add('spin'); dot.classList.add('rk-spin');
   stxt.textContent = 'Atualizando ranking...';
+  document.getElementById('rk-body').innerHTML = '<div style="padding:20px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">⏳ Carregando...</div>';
   try {
     // Fetch ranking + actual session count in parallel
-    const [rankRes, sessRes] = await Promise.all([
+    const [rankRes, sessRes, statsRes] = await Promise.all([
       fetch(PadelEyeDB._url()+'?action=get_ranking_sessoes'),
       fetch(PadelEyeDB._url()+'?action=get_sessoes'),
+      fetch(PadelEyeDB._url()+'?action=get_sessao_stats'),
     ]);
     if(!rankRes.ok) throw new Error('HTTP '+rankRes.status);
     const rankJson = await rankRes.json();
-    const sessJson = sessRes.ok ? await sessRes.json() : {rows:[]};
+    const sessJson = sessRes.ok  ? await sessRes.json()  : {rows:[]};
+    const statsJson= statsRes.ok ? await statsRes.json() : {rows:[]};
     const rows = rankJson.rows||[];
     if(!rows.length) throw new Error('empty');
     rkData = rows;
     rkTotalSessions = (sessJson.rows||[]).length;
-    rkSessData = sessJson.rows || [];
+    rkSessData = statsJson.rows || [];
     const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR'):'';
     document.getElementById('rk-upd').textContent = ts?`Última atualização: ${ts}`:'';
     stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
