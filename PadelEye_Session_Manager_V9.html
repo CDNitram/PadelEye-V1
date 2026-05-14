@@ -825,9 +825,11 @@ function doLogout() {
 // ══════════════════════════════════════════
 function showTab(id, el) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>{p.classList.remove('on'); p.style.display='none';});
   if (el) el.classList.add('on');
-  document.getElementById('p-'+id).classList.add('on');
+  var panel = document.getElementById('p-'+id);
+  if (panel) { panel.classList.add('on'); panel.style.display='block'; }
+  else { console.error('[showTab] Panel not found: p-'+id); }
   if (id === 'match')       updateMatchSelects();
   if (id === 'scoreboard')  renderScoreboard();
   if (id === 'save')        updateSaveTab();
