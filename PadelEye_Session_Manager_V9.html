@@ -1240,7 +1240,7 @@ function showAlert(id, msg, type='ok') {
 // PadelEye DB Module (Unified · V2)
 // ══════════════════════════════════════════
 const PadelEyeDB = (() => {
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNUHjlB04FGkzYb_f185FlF1G8c7nno3KLkGCeltBEhzjZyzLJdrOEEsnxVAJUYh20/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
   const now  = () => new Date().toISOString();
   const uid  = () => 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
@@ -1745,7 +1745,7 @@ async function loadHistory() {
   const dbg   = document.getElementById('hist-debug');
   const errEl = document.getElementById('hist-error');
   const grid  = document.getElementById('hist-sessions-grid');
-  const BASE  = "https://script.google.com/macros/s/AKfycbwNUHjlB04FGkzYb_f185FlF1G8c7nno3KLkGCeltBEhzjZyzLJdrOEEsnxVAJUYh20/exec";
+  const BASE  = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
 
   function log(msg) { if(dbg){dbg.style.display='block';dbg.innerHTML+=msg+'<br>';} console.log('[HIST]',msg); }
 
@@ -2010,7 +2010,7 @@ async function initShareMode(sessionNum) {
     </div>`;
   document.body.appendChild(pubDiv);
 
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNUHjlB04FGkzYb_f185FlF1G8c7nno3KLkGCeltBEhzjZyzLJdrOEEsnxVAJUYh20/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
   const pub = document.getElementById('pub-content');
 
   try {
