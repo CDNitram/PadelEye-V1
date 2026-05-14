@@ -1069,7 +1069,7 @@ function doLogin() {
   document.getElementById('tb-club').textContent = currentUser.club;
   document.getElementById('tb-av').textContent   = currentUser.name[0];
   document.getElementById('w-hi').textContent    = `Bem-vindo, ${currentUser.name.split(' ')[0]}!`;
-  renderDB();
+  loadPlayersFromDB();
   PadelEyeDB.logSession(user, 'login', 'auth', { name: currentUser.name, club: currentUser.club });
 }
 
@@ -3254,29 +3254,13 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════
 // LOAD PLAYERS FROM DATABASE
 // ══════════════════════════════════════════
-async function loadPlayersFromDB() {
-  // Sim: always seed DB from local REGISTRY first
+function loadPlayersFromDB() {
+  // SIM MODE: load directly from local REGISTRY — no network calls
   DB.length = 0;
   REGISTRY.forEach(p => {
     const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
     DB.push({ id: p.id, nome });
   });
-  // Try to also load from Google Sheets (adds extra players if available)
-  try {
-    const res  = await fetch(PadelEyeDB._url() + '?action=get_jogadores');
-    const json = await res.json();
-    const rows = json.rows || [];
-    if (rows.length) {
-      // Merge: add any Sheets players not already in DB
-      rows.forEach(p => {
-        const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
-        if (!DB.some(d => d.nome === nome)) DB.push({ id: p.id, nome });
-      });
-      console.log('[V32-Sim] Merged ' + rows.length + ' players from Sheets');
-    }
-  } catch(e) {
-    console.log('[V32-Sim] Using local registry (' + DB.length + ' players)');
-  }
   renderDB();
   renderRoster();
 }
