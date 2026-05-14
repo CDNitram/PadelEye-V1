@@ -593,6 +593,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab-btn" onclick="showTab('ranking',this)">📊 Estatísticas do Torneio</button>
     <button class="tab-btn" onclick="showTab('scorecard',this)">🏅 Scorecard do Torneio</button>
     <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico do Torneio</button>
+    <button class="tab-btn" onclick="showTab('dbtest',this)" style="color:#3a7bd5">🔌 Test DB</button>
   </div>
 
   <!-- ── SETUP ── -->
@@ -886,6 +887,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
 
 
+  <!-- ── TEST CONNECTION TO DB ── -->
+  <div class="panel" id="p-dbtest">
+    <div id="dbtest-content"></div>
+  </div>
+
   <!-- ── CADASTRO DE JOGADORES ── -->
   <div class="panel on" id="p-cadastro">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
@@ -1114,6 +1120,7 @@ function showTab(id, el) {
   if (id === 'grupos')    renderGrupos();
   if (id === 'scorecard') renderScorecard();
   if (id === 'cadastro')  renderRoster();
+  if (id === 'dbtest')    renderDBTest(); // Aba de teste de conexão
 }
 
 // ══════════════════════════════════
@@ -2830,6 +2837,188 @@ const PadelEyeDB = (() => {
 
   return { registerPlayer, saveTournament, logSession, ping };
 })();
+
+// ══════════════════════════════════════════════════════════════════
+// TEST CONNECTION TO DB
+// ══════════════════════════════════════════════════════════════════
+//
+// ── OBJETIVO: Renderizar a aba de teste de conexão com o Google Sheets ────────
+// CONTEXTO: Permite ao organizador verificar se cada tabela do Apps Script
+//   está acessível antes de usar o app em produção.
+//   Cada botão faz um GET à action correspondente e mostra: ok/erro + nº de rows.
+// ATENÇÃO: Os testes fazem chamadas reais ao Google Sheets — usar com rede ativa.
+
+const DB_TABLES = [
+  { action: 'get_jogadores',          label: 'Jogadores',          icon: '👤' },
+  { action: 'get_torneios',           label: 'Torneios',           icon: '🏆' },
+  { action: 'get_partidas_torneios',  label: 'Partidas_Torneios',  icon: '🏸' },
+  { action: 'get_scorecard_torneios', label: 'Scorecard_Torneios', icon: '🏅' },
+  { action: 'get_ranking_torneios',   label: 'Ranking_Torneios',   icon: '📊' },
+  { action: 'log_action',             label: 'Log_Torneios',       icon: '📋', pingOnly: true },
+];
+
+// ── Renderiza o painel com botões de teste ────────────────────────
+function renderDBTest() {
+  const el = document.getElementById('dbtest-content');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">Test Connection to DB</div>
+      <div style="font-size:12px;color:#9ab0c8;margin-top:2px;font-family:'DM Mono'">
+        Google Sheets · Apps Script · ${WEB_APP_URL.slice(0, 60)}...
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-hd">
+        <div class="card-title">Conexão Global</div>
+        <div class="card-badge" id="dbt-all-badge">Aguardando</div>
+      </div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px">
+        Testa o ping ao Apps Script e todas as tabelas em sequência.
+      </div>
+      <button onclick="testDBAll()"
+        style="width:100%;padding:13px;background:linear-gradient(135deg,#0a1628,#1a3052);color:#C9933A;
+               font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;border:none;border-radius:10px;
+               cursor:pointer;transition:all .2s"
+        onmouseover="this.style.background='linear-gradient(135deg,#132240,#243d6e)'"
+        onmouseout="this.style.background='linear-gradient(135deg,#0a1628,#1a3052)'">
+        🔌 Testar Conexão Completa
+      </button>
+      <div id="dbt-all-result" style="margin-top:12px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Teste por Tabela</div>
+        <div class="card-badge">6 tabelas</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px" id="dbt-table-list">
+        ${DB_TABLES.map(t => `
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;
+                      background:#f8fafd;border:1px solid #dde6f0;border-radius:10px;
+                      transition:border-color .2s" id="dbt-row-${t.action}">
+            <div style="font-size:18px;flex-shrink:0">${t.icon}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700;color:#0d1e3a">${t.label}</div>
+              <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">${t.action}</div>
+            </div>
+            <div id="dbt-status-${t.action}"
+                 style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;flex-shrink:0">
+              —
+            </div>
+            <button onclick="testDBTable('${t.action}', '${t.label}', ${t.pingOnly||false})"
+              style="padding:6px 14px;border-radius:7px;border:1px solid #dde6f0;background:#fff;
+                     font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#5a7090;
+                     cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0"
+              onmouseover="this.style.borderColor='#3a7bd5';this.style.color='#3a7bd5'"
+              onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a7090'">
+              TESTAR
+            </button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ── Testar uma tabela individual ─────────────────────────────────
+// OBJETIVO: Fazer GET à action correspondente e mostrar resultado inline
+// CONTEXTO: Para tabelas de leitura (get_*), conta rows devolvidas.
+//   Para Log_Torneios (pingOnly), faz apenas ping para confirmar ligação.
+async function testDBTable(action, label, pingOnly = false) {
+  const statusEl = document.getElementById('dbt-status-' + action);
+  const rowEl    = document.getElementById('dbt-row-' + action);
+  if (!statusEl || !rowEl) return;
+
+  // Estado: a testar
+  statusEl.textContent    = '⏳ A testar...';
+  statusEl.style.color    = '#9ab0c8';
+  rowEl.style.borderColor = '#dde6f0';
+
+  try {
+    const url = pingOnly
+      ? WEB_APP_URL + '?action=ping'
+      : WEB_APP_URL + '?action=' + action;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+    const ok   = data.ok || data.status === 'ok' || Array.isArray(data.rows);
+    const rows = Array.isArray(data.rows) ? data.rows.length : '—';
+
+    if (ok) {
+      statusEl.textContent    = pingOnly ? '✅ Online' : `✅ ${rows} rows`;
+      statusEl.style.color    = '#1a7a44';
+      rowEl.style.borderColor = '#c8e8d0';
+      rowEl.style.background  = '#f0fdf4';
+    } else {
+      statusEl.textContent    = '❌ Erro: ' + (data.error || data.message || 'resposta inválida');
+      statusEl.style.color    = '#c0392b';
+      rowEl.style.borderColor = '#fca5a5';
+      rowEl.style.background  = '#fff5f5';
+    }
+  } catch(e) {
+    statusEl.textContent    = '❌ Sem resposta';
+    statusEl.style.color    = '#c0392b';
+    rowEl.style.borderColor = '#fca5a5';
+    rowEl.style.background  = '#fff5f5';
+  }
+}
+
+// ── Testar todas as tabelas em sequência ─────────────────────────
+// OBJETIVO: Ping geral + teste de cada tabela, com resultado consolidado
+// CONTEXTO: Botão "Testar Conexão Completa". Corre todos os testes em paralelo
+//   via Promise.allSettled e mostra um resumo: X/6 tabelas OK.
+async function testDBAll() {
+  const badge    = document.getElementById('dbt-all-badge');
+  const resultEl = document.getElementById('dbt-all-result');
+  if (!badge || !resultEl) return;
+
+  badge.textContent = '⏳ A testar...';
+  badge.className   = 'card-badge';
+  resultEl.innerHTML = '<div style="font-size:12px;color:#9ab0c8;font-family:DM Mono">A testar todas as tabelas...</div>';
+
+  // Testar cada tabela em paralelo
+  const results = await Promise.allSettled(
+    DB_TABLES.map(t => testDBTable(t.action, t.label, t.pingOnly || false)
+      .then(() => {
+        const el = document.getElementById('dbt-status-' + t.action);
+        return { label: t.label, ok: el?.textContent?.startsWith('✅') };
+      })
+    )
+  );
+
+  // Re-ler os status dos elementos após os testes
+  let okCount = 0;
+  const lines = DB_TABLES.map(t => {
+    const el     = document.getElementById('dbt-status-' + t.action);
+    const passed = el?.textContent?.startsWith('✅');
+    if (passed) okCount++;
+    return `<div style="display:flex;justify-content:space-between;padding:4px 0;
+                        border-bottom:1px solid #f0f5fb;font-size:11px">
+              <span style="color:#5a7090">${t.icon} ${t.label}</span>
+              <span style="font-family:'DM Mono';color:${passed?'#1a7a44':'#c0392b'}">
+                ${el?.textContent || '—'}
+              </span>
+            </div>`;
+  }).join('');
+
+  const allOk = okCount === DB_TABLES.length;
+  badge.textContent = allOk ? '✅ Tudo OK' : `⚠️ ${okCount}/${DB_TABLES.length} OK`;
+  badge.className   = 'card-badge ' + (allOk ? 'green' : 'gold');
+
+  resultEl.innerHTML = `
+    <div style="background:${allOk?'#f0fdf4':'#fffbf0'};border:1px solid ${allOk?'#c8e8d0':'#e8c870'};
+                border-radius:10px;padding:14px">
+      <div style="font-family:'Bebas Neue';font-size:18px;color:${allOk?'#1a7a44':'#865a10'};
+                  letter-spacing:1px;margin-bottom:10px">
+        ${allOk ? '🟢 Conexão completa — todas as tabelas acessíveis' : `🟡 ${okCount} de ${DB_TABLES.length} tabelas responderam`}
+      </div>
+      ${lines}
+      <div style="margin-top:8px;font-size:10px;color:#9ab0c8;font-family:'DM Mono'">
+        URL: ${WEB_APP_URL.slice(0,55)}...
+      </div>
+    </div>`;
+}
 
 // ══════════════════════════════════════════
 // SCORECARD SUB-TABS
