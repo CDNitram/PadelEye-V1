@@ -590,9 +590,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab-btn" onclick="showTab('setup',this)">⚙ Setup do Torneio</button>
     <button class="tab-btn" onclick="showTab('rodadas',this)">🏸 Rodadas</button>
     <button class="tab-btn" onclick="showTab('grupos',this)">🗂 Grupos</button>
-    <button class="tab-btn" onclick="showTab('ranking',this)">📊 Estatísticas</button>
-    <button class="tab-btn" onclick="showTab('scorecard',this)">🏅 Scorecard</button>
-    <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico</button>
+    <button class="tab-btn" onclick="showTab('ranking',this)">📊 Estatísticas do Torneio</button>
+    <button class="tab-btn" onclick="showTab('scorecard',this)">🏅 Scorecard do Torneio</button>
+    <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico do Torneio</button>
   </div>
 
   <!-- ── SETUP ── -->
@@ -1910,7 +1910,7 @@ function _renderEstatRows(mode) {
   tbody.innerHTML = ranked.map((p,i) => {
     const medal   = i===0?'🥇':i===1?'🥈':i===2?'🥉':`<span class="rank-pos">${i+1}</span>`;
     const gdCls   = p.gd>0?'gd-pos':p.gd<0?'gd-neg':'';
-    const barW    = maxGW>0 ? Math.round(p.glmes_won/maxGW*100) : 0;
+    const barW    = maxGW>0 ? Math.round(p.games_won/maxGW*100) : 0;
     const wrColor = p.set_pct>=60?'#27AE60':p.set_pct>=40?'#C9933A':'#c0392b';
     return `<tr class="${i===0&&p.sets_played>0?'leader':''}">
       <td style="text-align:center">${medal}</td>
@@ -1928,9 +1928,9 @@ function _renderEstatRows(mode) {
       <td class="r" style="color:#5a7090">${p.sets_played}</td>
       <td class="r" style="color:#27AE60;font-weight:700">${p.sets_won}</td>
       <td class="r" style="color:#9ab0c8">${p.sets_lost}</td>
-      <td class="r" style="color:#5a7090">${p.glmes_played}</td>
-      <td class="r" style="color:#C9933A;font-weight:700">${p.glmes_won}</td>
-      <td class="r" style="color:#9ab0c8">${p.glmes_lost}</td>
+      <td class="r" style="color:#5a7090">${p.games_played}</td>
+      <td class="r" style="color:#C9933A;font-weight:700">${p.games_won}</td>
+      <td class="r" style="color:#9ab0c8">${p.games_lost}</td>
       <td class="r ${gdCls}">${p.gd>0?'+':''}${p.gd}</td>
       <td class="r" style="color:${wrColor};font-weight:700">${p.sets_played>0?p.set_pct+'%':'—'}</td>
     </tr>`;
@@ -2006,7 +2006,7 @@ function renderGrupos() {
   T.phases.forEach((ph, pi) => {
     const done = isPhaseComplete(pi);
     html += `<button onclick="switchGrupoPhase(${pi})" id="gtab-${pi}"
-      style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:${pi===0?'#0a1628':'#f4f7fc'};color:${pi===0?'#fff':'#9ab0c8'};transition:all .2s">
+      style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:${pi===0?'#0a1628':'#f4f7fc'};color:${pi===0?'#fff':'#9ab0c8'};transition:all .2s;${ph.groups&&ph.groups.length===0?'opacity:.35;cursor:not-allowed':''}">
       ${ph.name}${done?' ✅':''}
     </button>`;
   });
@@ -2027,7 +2027,7 @@ function renderGrupos() {
           ${T.name} · Fase 1
         </div>
         <div style="font-size:12px;color:#93C5FD">
-          ${T.date} · ${T.players.length} jogadores · ${T_groups.length} grupos · ${totalM} partidas · 21 no total
+          ${T.date} · ${T.players.length} jogadores · ${T_groups.length} grupos · ${totalM} partidas · F1+F2+Final
         </div>
         <div style="margin-top:10px;font-size:11px;color:#5a8aaa">
           ${seedList.length} seed${seedList.length!==1?'s':''} distribuído${seedList.length!==1?'s':''} — 1 por grupo.
