@@ -1082,6 +1082,9 @@ function doLogout() {
   document.getElementById('l-user').value = '';
   document.getElementById('l-pass').value = '';
   loadPlayersFromDB(); renderSeedPicker(); updateVagas(); updateSummary();
+  // Sim: pre-select all 8 players
+  selectedPlayers = REGISTRY.map(p => p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim());
+  renderCadastroPanel();
 }
 
 // ══════════════════════════════════
@@ -2372,22 +2375,14 @@ function renderScorecard() {
 
 // Extended player registry (starts with Liga 7ma base)
 let REGISTRY = [
-  {id:2601,nome:'Mahdi',       sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'Foz do Iguaçu',  nacionalidade:'',       email:'', celular:''},
-  {id:2602,nome:'Omar',        sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'Foz do Iguaçu',  nacionalidade:'',       email:'', celular:''},
-  {id:2603,nome:'Julio',       sobrenome:'W',  nickname:'Julio W', categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2604,nome:'Karim',       sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2605,nome:'João',        sobrenome:'G',  nickname:'João G',  categoria:'Masculina', cidade:'Foz do Iguaçu',  nacionalidade:'Brasileiro', email:'', celular:''},
-  {id:2606,nome:'Michel',      sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2607,nome:'Fábio',       sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2608,nome:'Gamarra',     sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2609,nome:'Pedro',       sobrenome:'H',  nickname:'Pedro H', categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2610,nome:'Nathan',      sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2611,nome:'Gabriel',     sobrenome:'M',  nickname:'Gabriel M',categoria:'Masculina',cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2612,nome:'Ricardo',     sobrenome:'B',  nickname:'Ricardo B',categoria:'Masculina',cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2613,nome:'Claudio',     sobrenome:'O',  nickname:'Claudio O',categoria:'Masculina',cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2614,nome:'Vitor',       sobrenome:'Bauer',nickname:'Vitor Bauer',categoria:'Masculina',cidade:'',           nacionalidade:'',       email:'', celular:''},
-  {id:2615,nome:'João',        sobrenome:'Lima',nickname:'João Lima',categoria:'Masculina',cidade:'',              nacionalidade:'',       email:'', celular:''},
-  {id:2616,nome:'Roberto',     sobrenome:'Carlos',nickname:'Roberto Carlos',categoria:'Masculina',cidade:'',       nacionalidade:'Brasileiro', email:'', celular:''},
+  {id:2601,nome:'Mahdi',        sobrenome:'',      nickname:'Mahdi',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2604,nome:'Karim',        sobrenome:'',      nickname:'Karim',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2608,nome:'Gamarra',      sobrenome:'',      nickname:'Gamarra',      categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2610,nome:'Nathan',       sobrenome:'',      nickname:'Nathan',       categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2613,nome:'Claudio',      sobrenome:'O',     nickname:'Claudio O.',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2614,nome:'Vitor',        sobrenome:'Bauer', nickname:'Vitor Bauer',  categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2617,nome:'Vitor',        sobrenome:'Hugo',  nickname:'Vitor Hugo',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2618,nome:'Christian',    sobrenome:'',      nickname:'Christian',    categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
 ];
 
 function nextPlayerId() {
