@@ -1006,6 +1006,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 // ══════════════════════════════════
 // CONSTANTS
 // ══════════════════════════════════
+// ── OBJETIVO: Tabela de utilizadores autorizados a aceder ao sistema ──────────
+// CONTEXTO: Verificado no login. Cada entrada tem email/username, password,
+//   nome de exibição, clube e role (organizer | admin).
+// ATENÇÃO: Credenciais hardcoded — apenas para MVP. Em produção, mover para
+//   autenticação via Google Sheets ou Firebase Auth.
 const USERS = {
   'organizador':                {pass:'padel2026', name:'Carlos Mendes',   club:'H7 Local · Foz do Iguaçu',      role:'organizer'},
   'gerente':                    {pass:'padel2026', name:'Carlos Mendes',   club:'H7 Local · Foz do Iguaçu',      role:'organizer'},
@@ -1016,10 +1021,15 @@ const USERS = {
   'admin':                      {pass:'admin123',  name:'Administrador',   club:'PadelEye Admin',                 role:'admin'},
 };
 
-// Liga 7ma Classe — base de jogadores
-const DB = []; // loaded from database on login
+// ── OBJETIVO: Array dinâmico de jogadores carregados do Google Sheets ─────────
+// CONTEXTO: Populado por loadPlayersFromDB() após login. Cada entrada: { id, nome }.
+// ATENÇÃO: Array mutável — não usar diretamente como fonte de verdade;
+//   o REGISTRY é a fonte local de fallback.
+const DB = [];
 
-// Pontos acumulados — futuro: virão do Google Sheets
+// ── OBJETIVO: Pontos acumulados por jogador na temporada (placeholder) ────────
+// CONTEXTO: Atualmente hardcoded. Futuramente virá do Google Sheets via
+//   PadelEyeDB.get_ranking_torneios(). Usado para sugerir seeds automaticamente.
 const DB_POINTS = {
   'Mahdi':120,'Omar':85,'Julio W':200,'Karim':60,'João G':400,
   'Michel':40,'Fábio':75,'Gamarra':200,'Pedro H':50,'Nathan':30,
@@ -1027,10 +1037,16 @@ const DB_POINTS = {
   'João Lima':10,'Roberto Carlos':300,
 };
 
+// ── OBJETIVO: Paleta de 16 cores para avatares e chips de jogadores ──────────
+// CONTEXTO: Cada jogador recebe uma cor com base no seu índice na lista.
+//   Funções pc(i) e _pc(name) fazem o mapeamento.
 const COLORS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A','#FF5722','#607D8B','#795548','#009688','#673AB7','#FF9800'];
 const pc = i => COLORS[i % COLORS.length];
 
-// ── STATE ──
+// ── OBJETIVO: Estado global da sessão do utilizador ──────────────────────────
+// CONTEXTO: Populado em doLogin(). Limpo em doLogout().
+// ATENÇÃO: currentUser é usado em toda a app para verificar permissões e
+//   para preencher dados de organizador nos torneios.
 let currentUser     = null;
 let selectedPlayers = [];  // names of players added to tournament
 let extraPlayers    = [];  // manually added players
@@ -1041,6 +1057,11 @@ function allPlayers() { return [...DB.map(p=>p.nome), ...extraPlayers]; }
 // ══════════════════════════════════
 // AUTH
 // ══════════════════════════════════
+// ── OBJETIVO: Autenticar o utilizador e inicializar o dashboard ──────────────
+// CONTEXTO: Chamado pelo botão "Entrar" e pelo Enter nos campos de login.
+//   Verifica credenciais contra USERS, mostra o dashboard e carrega jogadores do DB.
+// ATENÇÃO: Após login bem-sucedido, chama loadPlayersFromDB() — operação async
+//   que pode falhar se o Google Sheets estiver offline (usa REGISTRY como fallback).
 function doLogin() {
   const user = document.getElementById('l-user').value.trim().toLowerCase();
   const pass = document.getElementById('l-pass').value;
@@ -1062,6 +1083,9 @@ function doLogin() {
   PadelEyeDB.logSession(user, 'login', 'auth', { name: currentUser.name, club: currentUser.club });
 }
 
+// ── OBJETIVO: Encerrar a sessão e limpar todo o estado da app ────────────────
+// CONTEXTO: Chamado pelo botão "Sair" na topbar.
+//   Reinicia T (torneio), T_groups, selectedPlayers, seedList e regressa ao login.
 function doLogout() {
   currentUser = null; selectedPlayers = []; extraPlayers = []; seedList = [];
   T = { started:false, name:'', date:'', courts:2, scoring:'', players:[], phases:[], currentPhase:0, phaseConfig:[{maxScore:6,tbAt:5},{maxScore:6,tbAt:5},{maxScore:9,tbAt:9}] };
@@ -1077,6 +1101,11 @@ function doLogout() {
 // ══════════════════════════════════
 // TABS
 // ══════════════════════════════════
+// ── OBJETIVO: Navegar entre os painéis principais do dashboard ───────────────
+// CONTEXTO: Chamado pelos botões da tabs-bar. Ativa o painel correto e
+//   dispara o render adequado (rodadas, ranking, etc.) apenas quando necessário.
+// ATENÇÃO: Cada painel tem um render próprio chamado on-demand para evitar
+//   renders desnecessários em abas não visitadas.
 function showTab(id, el) {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
@@ -1094,12 +1123,17 @@ function showTab(id, el) {
 // ══════════════════════════════════
 // DATE
 // ══════════════════════════════════
+// ── OBJETIVO: Atualizar o widget de data no banner de boas-vindas ────────────
+// CONTEXTO: Chamado pelo onchange do input de data no Setup.
+//   Formata a data para exibição em pt-BR no cabeçalho do torneio.
 function syncDate(val) {
   if (!val) return;
   const d = new Date(val + 'T12:00:00');
   document.getElementById('w-dd').textContent = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}).toUpperCase();
   document.getElementById('w-dm').textContent = d.toLocaleDateString('pt-BR',{weekday:'long',year:'numeric'}).toUpperCase();
 }
+// ── OBJETIVO: Obter a data do torneio formatada em pt-BR para usar no estado T ─
+// CONTEXTO: Chamado em launch() e startRaffle(). Devolve "—" se não preenchida.
 function getCfgDate() {
   const raw = document.getElementById('cfg-date-raw').value;
   if (!raw) return '—';
@@ -1109,6 +1143,10 @@ function getCfgDate() {
 // ══════════════════════════════════
 // CARD ② · PLAYER SELECTION
 // ══════════════════════════════════
+// ── OBJETIVO: Renderizar a grelha de seleção de jogadores no Setup ───────────
+// CONTEXTO: Chamado sempre que selectedPlayers muda ou o input de pesquisa é usado.
+//   Gera cards clicáveis para cada jogador em DB + extraPlayers, com estado
+//   "selected" visível e chips na tira inferior.
 function renderDB() {
   const grid   = document.getElementById('db-grid');
   const strip  = document.getElementById('sel-strip');
@@ -1148,6 +1186,9 @@ function renderDB() {
   document.getElementById('db-cnt-bar').style.width     = (n/Math.max(tot,1)*100)+'%';
 }
 
+// ── OBJETIVO: Selecionar ou desseletar um jogador para o torneio ─────────────
+// CONTEXTO: Chamado pelo onclick de cada card na grelha de jogadores.
+//   Remove também dos seeds se deselecionado.
 function togglePlayer(name) {
   if (selectedPlayers.includes(name)) {
     selectedPlayers = selectedPlayers.filter(p=>p!==name);
@@ -1176,6 +1217,9 @@ function clearDB() {
 
 function filterDB() { renderDB(); }
 
+// ── OBJETIVO: Adicionar manualmente um jogador não registado no DB ───────────
+// CONTEXTO: Campo de texto no Setup para casos de última hora (ex: substituição
+//   antes do torneio começar). O jogador fica em extraPlayers[], não no REGISTRY.
 function addManual() {
   const inp  = document.getElementById('m-input');
   const name = inp.value.trim();
@@ -1190,6 +1234,10 @@ function addManual() {
 // ══════════════════════════════════
 // CARD ③ · SEED SELECTION
 // ══════════════════════════════════
+// ── OBJETIVO: Designar ou remover um jogador como cabeça de chave (seed) ─────
+// CONTEXTO: Chamado pelos chips na secção "Cabeças de Chave" do Setup.
+//   Máximo de seeds = floor(n_jogadores / 4) — 1 seed por grupo.
+//   Seeds são distribuídos automaticamente no sorteio (seed 0 → Grupo A, etc.).
 function toggleSeed(name) {
   if (seedList.includes(name)) {
     seedList = seedList.filter(s=>s!==name);
@@ -1242,6 +1290,9 @@ function renderSeedPicker() {
 // ══════════════════════════════════
 // VAGAS
 // ══════════════════════════════════
+// ── OBJETIVO: Atualizar a barra de progresso e contador de vagas ─────────────
+// CONTEXTO: Chamado sempre que selectedPlayers muda ou o nº de vagas é alterado.
+//   Muda a cor do status: Aberto → Quase (75%) → Completo (100%).
 function updateVagas() {
   const max    = parseInt(document.getElementById('cfg-vagas')?.value||16);
   const cur    = selectedPlayers.length;
@@ -1266,6 +1317,11 @@ function updateVagas() {
 // ══════════════════════════════════
 // SUMMARY
 // ══════════════════════════════════
+// ── OBJETIVO: Atualizar os KPIs de resumo do torneio no card de lançamento ───
+// CONTEXTO: Calcula nº de grupos F1, F2 e total de partidas com base no nº
+//   de jogadores selecionados. Modelo Brasileiro: grupos de 4, 3 partidas cada.
+// ATENÇÃO: O cálculo pressupõe sempre grupos completos de 4.
+//   Para nº ímpar de jogadores, o comportamento pode ser inesperado.
 function updateSummary() {
   const n = selectedPlayers.length;
 
@@ -1299,6 +1355,10 @@ function updateSummary() {
 // ══════════════════════════════════
 // AUTO-DISTRIBUTE GROUPS
 // ══════════════════════════════════
+// ── OBJETIVO: Distribuir jogadores automaticamente pelos grupos ───────────────
+// CONTEXTO: Chamado por buildGroups(). Seeds vão 1 por grupo (A, B, C, D).
+//   Os restantes são embaralhados e distribuídos round-robin pelo grupo com
+//   menos jogadores, garantindo grupos equilibrados.
 function autoDistributeGroups(players, seeds) {
   const numG     = Math.max(1, Math.floor(players.length / 4));
   const seeded   = seeds.filter(s=>players.includes(s)).slice(0, numG);
@@ -1314,6 +1374,10 @@ function autoDistributeGroups(players, seeds) {
 // ══════════════════════════════════
 // LAUNCH
 // ══════════════════════════════════
+// ── OBJETIVO: Validar a configuração e mostrar o overlay de confirmação ───────
+// CONTEXTO: Chamado pelo botão "Iniciar Torneio". Não inicia o torneio ainda —
+//   apenas mostra o resumo no overlay. O início real acontece em startRaffle().
+// ATENÇÃO: Mínimo de 4 jogadores obrigatório.
 function launch() {
   const n = selectedPlayers.length;
   if (n<4) { safeAlert('Selecione pelo menos 4 jogadores para iniciar.','err'); return; }
@@ -1393,6 +1457,11 @@ let T = {
 let T_groups = [];   // working copy for grupos screen
 
 // ── MATCH PAIRINGS for a group of 4 [A,B,C,D] ──
+// ── OBJETIVO: Gerar as 3 partidas de um grupo de 4 jogadores ─────────────────
+// CONTEXTO: Modelo Americano — cada par de jogadores é parceiro exatamente uma vez.
+//   [A,B] vs [C,D] · [A,C] vs [B,D] · [A,D] vs [B,C]
+// ATENÇÃO: Pressupõe sempre grupos de exatamente 4. Grupos incompletos causam
+//   undefined nos slots de jogadores.
 function groupMatches(g) {
   // Exactly 3 matches: every pair of players partners once
   return [
@@ -1403,6 +1472,11 @@ function groupMatches(g) {
 }
 
 // ── STANDINGS within a group ──
+// ── OBJETIVO: Calcular a classificação atual de um grupo ──────────────────────
+// CONTEXTO: Chamado por renderGrupos(), renderRounds() e advancePhase().
+//   Critérios de desempate em ordem: 1) Vitórias 2) Saldo de games 3) Saldo TB
+//   4) Sorteio aleatório (rand fixado por jogador para consistência no render).
+// ATENÇÃO: O rand é recriado a cada chamada — não usar para decisões persistentes.
 function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const phase = T.phases[phaseIdx];
   const stats = {};
@@ -1434,6 +1508,9 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
 }
 
 // ── PHASE COMPLETE? ──
+// ── OBJETIVO: Verificar se todas as partidas de uma fase foram guardadas ──────
+// CONTEXTO: Usado em renderRounds() para mostrar o botão "Avançar de fase" e
+//   em renderGrupos() para mostrar os labels de "avança" / "Campeão" / "Vice".
 function isPhaseComplete(phaseIdx) {
   const ph = T.phases[phaseIdx];
   if (!ph) return false;
@@ -1443,6 +1520,12 @@ function isPhaseComplete(phaseIdx) {
 }
 
 // ── ADVANCE to next phase ──
+// ── OBJETIVO: Avançar para a fase seguinte (F1→F2→Final ou F1→Final) ─────────
+// CONTEXTO: Chamado pelo botão "Avançar para a Fase X" após a fase atual completa.
+//   Calcula os qualificados (top 2 por grupo), faz o cross-pairing para F2,
+//   e cria a estrutura da nova fase em T.phases[].
+// ATENÇÃO: Em modo 2 fases (T.numFases===2), F1 avança diretamente para a Final
+//   sem F2. O índice da Final é sempre T.numFases-1.
 function advancePhase() {
   const phIdx = T.currentPhase;
   if (!isPhaseComplete(phIdx)) return;
@@ -1492,6 +1575,9 @@ function advancePhase() {
 
 
 // ── SYNC MAX & TB: ensure tbAt ≤ maxScore ──
+// ── OBJETIVO: Garantir que o valor de Tie-Break nunca excede o score máximo ───
+// CONTEXTO: Chamado pelo onchange dos selects de score máximo na config por fase.
+//   Desativa as opções de TB que seriam iguais ou superiores ao score máximo.
 function syncMaxTb(maxId, tbId) {
   const maxEl = document.getElementById(maxId);
   const tbEl  = document.getElementById(tbId);
@@ -1518,6 +1604,9 @@ function gameAlert(msg, type='ok') {
 }
 
 // ── SAFE ALERT — works from ANY panel, finds the first visible alert slot ──
+// ── OBJETIVO: Mostrar um alerta visível independentemente do painel ativo ─────
+// CONTEXTO: Versão robusta de gameAlert(). Tenta alert-game primeiro,
+//   depois alert-setup. Funciona de qualquer ponto da app.
 function safeAlert(msg, type='ok') {
   // Try current visible panel first, then fall back to alert-setup
   const ids = ['alert-game','alert-setup'];
@@ -1534,6 +1623,12 @@ function safeAlert(msg, type='ok') {
 }
 
 // ── SAVE MATCH ──
+// ── OBJETIVO: Guardar o resultado de uma partida no estado T ─────────────────
+// CONTEXTO: Chamado pelo botão "Guardar" em cada match-card nas Rodadas.
+//   Valida: score dentro do máximo da fase, TB obrigatório se atingir o threshold,
+//   sem empate fora do threshold. Guarda em T.phases[phaseIdx].results[key].
+// ATENÇÃO: key = "phaseIdx-groupIdx-matchIdx" — formato crítico, usado em todo
+//   o engine para indexar resultados. Não alterar sem atualizar groupStandings().
 function saveMatch(phaseIdx, groupIdx, matchIdx) {
   const key = `${phaseIdx}-${groupIdx}-${matchIdx}`;
   const inA = document.getElementById(`sc-${key}-a`);
@@ -1564,6 +1659,9 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
 }
 
+// ── OBJETIVO: Feedback visual em tempo real ao inserir placares ───────────────
+// CONTEXTO: Chamado pelo oninput dos campos de score. Aplica classes CSS
+//   "win" / "lose" e ativa o TB automaticamente se ambos atingirem o threshold.
 function liveScore(key) {
   const inA = document.getElementById(`sc-${key}-a`);
   const inB = document.getElementById(`sc-${key}-b`);
@@ -1583,6 +1681,9 @@ function liveScore(key) {
   }
 }
 
+// ── OBJETIVO: Ativar ou desativar a secção de Tie-Break numa partida ──────────
+// CONTEXTO: Chamado pelo botão "TB Tie-Break" em cada match-card.
+//   Ao desativar, limpa os valores de TB para não guardar dados inconsistentes.
 function toggleTB(key) {
   const btn    = document.getElementById(`tb-btn-${key}`);
   const inputs = document.getElementById(`tb-inputs-${key}`);
@@ -1598,7 +1699,12 @@ function toggleTB(key) {
   }
 }
 
-// ── RENDER ROUNDS ──
+// ── OBJETIVO: Renderizar o painel de Rodadas com as partidas da fase atual ────
+// CONTEXTO: Chamado por showTab('rodadas'), saveMatch(), advancePhase() e outros.
+//   Mostra tabs de fase, progress bar geral, e os grupos com match-cards.
+//   Inputs ficam readonly após guardar; botão "Corrigir" reabre a edição.
+// ATENÇÃO: Só renderiza a fase corrente (T.currentPhase). Fases anteriores
+//   são visíveis mas não editáveis via switchRoundPhase().
 function renderRounds() {
   const c = document.getElementById('rounds-container');
   if (!T.started) {
@@ -1784,7 +1890,12 @@ function unsaveMatch(key, phIdx, gi, mi) {
   }
 }
 
-// ── RENDER RANKING (accumulated across all phases) ──
+// ── OBJETIVO: Renderizar as Estatísticas acumuladas de todos os jogadores ─────
+// CONTEXTO: Chamado por showTab('ranking') e após cada saveMatch().
+//   Agrega sets e games de todas as fases. Ordenação primária: sets vencidos.
+//   Sub-tabs permitem ordenar por games marcados ou win rate.
+// ATENÇÃO: stats[] usa os nomes em T.players como chave — jogadores
+//   adicionados manualmente ou por substituição aparecem aqui automaticamente.
 function renderRanking() {
   const c = document.getElementById('ranking-container');
   if (!T.started) {
@@ -1894,6 +2005,9 @@ function renderRanking() {
   _renderEstatRows('sets');
 }
 
+// ── OBJETIVO: Mudar a ordenação da tabela de estatísticas ─────────────────────
+// CONTEXTO: Chamado pelos sub-botões "Sets Vencidos" / "Games Marcados" / "Win Rate".
+//   Reutiliza os dados já calculados em window._estatRanked para evitar re-cálculo.
 function estatSwitch(mode) {
   window._estatSort = mode;
   ['sets','games','pct'].forEach(m => {
@@ -1944,7 +2058,10 @@ function _renderEstatRows(mode) {
 }
 
 
-// ── RENDER HISTÓRICO ──
+// ── OBJETIVO: Renderizar o histórico de todas as partidas jogadas ────────────
+// CONTEXTO: Chamado por showTab('historico') e após saveMatch()/advancePhase().
+//   Lista todas as partidas guardadas, agrupadas por fase.
+//   Vencedor destacado a verde, perdedor a cinza. TB mostrado em laranja.
 function renderHistorico() {
   const c = document.getElementById('historico-container');
   if (!T.started) {
@@ -1989,12 +2106,20 @@ function renderHistorico() {
     : '<div class="empty-panel"><div class="empty-icon" style="font-size:30px">⏳</div><div>Nenhuma partida concluída ainda.</div></div>';
 }
 
-// ── GRUPOS SCREEN (with reshuffle) ──
+// ── OBJETIVO: Construir os grupos F1 a partir da lista de jogadores selecionados ─
+// CONTEXTO: Chamado por startRaffle() e reshuffleGroups().
+//   Delega a distribuição para autoDistributeGroups() e guarda em T_groups[].
 function buildGroups() {
   T_groups = autoDistributeGroups(T.players, seedList);
   // Ensure groups of exactly 4 (pad or trim if needed)
 }
 
+// ── OBJETIVO: Renderizar o painel de Grupos com todas as fases ───────────────
+// CONTEXTO: Chamado por showTab('grupos'), saveMatch(), advancePhase() e outros.
+//   Mostra tabs por fase (F1/F2/Final), grelha de grupos com classificação live,
+//   e labels contextuais: "avança" / "em jogo" / "🥇 Campeão" / "🥈 Vice".
+// ATENÇÃO: isFinal usa T.numFases-1 para determinar a fase Final dinamicamente.
+//   Grupos da F2/Final só aparecem após advancePhase() ser chamado.
 function renderGrupos() {
   const c = document.getElementById('grupos-container');
   if (!T.started) {
@@ -2175,6 +2300,9 @@ function switchGrupoPhase(pi) {
 }
 
 
+// ── OBJETIVO: Re-sortear os grupos F1 antes de iniciar as partidas ───────────
+// CONTEXTO: Botão "🔀 Sortear novamente" visível antes de guardar qualquer resultado.
+//   Bloqueia se já existirem resultados guardados para evitar inconsistências.
 function reshuffleGroups() {
   const f1HasResults = Object.keys(T.phases[0]?.results || {}).length > 0;
   if (T.started && f1HasResults) {
@@ -2190,7 +2318,12 @@ function reshuffleGroups() {
 
 
 
-// ── startTournament — shows Grupos first ──
+// ── OBJETIVO: Iniciar o torneio sem sorteio animado (via startTournament direto) ─
+// CONTEXTO: Versão alternativa ao fluxo raffle. Distribui grupos automaticamente
+//   e navega para as Rodadas. Mantido para compatibilidade mas o fluxo principal
+//   usa startRaffle() → raffleFinish().
+// ATENÇÃO: Esta função não é chamada pelo overlay "Torneio Criado!" — esse usa
+//   startRaffle(). Avaliar remover em versões futuras.
 function startTournament() {
   document.getElementById('overlay-ok').classList.remove('show');
 
@@ -2252,6 +2385,12 @@ function showTab(id, el) {
 
 const SC_PTS = { f1:10, f2:50, final:100, champ:300, runner:200, third:100 };
 
+// ── OBJETIVO: Calcular os pontos de temporada de cada jogador ─────────────────
+// CONTEXTO: Sistema de pontuação: F1 eliminado=10pts, F2=50pts, Final=100pts.
+//   Bónus: Campeão+300, Vice+200, 3º lugar+100.
+//   Devolve array ordenado por pontos totais.
+// ATENÇÃO: Em modo 2 fases, T.phases[1] É a Final (não F2).
+//   finalPhaseIdx = T.numFases - 1.
 function computeScorecard() {
   if (!T.started || !T.players.length) return [];
 
@@ -2286,6 +2425,12 @@ function computeScorecard() {
   }).sort((a,b) => b.total - a.total);
 }
 
+// ── OBJETIVO: Renderizar o Scorecard do torneio atual ────────────────────────
+// CONTEXTO: Chamado por showTab('scorecard') e após advancePhase().
+//   Mostra header com KPIs, lista de jogadores ordenada por pontos,
+//   e legenda do sistema de pontuação.
+// ATENÇÃO: Sub-tab "Temporada" (loadTemporada) faz fetch ao Google Sheets.
+//   Esta função renderiza apenas o torneio em curso (dados locais em T).
 function renderScorecard() {
   const c = document.getElementById('scorecard-container');
   if (!c) return;
@@ -2366,7 +2511,13 @@ function renderScorecard() {
 // CADASTRO DE JOGADORES · V26
 // ══════════════════════════════════
 
-// Extended player registry (starts with Liga 7ma base)
+// ── OBJETIVO: Registo local de jogadores conhecidos (fallback offline) ────────
+// CONTEXTO: Populado com os 8 jogadores base do EcoTenis MVP.
+//   Em modo online, o DB[] é carregado do Google Sheets.
+//   O REGISTRY serve de fallback quando o fetch falha.
+// ATENÇÃO: IDs começam em 2601. nextPlayerId() usa o maior ID do REGISTRY + 1.
+//   Novos jogadores registados via modal são adicionados ao REGISTRY E enviados
+//   ao Google Sheets via PadelEyeDB.registerPlayer().
 let REGISTRY = [
   {id:2601,nome:'Mahdi',        sobrenome:'',      nickname:'Mahdi',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
   {id:2604,nome:'Karim',        sobrenome:'',      nickname:'Karim',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
@@ -2409,6 +2560,12 @@ function closeRegModal(e) {
   }
 }
 
+// ── OBJETIVO: Validar e guardar um novo jogador no REGISTRY e no Google Sheets ─
+// CONTEXTO: Chamado pelo botão "💾 Salvar Perfil" no modal de registo.
+//   Valida campos obrigatórios (nome, sobrenome, categoria, género),
+//   gera um novo ID, adiciona ao REGISTRY e ao DB[], e chama registerPlayer().
+// ATENÇÃO: registerPlayer() é async mas não é awaited aqui — falhas vão para
+//   o toast de status sem bloquear a UI.
 function savePlayer() {
   const nome       = document.getElementById('reg-nome').value.trim();
   const sobrenome  = document.getElementById('reg-sobrenome').value.trim();
@@ -2452,6 +2609,9 @@ function savePlayer() {
   }
 }
 
+// ── OBJETIVO: Renderizar a lista de jogadores registados na aba Jogadores ─────
+// CONTEXTO: Chamado por showTab('cadastro'), loadPlayersFromDB() e savePlayer().
+//   Filtra pelo campo de pesquisa e mostra nome, apelido, categoria, cidade, ID.
 function renderRoster() {
   const container = document.getElementById('player-roster');
   const badge     = document.getElementById('roster-badge');
@@ -2499,7 +2659,12 @@ function renderRoster() {
 
 
 
-// ── FINALIZAR TORNEIO → Google Sheets ──
+// ── OBJETIVO: Guardar o torneio completo no Google Sheets ────────────────────
+// CONTEXTO: Chamado pelo botão "💾 Guardar Torneio" que aparece após a Final
+//   estar completa. Chama PadelEyeDB.saveTournament() com T, organizador e scorecard.
+//   Guarda: torneio, todas as partidas (todas as fases) e scorecard de pontos.
+// ATENÇÃO: Operação não-reversível. Em caso de erro (offline), o toast mostra
+//   aviso mas não há retry automático — cabe ao organizador tentar novamente.
 async function finalizeTournament() {
   if (!T.started || !T.phases.length) return;
   const scoreData = typeof computeScorecard === 'function' ? computeScorecard() : [];
@@ -2513,12 +2678,23 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIu
 // PadelEye · DB Integration Module · V32
 // Google Sheets via Apps Script Web App
 // ══════════════════════════════════════════════════════════
+//
+// ── OBJETIVO: Módulo de integração com o Google Sheets via Apps Script ────────
+// CONTEXTO: Expõe 4 métodos públicos: registerPlayer, saveTournament,
+//   logSession e ping. Todas as chamadas são async e tolerantes a falha.
+// ATENÇÃO: A WEB_APP_URL aponta para o deployment de PRODUÇÃO.
+//   Para testes usar PadelEye_Americano_V32_Sim.html (SimDB in-memory).
+//   Não confundir os dois ambientes — dados guardados aqui são reais.
 
 const PadelEyeDB = (() => {
 
   const now  = () => new Date().toISOString();
   const uid  = () => 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
+  // ── OBJETIVO: Enviar um pedido POST ao Apps Script Web App ─────────────────
+  // CONTEXTO: Usado internamente por todos os métodos do módulo.
+  //   Content-Type: text/plain para contornar CORS preflight do Apps Script.
+  //   Faz parse do JSON da resposta; em caso de erro de rede, devolve status:'error'.
   async function send(action, data) {
     try {
       const res = await fetch(WEB_APP_URL, {
@@ -2671,6 +2847,9 @@ const PadelEyeDB = (() => {
 // ══════════════════════════════════════════
 // SCORECARD SUB-TABS
 // ══════════════════════════════════════════
+// ── OBJETIVO: Alternar entre o scorecard do torneio atual e o da temporada ────
+// CONTEXTO: Botões "🏆 Torneio" / "📅 Temporada" na aba Scorecard.
+//   A temporada faz fetch ao Google Sheets; o torneio usa dados locais.
 function switchSC(tab) {
   const isTorneio = tab === 'torneio';
   document.getElementById('sc-torneio').style.display    = isTorneio ? 'block' : 'none';
@@ -2684,6 +2863,11 @@ function switchSC(tab) {
   if (!isTorneio) loadTemporada();
 }
 
+// ── OBJETIVO: Carregar e mostrar o ranking acumulado da temporada atual ───────
+// CONTEXTO: Chamado por switchSC('temporada'). Faz fetch à tab Torneios do
+//   Google Sheets, filtra pelo ano atual e agrega pontos por jogador.
+// ATENÇÃO: Estrutura de dados esperada do Sheets: t.standings como JSON array
+//   com { jogador, pts, pos }. Se o schema mudar, atualizar este parser.
 async function loadTemporada() {
   const el = document.getElementById('scorecard-temporada-container');
   el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Carregando temporada...</div></div>';
@@ -2763,6 +2947,12 @@ let _raffleCountdown = 3;
 const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
 const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
 
+// ── OBJETIVO: Inicializar e mostrar o ecrã de sorteio animado de grupos ───────
+// CONTEXTO: Chamado pelo botão "🎱 Sortear Grupos & Iniciar" no overlay de confirmação.
+//   Configura T com todos os dados do torneio, constrói a fila de sorteio
+//   (seeds primeiro, depois restantes em ordem aleatória), e abre s-raffle.
+// ATENÇÃO: Este é o ponto de entrada principal do torneio. T.numFases é definido
+//   aqui — crítico para toda a lógica de fases seguintes.
 function startRaffle() {
   // Pull config
   T.started     = true;
@@ -2828,6 +3018,11 @@ function _raffleRenderQueue() {
   }).join('');
 }
 
+// ── OBJETIVO: Sortear o próximo jogador e atribuí-lo a um grupo ───────────────
+// CONTEXTO: Chamado automaticamente (countdown) ou pelo botão "▶ Sortear agora".
+//   Seeds vão para o grupo correspondente ao seu índice (S1→A, S2→B...).
+//   Não-seeds vão para o grupo com menos jogadores no momento.
+//   Anima a bola com classe CSS "pop" e acende o card do grupo.
 function raffleDrawOne() {
   clearInterval(_raffleTimer);
   if (_raffleIdx >= _raffleQueue.length) { raffleAllDone(); return; }
@@ -2954,6 +3149,12 @@ function raffleAllDone() {
   document.getElementById('raffle-sub').textContent = '✅ Sorteio concluído!';
 }
 
+// ── OBJETIVO: Fechar o ecrã de sorteio e iniciar o torneio com os grupos ─────
+// CONTEXTO: Chamado pelo botão "🏆 Iniciar Torneio" após o sorteio completo.
+//   Converte _raffleGroups[] para T_groups[], cria T.phases[0] (Fase 1),
+//   e navega para as Rodadas.
+// ATENÇÃO: Este é o momento em que o torneio fica oficialmente "started".
+//   Após este ponto, substituições via modal são a única forma de alterar jogadores.
 function raffleFinish() {
   clearInterval(_raffleTimer);
   document.getElementById('s-raffle').classList.remove('show');
@@ -2978,12 +3179,6 @@ function raffleFinish() {
   document.querySelector('[onclick*="rodadas"]').classList.add('on');
   document.getElementById('p-rodadas').classList.add('on');
 }
-
-
-// ══════════════════════════════════════════
-// SIMULATION — V32_Sim
-// ══════════════════════════════════════════
-
 
 
 
@@ -3053,6 +3248,12 @@ function confirmSub() {
   renderScorecard();
 }
 
+// ── OBJETIVO: Substituir um jogador em todos os arrays do estado do torneio ───
+// CONTEXTO: Chamado por confirmSub(). Atualiza T.players, selectedPlayers,
+//   todos os grupos de todas as fases, seedList e T_groups.
+// ATENÇÃO: Resultados de partidas já guardadas NÃO são alterados (os índices
+//   de key não mudam). Apenas o nome na posição do grupo é atualizado,
+//   afetando partidas futuras e o display histórico.
 function substitutePlayer(outName, inName) {
   // 1. T.players list
   const pi = T.players.indexOf(outName);
@@ -3104,6 +3305,12 @@ function _updateSubButtons() {
 // ══════════════════════════════════════════
 // NÚMERO DE FASES — toggle para 8 jogadores
 // ══════════════════════════════════════════
+// ── OBJETIVO: Mostrar/esconder o selector de nº de fases conforme as vagas ────
+// CONTEXTO: Chamado pelo onchange do selector de vagas e do DOMContentLoaded.
+//   Só permite escolher 2 ou 3 fases quando vagas=8 (único caso prático de 2 fases).
+//   Para outros valores, força sempre 3 fases e esconde o selector.
+// ATENÇÃO: Quando numFases=2, o card de config da Fase 2 é ocultado e o card
+//   da Final é renomeado para "Fase Final (F1 → Final)".
 function updateFasesToggle() {
   const vagas = parseInt(document.getElementById('cfg-vagas')?.value || 16);
   const fieldFases  = document.getElementById('field-num-fases');
@@ -3140,6 +3347,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════
 // LOAD PLAYERS FROM DATABASE
 // ══════════════════════════════════════════
+// ── OBJETIVO: Carregar a lista de jogadores do Google Sheets para o DB[] ──────
+// CONTEXTO: Chamado após login. Faz fetch à action get_jogadores do Apps Script.
+//   Em caso de falha (offline, CORS, timeout), usa o REGISTRY local como fallback.
+// ATENÇÃO: A resposta esperada é { rows: [{id, nome, nickname, sobrenome, ...}] }.
+//   Se o schema do Sheets mudar, atualizar o mapeamento aqui.
 async function loadPlayersFromDB() {
   try {
     const res  = await fetch(PadelEyeDB._url ? PadelEyeDB._url() + '?action=get_jogadores' : WEB_APP_URL + '?action=get_jogadores');
