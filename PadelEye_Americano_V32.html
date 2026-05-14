@@ -885,6 +885,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 
 
+
   <!-- ── CADASTRO DE JOGADORES ── -->
   <div class="panel on" id="p-cadastro">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
@@ -1057,7 +1058,7 @@ function doLogin() {
   document.getElementById('tb-club').textContent = currentUser.club;
   document.getElementById('tb-av').textContent   = currentUser.name[0];
   document.getElementById('w-hi').textContent    = `Bem-vindo, ${currentUser.name.split(' ')[0]}!`;
-  renderDB();
+  loadPlayersFromDB();
   PadelEyeDB.logSession(user, 'login', 'auth', { name: currentUser.name, club: currentUser.club });
 }
 
@@ -1070,6 +1071,7 @@ function doLogout() {
   document.getElementById('l-user').value = '';
   document.getElementById('l-pass').value = '';
   loadPlayersFromDB(); renderSeedPicker(); updateVagas(); updateSummary();
+
 }
 
 // ══════════════════════════════════
@@ -2098,14 +2100,20 @@ function renderGrupos() {
           </div>
           ${isSeed && !hasResults ? `<div class="grupo-seed-badge">🌱 S${sIdx}</div>` : ''}
           ${!hasResults && !isSeed ? '' : ''}
-          ${hasResults && complete && pi===2
-            ? i===0 ? '<div style="font-size:16px">🥇</div>'
-            : i===1 ? '<div style="font-size:16px">🥈</div>'
-            : i===2 ? '<div style="font-size:16px">🥉</div>'
-            : '<div style="font-size:9px;color:#7090b0;font-family:\'DM Mono\';padding:2px 7px;background:#f0f5fb;border:1px solid #dde6f0;border-radius:5px">finalista</div>'
-            : hasResults && (i < qualify) ? `<div style="font-size:9px;color:#1a7a44;font-family:'DM Mono';padding:2px 6px;background:#E8F8EE;border-radius:5px">${complete?'avança':'em jogo'}</div>`
-            : hasResults && (i >= qualify) && complete ? '<div style="font-size:9px;color:#9ab0c8;font-family:\'DM Mono\'">elim.</div>'
-            : ''}
+          ${(() => {
+            const isFinal = (pi === (T.numFases||3) - 1);
+            if (isFinal && hasResults && complete) {
+              // Final phase — show titles, nothing for 3rd/4th
+              if (i === 0) return '<div style="font-size:11px;font-weight:700;color:#C9933A;font-family:DM Mono,monospace">🥇 Campeão</div>';
+              if (i === 1) return '<div style="font-size:11px;font-weight:700;color:#7090b0;font-family:DM Mono,monospace">🥈 Vice</div>';
+              return ''; // 3rd and 4th — nothing
+            }
+            if (isFinal && hasResults && !complete) return ''; // Final in progress — nothing
+            // Non-final phases
+            if (hasResults && (i < qualify)) return '<div style="font-size:9px;color:#1a7a44;font-family:DM Mono,monospace;padding:2px 6px;background:#E8F8EE;border-radius:5px">'+(complete?'avança':'em jogo')+'</div>';
+            if (hasResults && (i >= qualify) && complete) return ''; // eliminated — nothing
+            return '';
+          })()}
         </div>`;
       });
 
@@ -2360,22 +2368,14 @@ function renderScorecard() {
 
 // Extended player registry (starts with Liga 7ma base)
 let REGISTRY = [
-  {id:2601,nome:'Mahdi',       sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'Foz do Iguaçu',  nacionalidade:'',       email:'', celular:''},
-  {id:2602,nome:'Omar',        sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'Foz do Iguaçu',  nacionalidade:'',       email:'', celular:''},
-  {id:2603,nome:'Julio',       sobrenome:'W',  nickname:'Julio W', categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2604,nome:'Karim',       sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2605,nome:'João',        sobrenome:'G',  nickname:'João G',  categoria:'Masculina', cidade:'Foz do Iguaçu',  nacionalidade:'Brasileiro', email:'', celular:''},
-  {id:2606,nome:'Michel',      sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2607,nome:'Fábio',       sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2608,nome:'Gamarra',     sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2609,nome:'Pedro',       sobrenome:'H',  nickname:'Pedro H', categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2610,nome:'Nathan',      sobrenome:'',   nickname:'',        categoria:'Masculina', cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2611,nome:'Gabriel',     sobrenome:'M',  nickname:'Gabriel M',categoria:'Masculina',cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2612,nome:'Ricardo',     sobrenome:'B',  nickname:'Ricardo B',categoria:'Masculina',cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2613,nome:'Claudio',     sobrenome:'O',  nickname:'Claudio O',categoria:'Masculina',cidade:'',               nacionalidade:'',       email:'', celular:''},
-  {id:2614,nome:'Vitor',       sobrenome:'Bauer',nickname:'Vitor Bauer',categoria:'Masculina',cidade:'',           nacionalidade:'',       email:'', celular:''},
-  {id:2615,nome:'João',        sobrenome:'Lima',nickname:'João Lima',categoria:'Masculina',cidade:'',              nacionalidade:'',       email:'', celular:''},
-  {id:2616,nome:'Roberto',     sobrenome:'Carlos',nickname:'Roberto Carlos',categoria:'Masculina',cidade:'',       nacionalidade:'Brasileiro', email:'', celular:''},
+  {id:2601,nome:'Mahdi',        sobrenome:'',      nickname:'Mahdi',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2604,nome:'Karim',        sobrenome:'',      nickname:'Karim',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2608,nome:'Gamarra',      sobrenome:'',      nickname:'Gamarra',      categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2610,nome:'Nathan',       sobrenome:'',      nickname:'Nathan',       categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2613,nome:'Claudio',      sobrenome:'O',     nickname:'Claudio O.',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2614,nome:'Vitor',        sobrenome:'Bauer', nickname:'Vitor Bauer',  categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2617,nome:'Vitor',        sobrenome:'Hugo',  nickname:'Vitor Hugo',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2618,nome:'Christian',    sobrenome:'',      nickname:'Christian',    categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
 ];
 
 function nextPlayerId() {
@@ -2507,20 +2507,18 @@ async function finalizeTournament() {
   await PadelEyeDB.saveTournament(T, org, scoreData);
 }
 
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
+
 // ══════════════════════════════════════════════════════════
 // PadelEye · DB Integration Module · V32
 // Google Sheets via Apps Script Web App
-// Spreadsheet: PadelEye · Database
-// ID: 1NOp5DKNxFhNASLGcmAzyD1y_RVHbPUF3SQ2M6n7-NtA
 // ══════════════════════════════════════════════════════════
 
 const PadelEyeDB = (() => {
 
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
   const now  = () => new Date().toISOString();
   const uid  = () => 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
-  // ── Core send (no-cors compatible) ──
   async function send(action, data) {
     try {
       const res = await fetch(WEB_APP_URL, {
@@ -2539,42 +2537,27 @@ const PadelEyeDB = (() => {
     }
   }
 
-  // ── Mappers ──────────────────────────────────────────────
-
   function mapJogador(p) {
     return {
-      id:            p.id,
-      nome:          p.nome          || '',
-      sobrenome:     p.sobrenome     || '',
-      nickname:      p.nickname      || '',
-      categoria:     p.categoria     || '',
-      cidade:        p.cidade        || '',
-      nacionalidade: p.nacionalidade || '',
-      email:         p.email         || '',
-      celular:       p.celular       || '',
-      created_at:    now(),
-      ativo:         true,
+      id: p.id, nome: p.nome || '', sobrenome: p.sobrenome || '',
+      nickname: p.nickname || '', categoria: p.categoria || '',
+      cidade: p.cidade || '', nacionalidade: p.nacionalidade || '',
+      email: p.email || '', celular: p.celular || '',
+      created_at: now(), ativo: true,
     };
   }
 
   function mapTorneio(T, organizador) {
     const cfg = T.phaseConfig || [{maxScore:6,tbAt:5},{maxScore:6,tbAt:5},{maxScore:9,tbAt:9}];
     return {
-      id:          uid(),
-      nome:        T.name    || 'Torneio Americano EcoTenis',
-      data:        T.date    || now().slice(0,10),
-      formato:     'Americano · Modelo Brasileiro',
-      organizador: organizador || '—',
-      vagas:       T.players?.length || 0,
-      scoring:     T.scoring  || '15·30·40·Game',
-      f1_max:      cfg[0]?.maxScore ?? 6,
-      f1_tb:       cfg[0]?.tbAt    ?? 5,
-      f2_max:      cfg[1]?.maxScore ?? 6,
-      f2_tb:       cfg[1]?.tbAt    ?? 5,
-      final_max:   cfg[2]?.maxScore ?? 9,
-      final_tb:    cfg[2]?.tbAt    ?? 9,
-      status:      'em_curso',
-      created_at:  now(),
+      id: uid(), nome: T.name || 'Torneio Americano EcoTenis',
+      data: T.date || now().slice(0,10), formato: 'Americano · Modelo Brasileiro',
+      organizador: organizador || '—', vagas: T.players?.length || 0,
+      scoring: T.scoring || '15·30·40·Game',
+      f1_max: cfg[0]?.maxScore ?? 6, f1_tb: cfg[0]?.tbAt ?? 5,
+      f2_max: cfg[1]?.maxScore ?? 6, f2_tb: cfg[1]?.tbAt ?? 5,
+      final_max: cfg[2]?.maxScore ?? 9, final_tb: cfg[2]?.tbAt ?? 9,
+      status: 'em_curso', created_at: now(),
     };
   }
 
@@ -2593,19 +2576,13 @@ const PadelEyeDB = (() => {
           const key = `${phIdx}-${gi}-${mi}`;
           const res = ph.results?.[key] || {};
           rows.push({
-            id:         uid(),
-            torneio_id: torneioId,
-            fase:       ph.name,
-            grupo:      LETTERS[gi + (phIdx===1?4:0)],
-            partida:    mi + 1,
-            equipa_a:   m.a.join(' / '),
-            equipa_b:   m.b.join(' / '),
-            score_a:    res.sa  ?? '',
-            score_b:    res.sb  ?? '',
-            tie_break:  res.tb  ? 'Sim' : 'Não',
-            tb_a:       res.tba ?? '',
-            tb_b:       res.tbb ?? '',
-            saved_at:   res.saved ? now() : '',
+            id: uid(), torneio_id: torneioId, fase: ph.name,
+            grupo: LETTERS[gi + (phIdx===1?4:0)], partida: mi + 1,
+            equipa_a: m.a.join(' / '), equipa_b: m.b.join(' / '),
+            score_a: res.sa ?? '', score_b: res.sb ?? '',
+            tie_break: res.tb ? 'Sim' : 'Não',
+            tb_a: res.tba ?? '', tb_b: res.tbb ?? '',
+            saved_at: res.saved ? now() : '',
           });
         });
       });
@@ -2615,21 +2592,12 @@ const PadelEyeDB = (() => {
 
   function mapScorecard(T, torneioId, scoreData) {
     return scoreData.map(p => ({
-      id:            uid(),
-      torneio_id:    torneioId,
-      torneio_nome:  T.name   || '—',
-      data:          T.date   || now().slice(0,10),
-      jogador:       p.name,
-      pts_base:      p.basePts,
-      pts_bonus:     p.bonus,
-      pts_total:     p.total,
-      fase_atingida: p.phaseLabel,
-      posicao:       p.medal  || '—',
-      created_at:    now(),
+      id: uid(), torneio_id: torneioId, torneio_nome: T.name || '—',
+      data: T.date || now().slice(0,10), jogador: p.name,
+      pts_base: p.basePts, pts_bonus: p.bonus, pts_total: p.total,
+      fase_atingida: p.phaseLabel, posicao: p.medal || '—', created_at: now(),
     }));
   }
-
-  // ── Public API ───────────────────────────────────────────
 
   async function registerPlayer(playerData) {
     showStatus('A registar jogador...', 'loading');
@@ -2649,15 +2617,11 @@ const PadelEyeDB = (() => {
     const torneioId    = torneioRow.id;
     const partidasRows = mapPartidas(T, torneioId);
     const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
-
     const [r1, r2, r3] = await Promise.all([
-      send('insert_torneio',   { table:'Torneios',  row:  torneioRow }),
-      send('insert_partidas',  { table:'Partidas_Torneios',  rows: partidasRows }),
-      scRows.length
-        ? send('insert_scorecard', { table:'Scorecard_Torneios', rows: scRows })
-        : Promise.resolve({ status:'skipped' }),
+      send('insert_torneio',  { table:'Torneios', row: torneioRow }),
+      send('insert_partidas', { table:'Partidas_Torneios', rows: partidasRows }),
+      scRows.length ? send('insert_scorecard', { table:'Scorecard_Torneios', rows: scRows }) : Promise.resolve({ status:'skipped' }),
     ]);
-
     const ok = r1.status !== 'error';
     showStatus(
       ok ? `✅ Torneio "${T.name}" guardado (${partidasRows.length} partidas)` : '⚠️ Erro ao guardar torneio.',
@@ -2682,7 +2646,6 @@ const PadelEyeDB = (() => {
     } catch(e) { return { status:'error', message:e.message }; }
   }
 
-  // ── UI status toast ──────────────────────────────────────
   function showStatus(message, type='loading') {
     let el = document.getElementById('pe-db-status');
     if (!el) {
@@ -3018,6 +2981,13 @@ function raffleFinish() {
 
 
 // ══════════════════════════════════════════
+// SIMULATION — V32_Sim
+// ══════════════════════════════════════════
+
+
+
+
+// ══════════════════════════════════════════
 // SUBSTITUIÇÃO DE JOGADOR
 // ══════════════════════════════════════════
 function openSubModal() {
@@ -3172,19 +3142,21 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════
 async function loadPlayersFromDB() {
   try {
-    const res  = await fetch(PadelEyeDB._url() + '?action=get_jogadores');
-    const json = await res.json();
-    const rows = json.rows || [];
-    if (rows.length) {
-      DB.length = 0;
-      rows.forEach(p => {
-        const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
-        DB.push({ id: p.id, nome });
-      });
-      console.log('[V32] Loaded ' + rows.length + ' players from DB');
-    }
+    const res  = await fetch(PadelEyeDB._url ? PadelEyeDB._url() + '?action=get_jogadores' : WEB_APP_URL + '?action=get_jogadores');
+    const data = await res.json();
+    DB.length = 0;
+    (data.rows || []).forEach(p => {
+      const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+      if (nome) DB.push({ id: p.jogador_id || p.id, nome });
+    });
   } catch(e) {
-    console.warn('[V32] Could not load players from DB:', e.message);
+    // Fallback: load from local REGISTRY if offline
+    console.warn('[loadPlayersFromDB] fetch failed, using REGISTRY:', e.message);
+    DB.length = 0;
+    REGISTRY.forEach(p => {
+      const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+      DB.push({ id: p.id, nome });
+    });
   }
   renderDB();
   renderRoster();
