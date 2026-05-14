@@ -1027,15 +1027,11 @@ const USERS = {
 //   o REGISTRY é a fonte local de fallback.
 const DB = [];
 
-// ── OBJETIVO: Pontos acumulados por jogador na temporada (placeholder) ────────
-// CONTEXTO: Atualmente hardcoded. Futuramente virá do Google Sheets via
-//   PadelEyeDB.get_ranking_torneios(). Usado para sugerir seeds automaticamente.
-const DB_POINTS = {
-  'Mahdi':120,'Omar':85,'Julio W':200,'Karim':60,'João G':400,
-  'Michel':40,'Fábio':75,'Gamarra':200,'Pedro H':50,'Nathan':30,
-  'Gabriel M':100,'Ricardo B':10,'Claudio O':10,'Vitor Bauer':50,
-  'João Lima':10,'Roberto Carlos':300,
-};
+// ── OBJETIVO: Pontos acumulados por jogador na temporada ─────────────────────
+// CONTEXTO: Futuramente virá do Google Sheets via PadelEyeDB (tab Ranking_Torneios).
+//   Será usado para sugerir seeds automaticamente com base no histórico.
+// ATENÇÃO: Vazio intencionalmente na produção — sem dados dummy hardcoded.
+const DB_POINTS = {};
 
 // ── OBJETIVO: Paleta de 16 cores para avatares e chips de jogadores ──────────
 // CONTEXTO: Cada jogador recebe uma cor com base no seu índice na lista.
@@ -2511,23 +2507,14 @@ function renderScorecard() {
 // CADASTRO DE JOGADORES · V26
 // ══════════════════════════════════
 
-// ── OBJETIVO: Registo local de jogadores conhecidos (fallback offline) ────────
-// CONTEXTO: Populado com os 8 jogadores base do EcoTenis MVP.
-//   Em modo online, o DB[] é carregado do Google Sheets.
-//   O REGISTRY serve de fallback quando o fetch falha.
-// ATENÇÃO: IDs começam em 2601. nextPlayerId() usa o maior ID do REGISTRY + 1.
-//   Novos jogadores registados via modal são adicionados ao REGISTRY E enviados
-//   ao Google Sheets via PadelEyeDB.registerPlayer().
-let REGISTRY = [
-  {id:2601,nome:'Mahdi',        sobrenome:'',      nickname:'Mahdi',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2604,nome:'Karim',        sobrenome:'',      nickname:'Karim',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2608,nome:'Gamarra',      sobrenome:'',      nickname:'Gamarra',      categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2610,nome:'Nathan',       sobrenome:'',      nickname:'Nathan',       categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2613,nome:'Claudio',      sobrenome:'O',     nickname:'Claudio O.',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2614,nome:'Vitor',        sobrenome:'Bauer', nickname:'Vitor Bauer',  categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2617,nome:'Vitor',        sobrenome:'Hugo',  nickname:'Vitor Hugo',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2618,nome:'Christian',    sobrenome:'',      nickname:'Christian',    categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-];
+// ── OBJETIVO: Registo local de jogadores — usado apenas como fallback offline ──
+// CONTEXTO: Em modo normal, DB[] é sempre carregado do Google Sheets via
+//   loadPlayersFromDB(). Este array só é usado se o fetch falhar (sem rede).
+// ATENÇÃO: VAZIO INTENCIONALMENTE na versão de produção.
+//   Jogadores dummy/hardcoded só existem no V32_Sim (ambiente de simulação).
+//   Ao cadastrar um novo jogador via modal, ele é adicionado aqui temporariamente
+//   e enviado ao Google Sheets via PadelEyeDB.registerPlayer().
+let REGISTRY = [];
 
 function nextPlayerId() {
   const maxId = REGISTRY.reduce((m, p) => Math.max(m, p.id), 2600);
@@ -3362,13 +3349,19 @@ async function loadPlayersFromDB() {
       if (nome) DB.push({ id: p.jogador_id || p.id, nome });
     });
   } catch(e) {
-    // Fallback: load from local REGISTRY if offline
-    console.warn('[loadPlayersFromDB] fetch failed, using REGISTRY:', e.message);
+    // Fallback: sem rede → DB fica vazio (sem jogadores dummy na produção)
+    // O utilizador verá a lista de jogadores vazia e uma mensagem de erro.
+    console.warn('[loadPlayersFromDB] fetch failed — DB will be empty:', e.message);
     DB.length = 0;
-    REGISTRY.forEach(p => {
-      const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
-      DB.push({ id: p.id, nome });
-    });
+  }
+  // Se o DB ficou vazio (fetch falhou), mostrar aviso ao utilizador
+  if (DB.length === 0) {
+    const el = document.getElementById('alert-cadastro');
+    if (el) {
+      el.textContent = '⚠️ Não foi possível carregar jogadores do servidor. Verifique a ligação e recarregue.';
+      el.className   = 'alert warn';
+      el.style.display = 'block';
+    }
   }
   renderDB();
   renderRoster();
