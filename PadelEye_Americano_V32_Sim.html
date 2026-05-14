@@ -593,6 +593,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab-btn" onclick="showTab('ranking',this)">📊 Estatísticas do Torneio</button>
     <button class="tab-btn" onclick="showTab('scorecard',this)">🏅 Scorecard do Torneio</button>
     <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico do Torneio</button>
+    <button class="tab-btn" onclick="showTab('simdb',this)" style="color:#2D9E5A">🗄 SimDB</button>
   </div>
 
   <!-- ── SETUP ── -->
@@ -897,6 +898,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 
 
+  <!-- ── SIMDB INSPECTOR ── -->
+  <div class="panel" id="p-simdb">
+    <div id="simdb-content"></div>
+  </div>
+
   <!-- ── CADASTRO DE JOGADORES ── -->
   <div class="panel on" id="p-cadastro">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
@@ -1069,6 +1075,7 @@ function doLogin() {
   document.getElementById('tb-club').textContent = currentUser.club;
   document.getElementById('tb-av').textContent   = currentUser.name[0];
   document.getElementById('w-hi').textContent    = `Bem-vindo, ${currentUser.name.split(' ')[0]}!`;
+  simDBInit();
   loadPlayersFromDB();
   PadelEyeDB.logSession(user, 'login', 'auth', { name: currentUser.name, club: currentUser.club });
 }
@@ -2111,14 +2118,20 @@ function renderGrupos() {
           </div>
           ${isSeed && !hasResults ? `<div class="grupo-seed-badge">🌱 S${sIdx}</div>` : ''}
           ${!hasResults && !isSeed ? '' : ''}
-          ${hasResults && complete && pi===2
-            ? i===0 ? '<div style="font-size:16px">🥇</div>'
-            : i===1 ? '<div style="font-size:16px">🥈</div>'
-            : i===2 ? '<div style="font-size:16px">🥉</div>'
-            : '<div style="font-size:9px;color:#7090b0;font-family:\'DM Mono\';padding:2px 7px;background:#f0f5fb;border:1px solid #dde6f0;border-radius:5px">finalista</div>'
-            : hasResults && (i < qualify) ? `<div style="font-size:9px;color:#1a7a44;font-family:'DM Mono';padding:2px 6px;background:#E8F8EE;border-radius:5px">${complete?'avança':'em jogo'}</div>`
-            : hasResults && (i >= qualify) && complete ? '<div style="font-size:9px;color:#9ab0c8;font-family:\'DM Mono\'">elim.</div>'
-            : ''}
+          ${(() => {
+            const isFinal = (pi === (T.numFases||3) - 1);
+            if (isFinal && hasResults && complete) {
+              // Final phase — show titles, nothing for 3rd/4th
+              if (i === 0) return '<div style="font-size:11px;font-weight:700;color:#C9933A;font-family:'DM Mono'">🥇 Campeão</div>';
+              if (i === 1) return '<div style="font-size:11px;font-weight:700;color:#7090b0;font-family:'DM Mono'">🥈 Vice</div>';
+              return ''; // 3rd and 4th — nothing
+            }
+            if (isFinal && hasResults && !complete) return ''; // Final in progress — nothing
+            // Non-final phases
+            if (hasResults && (i < qualify)) return \`<div style="font-size:9px;color:#1a7a44;font-family:'DM Mono';padding:2px 6px;background:#E8F8EE;border-radius:5px">\${complete?'avança':'em jogo'}</div>\`;
+            if (hasResults && (i >= qualify) && complete) return ''; // eliminated — nothing
+            return '';
+          })()}
         </div>`;
       });
 
@@ -2513,15 +2526,291 @@ async function finalizeTournament() {
 }
 
 // ══════════════════════════════════════════════════════════
-// PadelEye · DB Integration Module · V32
-// Google Sheets via Apps Script Web App
-// Spreadsheet: PadelEye · Database
-// ID: 1NOp5DKNxFhNASLGcmAzyD1y_RVHbPUF3SQ2M6n7-NtA
+// PadelEye · SimDB — Banco de Dados Local para Simulação
+// Espelha a estrutura real do Google Sheets / Apps Script
+// Dados persistem durante a sessão (in-memory)
 // ══════════════════════════════════════════════════════════
 
-const PadelEyeDB = (() => {
+// ── SIM STORE — tabelas em memória ──────────────────────
+const SIM_STORE = {
+  Jogadores:          [],   // espelha tab Jogadores
+  Torneios:           [],   // espelha tab Torneios
+  Partidas_Torneios:  [],   // espelha tab Partidas_Torneios
+  Scorecard_Torneios: [],   // espelha tab Scorecard_Torneios
+  Ranking_Torneios:   [],   // espelha tab Ranking_Torneios
+  Sessions:           [],   // log de sessões
+};
 
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
+// Seed inicial: popula Jogadores a partir do REGISTRY
+function simDBInit() {
+  SIM_STORE.Jogadores = REGISTRY.map(p => ({
+    id:            p.id,
+    nome:          p.nome,
+    sobrenome:     p.sobrenome     || '',
+    nickname:      p.nickname      || '',
+    categoria:     p.categoria     || '',
+    cidade:        p.cidade        || '',
+    nacionalidade: p.nacionalidade || '',
+    email:         p.email         || '',
+    celular:       p.celular       || '',
+    created_at:    new Date().toISOString(),
+    ativo:         true,
+  }));
+  console.log('[SimDB] Inicializado com ' + SIM_STORE.Jogadores.length + ' jogadores');
+}
+
+// ── SimDB Actions (mesma estrutura do Apps Script real) ──
+function simDBAction(action, data) {
+  const now = new Date().toISOString();
+
+  // ── GET actions ──────────────────────────────────────
+  if (action === 'ping') {
+    return { ok:true, status:'SimDB online', mode:'simulation', timestamp:now };
+  }
+  if (action === 'get_jogadores') {
+    return { ok:true, rows: SIM_STORE.Jogadores };
+  }
+  if (action === 'get_torneios') {
+    return { ok:true, rows: SIM_STORE.Torneios };
+  }
+  if (action === 'get_partidas_torneios') {
+    const tid = data?.torneio_id;
+    const rows = tid
+      ? SIM_STORE.Partidas_Torneios.filter(r=>r.torneio_id===tid)
+      : SIM_STORE.Partidas_Torneios;
+    return { ok:true, rows };
+  }
+  if (action === 'get_scorecard_torneios') {
+    const tid = data?.torneio_id;
+    const rows = tid
+      ? SIM_STORE.Scorecard_Torneios.filter(r=>r.torneio_id===tid)
+      : SIM_STORE.Scorecard_Torneios;
+    return { ok:true, rows };
+  }
+  if (action === 'get_ranking_torneios') {
+    return { ok:true, rows: SIM_STORE.Ranking_Torneios };
+  }
+
+  // ── INSERT actions ───────────────────────────────────
+  if (action === 'insert_jogador') {
+    const row = data?.row || data;
+    if (row) { SIM_STORE.Jogadores.push({...row, created_at:now}); }
+    simDBRefreshUI();
+    return { ok:true, inserted:1, id:row?.id };
+  }
+  if (action === 'insert_torneio') {
+    const row = data?.row || data;
+    if (row) { SIM_STORE.Torneios.push({...row, created_at:now, status:'concluido'}); }
+    simDBRefreshUI();
+    return { ok:true, inserted:1, id:row?.id };
+  }
+  if (action === 'insert_partidas') {
+    const rows = data?.rows || (data ? [data] : []);
+    rows.forEach(r => SIM_STORE.Partidas_Torneios.push({...r, created_at:now}));
+    simDBRefreshUI();
+    return { ok:true, inserted:rows.length };
+  }
+  if (action === 'insert_scorecard') {
+    const rows = data?.rows || (data ? [data] : []);
+    rows.forEach(r => {
+      SIM_STORE.Scorecard_Torneios.push({...r, created_at:now});
+      // Also update Ranking_Torneios (aggregate)
+      const existing = SIM_STORE.Ranking_Torneios.find(x=>x.jogador===r.jogador);
+      if (existing) {
+        existing.pts_total   += r.pts_total || 0;
+        existing.torneios    += 1;
+        if (r.posicao==='🥇') existing.titulos++;
+      } else {
+        SIM_STORE.Ranking_Torneios.push({
+          jogador:    r.jogador,
+          pts_total:  r.pts_total  || 0,
+          torneios:   1,
+          titulos:    r.posicao==='🥇' ? 1 : 0,
+          ultima_data:r.data || now.slice(0,10),
+        });
+      }
+    });
+    SIM_STORE.Ranking_Torneios.sort((a,b)=>b.pts_total-a.pts_total);
+    simDBRefreshUI();
+    return { ok:true, inserted:rows.length };
+  }
+  if (action === 'log_action') {
+    const row = data?.row || data;
+    if (row) SIM_STORE.Sessions.push({...row, timestamp:now});
+    return { ok:true };
+  }
+
+  return { ok:false, error:'Unknown action: ' + action };
+}
+
+// Refresh SimDB inspector panel if open
+function simDBRefreshUI() {
+  const panel = document.getElementById('simdb-content');
+  if (panel && panel.offsetParent !== null) renderSimDB();
+}
+
+// ── SimPadelEyeDB — substitui PadelEyeDB com mesma API ──
+const PadelEyeDB = (() => {
+  const now  = () => new Date().toISOString();
+  const uid  = () => 'sim_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+
+  // Simula delay de rede (50ms) para parecer real
+  function fakeAsync(result) {
+    return new Promise(resolve => setTimeout(() => resolve(result), 50));
+  }
+
+  function mapJogador(p) {
+    return {
+      id:            p.id,
+      nome:          p.nome          || '',
+      sobrenome:     p.sobrenome     || '',
+      nickname:      p.nickname      || '',
+      categoria:     p.categoria     || '',
+      cidade:        p.cidade        || '',
+      nacionalidade: p.nacionalidade || '',
+      email:         p.email         || '',
+      celular:       p.celular       || '',
+      created_at:    now(),
+      ativo:         true,
+    };
+  }
+
+  function mapTorneio(T, organizador) {
+    const cfg = T.phaseConfig || [{maxScore:6,tbAt:5},{maxScore:6,tbAt:5},{maxScore:9,tbAt:9}];
+    return {
+      id:          uid(),
+      nome:        T.name    || 'Torneio Americano EcoTenis',
+      data:        T.date    || now().slice(0,10),
+      formato:     'Americano · Modelo Brasileiro',
+      organizador: organizador || '—',
+      vagas:       T.players?.length || 0,
+      scoring:     T.scoring  || '15·30·40·Game',
+      num_fases:   T.numFases || 3,
+      f1_max:      cfg[0]?.maxScore ?? 6,
+      f1_tb:       cfg[0]?.tbAt    ?? 5,
+      f2_max:      cfg[1]?.maxScore ?? 6,
+      f2_tb:       cfg[1]?.tbAt    ?? 5,
+      final_max:   cfg[2]?.maxScore ?? 9,
+      final_tb:    cfg[2]?.tbAt    ?? 9,
+      status:      'concluido',
+      created_at:  now(),
+    };
+  }
+
+  function mapPartidas(T, torneioId) {
+    const rows = [];
+    const LETTERS = ['A','B','C','D','E','F','G','H'];
+    T.phases.forEach((ph, phIdx) => {
+      if (!ph) return;
+      ph.groups.forEach((group, gi) => {
+        const matches = [
+          { a:[group[0],group[1]], b:[group[2],group[3]] },
+          { a:[group[0],group[2]], b:[group[1],group[3]] },
+          { a:[group[0],group[3]], b:[group[1],group[2]] },
+        ];
+        matches.forEach((m, mi) => {
+          const key = phIdx+'-'+gi+'-'+mi;
+          const res = ph.results?.[key] || {};
+          rows.push({
+            id:         uid(),
+            torneio_id: torneioId,
+            fase:       ph.name,
+            grupo:      LETTERS[gi + (phIdx===1?4:0)],
+            partida:    mi + 1,
+            equipa_a:   m.a.join(' / '),
+            equipa_b:   m.b.join(' / '),
+            score_a:    res.sa  ?? '',
+            score_b:    res.sb  ?? '',
+            tie_break:  res.tb  ? 'Sim' : 'Não',
+            tb_a:       res.tba ?? '',
+            tb_b:       res.tbb ?? '',
+            saved_at:   res.saved ? now() : '',
+          });
+        });
+      });
+    });
+    return rows;
+  }
+
+  function mapScorecard(T, torneioId, scoreData) {
+    return scoreData.map(p => ({
+      id:            uid(),
+      torneio_id:    torneioId,
+      torneio_nome:  T.name   || '—',
+      data:          T.date   || now().slice(0,10),
+      jogador:       p.name,
+      pts_base:      p.basePts,
+      pts_bonus:     p.bonus,
+      pts_total:     p.total,
+      fase_atingida: p.phaseLabel,
+      posicao:       p.medal  || '—',
+      created_at:    now(),
+    }));
+  }
+
+  async function registerPlayer(playerData) {
+    showStatus('[SimDB] A registar jogador...', 'loading');
+    const result = await fakeAsync(simDBAction('insert_jogador', { row: mapJogador(playerData) }));
+    showStatus(
+      result.ok
+        ? '✅ [SimDB] ' + playerData.nome + ' registado (ID #' + playerData.id + ')'
+        : '⚠️ [SimDB] Erro ao registar.',
+      result.ok ? 'success' : 'error'
+    );
+    return result;
+  }
+
+  async function saveTournament(T, organizador, scoreData) {
+    showStatus('[SimDB] A guardar torneio...', 'loading');
+    const torneioRow   = mapTorneio(T, organizador);
+    const torneioId    = torneioRow.id;
+    const partidasRows = mapPartidas(T, torneioId);
+    const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
+
+    await fakeAsync(simDBAction('insert_torneio',   { row:  torneioRow }));
+    await fakeAsync(simDBAction('insert_partidas',  { rows: partidasRows }));
+    if (scRows.length) await fakeAsync(simDBAction('insert_scorecard', { rows: scRows }));
+
+    showStatus(
+      '✅ [SimDB] Torneio "' + T.name + '" guardado (' + partidasRows.length + ' partidas · ' + scRows.length + ' scorecard entries)',
+      'success'
+    );
+    return { torneioId, ok:true };
+  }
+
+  async function logSession(user, action, entity, metadata) {
+    return fakeAsync(simDBAction('log_action', {
+      row: { id:uid(), user:user||'anonymous', action, entity:entity||'', metadata:JSON.stringify(metadata||{}), timestamp:now() }
+    }));
+  }
+
+  async function ping() {
+    const result = await fakeAsync(simDBAction('ping'));
+    console.log('[SimDB] Ping:', result);
+    return result;
+  }
+
+  function showStatus(message, type='loading') {
+    let el = document.getElementById('pe-db-status');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'pe-db-status';
+      el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-family:\'DM Sans\',sans-serif;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:all .3s;max-width:320px;';
+      document.body.appendChild(el);
+    }
+    const styles = {
+      loading: 'background:#0a1628;color:#93C5FD;border:1px solid #3a7bd5;',
+      success: 'background:#0d2818;color:#4CAF50;border:1px solid #4CAF50;',
+      error:   'background:#2d0d0d;color:#f97316;border:1px solid #f97316;',
+    };
+    el.style.cssText += styles[type] || styles.loading;
+    el.textContent = message;
+    el.style.display = 'block';
+    if (type !== 'loading') setTimeout(() => el.style.display='none', 4000);
+  }
+
+  return { registerPlayer, saveTournament, logSession, ping };
+})();
   const now  = () => new Date().toISOString();
   const uid  = () => 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
@@ -3025,6 +3314,76 @@ function raffleFinish() {
 // ══════════════════════════════════════════
 // SIMULATION — V32_Sim
 // ══════════════════════════════════════════
+function renderSimDB() {
+  const el = document.getElementById('simdb-content');
+  if (!el) return;
+
+  const tables = [
+    { key:'Jogadores',          icon:'👤', cols:['id','nome','nickname','categoria','cidade'] },
+    { key:'Torneios',           icon:'🏆', cols:['id','nome','data','organizador','vagas','num_fases','status'] },
+    { key:'Partidas_Torneios',  icon:'🏸', cols:['torneio_id','fase','grupo','partida','equipa_a','score_a','score_b','equipa_b','tie_break'] },
+    { key:'Scorecard_Torneios', icon:'🏅', cols:['torneio_nome','data','jogador','pts_base','pts_bonus','pts_total','posicao'] },
+    { key:'Ranking_Torneios',   icon:'📊', cols:['jogador','pts_total','torneios','titulos'] },
+    { key:'Sessions',           icon:'📋', cols:['user','action','entity','timestamp'] },
+  ];
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">SimDB Inspector</div>
+        <div style="font-size:12px;color:#2D9E5A;font-family:'DM Mono'">● Banco de dados local · in-memory · sessão atual</div>
+      </div>
+      <button onclick="simDBReset()" style="padding:7px 14px;background:#fff;border:1.5px solid #E74C3C;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#E74C3C;cursor:pointer">🗑 Reset SimDB</button>
+    </div>`;
+
+  tables.forEach(t => {
+    const rows = SIM_STORE[t.key] || [];
+    html += `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:'DM Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7090b0">${t.icon} ${t.key.replace(/_/g,' ')}</div>
+        <div style="background:#f0f5fb;border:1px solid #dde6f0;border-radius:6px;padding:2px 8px;font-family:'DM Mono';font-size:10px;color:#5a7090">${rows.length} rows</div>
+      </div>`;
+    if (!rows.length) {
+      html += `<div style="font-size:12px;color:#b0c4d8;font-style:italic;padding:8px 0">Sem dados</div>`;
+    } else {
+      html += `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr>`;
+      t.cols.forEach(col => {
+        html += `<th style="text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#9ab0c8;padding:4px 8px;border-bottom:1px solid #eaf0f8;white-space:nowrap">${col}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+      rows.slice(-10).forEach((row, i) => {
+        html += `<tr style="${i%2===0?'background:#fafbfd':''}">`;
+        t.cols.forEach(col => {
+          const val = row[col] ?? '—';
+          const display = typeof val === 'string' && val.length > 30 ? val.slice(0,28)+'…' : val;
+          html += `<td style="padding:5px 8px;border-bottom:1px solid #f4f7fc;color:#0d1e3a;white-space:nowrap">${display}</td>`;
+        });
+        html += `</tr>`;
+      });
+      if (rows.length > 10) {
+        html += `<tr><td colspan="${t.cols.length}" style="padding:5px 8px;color:#9ab0c8;font-style:italic;font-size:10px">... +${rows.length-10} rows anteriores</td></tr>`;
+      }
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+function simDBReset() {
+  if (!confirm('Resetar SimDB? Todos os torneios e partidas simuladas serão apagados. Os jogadores do REGISTRY serão restaurados.')) return;
+  SIM_STORE.Torneios           = [];
+  SIM_STORE.Partidas_Torneios  = [];
+  SIM_STORE.Scorecard_Torneios = [];
+  SIM_STORE.Ranking_Torneios   = [];
+  SIM_STORE.Sessions           = [];
+  simDBInit(); // re-seed Jogadores from REGISTRY
+  renderSimDB();
+  safeAlert('✅ SimDB resetado.', 'ok');
+}
+
 function simScore(phaseIdx) {
   const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:6, tbAt:5};
   const max = cfg.maxScore || 6;
@@ -3255,9 +3614,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // LOAD PLAYERS FROM DATABASE
 // ══════════════════════════════════════════
 function loadPlayersFromDB() {
-  // SIM MODE: load directly from local REGISTRY — no network calls
+  // SIM MODE: load from SIM_STORE.Jogadores (seeded from REGISTRY on login)
   DB.length = 0;
-  REGISTRY.forEach(p => {
+  (SIM_STORE.Jogadores.length ? SIM_STORE.Jogadores : REGISTRY).forEach(p => {
     const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
     DB.push({ id: p.id, nome });
   });
