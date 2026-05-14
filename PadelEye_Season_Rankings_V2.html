@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PadelEye · Season Rankings</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;background:#f0f5fb;font-family:'DM Sans',sans-serif;color:#e8edf4;}
+.topbar{background:#0a1628;border-bottom:1px solid #0a1628;height:52px;padding:0 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:#fff;}
+.logo em{color:#C9933A;font-style:normal;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.season-badge{font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#5a8aaa;border:1px solid #1a3a5c;border-radius:4px;padding:3px 8px;color:#93C5FD;}
+.ref-btn{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:14px;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+.ref-btn:hover{border-color:#C9933A;color:#C9933A;}
+.ref-btn.spin{animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px;}
+.status-bar{display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:10px 14px;background:#fff;border:1px solid #dde6f0;border-radius:8px;}
+.dot{width:7px;height:7px;border-radius:50%;background:#27AE60;flex-shrink:0;transition:background .3s;}
+.dot.loading{background:#C9933A;animation:pulse .7s ease infinite alternate;}
+@keyframes pulse{to{opacity:.3;}}
+.status-txt{font-family:'DM Mono';font-size:10px;color:#9ab0c8;letter-spacing:1px;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:24px;}
+.kpi{background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px 16px;}
+.kpi-v{font-family:'Bebas Neue';font-size:30px;color:#0a1628;line-height:1;}
+.kpi-v.gold{color:#C9933A;}
+.kpi-l{font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+.kpi-s{font-size:10px;color:#b0c4d8;margin-top:2px;}
+.section-hdr{font-family:'DM Mono';font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#9ab0c8;margin:20px 0 10px;display:flex;align-items:center;gap:10px;}
+.section-hdr::after{content:'';flex:1;height:1px;background:#dde6f0;}
+.sort-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.sbtn{padding:5px 14px;border-radius:6px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#fff;color:#9ab0c8;transition:all .15s;}
+.sbtn:hover{border-color:#C9933A;color:#C9933A;}
+.sbtn.on{background:#C9933A;color:#0a1628;border-color:#C9933A;font-weight:700;}
+.rk-tbl{background:#fff;border:1px solid #dde6f0;border-radius:12px;overflow:hidden;}
+.rk-hdr{display:grid;grid-template-columns:40px 1fr 50px 50px 50px 70px 55px 65px;padding:10px 16px;background:#0a1628;border-bottom:1px solid #0a1628;}
+.rk-hdr-cell{font-family:'DM Mono';font-size:9px;color:#9ab0c8;letter-spacing:1.5px;text-transform:uppercase;text-align:right;}
+.rk-hdr-cell:nth-child(2){text-align:left;}
+.rk-hdr-cell.on{color:#C9933A;}
+.rk-row{display:grid;grid-template-columns:40px 1fr 50px 50px 50px 70px 55px 65px;padding:11px 16px;border-bottom:1px solid #eaf0f8;align-items:center;transition:background .1s;animation:fadeUp .25s ease both;}
+.rk-row:last-child{border-bottom:none;}
+.rk-row:hover{background:#f8fafd;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.rk-rank{font-family:'Bebas Neue';font-size:20px;color:#9ab0c8;text-align:center;}
+.rk-rank.g{color:#d4a017;}.rk-rank.s{color:#8a9ab0;}.rk-rank.b{color:#a06840;}
+.rk-player{display:flex;align-items:center;gap:10px;}
+.rk-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:#fff;flex-shrink:0;}
+.rk-name{font-size:13px;font-weight:600;color:#0d1e3a;}
+.rk-sess{font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:1px;}
+.rk-num{font-family:'DM Mono';font-size:11px;color:#9ab0c8;text-align:right;}
+.rk-num.hi{color:#0d1e3a;font-weight:600;}
+.rk-wr-wrap{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.rk-wr-val{font-family:'DM Mono';font-size:11px;font-weight:600;}
+.rk-wr-bar{width:44px;height:3px;background:#eaf0f8;border-radius:2px;overflow:hidden;}
+.rk-wr-fill{height:100%;border-radius:2px;}
+.rk-gd{font-family:'DM Mono';font-size:11px;font-weight:700;text-align:right;}
+.rk-mvp{background:#1a2d1a;border:1px solid #2a4a2a;border-radius:5px;padding:2px 7px;font-family:'DM Mono';font-size:9px;color:#4CAF50;text-align:center;}
+.rk-mvp.z{opacity:0;}
+.cb{background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:18px;}
+.cb-title{font-family:'Bebas Neue';font-size:18px;color:#0a1628;letter-spacing:1px;margin-bottom:4px;}
+.cb-sub{font-size:11px;color:#9ab0c8;margin-bottom:14px;}
+.period-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.ptab{padding:4px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .15s;}
+.ptab:hover{border-color:#C9933A;color:#C9933A;}
+.ptab.on{background:#0a1628;border-color:#0a1628;color:#fff;}
+.c-rows{display:flex;flex-direction:column;gap:7px;}
+.c-row{display:grid;grid-template-columns:130px 1fr 65px 60px;align-items:center;gap:10px;animation:fadeUp .2s ease both;}
+.c-name{font-size:12px;font-weight:600;color:#0d1e3a;display:flex;align-items:center;gap:7px;}
+.c-av{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:9px;color:#fff;flex-shrink:0;}
+.c-bar-wrap{position:relative;height:6px;background:#eaf0f8;border-radius:3px;overflow:visible;}
+.c-bar-avg{position:absolute;top:-4px;width:2px;height:14px;background:#0a1628;border-radius:1px;opacity:.3;z-index:2;}
+.c-bar-fill{height:100%;border-radius:3px;transition:width .6s cubic-bezier(.22,.68,0,1.2);}
+.c-wr{font-family:'DM Mono';font-size:11px;text-align:right;}
+.c-score{font-family:'DM Mono';font-size:10px;font-weight:700;text-align:right;padding:2px 7px;border-radius:4px;}
+.avg-note{display:flex;align-items:center;gap:7px;margin-top:12px;font-family:'DM Mono';font-size:9px;color:#b0c4d8;}
+.avg-line{width:16px;height:2px;background:#0a1628;opacity:.3;border-radius:1px;}
+.empty-state{text-align:center;padding:40px 20px;color:#b0c4d8;}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.4;}
+@media(max-width:600px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .rk-hdr,.rk-row{grid-template-columns:32px 1fr 70px 55px 65px;}
+  .rk-hdr-cell:nth-child(3),.rk-hdr-cell:nth-child(4),.rk-hdr-cell:nth-child(5){display:none;}
+  .rk-row>.rk-num:nth-child(3),.rk-row>.rk-num:nth-child(4),.rk-row>.rk-num:nth-child(5){display:none;}
+  .c-row{grid-template-columns:110px 1fr 55px;} .c-score{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">PADEL<em>EYE</em></div>
+  <div class="topbar-right">
+    <span class="season-badge">Temporada 2024–2026</span>
+    <button class="ref-btn" id="ref-btn" onclick="loadAll()" title="Refresh">↻</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="status-bar">
+    <div class="dot loading" id="dot"></div>
+    <div class="status-txt" id="status-txt">Carregando ranking...</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-v" id="k-players">—</div><div class="kpi-l">Jogadores</div><div class="kpi-s">na temporada</div></div>
+    <div class="kpi"><div class="kpi-v" id="k-sess">—</div><div class="kpi-l">Sessões</div><div class="kpi-s" id="k-span">—</div></div>
+    <div class="kpi"><div class="kpi-v" id="k-matches">—</div><div class="kpi-l">Partidas</div><div class="kpi-s">total registradas</div></div>
+    <div class="kpi"><div class="kpi-v gold" id="k-leader">—</div><div class="kpi-l">Líder</div><div class="kpi-s" id="k-leader-sub">—</div></div>
+  </div>
+
+  <div class="section-hdr">Ranking Completo</div>
+  <div class="sort-bar">
+    <button class="sbtn on" onclick="setSort('vitorias',this)">🏆 Vitórias</button>
+    <button class="sbtn" onclick="setSort('win_rate',this)">📊 Win Rate</button>
+    <button class="sbtn" onclick="setSort('partidas',this)">🎯 Partidas</button>
+    <button class="sbtn" onclick="setSort('gd',this)">⚡ GD</button>
+    <button class="sbtn" onclick="setSort('mvp_count',this)">🥇 MVP</button>
+    <button class="sbtn" onclick="setSort('sessoes',this)">📅 Sessões</button>
+  </div>
+  <div class="rk-tbl">
+    <div class="rk-hdr">
+      <div class="rk-hdr-cell">#</div>
+      <div class="rk-hdr-cell" style="text-align:left">Jogador</div>
+      <div class="rk-hdr-cell" id="th-s">Sess</div>
+      <div class="rk-hdr-cell" id="th-p">Part</div>
+      <div class="rk-hdr-cell" id="th-v">V</div>
+      <div class="rk-hdr-cell" id="th-wr">WR%</div>
+      <div class="rk-hdr-cell" id="th-gd">GD</div>
+      <div class="rk-hdr-cell" id="th-mvp">MVP</div>
+    </div>
+    <div id="rk-body"><div class="empty-state"><div class="empty-icon">⏳</div></div></div>
+  </div>
+  <div style="font-family:'DM Mono';font-size:9px;color:#2a4a6a;text-align:right;margin-top:8px" id="upd-txt"></div>
+
+  <div class="section-hdr" style="margin-top:28px">Consistência por Período</div>
+  <div class="cb">
+    <div class="cb-title">Consistency Score</div>
+    <div class="cb-sub">Proximidade à win rate média do grupo. Score 100 = na média exata.</div>
+    <div class="period-tabs">
+      <button class="ptab on" onclick="setPeriod(6,this)">6M</button>
+      <button class="ptab" onclick="setPeriod(9,this)">9M</button>
+      <button class="ptab" onclick="setPeriod(12,this)">12M</button>
+      <button class="ptab" onclick="setPeriod(24,this)">24M</button>
+      <button class="ptab" onclick="setPeriod(999,this)">Tudo</button>
+    </div>
+    <div class="c-rows" id="c-rows"><div class="empty-state"><div class="empty-icon">⏳</div></div></div>
+    <div class="avg-note"><div class="avg-line"></div><span>Linha branca = média do grupo no período</span></div>
+  </div>
+</div>
+
+<script>
+const API='https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec';
+const COLORS=['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E67E22','#E91E63','#00BCD4','#8BC34A','#FF5722','#607D8B'];
+const col=n=>COLORS[Math.abs([...n].reduce((a,c)=>a+c.charCodeAt(0),0))%COLORS.length];
+const ini=n=>n.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const wrN=v=>parseInt(String(v||0).replace('%',''))||0;
+const gdN=v=>parseInt(String(v||0).replace('+',''))||0;
+const wrCol=w=>w>=70?'#27AE60':w>=50?'#C9933A':w>=35?'#7090b0':'#E74C3C';
+
+let rankData=[],statsData=[],sortKey='vitorias',period=6;
+
+async function get(action){
+  const r=await fetch(API+'?action='+action);
+  const j=await r.json();
+  return j.rows||[];
+}
+
+function setStatus(msg,ok){
+  document.getElementById('status-txt').textContent=msg;
+  const d=document.getElementById('dot');
+  d.className='dot'+(ok===null?' loading':'');
+  if(ok===true) d.style.background='#27AE60';
+  if(ok===false) d.style.background='#E74C3C';
+}
+
+async function loadAll(){
+  document.getElementById('ref-btn').classList.add('spin');
+  setStatus('Carregando...',null);
+  try{
+    const [ranks,sessions,stats]=await Promise.all([
+      get('get_ranking_sessoes'),
+      get('get_sessoes'),
+      get('get_sessao_stats'),
+    ]);
+    rankData=ranks; statsData=stats;
+    const totalP=ranks.reduce((s,p)=>s+(+(p.partidas||0)),0);
+    const leader=[...ranks].sort((a,b)=>(+b.vitorias||0)-(+a.vitorias||0))[0];
+    document.getElementById('k-players').textContent=ranks.length;
+    document.getElementById('k-sess').textContent=sessions.length;
+    document.getElementById('k-span').textContent='Out 2024 → Mai 2026';
+    document.getElementById('k-matches').textContent=Math.round(totalP/2);
+    document.getElementById('k-leader').textContent=leader?(leader.jogador||'—').split(' ')[0]:'—';
+    document.getElementById('k-leader-sub').textContent=leader?leader.vitorias+'V · '+leader.win_rate+' WR':'—';
+    const ts=ranks[0]&&ranks[0].updated_at?new Date(ranks[0].updated_at).toLocaleString('pt-BR'):'';
+    document.getElementById('upd-txt').textContent=ts?'Atualizado: '+ts:'';
+    renderTable(); renderConsistency();
+    setStatus(ranks.length+' jogadores · '+sessions.length+' sessões · ao vivo',true);
+  }catch(e){
+    setStatus('Erro: '+e.message,false);
+    document.getElementById('rk-body').innerHTML='<div class="empty-state"><div class="empty-icon">⚠️</div><div>'+e.message+'</div></div>';
+  }
+  document.getElementById('ref-btn').classList.remove('spin');
+}
+
+function setSort(key,el){
+  sortKey=key;
+  document.querySelectorAll('.sbtn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  const m={vitorias:'th-v',win_rate:'th-wr',partidas:'th-p',gd:'th-gd',mvp_count:'th-mvp',sessoes:'th-s'};
+  ['th-s','th-p','th-v','th-wr','th-gd','th-mvp'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});
+  const t=document.getElementById(m[key]);if(t)t.classList.add('on');
+  renderTable();
+}
+
+function renderTable(){
+  const sorted=[...rankData].sort((a,b)=>{
+    if(sortKey==='win_rate') return wrN(b.win_rate)-wrN(a.win_rate);
+    if(sortKey==='gd') return gdN(b.gd)-gdN(a.gd);
+    return(+(b[sortKey]||0))-(+(a[sortKey]||0));
+  });
+  if(!sorted.length){
+    document.getElementById('rk-body').innerHTML='<div class="empty-state"><div class="empty-icon">🏸</div><div>Sem dados.</div></div>';
+    return;
+  }
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('rk-body').innerHTML=sorted.map((p,i)=>{
+    const w=wrN(p.win_rate),gd=gdN(p.gd),mvp=+(p.mvp_count||0);
+    const rkC=i===0?'g':i===1?'s':i===2?'b':'';
+    const rl=i<3?medals[i]:(i+1);
+    const c=col(p.jogador||'?');
+    return '<div class="rk-row" style="animation-delay:'+i*15+'ms">'+
+      '<div class="rk-rank '+rkC+'">'+rl+'</div>'+
+      '<div class="rk-player"><div class="rk-av" style="background:'+c+'">'+ini(p.jogador||'?')+'</div>'+
+      '<div><div class="rk-name">'+p.jogador+'</div><div class="rk-sess">'+p.sessoes+'S</div></div></div>'+
+      '<div class="rk-num">'+p.sessoes+'</div>'+
+      '<div class="rk-num">'+p.partidas+'</div>'+
+      '<div class="rk-num hi">'+p.vitorias+'</div>'+
+      '<div class="rk-wr-wrap"><div class="rk-wr-val" style="color:'+wrCol(w)+'">'+p.win_rate+'</div>'+
+      '<div class="rk-wr-bar"><div class="rk-wr-fill" style="width:'+w+'%;background:'+wrCol(w)+'"></div></div></div>'+
+      '<div class="rk-gd" style="color:'+(gd>0?'#27AE60':gd<0?'#E74C3C':'#5a8aaa')+'">'+(gd>0?'+':'')+gd+'</div>'+
+      '<div class="rk-mvp '+(mvp===0?'z':'')+'">🏅 '+mvp+'</div></div>';
+  }).join('');
+}
+
+function setPeriod(m,el){
+  period=m;
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderConsistency();
+}
+
+function renderConsistency(){
+  const el=document.getElementById('c-rows');
+  const now=new Date();
+  const cutoff=new Date(now);
+  if(period<900) cutoff.setMonth(cutoff.getMonth()-period); else cutoff.setFullYear(2000);
+  const map={};
+  statsData.forEach(r=>{
+    const d=r.data||'';
+    if(!d||new Date(d)<cutoff) return;
+    const p=r.jogador; if(!p) return;
+    if(!map[p]) map[p]={m:0,w:0};
+    map[p].m+=+(r.partidas||0);
+    map[p].w+=+(r.vitorias||0);
+  });
+  const players=Object.entries(map).filter(([,d])=>d.m>=3).map(([n,d])=>({n,wr:d.w/d.m*100,m:d.m}));
+  if(!players.length){el.innerHTML='<div style="font-size:11px;color:#3a5a7a;padding:8px 0;font-family:DM Mono,monospace">Sem dados para este período.</div>';return;}
+  const avg=players.reduce((s,p)=>s+p.wr,0)/players.length;
+  const rows=players.map(p=>({...p,score:Math.max(0,Math.round(100-Math.abs(p.wr-avg))),diff:p.wr-avg})).sort((a,b)=>b.score-a.score);
+  el.innerHTML=rows.map((r,i)=>{
+    const barCol=r.diff>=0?'#27AE60':'#E74C3C';
+    const sCol=r.score>=80?'background:#0d2818;color:#27AE60':r.score>=60?'background:#1a1a0a;color:#C9933A':'background:#1a0a0a;color:#E74C3C';
+    const c=col(r.n);
+    return '<div class="c-row" style="animation-delay:'+i*15+'ms">'+
+      '<div class="c-name"><div class="c-av" style="background:'+c+'">'+ini(r.n)+'</div>'+r.n+'</div>'+
+      '<div class="c-bar-wrap"><div class="c-bar-fill" style="width:'+Math.min(100,r.wr)+'%;background:'+barCol+';opacity:.8"></div>'+
+      '<div class="c-bar-avg" style="left:'+Math.min(100,avg)+'%"></div></div>'+
+      '<div class="c-wr" style="color:'+wrCol(r.wr)+'">'+r.wr.toFixed(0)+'%<div style="font-size:9px;color:#3a5a7a">'+(r.diff>=0?'+':'')+r.diff.toFixed(1)+'%</div></div>'+
+      '<div class="c-score" style="'+sCol+'">'+r.score+'</div></div>';
+  }).join('');
+}
+
+loadAll();
+</script>
+</body>
+</html>
