@@ -2534,14 +2534,14 @@ function renderScorecard() {
 // ATENÇÃO: REGISTRY é a fonte de verdade local. SIM_STORE.Jogadores é o espelho
 //   in-memory que o app usa durante a sessão.
 let REGISTRY = [
-  {id:2601,nome:'Mahdi',        sobrenome:'',      nickname:'Mahdi',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2604,nome:'Karim',        sobrenome:'',      nickname:'Karim',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2608,nome:'Gamarra',      sobrenome:'',      nickname:'Gamarra',      categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2610,nome:'Nathan',       sobrenome:'',      nickname:'Nathan',       categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2613,nome:'Claudio',      sobrenome:'O',     nickname:'Claudio O.',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2614,nome:'Vitor',        sobrenome:'Bauer', nickname:'Vitor Bauer',  categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2617,nome:'Vitor',        sobrenome:'Hugo',  nickname:'Vitor Hugo',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
-  {id:2618,nome:'Christian',    sobrenome:'',      nickname:'Christian',    categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2601,nome:'Mahdi',   sobrenome:'',      nickname:'Mahdi',       categoria:'8a', cidade:'Foz do Iguaçu', nacionalidade:'Brasileiro',  email:'', celular:''},
+  {id:2604,nome:'Karim',   sobrenome:'',      nickname:'Karim',       categoria:'7a', cidade:'Foz do Iguaçu', nacionalidade:'Argentino',   email:'', celular:''},
+  {id:2608,nome:'Gamarra', sobrenome:'',      nickname:'Gamarra',     categoria:'7a', cidade:'Foz do Iguaçu', nacionalidade:'Paraguaio',   email:'', celular:''},
+  {id:2610,nome:'Nathan',  sobrenome:'',      nickname:'Nathan',      categoria:'6a', cidade:'Foz do Iguaçu', nacionalidade:'Brasileiro',  email:'', celular:''},
+  {id:2613,nome:'Claudio', sobrenome:'O',     nickname:'Claudio O.',  categoria:'6a', cidade:'Foz do Iguaçu', nacionalidade:'Brasileiro',  email:'', celular:''},
+  {id:2614,nome:'Vitor',   sobrenome:'Bauer', nickname:'Vitor Bauer', categoria:'7a', cidade:'Foz do Iguaçu', nacionalidade:'Brasileiro',  email:'', celular:''},
+  {id:2617,nome:'Vitor',   sobrenome:'Hugo',  nickname:'Vitor Hugo',  categoria:'5a', cidade:'Foz do Iguaçu', nacionalidade:'Brasileiro',  email:'', celular:''},
+  {id:2618,nome:'Christian',sobrenome:'',     nickname:'Christian',   categoria:'8a', cidade:'Foz do Iguaçu', nacionalidade:'Argentino',   email:'', celular:''},
 ];
 
 function nextPlayerId() {
@@ -3702,8 +3702,9 @@ function playerCardFull(name, isSeed) {
       </div>
     </div>
     <div style="background:#fff;padding:24px 10px 10px;text-align:center">
-      <div style="font-size:14px;font-weight:700;color:#0a1628;line-height:1.1">${p.nome||name}</div>
-      <div style="font-size:11px;font-weight:500;color:#5a7090;margin-top:1px">${p.sobrenome||''}</div>
+      <div style="font-size:14px;font-weight:700;color:#0a1628;line-height:1.2">
+        ${p.nome||name}${p.sobrenome ? ' <span style="font-weight:500;color:#5a7090">'+p.sobrenome+'</span>' : ''}
+      </div>
       <div style="font-size:9px;font-weight:600;color:${hdrCol};margin-top:4px">Atleta de Padel</div>
       ${cidade ? `<div style="font-size:8px;color:#9ab0c8;margin-top:2px">${cidade}</div>` : ''}
       <div style="margin:7px 0;height:0.5px;background:#eef1f5"></div>
@@ -3919,12 +3920,21 @@ document.addEventListener('DOMContentLoaded', () => {
 // CONTEXTO: Versão síncrona exclusiva do modo Sim. Lê SIM_STORE.Jogadores
 //   (populado por simDBInit()) ou usa REGISTRY como fallback.
 //   Ao contrário do V34 de produção, nunca faz fetch à rede.
+// Sim: nationalidades aleatórias (determinístico por ID) para jogadores sem país
+const _simNats = ['Brasileiro','Argentino','Paraguaio'];
+function _simRandNat(id) { return _simNats[Math.abs(parseInt(id)||0) % _simNats.length]; }
+
 function loadPlayersFromDB() {
   // SIM MODE: load from SIM_STORE.Jogadores (seeded from REGISTRY on login)
   DB.length = 0;
   (SIM_STORE.Jogadores.length ? SIM_STORE.Jogadores : REGISTRY).forEach(p => {
     const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
     DB.push({ id: p.id, nome });
+    // Garantir que REGISTRY tem nacionalidade para os gradientes de bandeira
+    const regIdx = REGISTRY.findIndex(r => String(r.id) === String(p.id));
+    if (regIdx !== -1 && !REGISTRY[regIdx].nacionalidade) {
+      REGISTRY[regIdx].nacionalidade = _simRandNat(p.id);
+    }
   });
   renderDB();
   renderRoster();
