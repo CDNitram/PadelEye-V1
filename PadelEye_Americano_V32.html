@@ -888,8 +888,122 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
 
   <!-- ── TEST CONNECTION TO DB ── -->
+  <!-- OBJETIVO: Painel de diagnóstico de conexão com o Google Sheets.
+       HTML completamente estático — sem depender de renderDBTest().
+       Os botões chamam funções JS simples definidas no script. -->
   <div class="panel" id="p-dbtest">
-    <div id="dbtest-content"></div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px">Test Connection to DB</div>
+      <div style="font-size:11px;color:#9ab0c8;margin-top:4px;font-family:'DM Mono'">Google Sheets · Apps Script Web App</div>
+    </div>
+
+    <!-- Card: Teste Global -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-hd">
+        <div class="card-title">Conexão Global</div>
+        <div class="card-badge" id="dbt-badge-all">Aguardando</div>
+      </div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px">
+        Testa o ping ao Apps Script e todas as 6 tabelas em sequência.
+      </div>
+      <button onclick="dbtTestAll()"
+        style="width:100%;padding:14px;background:linear-gradient(135deg,#0a1628,#1a3052);
+               color:#C9933A;font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;
+               border:none;border-radius:10px;cursor:pointer">
+        🔌 TESTAR CONEXÃO COMPLETA
+      </button>
+      <div id="dbt-result-all" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Card: Teste por Tabela -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Teste por Tabela</div>
+        <div class="card-badge">6 tabelas</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <!-- Jogadores -->
+        <div class="card" id="dbt-row-jogadores" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">👤</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Jogadores</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_jogadores</div>
+          </div>
+          <div id="dbt-status-jogadores" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_jogadores','jogadores',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Torneios -->
+        <div class="card" id="dbt-row-torneios" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">🏆</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_torneios</div>
+          </div>
+          <div id="dbt-status-torneios" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_torneios','torneios',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Partidas_Torneios -->
+        <div class="card" id="dbt-row-partidas" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">🏸</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Partidas_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_partidas_torneios</div>
+          </div>
+          <div id="dbt-status-partidas" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_partidas_torneios','partidas',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Scorecard_Torneios -->
+        <div class="card" id="dbt-row-scorecard" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">🏅</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Scorecard_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_scorecard_torneios</div>
+          </div>
+          <div id="dbt-status-scorecard" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_scorecard_torneios','scorecard',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Ranking_Torneios -->
+        <div class="card" id="dbt-row-ranking" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">📊</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Ranking_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_ranking_torneios</div>
+          </div>
+          <div id="dbt-status-ranking" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_ranking_torneios','ranking',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Log_Torneios -->
+        <div class="card" id="dbt-row-log" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">📋</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Log_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ping (health check)</div>
+          </div>
+          <div id="dbt-status-log" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('ping','log',true)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <!-- ── CADASTRO DE JOGADORES ── -->
@@ -2857,166 +2971,99 @@ const DB_TABLES = [
   { action: 'log_action',             label: 'Log_Torneios',       icon: '📋', pingOnly: true },
 ];
 
-// ── OBJETIVO: Montar o painel de teste com todos os botões ─────────────────────
-// CONTEXTO: Chamado por showTab('dbtest'). Constrói o HTML via concatenação
-//   para evitar problemas com template literals aninhados no innerHTML.
-function renderDBTest() {
-  var el = document.getElementById('dbtest-content');
-  if (!el) return;
+// ── OBJETIVO: Testar uma tabela individual do Google Sheets ───────────────────
+// CONTEXTO: Chamado pelos botões TESTAR individuais no painel Test DB.
+//   action = action do Apps Script (ex: get_jogadores)
+//   key    = chave do elemento de status no DOM (ex: jogadores)
+//   pingOnly = true para Log_Torneios (apenas verifica se o endpoint responde)
+// ATENÇÃO: Faz chamada real ao Google Sheets — requer rede ativa.
+async function dbtTestOne(action, key, pingOnly) {
+  var statusEl = document.getElementById('dbt-status-' + key);
+  var rowEl    = document.getElementById('dbt-row-'    + key);
+  if (!statusEl) return;
 
-  var shortUrl = WEB_APP_URL.slice(0, 58) + '...';
-
-  // ── Cabeçalho ──
-  var html = '';
-  html += '<div style="margin-bottom:20px">';
-  html += '<div style="font-family:Bebas Neue,sans-serif;font-size:24px;color:#0a1628;letter-spacing:1px">Test Connection to DB</div>';
-  html += '<div style="font-size:11px;color:#9ab0c8;margin-top:4px;font-family:DM Mono,monospace">Apps Script · ' + shortUrl + '</div>';
-  html += '</div>';
-
-  // ── Card: Teste Global ──
-  html += '<div class="card" style="margin-bottom:16px">';
-  html += '<div class="card-hd"><div class="card-title">Conexão Global</div>';
-  html += '<div class="card-badge" id="dbt-all-badge">Aguardando</div></div>';
-  html += '<div style="font-size:12px;color:#9ab0c8;margin-bottom:14px">Testa o ping e todas as tabelas em sequência.</div>';
-  html += '<button onclick="testDBAll()" style="width:100%;padding:13px;background:linear-gradient(135deg,#0a1628,#1a3052);';
-  html += 'color:#C9933A;font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;border:none;';
-  html += 'border-radius:10px;cursor:pointer">🔌 Testar Conexão Completa</button>';
-  html += '<div id="dbt-all-result" style="margin-top:12px"></div>';
-  html += '</div>';
-
-  // ── Card: Teste por Tabela ──
-  html += '<div class="card">';
-  html += '<div class="card-hd"><div class="card-title">Teste por Tabela</div>';
-  html += '<div class="card-badge">6 tabelas</div></div>';
-  html += '<div style="display:flex;flex-direction:column;gap:10px">';
-
-  for (var i = 0; i < DB_TABLES.length; i++) {
-    var t = DB_TABLES[i];
-    html += '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;';
-    html += 'background:#f8fafd;border:1.5px solid #dde6f0;border-radius:10px" id="dbt-row-' + t.action + '">';
-    html += '<div style="font-size:20px;flex-shrink:0">' + t.icon + '</div>';
-    html += '<div style="flex:1">';
-    html += '<div style="font-size:13px;font-weight:700;color:#0d1e3a">' + t.label + '</div>';
-    html += '<div style="font-size:10px;color:#9ab0c8;font-family:DM Mono,monospace">' + t.action + '</div>';
-    html += '</div>';
-    html += '<div id="dbt-status-' + t.action + '" style="font-size:10px;font-family:DM Mono,monospace;color:#b0c4d8;flex-shrink:0;min-width:80px;text-align:right">—</div>';
-    var pingFlag = t.pingOnly ? 'true' : 'false';
-    html += '<button onclick="testDBTable(this)" data-action="' + t.action + '" data-label="' + t.label + '" data-ping="' + pingFlag + '" ';
-    html += 'style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;';
-    html += 'font-family:DM Mono,monospace;font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer;white-space:nowrap;flex-shrink:0">TESTAR</button>';
-    html += '</div>';
-  }
-
-  html += '</div></div>';
-
-  el.innerHTML = html;
-}
-
-// ── OBJETIVO: Testar uma tabela individual ────────────────────────────────────
-// CONTEXTO: Faz GET ao endpoint com a action correspondente. Para Log_Torneios
-//   usa pingOnly=true (apenas verifica se o endpoint responde).
-//   Atualiza o status inline no card da tabela: ✅ N rows ou ❌ erro.
-async function testDBTable(elOrAction, label, pingOnly) {
-  // Aceita tanto (element) via onclick como (action, label, pingOnly) via testDBAll
-  var action, ping;
-  if (typeof elOrAction === 'string') {
-    action = elOrAction;
-    ping   = pingOnly || false;
-  } else {
-    action = elOrAction.dataset.action;
-    label  = elOrAction.dataset.label;
-    ping   = elOrAction.dataset.ping === 'true';
-  }
-  pingOnly = ping;
-  var statusEl = document.getElementById('dbt-status-' + action);
-  var rowEl    = document.getElementById('dbt-row-'    + action);
-  if (!statusEl || !rowEl) return;
-
-  // Estado loading
-  statusEl.textContent    = '⏳ ...';
-  statusEl.style.color    = '#9ab0c8';
-  rowEl.style.borderColor = '#dde6f0';
-  rowEl.style.background  = '#f8fafd';
+  // Estado: a carregar
+  statusEl.textContent = '⏳ ...';
+  statusEl.style.color = '#9ab0c8';
+  if (rowEl) { rowEl.style.borderColor = '#dde6f0'; rowEl.style.background = '#f8fafd'; }
 
   try {
-    var url  = WEB_APP_URL + '?action=' + (pingOnly ? 'ping' : action);
+    var url  = WEB_APP_URL + '?action=' + action;
     var res  = await fetch(url);
     var data = await res.json();
-    var ok   = data.ok || data.status === 'ok' || Array.isArray(data.rows);
+    var ok   = data.ok === true || data.status === 'ok' || Array.isArray(data.rows);
     var rows = Array.isArray(data.rows) ? data.rows.length : null;
 
     if (ok) {
-      statusEl.textContent    = pingOnly ? '✅ Online' : ('✅ ' + rows + ' rows');
-      statusEl.style.color    = '#1a7a44';
-      rowEl.style.borderColor = '#c8e8d0';
-      rowEl.style.background  = '#f0fdf4';
+      statusEl.textContent = pingOnly ? '✅ Online' : '✅ ' + rows + ' rows';
+      statusEl.style.color = '#1a7a44';
+      if (rowEl) { rowEl.style.borderColor = '#c8e8d0'; rowEl.style.background = '#f0fdf4'; }
     } else {
-      var errMsg = data.error || data.message || 'resposta inválida';
-      statusEl.textContent    = '❌ ' + errMsg.slice(0, 20);
-      statusEl.style.color    = '#c0392b';
-      rowEl.style.borderColor = '#fca5a5';
-      rowEl.style.background  = '#fff5f5';
+      var msg = (data.error || data.message || 'erro').toString().slice(0, 25);
+      statusEl.textContent = '❌ ' + msg;
+      statusEl.style.color = '#c0392b';
+      if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
     }
   } catch(e) {
-    statusEl.textContent    = '❌ Sem resposta';
-    statusEl.style.color    = '#c0392b';
-    rowEl.style.borderColor = '#fca5a5';
-    rowEl.style.background  = '#fff5f5';
+    statusEl.textContent = '❌ Sem resposta';
+    statusEl.style.color = '#c0392b';
+    if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
   }
 }
 
-// ── OBJETIVO: Testar todas as tabelas em paralelo e mostrar resumo ────────────
-// CONTEXTO: Botão "Testar Conexão Completa". Corre testDBTable() para cada tabela,
-//   aguarda todas com Promise.allSettled e monta um card de resumo com X/6 OK.
-async function testDBAll() {
-  var badge    = document.getElementById('dbt-all-badge');
-  var resultEl = document.getElementById('dbt-all-result');
-  if (!badge || !resultEl) return;
+// ── OBJETIVO: Testar todas as tabelas em paralelo e mostrar resultado global ──
+// CONTEXTO: Botão "TESTAR CONEXÃO COMPLETA". Corre dbtTestOne para cada tabela
+//   em paralelo via Promise.allSettled, depois consolida num card de resumo.
+async function dbtTestAll() {
+  var badge    = document.getElementById('dbt-badge-all');
+  var resultEl = document.getElementById('dbt-result-all');
+  if (badge) { badge.textContent = '⏳ A testar...'; badge.className = 'card-badge'; }
+  if (resultEl) resultEl.innerHTML = '<div style="font-size:12px;color:#9ab0c8;padding:8px 0">A testar todas as tabelas...</div>';
 
-  badge.textContent = '⏳ A testar...';
-  badge.className   = 'card-badge';
-  resultEl.innerHTML = '<div style="font-size:12px;color:#9ab0c8;padding:10px 0">A testar todas as tabelas...</div>';
+  // Definição local das tabelas a testar
+  var tables = [
+    { action:'get_jogadores',          key:'jogadores', pingOnly:false },
+    { action:'get_torneios',           key:'torneios',  pingOnly:false },
+    { action:'get_partidas_torneios',  key:'partidas',  pingOnly:false },
+    { action:'get_scorecard_torneios', key:'scorecard', pingOnly:false },
+    { action:'get_ranking_torneios',   key:'ranking',   pingOnly:false },
+    { action:'ping',                   key:'log',       pingOnly:true  },
+  ];
 
-  // Correr todos os testes em paralelo
-  await Promise.allSettled(
-    DB_TABLES.map(function(t) {
-      return testDBTable(t.action, t.label, t.pingOnly || false);
-    })
-  );
+  // Correr todos em paralelo
+  await Promise.allSettled(tables.map(function(t) {
+    return dbtTestOne(t.action, t.key, t.pingOnly);
+  }));
 
-  // Consolidar resultados lendo os status elements
+  // Ler resultados dos elementos DOM após os testes
   var okCount = 0;
   var lines   = '';
-  for (var i = 0; i < DB_TABLES.length; i++) {
-    var t      = DB_TABLES[i];
-    var el     = document.getElementById('dbt-status-' + t.action);
-    var passed = el && el.textContent.indexOf('✅') === 0;
+  var labels  = { jogadores:'👤 Jogadores', torneios:'🏆 Torneios', partidas:'🏸 Partidas_Torneios',
+                  scorecard:'🏅 Scorecard_Torneios', ranking:'📊 Ranking_Torneios', log:'📋 Log_Torneios' };
+
+  tables.forEach(function(t) {
+    var el     = document.getElementById('dbt-status-' + t.key);
+    var txt    = el ? el.textContent : '—';
+    var passed = txt.indexOf('✅') === 0;
     if (passed) okCount++;
-    var col = passed ? '#1a7a44' : '#c0392b';
-    lines += '<div style="display:flex;justify-content:space-between;align-items:center;';
-    lines += 'padding:5px 0;border-bottom:1px solid #f0f5fb;font-size:11px">';
-    lines += '<span style="color:#5a7090">' + t.icon + ' ' + t.label + '</span>';
-    lines += '<span style="font-family:DM Mono,monospace;color:' + col + '">' + (el ? el.textContent : '—') + '</span>';
+    lines += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f5fb;font-size:11px">';
+    lines += '<span style="color:#5a7090">' + (labels[t.key] || t.key) + '</span>';
+    lines += '<span style="font-family:DM Mono,monospace;font-weight:700;color:' + (passed?'#1a7a44':'#c0392b') + '">' + txt + '</span>';
     lines += '</div>';
+  });
+
+  var allOk = okCount === tables.length;
+  if (badge) {
+    badge.textContent = (allOk ? '✅ ' : '⚠️ ') + okCount + '/6 OK';
+    badge.className   = 'card-badge ' + (allOk ? 'green' : 'gold');
   }
-
-  var allOk     = okCount === DB_TABLES.length;
-  var bgColor   = allOk ? '#f0fdf4' : '#fffbf0';
-  var bdColor   = allOk ? '#c8e8d0' : '#e8c870';
-  var titleCol  = allOk ? '#1a7a44' : '#865a10';
-  var titleText = allOk
-    ? '🟢 Todas as tabelas acessíveis'
-    : '🟡 ' + okCount + ' de ' + DB_TABLES.length + ' tabelas responderam';
-
-  badge.textContent = allOk ? '✅ ' + okCount + '/6 OK' : '⚠️ ' + okCount + '/6 OK';
-  badge.className   = 'card-badge ' + (allOk ? 'green' : 'gold');
-
-  resultEl.innerHTML =
-    '<div style="background:' + bgColor + ';border:1px solid ' + bdColor + ';border-radius:10px;padding:14px">' +
-    '<div style="font-family:Bebas Neue,sans-serif;font-size:18px;color:' + titleCol + ';letter-spacing:1px;margin-bottom:10px">' + titleText + '</div>' +
-    lines +
-    '<div style="margin-top:8px;font-size:10px;color:#b0c4d8;font-family:DM Mono,monospace">URL: ' + WEB_APP_URL.slice(0,55) + '...</div>' +
-    '</div>';
+  if (resultEl) {
+    resultEl.innerHTML =
+      '<div style="background:' + (allOk?'#f0fdf4':'#fffbf0') + ';border:1px solid ' + (allOk?'#c8e8d0':'#e8c870') + ';border-radius:10px;padding:14px;margin-top:4px">' +
+      '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:' + (allOk?'#1a7a44':'#865a10') + ';margin-bottom:10px">' +
+      (allOk ? '🟢 Todas as tabelas acessíveis' : '🟡 ' + okCount + ' de 6 tabelas responderam') + '</div>' +
+      lines + '</div>';
+  }
 }
 
 // ══════════════════════════════════════════
