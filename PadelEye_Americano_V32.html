@@ -2637,9 +2637,26 @@ function renderScorecard() {
 //   e enviado ao Google Sheets via PadelEyeDB.registerPlayer().
 let REGISTRY = [];
 
+// ── OBJETIVO: Calcular o próximo ID no formato Ano+Sequencial (YYYYNNN) ────────
+// CONTEXTO: Formato: ano actual + sequencial de 3 dígitos. Ex: 2026001, 2026025.
+//   O sequencial reinicia a 001 a cada novo ano.
+//   A fonte de verdade é DB[] carregado do Google Sheets ao login.
+// ATENÇÃO: Se DB estiver vazio (offline), o primeiro ID do ano é YYYY001.
+//   Ex: em 2026 offline → 2026001; em 2027 offline → 2027001.
 function nextPlayerId() {
-  const maxId = REGISTRY.reduce((m, p) => Math.max(m, p.id), 2600);
-  return maxId + 1;
+  const year    = new Date().getFullYear().toString(); // ex: '2026'
+  const prefix  = year;                               // prefixo de 4 dígitos
+
+  // Filtrar IDs do DB[] que pertencem ao ano actual (formato YYYYNNN = 7 dígitos)
+  const thisYearIds = DB
+    .map(p => p.id ? p.id.toString() : '')
+    .filter(id => id.startsWith(prefix) && id.length === 7)
+    .map(id => parseInt(id.slice(4), 10))
+    .filter(n => !isNaN(n));
+
+  const maxSeq  = thisYearIds.length > 0 ? Math.max(...thisYearIds) : 0;
+  const nextSeq = (maxSeq + 1).toString().padStart(3, '0'); // '001', '025', etc.
+  return parseInt(prefix + nextSeq, 10); // ex: 2026025
 }
 
 function displayName(p) {
@@ -2780,7 +2797,7 @@ async function finalizeTournament() {
   await PadelEyeDB.saveTournament(T, org, scoreData);
 }
 
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyHXzTdCXqi8FUHyIuG2fl5nbCDcnFc7adGG0jDYyoRrabNgBw0naE_mJJIQP9j5Li-A/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxIMEFN3nTVDA-LY2aP_w2Hu3RZlgbDVvKz0zI5DfW9HtT_d9PqzLYLBMkc5Q5ORY7WQg/exec";
 
 // ══════════════════════════════════════════════════════════
 // PadelEye · DB Integration Module · V32
@@ -2821,13 +2838,28 @@ const PadelEyeDB = (() => {
     }
   }
 
+  // ── OBJETIVO: Mapear os dados do jogador para as colunas exactas do Google Sheet ─
+  // COLUNAS DO SHEET: jogador_id | nome | sobrenome | apelido | categoria | genero
+  //                   cidade | nacionalidade | clube | foto | criado_em | ativo
+  // ATENÇÃO: Os nomes das chaves DEVEM corresponder exactamente aos headers do Sheet.
+  //   email e celular são enviados extra — o Apps Script (ensureHeaders) cria
+  //   automaticamente essas colunas se não existirem.
   function mapJogador(p) {
     return {
-      id: p.id, nome: p.nome || '', sobrenome: p.sobrenome || '',
-      nickname: p.nickname || '', categoria: p.categoria || '',
-      cidade: p.cidade || '', nacionalidade: p.nacionalidade || '',
-      email: p.email || '', celular: p.celular || '',
-      created_at: now(), ativo: true,
+      jogador_id:    p.id,                        // ID numérico sequencial (ex: 2619, 2620...)
+      nome:          p.nome        || '',
+      sobrenome:     p.sobrenome   || '',
+      apelido:       p.nickname    || '',           // era 'nickname' — corrigido para 'apelido'
+      categoria:     p.categoria   || '',
+      genero:        p.genero      || '',           // campo em falta — corrigido
+      cidade:        p.cidade      || '',
+      nacionalidade: p.nacionalidade || '',
+      clube:         p.clube       || '',
+      foto:          p.foto        || '',
+      email:         p.email       || '',           // extra — Apps Script cria coluna se não existir
+      celular:       p.celular     || '',           // extra — idem
+      criado_em:     now(),                         // era 'created_at' — corrigido para 'criado_em'
+      ativo:         true,
     };
   }
 
@@ -3581,6 +3613,7 @@ async function loadPlayersFromDB() {
     DB.length = 0;
     (data.rows || []).forEach(p => {
       const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+      // jogador_id é a PK no Sheet (ex: 2619) — mapeamos para id no DB[] local
       if (nome) DB.push({ id: p.jogador_id || p.id, nome });
     });
   } catch(e) {
