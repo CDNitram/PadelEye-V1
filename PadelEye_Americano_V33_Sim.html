@@ -865,7 +865,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
   <!-- ── SCORECARD ── -->
   <div class="panel" id="p-scorecard">
-    <!-- Scorecard do torneio actual — sem sub-tab Temporada (futuro módulo separado) -->
     <div id="scorecard-container">
       <div class="empty-panel"><div class="empty-icon">🏅</div><div>O scorecard aparece conforme as fases são concluídas.</div></div>
     </div>
@@ -2082,7 +2081,7 @@ function _renderEstatRows(mode) {
 
 
 // ── OBJETIVO: Renderizar o histórico de todas as partidas (manuais e simuladas) ─
-// CONTEXTO: Agrupa por fase. Vencedor a verde, perdedor a cinza. TB em laranja.
+// CONTEXTO: Read-only. Mesmo design das Rodadas mas sem inputs. Agrupado por fase.
 function renderHistorico() {
   const container = document.getElementById('historico-container');
   if (!T.started) {
@@ -2095,17 +2094,14 @@ function renderHistorico() {
 
   T.phases.forEach((ph, phIdx) => {
     let phHtml = '';
-
     ph.groups.forEach((g, gi) => {
       groupMatches(g).forEach((match, mi) => {
         const res = ph.results[`${phIdx}-${gi}-${mi}`];
         if (!res?.saved) return;
         hasAny = true;
-
         const { sa, sb } = res;
-        const aWin      = sa > sb;
+        const aWin = sa > sb;
         const borderCol = aWin ? 'rgba(39,174,96,.3)' : '#dde6f0';
-
         phHtml += `
         <div style="background:#fff;border:1px solid ${borderCol};border-radius:10px;overflow:hidden;margin-bottom:8px">
           <div style="padding:5px 12px;border-bottom:1px solid #f0f5fb;display:flex;align-items:center;justify-content:space-between">
@@ -2148,7 +2144,6 @@ function renderHistorico() {
         </div>`;
       });
     });
-
     if (phHtml) {
       html += `
       <div style="margin-bottom:20px">
@@ -2164,3 +2159,1646 @@ function renderHistorico() {
   container.innerHTML = hasAny ? html
     : '<div class="empty-panel"><div class="empty-icon" style="font-size:30px">⏳</div><div>Nenhuma partida concluída ainda.</div></div>';
 }
+
+
+// ── OBJETIVO: Construir grupos F1 a partir dos jogadores selecionados ────────
+// CONTEXTO: Delega para autoDistributeGroups(). Guarda em T_groups[].
+function buildGroups() {
+  T_groups = autoDistributeGroups(T.players, seedList);
+  // Ensure groups of exactly 4 (pad or trim if needed)
+}
+
+// ── OBJETIVO: Renderizar o painel de Grupos com todas as fases ───────────────
+// CONTEXTO: Mostra tabs F1/F2/Final, grelha de grupos, classificação live
+//   e labels contextuais: "avança" / "em jogo" / "🥇 Campeão" / "🥈 Vice".
+//   No modo Sim, resultados aparecem imediatamente após simCurrentPhase().
+// ATENÇÃO: isFinal = pi === T.numFases-1. Grupos de F2/Final só existem
+//   após advancePhase() ser chamado.
+function renderGrupos() {
+  const c = document.getElementById('grupos-container');
+  if (!T.started) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🗂</div><div>Os grupos aparecem após iniciar o torneio no Setup.</div></div>';
+    return;
+  }
+
+  const all     = [...DB.map(p=>p.nome), ...extraPlayers];
+  const totalM  = T_groups.length * 3;
+  const MEDALS  = ['🥇','🥈','🥉','4º'];
+  const G_LETTERS = ['A','B','C','D','E','F','G','H'];
+
+  // ── PHASE TABS ──
+  let html = `<div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">`;
+  T.phases.forEach((ph, pi) => {
+    const done = isPhaseComplete(pi);
+    html += `<button onclick="switchGrupoPhase(${pi})" id="gtab-${pi}"
+      style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:${pi===0?'#0a1628':'#f4f7fc'};color:${pi===0?'#fff':'#9ab0c8'};transition:all .2s;${ph.groups&&ph.groups.length===0?'opacity:.35;cursor:not-allowed':''}">
+      ${ph.name}${done?' ✅':''}
+    </button>`;
+  });
+  html += `</div>`;
+
+  // ── PHASE PANELS ──
+  T.phases.forEach((ph, pi) => {
+    const hasResults = Object.values(ph.results||{}).some(r=>r.saved);
+    const complete   = isPhaseComplete(pi);
+    const qualify    = pi < 2 ? 2 : ph.groups[0]?.length || 4;
+
+    html += `<div id="gphase-${pi}" style="display:${pi===0?'block':'none'}">`;
+
+    // Hero card — same as original
+    if (pi === 0) {
+      html += `<div class="card" style="background:linear-gradient(135deg,#0a1628,#1a3052);border-color:#0a1628;margin-bottom:14px">
+        <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px;margin-bottom:4px">
+          ${T.name} · Fase 1
+        </div>
+        <div style="font-size:12px;color:#93C5FD">
+          ${T.date} · ${T.players.length} jogadores · ${T_groups.length} grupos · ${totalM} partidas · F1+F2+Final
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:#5a8aaa">
+          ${seedList.length} seed${seedList.length!==1?'s':''} distribuído${seedList.length!==1?'s':''} — 1 por grupo.
+          Os 2 melhores de cada grupo avançam para a Fase 2.
+        </div>
+      </div>`;
+
+      if (!hasResults) {
+        html += `<div class="grupos-info">
+          <strong>Cada grupo joga 3 partidas:</strong><br>
+          Partida 1: A+B vs C+D &nbsp;·&nbsp; Partida 2: A+C vs B+D &nbsp;·&nbsp; Partida 3: A+D vs B+C
+        </div>
+        <div class="grupos-actions" style="margin-bottom:16px">
+          <button class="btn-reshuffle" onclick="reshuffleGroups()">🔀 Sortear novamente</button>
+          <span style="font-size:11px;color:#b0c4d8">ou confirme e inicie</span>
+        </div>`;
+      }
+    }
+
+    // Groups grid — original visual style
+    html += `<div class="grupos-grid">`;
+
+    ph.groups.forEach((group, gi) => {
+      const color   = GROUP_COLORS[gi % GROUP_COLORS.length];
+      const letter  = G_LETTERS[gi];
+      const stds    = groupStandings(group, pi, gi);
+      const matches = groupMatches(group);
+
+      html += `<div class="grupo-card" style="border-color:${color}40">
+        <div class="grupo-header" style="background:${color}">
+          <div>
+            <div class="grupo-letter">Grupo ${letter}</div>
+            <div class="grupo-count">${group.length} jogadores · ${matches.length} partidas</div>
+          </div>
+          ${complete ? '<div style="font-size:10px;color:rgba(255,255,255,.8)">✅ Completo</div>' : ''}
+        </div>
+        <div class="grupo-body">`;
+
+      // Players — original style + live stats if available
+      stds.forEach((s, i) => {
+        const idx      = all.indexOf(s.name);
+        const isSeed   = seedList.includes(s.name);
+        const sIdx     = seedList.indexOf(s.name) + 1;
+        const dbEntry  = DB.find(p=>p.nome===s.name);
+        const advances = i < qualify;
+        const medal    = MEDALS[i] || (i+1)+'º';
+        const gdStr    = s.gd >= 0 ? '+'+s.gd : ''+s.gd;
+        const gdCol    = s.gd > 0 ? '#1a7a44' : s.gd < 0 ? '#c0392b' : '#9ab0c8';
+        const nameCol  = advances && hasResults ? '#1a7a44' : '#0d1e3a';
+        const rowBg    = advances && hasResults ? 'rgba(26,122,68,.04)' : '';
+
+        html += `<div class="grupo-player" style="background:${rowBg}">
+          <div class="grupo-av" style="background:${_COLORS[Math.abs(idx)%_COLORS.length]}">${_init(s.name)}</div>
+          <div style="flex:1">
+            <div class="grupo-name" style="color:${nameCol}">
+              ${hasResults ? medal+' ' : ''}${s.name}
+              ${advances && hasResults && pi<2 ? '<span style="font-size:9px;color:#1a7a44;font-family:DM Mono"> →F'+(pi+2)+'</span>' : ''}
+            </div>
+            <div class="grupo-id">
+              ${hasResults
+                ? `${s.m}M · <span style="color:#1a7a44;font-weight:700">${s.w}V</span> · ${s.l}D · GW ${s.gw} · <span style="color:${gdCol};font-weight:700">GD ${s.m>0?gdStr:'—'}</span>`
+                : `ID ${dbEntry?.id||'—'}`}
+            </div>
+          </div>
+          ${isSeed && !hasResults ? `<div class="grupo-seed-badge">🌱 S${sIdx}</div>` : ''}
+          ${!hasResults && !isSeed ? '' : ''}
+          ${(() => {
+            const isFinal = (pi === (T.numFases||3) - 1);
+            if (isFinal && hasResults && complete) {
+              // Final phase — show titles, nothing for 3rd/4th
+              if (i === 0) return '<div style="font-size:11px;font-weight:700;color:#C9933A;font-family:DM Mono,monospace">🥇 Campeão</div>';
+              if (i === 1) return '<div style="font-size:11px;font-weight:700;color:#7090b0;font-family:DM Mono,monospace">🥈 Vice</div>';
+              return ''; // 3rd and 4th — nothing
+            }
+            if (isFinal && hasResults && !complete) return ''; // Final in progress — nothing
+            // Non-final phases
+            if (hasResults && (i < qualify)) return '<div style="font-size:9px;color:#1a7a44;font-family:DM Mono,monospace;padding:2px 6px;background:#E8F8EE;border-radius:5px">'+(complete?'avança':'em jogo')+'</div>';
+            if (hasResults && (i >= qualify) && complete) return ''; // eliminated — nothing
+            return '';
+          })()}
+        </div>`;
+      });
+
+      html += `</div>`; // grupo-body
+
+      // Matches compact — below each group, separated
+      if (hasResults || true) {
+        html += `<div style="border-top:1px solid #f0f5fb;padding:6px 10px;background:#fafbfd">
+          <div style="font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#c0cdd8;margin-bottom:4px">Partidas</div>`;
+        matches.forEach((match, mi) => {
+          const key    = `${pi}-${gi}-${mi}`;
+          const res    = ph.results[key];
+          const played = res?.saved;
+          const aWin   = played && res.sa > res.sb;
+          html += `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:4px;padding:3px 0;border-bottom:1px solid #f4f7fb">
+            <div style="font-size:10px;font-weight:600;color:${played?(aWin?'#1a7a44':'#9ab0c8'):'#7090b0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${match.a.join('+')}</div>
+            <div style="text-align:center;font-family:'Bebas Neue';font-size:${played?'14px':'11px'};color:${played?'#0d1e3a':'#c0cdd8'};letter-spacing:1px;white-space:nowrap">
+              ${played
+                ? `<span style="color:${res.sa>res.sb?'#1a7a44':'#9ab0c8'}">${res.sa}</span>×<span style="color:${res.sb>res.sa?'#1a7a44':'#9ab0c8'}">${res.sb}</span>${res.tb?'<sup style="font-size:7px;color:#C9933A">TB</sup>':''}`
+                : 'vs'}
+            </div>
+            <div style="text-align:right;font-size:10px;font-weight:600;color:${played?(!aWin?'#1a7a44':'#9ab0c8'):'#7090b0'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${match.b.join('+')}</div>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      html += `</div>`; // grupo-card
+    });
+
+    html += `</div>`; // grupos-grid
+
+    // Bottom CTA — original style, only F1 before results
+    if (pi === 0) {
+      html += `<div class="card" style="border-color:rgba(58,123,213,.2);background:#f0f8ff;margin-top:14px">
+        <div style="font-size:12px;color:#1a5276;margin-bottom:14px;line-height:1.7">
+          Os grupos estão definidos. As partidas da Fase 1 já foram geradas.<br>
+          <strong style="color:#0d1e3a">Total: 21 partidas</strong> — F1: 12 · F2: 6 · Final: 3
+        </div>
+        <button class="btn btn-gold btn-full" onclick="showTab('rodadas', document.querySelector('[onclick*=rodadas]'))" style="font-size:15px">
+          🏸 Ver Rodadas da Fase 1 →
+        </button>
+      </div>`;
+    }
+
+    html += `</div>`; // gphase
+  });
+
+  c.innerHTML = html;
+}
+
+function switchGrupoPhase(pi) {
+  document.querySelectorAll('[id^="gphase-"]').forEach(el=>el.style.display='none');
+  document.querySelectorAll('[id^="gtab-"]').forEach(el=>{el.style.background='#f4f7fc';el.style.color='#9ab0c8';});
+  const ph = document.getElementById('gphase-'+pi);
+  const tb = document.getElementById('gtab-'+pi);
+  if(ph) ph.style.display='block';
+  if(tb){ tb.style.background='#0a1628'; tb.style.color='#fff'; }
+}
+
+
+// ── OBJETIVO: Re-sortear grupos F1 antes de qualquer resultado ser guardado ───
+// CONTEXTO: Bloqueado se já existirem resultados. No modo Sim, após simScore()
+//   já não é possível re-sortear.
+function reshuffleGroups() {
+  const f1HasResults = Object.keys(T.phases[0]?.results || {}).length > 0;
+  if (T.started && f1HasResults) {
+    safeAlert('Não é possível sortear novamente após guardar resultados da Fase 1.','warn');
+    return;
+  }
+  buildGroups();
+  if (T.started && T.phases.length > 0) {
+    T.phases[0] = { name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false };
+  }
+  renderGrupos();
+}
+
+
+
+// ── startTournament — shows Grupos first ──
+function startTournament() {
+  document.getElementById('overlay-ok').classList.remove('show');
+
+  T.started      = true;
+  T.name         = document.getElementById('cfg-name').value || 'Torneio Americano EcoTenis';
+  T.date         = getCfgDate();
+  T.courts       = parseInt(document.getElementById('cfg-courts').value);
+  T.scoring      = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
+  T.players      = [...selectedPlayers];
+  T.currentPhase = 0;
+  T.phaseConfig  = [
+    { maxScore: parseInt(document.getElementById('cfg-max-f1')?.value    || 6),
+      tbAt:     parseInt(document.getElementById('cfg-tb-f1')?.value     || 5) },
+    { maxScore: parseInt(document.getElementById('cfg-max-f2')?.value    || 6),
+      tbAt:     parseInt(document.getElementById('cfg-tb-f2')?.value     || 5) },
+    { maxScore: parseInt(document.getElementById('cfg-max-final')?.value || 9),
+      tbAt:     parseInt(document.getElementById('cfg-tb-final')?.value  || 9) },
+  ];
+
+  // Build groups + initialize F1 phase immediately
+  buildGroups();
+  T.phases = [
+    { name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }
+  ];
+
+  // Pre-render all panels
+  renderGrupos();
+  renderRounds();
+  renderRanking();
+  renderHistorico();
+
+  // Go directly to Rodadas — Grupos tab is still accessible to see the draw
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelector('[onclick*="rodadas"]').classList.add('on');
+  document.getElementById('p-rodadas').classList.add('on');
+}
+
+// [showTab removed — duplicate, canonical definition above]
+
+// ══════════════════════════════════
+// SCORECARD · V22
+// F1 eliminado: 10pts · F2 eliminado: 50pts
+// Final base: 100pts · 🥇+300 · 🥈+200 · 🥉+100
+// ══════════════════════════════════
+
+const SC_PTS = { f1:10, f2:50, final:100, champ:300, runner:200, third:100 };
+
+// ── OBJETIVO: Calcular pontos de temporada por jogador ───────────────────────
+// CONTEXTO: F1=10pts, F2=50pts, Final=100+bónus (Campeão+300, Vice+200, 3º+100).
+//   No modo Sim, os dados calculados aqui são também guardados no SIM_STORE
+//   via saveTournament() → mapScorecard() → insert_scorecard.
+function computeScorecard() {
+  if (!T.started || !T.players.length) return [];
+
+  const _2phase = (T.numFases === 2);
+  // In 2-phase mode: T.phases[1] IS the final; in 3-phase: T.phases[2] is the final
+  const finalPhaseIdx = _2phase ? 1 : 2;
+  const f2Players    = (!_2phase && T.phases[1]) ? T.phases[1].groups.flat() : [];
+  const finalPlayers = T.phases[finalPhaseIdx] ? T.phases[finalPhaseIdx].groups[0] : [];
+  const finalStandings = T.phases[finalPhaseIdx] && isPhaseComplete(finalPhaseIdx)
+    ? groupStandings(T.phases[finalPhaseIdx].groups[0], finalPhaseIdx, 0) : [];
+
+  return T.players.map(name => {
+    const inFinal = finalPlayers.includes(name);
+    const inF2    = f2Players.includes(name);
+    let basePts = 0, bonus = 0, phaseLabel = '', phaseKey = '';
+
+    if (inFinal) {
+      basePts = SC_PTS.final; phaseLabel = 'Final'; phaseKey = 'final';
+      const pos = finalStandings.findIndex(s => s.name === name);
+      if (pos === 0) bonus = SC_PTS.champ;
+      else if (pos === 1) bonus = SC_PTS.runner;
+      else if (pos === 2) bonus = SC_PTS.third;
+    } else if (inF2) {
+      basePts = SC_PTS.f2; phaseLabel = _2phase ? 'Final' : 'Fase 2'; phaseKey = 'f2';
+    } else {
+      basePts = SC_PTS.f1; phaseLabel = 'Fase 1'; phaseKey = 'f1';
+    }
+
+    const finalPos = finalStandings.findIndex(s => s.name === name);
+    const medal = finalPos===0?'🥇':finalPos===1?'🥈':finalPos===2?'🥉':finalPos===3?'4º':'';
+    return { name, basePts, bonus, total:basePts+bonus, phaseLabel, phaseKey, medal };
+  }).sort((a,b) => b.total - a.total);
+}
+
+// ── OBJETIVO: Renderizar o Scorecard do torneio atual ────────────────────────
+// CONTEXTO: Sub-tab "Torneio" usa dados locais (T). Sub-tab "Temporada" faz
+//   fetch ao SIM_STORE via loadTemporada() (no modo Sim, devolve erro de rede
+//   porque WEB_APP_URL não está configurado — comportamento esperado).
+function renderScorecard() {
+  const c = document.getElementById('scorecard-container');
+  if (!c) return;
+
+  if (!T.started || !T.players.length) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🏅</div><div>O scorecard aparece conforme as fases são concluídas.</div></div>';
+    return;
+  }
+
+  const data    = computeScorecard();
+  const maxPts  = data[0]?.total || 1;
+  const _scFinalIdx = (T.numFases || 3) - 1;
+  const fdone   = T.phases[_scFinalIdx] && isPhaseComplete(_scFinalIdx);
+  const phase   = T.currentPhase===0?'Fase 1 em curso': (T.numFases===2 ? (fdone?'🏆 Torneio Concluído':'Final em curso') : T.currentPhase===1?'Fase 2 em curso':fdone?'🏆 Torneio Concluído':'Final em curso');
+
+  const f1Elim    = data.filter(p=>p.phaseKey==='f1').length;
+  const f2Elim    = data.filter(p=>p.phaseKey==='f2').length;
+  const finalists = data.filter(p=>p.phaseKey==='final').length;
+  const champion  = data.find(p=>p.medal==='🥇');
+
+  let html = `
+    <div class="sc-header">
+      <div class="sc-header-title">${T.name} · Scorecard</div>
+      <div class="sc-header-sub">${T.date} · ${T.players.length} jogadores · ${phase}</div>
+      <div class="sc-kpis">
+        <div class="sc-kpi"><div class="sc-kpi-v">${f1Elim}</div><div class="sc-kpi-l">Elim. F1 · 10pts</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${f2Elim}</div><div class="sc-kpi-l">Elim. F2 · 50pts</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${finalists}</div><div class="sc-kpi-l">Finalistas · 100+</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${champion?champion.name.split(' ')[0]:'—'}</div><div class="sc-kpi-l">🥇 Campeão</div></div>
+      </div>
+    </div>`;
+
+  data.forEach((p, i) => {
+    const col = _pc(p.name);
+    const cls = p.medal==='🥇'?'champ':p.medal==='🥈'?'runner':p.medal==='🥉'?'third':'';
+    const pos = p.medal || `<span style="font-size:13px;color:#9ab0c8">#${i+1}</span>`;
+    html += `<div class="sc-row ${cls}">
+      <div class="sc-pos">${pos}</div>
+      <div class="sc-av" style="background:${col}">${_init(p.name)}</div>
+      <div class="sc-info">
+        <div class="sc-name">${p.name}</div>
+        <div class="sc-phase">${p.phaseLabel}</div>
+        <div class="sc-breakdown">
+          <span class="sc-pill base">base: ${p.basePts}pts</span>
+          ${p.bonus>0?`<span class="sc-pill bonus">bônus: +${p.bonus}pts</span>`:''}
+        </div>
+      </div>
+      <div class="sc-pts-wrap">
+        <div class="sc-pts ${cls}">${p.total}</div>
+        <div class="sc-pts-lbl">pts temporada</div>
+        <div class="sc-bar-wrap">
+          <div class="sc-bar-fill" style="width:${Math.round(p.total/maxPts*100)}%;background:${col}"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `
+    <div class="sc-legend">
+      <div class="sc-legend-title">Sistema de Pontuação · Torneio Americano</div>
+      <div class="sc-legend-grid">
+        <div class="sc-legend-item"><div class="sc-legend-pts">10</div><div class="sc-legend-lbl">Eliminado F1</div></div>
+        <div class="sc-legend-item"><div class="sc-legend-pts">50</div><div class="sc-legend-lbl">Eliminado F2</div></div>
+        <div class="sc-legend-item"><div class="sc-legend-pts">100</div><div class="sc-legend-lbl">Chegou à Final</div></div>
+        <div class="sc-legend-item gold"><div class="sc-legend-pts">400</div><div class="sc-legend-lbl">🥇 Campeão (100+300)</div></div>
+        <div class="sc-legend-item"><div class="sc-legend-pts">300</div><div class="sc-legend-lbl">🥈 Vice (100+200)</div></div>
+        <div class="sc-legend-item"><div class="sc-legend-pts">200</div><div class="sc-legend-lbl">🥉 3º Lugar (100+100)</div></div>
+      </div>
+      <div style="margin-top:10px;font-size:10px;color:#c0cdd8">
+        Pontos acumulam entre torneios ao longo da temporada · futura integração Google Sheets
+      </div>
+    </div>`;
+
+  c.innerHTML = html;
+}
+
+// ══════════════════════════════════
+// CADASTRO DE JOGADORES · V26
+// ══════════════════════════════════
+
+// ── OBJETIVO: Registo local dos 8 jogadores do ambiente de simulação ─────────
+// CONTEXTO: Fonte de seed para simDBInit(). IDs 2601–2618.
+//   Novos jogadores registados via modal são adicionados aqui E no SIM_STORE
+//   via PadelEyeDB.registerPlayer() → simDBAction('insert_jogador').
+// ATENÇÃO: REGISTRY é a fonte de verdade local. SIM_STORE.Jogadores é o espelho
+//   in-memory que o app usa durante a sessão.
+let REGISTRY = [
+  {id:2601,nome:'Mahdi',        sobrenome:'',      nickname:'Mahdi',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2604,nome:'Karim',        sobrenome:'',      nickname:'Karim',        categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2608,nome:'Gamarra',      sobrenome:'',      nickname:'Gamarra',      categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2610,nome:'Nathan',       sobrenome:'',      nickname:'Nathan',       categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2613,nome:'Claudio',      sobrenome:'O',     nickname:'Claudio O.',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2614,nome:'Vitor',        sobrenome:'Bauer', nickname:'Vitor Bauer',  categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2617,nome:'Vitor',        sobrenome:'Hugo',  nickname:'Vitor Hugo',   categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+  {id:2618,nome:'Christian',    sobrenome:'',      nickname:'Christian',    categoria:'Masculina', cidade:'Foz do Iguaçu', nacionalidade:'', email:'', celular:''},
+];
+
+function nextPlayerId() {
+  const maxId = REGISTRY.reduce((m, p) => Math.max(m, p.id), 2600);
+  return maxId + 1;
+}
+
+function displayName(p) {
+  if (p.nickname) return p.nickname;
+  return (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+}
+
+let _editingPlayerId = null;
+
+function openRegModal() {
+  _editingPlayerId = null;
+  document.getElementById('reg-box-title').textContent  = 'Novo Jogador';
+  document.getElementById('reg-box-sub').textContent    = 'Preencha os dados do jogador. Campos com * são obrigatórios.';
+  document.getElementById('reg-save-btn').textContent   = '💾 Salvar Perfil';
+  document.getElementById('reg-nome').value             = '';
+  document.getElementById('reg-sobrenome').value        = '';
+  document.getElementById('reg-nickname').value         = '';
+  document.getElementById('reg-categoria').value        = '';
+  document.getElementById('reg-genero').value           = '';
+  document.getElementById('reg-cidade').value           = '';
+  document.getElementById('reg-nacionalidade').value    = '';
+  document.getElementById('reg-email').value            = '';
+  document.getElementById('reg-celular').value          = '';
+  document.getElementById('reg-id-preview').textContent = `#${nextPlayerId()} (gerado ao salvar)`;
+  document.getElementById('reg-modal').classList.add('show');
+  setTimeout(() => document.getElementById('reg-nome').focus(), 100);
+}
+
+function openEditModal(playerId) {
+  const p = REGISTRY.find(r => String(r.id) === String(playerId));
+  if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
+  _editingPlayerId = p.id;
+  document.getElementById('reg-box-title').textContent  = 'Editar Jogador';
+  document.getElementById('reg-box-sub').textContent    = `A editar: ${p.nome} ${p.sobrenome} · ID #${p.id}`;
+  document.getElementById('reg-save-btn').textContent   = '💾 Guardar Alterações';
+  document.getElementById('reg-id-preview').textContent = `#${p.id}`;
+  document.getElementById('reg-nome').value             = p.nome          || '';
+  document.getElementById('reg-sobrenome').value        = p.sobrenome     || '';
+  document.getElementById('reg-nickname').value         = p.nickname      || '';
+  document.getElementById('reg-categoria').value        = p.categoria     || '';
+  document.getElementById('reg-genero').value           = p.genero        || '';
+  document.getElementById('reg-cidade').value           = p.cidade        || '';
+  document.getElementById('reg-nacionalidade').value    = p.nacionalidade || '';
+  document.getElementById('reg-email').value            = p.email         || '';
+  document.getElementById('reg-celular').value          = p.celular       || '';
+  document.getElementById('reg-modal').classList.add('show');
+  setTimeout(() => document.getElementById('reg-nome').focus(), 100);
+}
+
+function closeRegModal(e) {
+  if (!e || e.target.id === 'reg-modal') {
+    document.getElementById('reg-modal').classList.remove('show');
+  }
+}
+
+// ── OBJETIVO: Validar e guardar novo jogador no REGISTRY e no SIM_STORE ───────
+// CONTEXTO: Chama PadelEyeDB.registerPlayer() que no modo Sim vai para
+//   simDBAction('insert_jogador') — sem rede, sem Google Sheets.
+//   O jogador fica persistente até ao fim da sessão (ou Reset SimDB).
+function savePlayer() {
+  const nome       = document.getElementById('reg-nome').value.trim();
+  const sobrenome  = document.getElementById('reg-sobrenome').value.trim();
+  const categoria  = document.getElementById('reg-categoria').value;
+
+  if (!nome)      { document.getElementById('reg-nome').focus();      safeAlert('Nome é obrigatório.','err'); return; }
+  if (!sobrenome) { document.getElementById('reg-sobrenome').focus(); safeAlert('Sobrenome é obrigatório.','err'); return; }
+  const genero = document.getElementById('reg-genero').value;
+  if (!categoria) { document.getElementById('reg-categoria').focus(); safeAlert('Categoria é obrigatória.','err'); return; }
+  if (!genero)    { document.getElementById('reg-genero').focus();    safeAlert('Género é obrigatório.','err'); return; }
+
+  const newId = nextPlayerId();
+  const player = {
+    id:           newId,
+    nome,
+    sobrenome,
+    nickname:     document.getElementById('reg-nickname').value.trim(),
+    categoria,
+    genero,
+    cidade:       document.getElementById('reg-cidade').value.trim(),
+    nacionalidade:document.getElementById('reg-nacionalidade').value.trim(),
+    email:        document.getElementById('reg-email').value.trim(),
+    celular:      document.getElementById('reg-celular').value.trim(),
+  };
+
+  if (_editingPlayerId !== null) {
+    const idx = REGISTRY.findIndex(r => String(r.id) === String(_editingPlayerId));
+    if (idx !== -1) REGISTRY[idx] = { ...REGISTRY[idx], ...player, id: _editingPlayerId };
+    player.id = _editingPlayerId;
+    const dbIdx = DB.findIndex(p => String(p.id) === String(_editingPlayerId));
+    if (dbIdx !== -1) DB[dbIdx].nome = displayName(player);
+    PadelEyeDB.updatePlayer(player);
+    document.getElementById('reg-modal').classList.remove('show');
+    renderRoster(); renderDB();
+    const el = document.getElementById('alert-cadastro');
+    if (el) {
+      el.textContent = `✅ Jogador ${displayName(player)} actualizado (ID #${_editingPlayerId}).`;
+      el.className = 'alert ok'; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
+  } else {
+    REGISTRY.push(player);
+    DB.push({ id: newId, nome: displayName(player) });
+    PadelEyeDB.registerPlayer(player);
+    document.getElementById('reg-modal').classList.remove('show');
+    renderRoster(); renderDB();
+    const el = document.getElementById('alert-cadastro');
+    if (el) {
+      el.textContent = `✅ Jogador ${displayName(player)} registado com ID #${newId}.`;
+      el.className = 'alert ok'; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
+  }
+}
+
+// ── OBJETIVO: Renderizar a lista de jogadores registados na aba Jogadores ─────
+// CONTEXTO: Lê do REGISTRY (não do SIM_STORE diretamente).
+//   Jogadores adicionados via modal aparecem aqui imediatamente.
+function renderRoster() {
+  const container = document.getElementById('player-roster');
+  const badge     = document.getElementById('roster-badge');
+  if (!container) return;
+
+  const q = (document.getElementById('roster-search')?.value || '').toLowerCase();
+  const filtered = REGISTRY.filter(p => {
+    if (!q) return true;
+    return displayName(p).toLowerCase().includes(q) ||
+           p.cidade?.toLowerCase().includes(q)       ||
+           p.categoria?.toLowerCase().includes(q)    ||
+           String(p.id).includes(q);
+  });
+
+  if (badge) badge.textContent = `${filtered.length} / ${REGISTRY.length} jogadores`;
+
+  if (!filtered.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ab0c8;font-size:13px">Nenhum jogador encontrado.</div>';
+    return;
+  }
+
+  const all = allPlayers();
+  container.innerHTML = filtered.map((p, i) => {
+    const dname   = displayName(p);
+    const idx     = all.indexOf(dname);
+    const col     = _COLORS[Math.abs(idx < 0 ? p.id % _COLORS.length : idx) % _COLORS.length];
+    const initials = _init(dname);
+    const tags = [p.categoria, p.cidade, p.nacionalidade].filter(Boolean);
+    return `<div class="roster-card">
+      <div class="roster-av" style="background:${col}">${initials}</div>
+      <div class="roster-info">
+        <div class="roster-name">${p.nome} ${p.sobrenome}${p.nickname ? ` <span style="color:#9ab0c8;font-weight:400;font-size:12px">"${p.nickname}"</span>` : ''}</div>
+        <div class="roster-meta">
+          ${tags.map(t=>`<span class="roster-tag">${t}</span>`).join('')}
+          ${p.email ? `<span class="roster-tag" style="color:#3a7bd5">${p.email}</span>` : ''}
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="roster-id">#${p.id}</div>
+        ${p.celular ? `<div style="font-size:10px;color:#b0c4d8">${p.celular}</div>` : ''}
+        <div style="display:flex;gap:5px">
+          <button title="Ver jogador"
+            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #2980b9;
+                   background:rgba(41,128,185,0.07);color:#2980b9;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+            onmouseover="this.style.background='rgba(41,128,185,0.18)'"
+            onmouseout="this.style.background='rgba(41,128,185,0.07)'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button onclick="openEditModal('${p.id}')" title="Editar jogador"
+            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #C9933A;
+                   background:rgba(201,147,58,0.07);color:#C9933A;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+            onmouseover="this.style.background='rgba(201,147,58,0.18)'"
+            onmouseout="this.style.background='rgba(201,147,58,0.07)'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
+
+// ── OBJETIVO: Guardar o torneio completo no SIM_STORE (modo Sim) ─────────────
+// CONTEXTO: Chama PadelEyeDB.saveTournament() que no modo Sim vai para
+//   simDBAction() sem rede. Guarda Torneios, Partidas_Torneios e Scorecard_Torneios.
+//   Atualiza também Ranking_Torneios automaticamente via insert_scorecard.
+// ATENÇÃO: No modo Sim, dados ficam em memória até ao fim da sessão.
+//   Ver o resultado na aba 🗄 SimDB após guardar.
+async function finalizeTournament() {
+  if (!T.started || !T.phases.length) return;
+  const scoreData = typeof computeScorecard === 'function' ? computeScorecard() : [];
+  const org = currentUser?.name || '—';
+  await PadelEyeDB.saveTournament(T, org, scoreData);
+}
+
+// ══════════════════════════════════════════════════════════
+// PadelEye · SimDB — Banco de Dados Local para Simulação
+// Espelha a estrutura real do Google Sheets / Apps Script
+// Dados persistem durante a sessão (in-memory)
+// ══════════════════════════════════════════════════════════
+
+// ── SIM STORE — tabelas em memória ──────────────────────
+// ── OBJETIVO: Base de dados in-memory que espelha a estrutura do Google Sheets ─
+// CONTEXTO: 6 tabelas — Jogadores, Torneios, Partidas_Torneios,
+//   Scorecard_Torneios, Ranking_Torneios, Sessions.
+//   Todas as operações de leitura/escrita da app passam por simDBAction().
+// ATENÇÃO: Dados persistem durante a sessão mas são perdidos ao fechar o browser.
+//   Reset via botão "🗑 Reset SimDB" na aba SimDB.
+const SIM_STORE = {
+  Jogadores:          [],   // espelha tab Jogadores
+  Torneios:           [],   // espelha tab Torneios
+  Partidas_Torneios:  [],   // espelha tab Partidas_Torneios
+  Scorecard_Torneios: [],   // espelha tab Scorecard_Torneios
+  Ranking_Torneios:   [],   // espelha tab Ranking_Torneios
+  Sessions:           [],   // log de sessões
+};
+
+// Seed inicial: popula Jogadores a partir do REGISTRY
+// ── OBJETIVO: Inicializar o SIM_STORE com os jogadores do REGISTRY ────────────
+// CONTEXTO: Chamado em doLogin(). Seed inicial — sem dados de torneios.
+//   Garante que a aba Jogadores no SimDB Inspector começa sempre com os 8 players.
+// ATENÇÃO: Re-executar simDBInit() sobrescreve SIM_STORE.Jogadores mas mantém
+//   os outros arrays. O botão "Reset SimDB" limpa tudo e chama simDBInit().
+function simDBInit() {
+  SIM_STORE.Jogadores = REGISTRY.map(p => ({
+    id:            p.id,
+    nome:          p.nome,
+    sobrenome:     p.sobrenome     || '',
+    nickname:      p.nickname      || '',
+    categoria:     p.categoria     || '',
+    cidade:        p.cidade        || '',
+    nacionalidade: p.nacionalidade || '',
+    email:         p.email         || '',
+    celular:       p.celular       || '',
+    created_at:    new Date().toISOString(),
+    ativo:         true,
+  }));
+  console.log('[SimDB] Inicializado com ' + SIM_STORE.Jogadores.length + ' jogadores');
+}
+
+// ── SimDB Actions (mesma estrutura do Apps Script real) ──
+// ── OBJETIVO: Router central de todas as operações no SIM_STORE ───────────────
+// CONTEXTO: Espelha exatamente as actions do Apps Script real (ping, get_*, insert_*).
+//   Mesma estrutura de resposta: { ok: true, rows: [...] } para GET,
+//   { ok: true, inserted: N } para INSERT.
+// ATENÇÃO: insert_scorecard atualiza automaticamente Ranking_Torneios (upsert
+//   por jogador). Mesmo comportamento do Apps Script de produção.
+function simDBAction(action, data) {
+  const now = new Date().toISOString();
+
+  // ── GET actions ──────────────────────────────────────
+  if (action === 'ping') {
+    return { ok:true, status:'SimDB online', mode:'simulation', timestamp:now };
+  }
+  if (action === 'get_jogadores') {
+    return { ok:true, rows: SIM_STORE.Jogadores };
+  }
+  if (action === 'get_torneios') {
+    return { ok:true, rows: SIM_STORE.Torneios };
+  }
+  if (action === 'get_partidas_torneios') {
+    const tid = data?.torneio_id;
+    const rows = tid
+      ? SIM_STORE.Partidas_Torneios.filter(r=>r.torneio_id===tid)
+      : SIM_STORE.Partidas_Torneios;
+    return { ok:true, rows };
+  }
+  if (action === 'get_scorecard_torneios') {
+    const tid = data?.torneio_id;
+    const rows = tid
+      ? SIM_STORE.Scorecard_Torneios.filter(r=>r.torneio_id===tid)
+      : SIM_STORE.Scorecard_Torneios;
+    return { ok:true, rows };
+  }
+  if (action === 'get_ranking_torneios') {
+    return { ok:true, rows: SIM_STORE.Ranking_Torneios };
+  }
+
+  // ── INSERT actions ───────────────────────────────────
+  if (action === 'insert_jogador') {
+    const row = data?.row || data;
+    if (row) { SIM_STORE.Jogadores.push({...row, created_at:now}); }
+    simDBRefreshUI();
+    return { ok:true, inserted:1, id:row?.id };
+  }
+  if (action === 'insert_torneio') {
+    const row = data?.row || data;
+    if (row) { SIM_STORE.Torneios.push({...row, created_at:now, status:'concluido'}); }
+    simDBRefreshUI();
+    return { ok:true, inserted:1, id:row?.id };
+  }
+  if (action === 'insert_partidas') {
+    const rows = data?.rows || (data ? [data] : []);
+    rows.forEach(r => SIM_STORE.Partidas_Torneios.push({...r, created_at:now}));
+    simDBRefreshUI();
+    return { ok:true, inserted:rows.length };
+  }
+  if (action === 'insert_scorecard') {
+    const rows = data?.rows || (data ? [data] : []);
+    rows.forEach(r => {
+      SIM_STORE.Scorecard_Torneios.push({...r, created_at:now});
+      // Also update Ranking_Torneios (aggregate)
+      const existing = SIM_STORE.Ranking_Torneios.find(x=>x.jogador===r.jogador);
+      if (existing) {
+        existing.pts_total   += r.pts_total || 0;
+        existing.torneios    += 1;
+        if (r.posicao==='🥇') existing.titulos++;
+      } else {
+        SIM_STORE.Ranking_Torneios.push({
+          jogador:    r.jogador,
+          pts_total:  r.pts_total  || 0,
+          torneios:   1,
+          titulos:    r.posicao==='🥇' ? 1 : 0,
+          ultima_data:r.data || now.slice(0,10),
+        });
+      }
+    });
+    SIM_STORE.Ranking_Torneios.sort((a,b)=>b.pts_total-a.pts_total);
+    simDBRefreshUI();
+    return { ok:true, inserted:rows.length };
+  }
+  if (action === 'log_action') {
+    const row = data?.row || data;
+    if (row) SIM_STORE.Sessions.push({...row, timestamp:now});
+    return { ok:true };
+  }
+
+  return { ok:false, error:'Unknown action: ' + action };
+}
+
+// Refresh SimDB inspector panel if open
+// ── OBJETIVO: Atualizar o painel SimDB Inspector se estiver visível ───────────
+// CONTEXTO: Chamado por simDBAction() após cada INSERT. Só re-renderiza se
+//   o painel SimDB estiver aberto (offsetParent !== null).
+function simDBRefreshUI() {
+  const panel = document.getElementById('simdb-content');
+  if (panel && panel.offsetParent !== null) renderSimDB();
+}
+
+// ── OBJETIVO: Módulo SimPadelEyeDB — substitui PadelEyeDB com API idêntica ────
+// CONTEXTO: Expõe os mesmos 4 métodos públicos: registerPlayer, saveTournament,
+//   logSession e ping. Em vez de fetch ao Google Sheets, chama simDBAction().
+//   Simula delay de rede de 50ms (fakeAsync) para realismo.
+// ATENÇÃO: A WEB_APP_URL NÃO é usada neste módulo — todas as chamadas são locais.
+//   Qualquer dev que leia este código deve notar que é um mock completo do PadelEyeDB.
+const PadelEyeDB = (() => {
+  const now  = () => new Date().toISOString();
+  const uid  = () => 'sim_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+
+  // Simula delay de rede (50ms) para parecer real
+  function fakeAsync(result) {
+    return new Promise(resolve => setTimeout(() => resolve(result), 50));
+  }
+
+  function mapJogador(p) {
+    return {
+      id:            p.id,
+      nome:          p.nome          || '',
+      sobrenome:     p.sobrenome     || '',
+      nickname:      p.nickname      || '',
+      categoria:     p.categoria     || '',
+      cidade:        p.cidade        || '',
+      nacionalidade: p.nacionalidade || '',
+      email:         p.email         || '',
+      celular:       p.celular       || '',
+      created_at:    now(),
+      ativo:         true,
+    };
+  }
+
+  function mapTorneio(T, organizador) {
+    const cfg = T.phaseConfig || [{maxScore:6,tbAt:5},{maxScore:6,tbAt:5},{maxScore:9,tbAt:9}];
+    return {
+      id:          uid(),
+      nome:        T.name    || 'Torneio Americano EcoTenis',
+      data:        T.date    || now().slice(0,10),
+      formato:     'Americano · Modelo Brasileiro',
+      organizador: organizador || '—',
+      vagas:       T.players?.length || 0,
+      scoring:     T.scoring  || '15·30·40·Game',
+      num_fases:   T.numFases || 3,
+      f1_max:      cfg[0]?.maxScore ?? 6,
+      f1_tb:       cfg[0]?.tbAt    ?? 5,
+      f2_max:      cfg[1]?.maxScore ?? 6,
+      f2_tb:       cfg[1]?.tbAt    ?? 5,
+      final_max:   cfg[2]?.maxScore ?? 9,
+      final_tb:    cfg[2]?.tbAt    ?? 9,
+      status:      'concluido',
+      created_at:  now(),
+    };
+  }
+
+  function mapPartidas(T, torneioId) {
+    const rows = [];
+    const LETTERS = ['A','B','C','D','E','F','G','H'];
+    T.phases.forEach((ph, phIdx) => {
+      if (!ph) return;
+      ph.groups.forEach((group, gi) => {
+        const matches = [
+          { a:[group[0],group[1]], b:[group[2],group[3]] },
+          { a:[group[0],group[2]], b:[group[1],group[3]] },
+          { a:[group[0],group[3]], b:[group[1],group[2]] },
+        ];
+        matches.forEach((m, mi) => {
+          const key = phIdx+'-'+gi+'-'+mi;
+          const res = ph.results?.[key] || {};
+          rows.push({
+            id:         uid(),
+            torneio_id: torneioId,
+            fase:       ph.name,
+            grupo:      LETTERS[gi + (phIdx===1?4:0)],
+            partida:    mi + 1,
+            equipa_a:   m.a.join(' / '),
+            equipa_b:   m.b.join(' / '),
+            score_a:    res.sa  ?? '',
+            score_b:    res.sb  ?? '',
+            tie_break:  res.tb  ? 'Sim' : 'Não',
+            tb_a:       res.tba ?? '',
+            tb_b:       res.tbb ?? '',
+            saved_at:   res.saved ? now() : '',
+          });
+        });
+      });
+    });
+    return rows;
+  }
+
+  function mapScorecard(T, torneioId, scoreData) {
+    return scoreData.map(p => ({
+      id:            uid(),
+      torneio_id:    torneioId,
+      torneio_nome:  T.name   || '—',
+      data:          T.date   || now().slice(0,10),
+      jogador:       p.name,
+      pts_base:      p.basePts,
+      pts_bonus:     p.bonus,
+      pts_total:     p.total,
+      fase_atingida: p.phaseLabel,
+      posicao:       p.medal  || '—',
+      created_at:    now(),
+    }));
+  }
+
+  async function registerPlayer(playerData) {
+    showStatus('[SimDB] A registar jogador...', 'loading');
+    const result = await fakeAsync(simDBAction('insert_jogador', { row: mapJogador(playerData) }));
+    showStatus(
+      result.ok
+        ? '✅ [SimDB] ' + playerData.nome + ' registado (ID #' + playerData.id + ')'
+        : '⚠️ [SimDB] Erro ao registar.',
+      result.ok ? 'success' : 'error'
+    );
+    return result;
+  }
+
+  async function updatePlayer(playerData) {
+    showStatus('[SimDB] A actualizar jogador...', 'loading');
+    const result = await fakeAsync(simDBAction('upsert_jogador', { row: mapJogador(playerData) }));
+    showStatus(
+      result.ok
+        ? '✅ [SimDB] ' + playerData.nome + ' actualizado (ID #' + playerData.id + ')'
+        : '⚠️ [SimDB] Erro ao actualizar.',
+      result.ok ? 'success' : 'error'
+    );
+    return result;
+  }
+
+  async function saveTournament(T, organizador, scoreData) {
+    showStatus('[SimDB] A guardar torneio...', 'loading');
+    const torneioRow   = mapTorneio(T, organizador);
+    const torneioId    = torneioRow.id;
+    const partidasRows = mapPartidas(T, torneioId);
+    const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
+
+    await fakeAsync(simDBAction('insert_torneio',   { row:  torneioRow }));
+    await fakeAsync(simDBAction('insert_partidas',  { rows: partidasRows }));
+    if (scRows.length) await fakeAsync(simDBAction('insert_scorecard', { rows: scRows }));
+
+    showStatus(
+      '✅ [SimDB] Torneio "' + T.name + '" guardado (' + partidasRows.length + ' partidas · ' + scRows.length + ' scorecard entries)',
+      'success'
+    );
+    return { torneioId, ok:true };
+  }
+
+  async function logSession(user, action, entity, metadata) {
+    return fakeAsync(simDBAction('log_action', {
+      row: { id:uid(), user:user||'anonymous', action, entity:entity||'', metadata:JSON.stringify(metadata||{}), timestamp:now() }
+    }));
+  }
+
+  async function ping() {
+    const result = await fakeAsync(simDBAction('ping'));
+    console.log('[SimDB] Ping:', result);
+    return result;
+  }
+
+  function showStatus(message, type='loading') {
+    let el = document.getElementById('pe-db-status');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'pe-db-status';
+      el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-family:\'DM Sans\',sans-serif;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:all .3s;max-width:320px;';
+      document.body.appendChild(el);
+    }
+    const styles = {
+      loading: 'background:#0a1628;color:#93C5FD;border:1px solid #3a7bd5;',
+      success: 'background:#0d2818;color:#4CAF50;border:1px solid #4CAF50;',
+      error:   'background:#2d0d0d;color:#f97316;border:1px solid #f97316;',
+    };
+    el.style.cssText += styles[type] || styles.loading;
+    el.textContent = message;
+    el.style.display = 'block';
+    if (type !== 'loading') setTimeout(() => el.style.display='none', 4000);
+  }
+
+  return { registerPlayer, saveTournament, logSession, ping };
+})();
+
+// ══════════════════════════════════════════
+// SCORECARD SUB-TABS
+// ══════════════════════════════════════════
+function switchSC(tab) {
+  const isTorneio = tab === 'torneio';
+  document.getElementById('sc-torneio').style.display    = isTorneio ? 'block' : 'none';
+  document.getElementById('sc-temporada').style.display  = isTorneio ? 'none'  : 'block';
+  const tBtn = document.getElementById('sctab-torneio');
+  const sBtn = document.getElementById('sctab-temporada');
+  tBtn.style.background = isTorneio ? '#0a1628' : '#f4f7fc';
+  tBtn.style.color      = isTorneio ? '#fff'    : '#9ab0c8';
+  sBtn.style.background = isTorneio ? '#f4f7fc' : '#0a1628';
+  sBtn.style.color      = isTorneio ? '#9ab0c8' : '#fff';
+  if (!isTorneio) loadTemporada();
+}
+
+async function loadTemporada() {
+  const el = document.getElementById('scorecard-temporada-container');
+  el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Carregando temporada...</div></div>';
+
+  const year = new Date().getFullYear();
+
+  try {
+    const res = await fetch(WEB_APP_URL + '?action=get_torneios');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const torneios = (data.rows || []).filter(t => (t.data || '').startsWith(year));
+
+    if (!torneios.length) {
+      el.innerHTML = '<div class="empty-panel"><div class="empty-icon">📅</div><div>Nenhum torneio registrado em ' + year + '.</div></div>';
+      return;
+    }
+
+    // Aggregate points per player across all tournaments
+    const map = {};
+    torneios.forEach(t => {
+      const standings = t.standigs || t.standings || [];
+      (typeof standings === 'string' ? JSON.parse(standings) : standings).forEach(s => {
+        if (!map[s.jogador]) map[s.jogador] = {name:s.jogador, pts:0, torneios:0, wins:0, top3:0};
+        const p = map[s.jogador];
+        p.torneios++;
+        p.pts += +s.pts || 0;
+        if (s.pos === 1) p.wins++;
+        if (s.pos <= 3) p.top3++;
+      });
+    });
+
+    const ranked = Object.values(map).sort((a,b) => b.pts - a.pts || b.wins - a.wins);
+    const maxPts = ranked[0]?.pts || 1;
+    const MEDALS = ['🥇','🥈','🥉'];
+
+    let html = `<div style="background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:12px;padding:16px;margin-bottom:14px">
+      <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px">Temporada ${year}</div>
+      <div style="font-size:12px;color:#93C5FD;margin-top:4px">${torneios.length} torneio(s) · ${ranked.length} jogadores · Sistema de pontos: F1=10 · F2=50 · Final=100+bônus</div>
+    </div>`;
+
+    ranked.forEach((p, i) => {
+      const medal = MEDALS[i] || '';
+      const pct   = Math.round(p.pts / maxPts * 100);
+      const col   = _pc(p.name);
+      const ini   = _init(p.name);
+      html += `<div style="background:#fff;border:1px solid ${i===0?'#e8c870':'#dde6f0'};border-radius:10px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:10px;${i===0?'background:linear-gradient(135deg,#fffbf0,#fff8e0);':''}">
+        <div style="font-size:${i<3?'22px':'14px'};min-width:28px;text-align:center">${medal||'#'+(i+1)}</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:${col};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#fff;flex-shrink:0">${ini}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:#0d1e3a">${p.name}</div>
+          <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:2px">${p.torneios} torneio(s) · ${p.wins} título(s) · top3: ${p.top3}×</div>
+          <div style="height:3px;background:#eaf0f8;border-radius:2px;margin-top:5px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${i===0?'#C9933A':'#3498DB'};border-radius:2px"></div>
+          </div>
+        </div>
+        <div style="font-family:'Bebas Neue';font-size:26px;color:${i===0?'#C9933A':'#0d1e3a'}">${p.pts}<span style="font-size:10px;color:#9ab0c8"> pts</span></div>
+      </div>`;
+    });
+
+    el.innerHTML = html;
+
+  } catch(e) {
+    el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Erro ao carregar temporada: ' + e.message + '</div></div>';
+  }
+}
+
+
+
+// ══════════════════════════════════════════
+// RAFFLE (SORTEIO DE GRUPOS)  — V33
+// ══════════════════════════════════════════
+let _raffleQueue   = [];   // draw order: seeds first, then shuffled rest
+let _raffleGroups  = [];   // array of 4 arrays (one per group)
+let _raffleIdx     = 0;    // current draw pointer
+let _raffleTimer   = null; // interval handle
+let _raffleCountdown = 3;
+const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
+const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
+
+// ── OBJETIVO: Inicializar e mostrar o ecrã de sorteio animado ────────────────
+// CONTEXTO: Chamado pelo overlay "🎱 Sortear Grupos & Iniciar". Define T.numFases,
+//   constrói a fila de sorteio (seeds primeiro, restantes aleatórios) e abre s-raffle.
+// ATENÇÃO: Após raffleFinish(), os botões de simulação ficam visíveis
+//   via o override de raffleFinish() no final do ficheiro.
+function startRaffle() {
+  // Pull config
+  T.started     = true;
+  T.name        = document.getElementById('cfg-name').value || 'Torneio Americano';
+  T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
+  T.numFases    = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  T.date        = getCfgDate();
+  T.courts      = parseInt(document.getElementById('cfg-courts').value);
+  T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
+  T.scoring     = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
+  T.players     = [...selectedPlayers];
+  T.currentPhase = 0;
+  T.phaseConfig  = [
+    { maxScore: parseInt(document.getElementById('cfg-max-f1')?.value    || 6), tbAt: parseInt(document.getElementById('cfg-tb-f1')?.value     || 5) },
+    { maxScore: parseInt(document.getElementById('cfg-max-f2')?.value    || 6), tbAt: parseInt(document.getElementById('cfg-tb-f2')?.value     || 5) },
+    { maxScore: parseInt(document.getElementById('cfg-max-final')?.value || 9), tbAt: parseInt(document.getElementById('cfg-tb-final')?.value  || 9) },
+  ];
+
+  // Build draw queue: seeds first, then shuffled non-seeds
+  const seeds    = [...seedList];
+  const nonSeeds = selectedPlayers.filter(p => !seedList.includes(p))
+                     .sort(() => Math.random() - 0.5);
+  _raffleQueue   = [...seeds, ...nonSeeds];
+  _raffleIdx     = 0;
+  const _numG = Math.max(1, Math.floor(selectedPlayers.length / 4));
+  _raffleGroups  = Array.from({length: _numG}, () => []);
+
+  // Render group cards
+  const gc = document.getElementById('raffle-groups');
+  gc.style.gridTemplateColumns = _numG <= 2 ? '1fr 1fr' : _numG <= 4 ? '1fr 1fr' : 'repeat(auto-fill,minmax(140px,1fr))';
+  gc.innerHTML = RAFFLE_LETTERS.slice(0, _numG).map((l,i) =>
+    `<div class="raffle-group-card" id="rg-${l}" style="border-color:${RAFFLE_COLORS[i]}22">
+      <div class="raffle-group-header" style="color:${RAFFLE_COLORS[i]}">GRUPO ${l}</div>
+      <div id="rg-players-${l}"></div>
+    </div>`
+  ).join('');
+
+  // Render queue chips
+  _raffleRenderQueue();
+
+  document.getElementById('raffle-sub').textContent = `${_raffleQueue.length} jogadores · ${seeds.length} seeds`;
+  document.getElementById('raffle-idle').style.display    = 'block';
+  document.getElementById('raffle-ball-content').style.display = 'none';
+  document.getElementById('raffle-countdown').textContent = '';
+  document.getElementById('raffle-prog').style.width      = '100%';
+  document.getElementById('raffle-next-btn').style.display = 'block';
+  document.getElementById('raffle-start-btn').classList.remove('show');
+
+  // Show raffle screen
+  document.getElementById('overlay-ok').classList.remove('show');
+  document.getElementById('s-raffle').classList.add('show');
+
+  // Auto-start after 2s
+  setTimeout(() => raffleDrawOne(), 2000);
+}
+
+function _raffleRenderQueue() {
+  const wrap = document.getElementById('raffle-queue');
+  wrap.innerHTML = _raffleQueue.map((name, i) => {
+    const drawn = i < _raffleIdx;
+    const isSeed = seedList.includes(name);
+    return `<div class="raffle-chip${drawn?' drawn':''}" id="rchip-${i}">${isSeed?'🌱 ':''}${name}</div>`;
+  }).join('');
+}
+
+// ── OBJETIVO: Sortear o próximo jogador e atribuí-lo a um grupo ───────────────
+// CONTEXTO: Seeds → grupo por índice. Não-seeds → grupo com menos jogadores.
+//   Anima a bola, acende o card do grupo e inicia countdown de 3s para o próximo.
+function raffleDrawOne() {
+  clearInterval(_raffleTimer);
+  if (_raffleIdx >= _raffleQueue.length) { raffleAllDone(); return; }
+
+  const name    = _raffleQueue[_raffleIdx];
+  const isSeed  = seedList.includes(name);
+  // Assign to group: seeds go in order (seed 0 → group A, seed 1 → B, etc.)
+  // Non-seeds fill groups round-robin by smallest group
+  let groupIdx;
+  if (isSeed) {
+    groupIdx = seedList.indexOf(name);
+  } else {
+    // assign to group with fewest players (round-robin among ties)
+    const sizes = _raffleGroups.map(g => g.length);
+    groupIdx    = sizes.indexOf(Math.min(...sizes));
+  }
+
+  _raffleGroups[groupIdx].push({ name, seed: isSeed });
+  _raffleIdx++;
+
+  // Animate ball
+  const ball = document.getElementById('raffle-ball');
+  ball.classList.remove('pop');
+  void ball.offsetWidth; // reflow
+  ball.classList.add('pop');
+
+  document.getElementById('raffle-idle').style.display = 'none';
+  document.getElementById('raffle-ball-content').style.display = 'flex';
+  document.getElementById('raffle-ball-seed').textContent  = isSeed ? '🌱 SEED' : '';
+  document.getElementById('raffle-ball-name').textContent  = name;
+  document.getElementById('raffle-ball-grp').textContent   = '→ GRUPO ' + RAFFLE_LETTERS[groupIdx];
+  document.getElementById('raffle-ball').style.borderColor = RAFFLE_COLORS[groupIdx];
+  document.getElementById('raffle-ball').style.boxShadow   = `0 0 40px ${RAFFLE_COLORS[groupIdx]}55, 0 0 80px ${RAFFLE_COLORS[groupIdx]}22`;
+
+  // Update group card
+  const grpEl = document.getElementById('rg-players-' + RAFFLE_LETTERS[groupIdx]);
+  const div   = document.createElement('div');
+  div.className = 'raffle-group-player';
+  div.innerHTML = `${isSeed?'<span class="raffle-seed-star">🌱</span>':''}<span>${name}</span>`;
+  grpEl.appendChild(div);
+  // Light up the group card
+  const card = document.getElementById('rg-' + RAFFLE_LETTERS[groupIdx]);
+  card.classList.add('lit');
+  setTimeout(() => card.classList.remove('lit'), 800);
+
+  // Mark chip as drawn
+  _raffleRenderQueue();
+  // Scroll chip into view
+  const chip = document.getElementById('rchip-' + (_raffleIdx - 1));
+  chip?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  document.getElementById('raffle-sub').textContent =
+    `${_raffleIdx} / ${_raffleQueue.length} sorteados`;
+
+  // Check if done
+  if (_raffleIdx >= _raffleQueue.length) {
+    setTimeout(raffleAllDone, 800);
+    return;
+  }
+
+  // Start countdown for next
+  _raffleCountdown = 3;
+  _raffleUpdateCountdown();
+  _raffleTimer = setInterval(() => {
+    _raffleCountdown--;
+    _raffleUpdateCountdown();
+    if (_raffleCountdown <= 0) {
+      clearInterval(_raffleTimer);
+      raffleDrawOne();
+    }
+  }, 1000);
+}
+
+function _raffleUpdateCountdown() {
+  const el   = document.getElementById('raffle-countdown');
+  const prog = document.getElementById('raffle-prog');
+  el.textContent = _raffleCountdown + 's';
+  el.className   = 'raffle-countdown' + (_raffleCountdown <= 3 ? ' urgent' : '');
+  prog.style.width = (_raffleCountdown / 3 * 100) + '%';
+}
+
+function raffleNext() {
+  clearInterval(_raffleTimer);
+  raffleDrawOne();
+}
+
+function raffleSkip() {
+  clearInterval(_raffleTimer);
+  // Draw all remaining at once without animation
+  while (_raffleIdx < _raffleQueue.length) {
+    const name     = _raffleQueue[_raffleIdx];
+    const isSeed   = seedList.includes(name);
+    let groupIdx;
+    if (isSeed) {
+      groupIdx = seedList.indexOf(name);
+    } else {
+      const sizes = _raffleGroups.map(g => g.length);
+      groupIdx    = sizes.indexOf(Math.min(...sizes));
+    }
+    _raffleGroups[groupIdx].push({ name, seed: isSeed });
+    _raffleIdx++;
+  }
+  _raffleRenderQueue();
+  // Refresh all group cards
+  RAFFLE_LETTERS.forEach((l, gi) => {
+    const el = document.getElementById('rg-players-' + l);
+    el.innerHTML = _raffleGroups[gi].map(p =>
+      `<div class="raffle-group-player">${p.seed?'<span class="raffle-seed-star">🌱</span>':''}<span>${p.name}</span></div>`
+    ).join('');
+  });
+  document.getElementById('raffle-ball-name').textContent = '✅';
+  document.getElementById('raffle-ball-grp').textContent  = 'COMPLETO';
+  document.getElementById('raffle-countdown').textContent = '';
+  document.getElementById('raffle-prog').style.width      = '0%';
+  raffleAllDone();
+}
+
+function raffleAllDone() {
+  clearInterval(_raffleTimer);
+  document.getElementById('raffle-countdown').textContent = '';
+  document.getElementById('raffle-prog').style.width      = '0%';
+  document.getElementById('raffle-next-btn').style.display = 'none';
+  document.getElementById('raffle-start-btn').classList.add('show');
+  document.getElementById('raffle-sub').textContent = '✅ Sorteio concluído!';
+}
+
+// ── OBJETIVO: Fechar o sorteio e iniciar o torneio com os grupos definidos ────
+// CONTEXTO: Converte _raffleGroups[] para T_groups[], cria T.phases[0].
+//   No modo Sim, o override abaixo (const _origRaffleFinish) também
+//   ativa os botões de simulação (sim-buttons) após este ponto.
+function raffleFinish() {
+  clearInterval(_raffleTimer);
+  document.getElementById('s-raffle').classList.remove('show');
+
+  // Use raffle groups as T_groups
+  T_groups = _raffleGroups.map(g => g.map(p => p.name));
+
+  T.phases = [
+    { name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }
+  ];
+
+  renderGrupos();
+  renderRounds();
+  renderRanking();
+  renderHistorico();
+  renderScorecard();
+  _updateSubButtons();
+
+  // Navigate to Rodadas
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelector('[onclick*="rodadas"]').classList.add('on');
+  document.getElementById('p-rodadas').classList.add('on');
+}
+
+
+// ══════════════════════════════════════════
+// SIMULATION — V33_Sim
+// ══════════════════════════════════════════
+// ── OBJETIVO: Renderizar o painel SimDB Inspector com o estado atual ──────────
+// CONTEXTO: Chamado por showTab('simdb') e simDBRefreshUI().
+//   Mostra as 6 tabelas do SIM_STORE com as últimas 10 rows de cada.
+//   Botão "🗑 Reset SimDB" chama simDBReset().
+function renderSimDB() {
+  const el = document.getElementById('simdb-content');
+  if (!el) return;
+
+  const tables = [
+    { key:'Jogadores',          icon:'👤', cols:['id','nome','nickname','categoria','cidade'] },
+    { key:'Torneios',           icon:'🏆', cols:['id','nome','data','organizador','vagas','num_fases','status'] },
+    { key:'Partidas_Torneios',  icon:'🏸', cols:['torneio_id','fase','grupo','partida','equipa_a','score_a','score_b','equipa_b','tie_break'] },
+    { key:'Scorecard_Torneios', icon:'🏅', cols:['torneio_nome','data','jogador','pts_base','pts_bonus','pts_total','posicao'] },
+    { key:'Ranking_Torneios',   icon:'📊', cols:['jogador','pts_total','torneios','titulos'] },
+    { key:'Sessions',           icon:'📋', cols:['user','action','entity','timestamp'] },
+  ];
+
+  let html = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">SimDB Inspector</div>
+        <div style="font-size:12px;color:#2D9E5A;font-family:'DM Mono'">● Banco de dados local · in-memory · sessão atual</div>
+      </div>
+      <button onclick="simDBReset()" style="padding:7px 14px;background:#fff;border:1.5px solid #E74C3C;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#E74C3C;cursor:pointer">🗑 Reset SimDB</button>
+    </div>`;
+
+  tables.forEach(t => {
+    const rows = SIM_STORE[t.key] || [];
+    html += `<div class="card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:'DM Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7090b0">${t.icon} ${t.key.replace(/_/g,' ')}</div>
+        <div style="background:#f0f5fb;border:1px solid #dde6f0;border-radius:6px;padding:2px 8px;font-family:'DM Mono';font-size:10px;color:#5a7090">${rows.length} rows</div>
+      </div>`;
+    if (!rows.length) {
+      html += `<div style="font-size:12px;color:#b0c4d8;font-style:italic;padding:8px 0">Sem dados</div>`;
+    } else {
+      html += `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr>`;
+      t.cols.forEach(col => {
+        html += `<th style="text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#9ab0c8;padding:4px 8px;border-bottom:1px solid #eaf0f8;white-space:nowrap">${col}</th>`;
+      });
+      html += `</tr></thead><tbody>`;
+      rows.slice(-10).forEach((row, i) => {
+        html += `<tr style="${i%2===0?'background:#fafbfd':''}">`;
+        t.cols.forEach(col => {
+          const val = row[col] ?? '—';
+          const display = typeof val === 'string' && val.length > 30 ? val.slice(0,28)+'…' : val;
+          html += `<td style="padding:5px 8px;border-bottom:1px solid #f4f7fc;color:#0d1e3a;white-space:nowrap">${display}</td>`;
+        });
+        html += `</tr>`;
+      });
+      if (rows.length > 10) {
+        html += `<tr><td colspan="${t.cols.length}" style="padding:5px 8px;color:#9ab0c8;font-style:italic;font-size:10px">... +${rows.length-10} rows anteriores</td></tr>`;
+      }
+      html += `</tbody></table></div>`;
+    }
+    html += `</div>`;
+  });
+
+  el.innerHTML = html;
+}
+
+// ── OBJETIVO: Limpar todos os dados de torneios do SIM_STORE ─────────────────
+// CONTEXTO: Mantém os Jogadores (re-seed do REGISTRY via simDBInit()).
+//   Limpa: Torneios, Partidas, Scorecard, Ranking e Sessions.
+// ATENÇÃO: Operação irreversível dentro da sessão. Torneios simulados são perdidos.
+function simDBReset() {
+  if (!confirm('Resetar SimDB? Todos os torneios e partidas simuladas serão apagados. Os jogadores do REGISTRY serão restaurados.')) return;
+  SIM_STORE.Torneios           = [];
+  SIM_STORE.Partidas_Torneios  = [];
+  SIM_STORE.Scorecard_Torneios = [];
+  SIM_STORE.Ranking_Torneios   = [];
+  SIM_STORE.Sessions           = [];
+  simDBInit(); // re-seed Jogadores from REGISTRY
+  renderSimDB();
+  safeAlert('✅ SimDB resetado.', 'ok');
+}
+
+// ── OBJETIVO: Gerar um resultado aleatório realista para uma partida ──────────
+// CONTEXTO: Chamado por simPhaseMatches() para cada partida não guardada.
+//   12% de probabilidade de Tie-Break. O perdedor recebe entre 0 e tbAt-1 games.
+//   Respeita os limites de score máximo e TB configurados por fase.
+function simScore(phaseIdx) {
+  const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:6, tbAt:5};
+  const max = cfg.maxScore || 6;
+  const tb  = cfg.tbAt    || 5;
+  const goTB = Math.random() < 0.12;
+  if (goTB) {
+    const tba = 7 + Math.floor(Math.random()*3);
+    const tbb = tba - 1 - Math.floor(Math.random()*3);
+    return {sa:tb, sb:tb, tb:true, tba, tbb};
+  }
+  const loser = Math.floor(Math.random()*tb);
+  return Math.random()>0.5
+    ? {sa:max, sb:loser, tb:false, tba:null, tbb:null}
+    : {sa:loser, sb:max,  tb:false, tba:null, tbb:null};
+}
+
+// ── OBJETIVO: Simular todos os resultados em falta de uma fase ───────────────
+// CONTEXTO: Chamado por simCurrentPhase() e pelo loop em simAllRemaining().
+//   Itera todos os grupos e partidas não guardadas, aplica simScore() e
+//   marca saved:true. Devolve o nº de partidas simuladas.
+// ATENÇÃO: Não chama advancePhase() — essa responsabilidade é de quem chamou.
+function simPhaseMatches(phaseIdx) {
+  const ph = T.phases[phaseIdx];
+  if (!ph) return 0;
+  let count = 0;
+  ph.groups.forEach((group, gi) => {
+    const americano = [];
+    if (group.length === 4) {
+      const [a,b,c,d] = group;
+      americano.push([[a,b],[c,d]], [[a,c],[b,d]], [[a,d],[b,c]]);
+    } else {
+      for (let i=0; i<group.length-1; i+=2)
+        if (i+3 <= group.length)
+          americano.push([[group[i],group[i+1]],[group[i+2],group[i+3]]]);
+    }
+    americano.forEach((_,mi) => {
+      const key = phaseIdx+'-'+gi+'-'+mi;
+      if (T.phases[phaseIdx].results[key]?.saved) return;
+      T.phases[phaseIdx].results[key] = {...simScore(phaseIdx), saved:true};
+      count++;
+    });
+  });
+  return count;
+}
+
+// ── OBJETIVO: Simular todas as partidas da fase atual ────────────────────────
+// CONTEXTO: Botão "⚡ Simular fase atual" nas Rodadas. Simula a fase corrente
+//   e re-renderiza todos os painéis. O utilizador ainda precisa de clicar
+//   "Avançar de fase" manualmente para progredir.
+function simCurrentPhase() {
+  if (!T.started) { safeAlert('Inicie o torneio primeiro.','warn'); return; }
+  const pi = T.currentPhase;
+  if (!T.phases[pi]) { safeAlert('Fase não encontrada.','warn'); return; }
+  const count = simPhaseMatches(pi);
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
+  safeAlert('✅ '+count+' partidas simuladas na fase '+(pi+1)+'. Avance a fase para continuar.','ok');
+}
+
+// ── OBJETIVO: Simular e avançar todas as fases restantes automaticamente ──────
+// CONTEXTO: Botão "🏁 Simular todas as fases restantes". Itera de T.currentPhase
+//   até T.numFases-1, simulando e avançando cada fase com delay de 150ms entre
+//   fases para visibilidade do progresso. No final, navega para o Scorecard.
+// ATENÇÃO: Chama advancePhase() dentro do loop — se alguma fase não estiver
+//   completa, o try/catch absorve o erro e continua.
+async function simAllRemaining() {
+  if (!T.started) { safeAlert('Inicie o torneio primeiro.','warn'); return; }
+  const _simMax = (T.numFases || 3);
+  for (let i = T.currentPhase; i < _simMax; i++) {
+    if (!T.phases[i]) break;
+    simPhaseMatches(i);
+    renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
+    try { if (i < _simMax - 1) advancePhase(); } catch(e) {}
+    await new Promise(r => setTimeout(r, 150));
+  }
+  renderRounds(); renderRanking(); renderHistorico();
+  const scTab = document.querySelector('[onclick*="scorecard"]');
+  if (scTab) showTab('scorecard', scTab);
+  safeAlert('🏆 Simulação completa! Ver Scorecard.','ok');
+}
+
+// ── OBJETIVO: Override de raffleFinish para mostrar os botões de simulação ────
+// CONTEXTO: Específico do modo Sim. Após o sorteio, mostra o div #sim-buttons
+//   que contém "⚡ Simular fase atual" e "🏁 Simular todas as fases restantes".
+// ATENÇÃO: Este padrão de override de função é fragil — se raffleFinish() for
+//   renomeada, este bloco quebra silenciosamente.
+const _origRaffleFinish = raffleFinish;
+raffleFinish = function() {
+  _origRaffleFinish();
+  setTimeout(() => {
+    const sb = document.getElementById('sim-buttons');
+    if (sb) sb.style.display = 'block';
+  }, 300);
+};
+
+
+// ══════════════════════════════════════════
+// SUBSTITUIÇÃO DE JOGADOR
+// ══════════════════════════════════════════
+function openSubModal() {
+  if (!T.started) { safeAlert('Inicie o torneio antes de substituir.','warn'); return; }
+
+  const modal     = document.getElementById('modal-sub');
+  const outSel    = document.getElementById('sub-out');
+  const inSel     = document.getElementById('sub-in-list');
+  const inCustom  = document.getElementById('sub-in-custom');
+  const warn      = document.getElementById('sub-warning');
+  const label     = document.getElementById('sub-scenario-label');
+
+  // Scenario label
+  const hasResults = T.phases.some(ph => Object.keys(ph?.results||{}).length > 0);
+  label.textContent = hasResults
+    ? '⚠️ Torneio em andamento — partidas futuras serão atualizadas'
+    : 'Torneio criado — substituição antes do início das partidas';
+
+  // Populate "out" select — all current players
+  outSel.innerHTML = '<option value="">— Selecionar —</option>' +
+    T.players.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  // Populate "in" select — known players NOT already in tournament
+  const allKnown = [...new Set([
+    ...DB.map(p=>p.nome),
+    ...(typeof extraPlayers !== 'undefined' ? extraPlayers : [])
+  ])].filter(p => !T.players.includes(p));
+  inSel.innerHTML = '<option value="">— Da lista —</option>' +
+    allKnown.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  inCustom.value = '';
+  warn.style.display = 'none';
+
+  modal.style.display = 'flex';
+}
+
+function closeSubModal() {
+  document.getElementById('modal-sub').style.display = 'none';
+}
+
+function confirmSub() {
+  const outName   = document.getElementById('sub-out').value.trim();
+  const inName    = (document.getElementById('sub-in-custom').value.trim() ||
+                     document.getElementById('sub-in-list').value.trim());
+  const warn      = document.getElementById('sub-warning');
+
+  if (!outName) { warn.style.display='block'; warn.textContent='Selecione o jogador a sair.'; return; }
+  if (!inName)  { warn.style.display='block'; warn.textContent='Digite ou selecione o jogador que entra.'; return; }
+  if (outName === inName) { warn.style.display='block'; warn.textContent='O jogador de entrada é o mesmo que o de saída.'; return; }
+  if (T.players.includes(inName)) { warn.style.display='block'; warn.textContent=`${inName} já está no torneio.`; return; }
+
+  // ── Apply substitution ──
+  substitutePlayer(outName, inName);
+
+  closeSubModal();
+  safeAlert(`✅ ${outName} substituído por ${inName}.`, 'ok');
+
+  // Re-render all panels
+  renderGrupos();
+  renderRounds();
+  renderRanking();
+  renderHistorico();
+  renderScorecard();
+}
+
+// ── OBJETIVO: Substituir jogador em todos os arrays do estado do torneio ──────
+// CONTEXTO: Atualiza T.players, selectedPlayers, grupos de todas as fases,
+//   seedList e T_groups. Resultados já guardados NÃO são alterados.
+function substitutePlayer(outName, inName) {
+  // 1. T.players list
+  const pi = T.players.indexOf(outName);
+  if (pi !== -1) T.players[pi] = inName;
+
+  // 2. selectedPlayers (setup list)
+  if (typeof selectedPlayers !== 'undefined') {
+    const si = selectedPlayers.indexOf(outName);
+    if (si !== -1) selectedPlayers[si] = inName;
+  }
+
+  // 3. All phase groups
+  T.phases.forEach(phase => {
+    if (!phase) return;
+    phase.groups.forEach((group, gi) => {
+      const idx = group.indexOf(outName);
+      if (idx !== -1) group[idx] = inName;
+    });
+
+    // 4. Match results — update equipa references in result keys
+    // Results are keyed by index, teams are derived from group order — no names in keys
+    // But for rendered display, groups are now updated above ✅
+  });
+
+  // 5. seedList
+  if (typeof seedList !== 'undefined') {
+    const si = seedList.indexOf(outName);
+    if (si !== -1) seedList[si] = inName;
+  }
+
+  // 6. T_groups (raw group array)
+  if (typeof T_groups !== 'undefined') {
+    T_groups.forEach(group => {
+      const idx = group.indexOf(outName);
+      if (idx !== -1) group[idx] = inName;
+    });
+  }
+}
+
+// Show/hide sub buttons when tournament starts
+function _updateSubButtons() {
+  ['btn-sub-grupos','btn-sub-rodadas'].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.style.display = T.started ? 'block' : 'none';
+  });
+}
+
+
+// ══════════════════════════════════════════
+// NÚMERO DE FASES — toggle para 8 jogadores
+// ══════════════════════════════════════════
+// ── OBJETIVO: Mostrar/esconder o selector de nº de fases conforme as vagas ────
+// CONTEXTO: Só disponível para 8 jogadores (único caso de 2 fases prático).
+//   Quando numFases=2, oculta card de config F2 e renomeia card da Final.
+function updateFasesToggle() {
+  const vagas = parseInt(document.getElementById('cfg-vagas')?.value || 16);
+  const fieldFases  = document.getElementById('field-num-fases');
+  const f2ConfigRow = document.getElementById('f2-config-row')?.closest('.phase-cfg-row') ||
+                      document.getElementById('f2-config-row')?.parentElement;
+
+  if (vagas === 8) {
+    // Show the fases toggle for 8 players only
+    if (fieldFases) fieldFases.style.display = 'block';
+  } else {
+    // For other player counts: always 3 phases, hide toggle
+    if (fieldFases) fieldFases.style.display = 'none';
+    const sel = document.getElementById('cfg-num-fases');
+    if (sel) sel.value = '3';
+  }
+
+  // Show/hide F2 config + rename Final card when 2 fases
+  const numFases = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  const f2Card   = document.getElementById('f2-config-row')?.closest('.phase-cfg-card') ||
+                   document.getElementById('f2-config-row')?.parentElement;
+  const finalLbl = document.querySelector('.phase-cfg-card:last-child .phase-cfg-label');
+  const finalSub = document.querySelector('.phase-cfg-card:last-child .phase-cfg-sub');
+  if (f2Card) f2Card.style.display = (numFases === 2) ? 'none' : '';
+  if (finalLbl) finalLbl.textContent = (numFases === 2) ? 'Fase Final (F1 → Final)' : 'Final';
+  if (finalSub) finalSub.textContent = (numFases === 2) ? '1 GRUPO · 3 PARTIDAS · DIRETO DA F1' : '1 GRUPO · 3 PARTIDAS';
+}
+
+// Hook: also call on fases select change
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('cfg-num-fases')?.addEventListener('change', updateFasesToggle);
+});
+
+
+// ══════════════════════════════════════════
+// LOAD PLAYERS FROM DATABASE
+// ══════════════════════════════════════════
+// ── OBJETIVO: Carregar jogadores do SIM_STORE para o DB[] ────────────────────
+// CONTEXTO: Versão síncrona exclusiva do modo Sim. Lê SIM_STORE.Jogadores
+//   (populado por simDBInit()) ou usa REGISTRY como fallback.
+//   Ao contrário do V33 de produção, nunca faz fetch à rede.
+function loadPlayersFromDB() {
+  // SIM MODE: load from SIM_STORE.Jogadores (seeded from REGISTRY on login)
+  DB.length = 0;
+  (SIM_STORE.Jogadores.length ? SIM_STORE.Jogadores : REGISTRY).forEach(p => {
+    const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+    DB.push({ id: p.id, nome });
+  });
+  renderDB();
+  renderRoster();
+}
+
+</script>
+
+<!-- ═══════════════════════════════ SUBSTITUTE PLAYER MODAL ═══ -->
+<div id="modal-sub" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:9000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18)">
+    <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Substituir Jogador</div>
+    <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-bottom:18px" id="sub-scenario-label"></div>
+
+    <div style="margin-bottom:14px">
+      <label style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px">Jogador a substituir</label>
+      <select id="sub-out" style="width:100%;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:10px;padding:10px 12px;font-family:'DM Sans';font-size:13px;color:#0d1e3a;outline:none">
+        <option value="">— Selecionar —</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <label style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px">Entra em campo</label>
+      <div style="display:flex;gap:8px">
+        <select id="sub-in-list" style="flex:1;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:10px;padding:10px 12px;font-family:'DM Sans';font-size:13px;color:#0d1e3a;outline:none" onchange="document.getElementById('sub-in-custom').value=''">
+          <option value="">— Da lista —</option>
+        </select>
+        <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;align-self:center">ou</span>
+        <input id="sub-in-custom" placeholder="Nome livre" style="flex:1;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:10px;padding:10px 12px;font-family:'DM Sans';font-size:13px;color:#0d1e3a;outline:none" oninput="document.getElementById('sub-in-list').value=''">
+      </div>
+    </div>
+
+    <div id="sub-warning" style="display:none;background:#fff8e0;border:1px solid #e8c870;border-radius:8px;padding:9px 13px;font-family:'DM Mono';font-size:10px;color:#865a10;margin-bottom:14px"></div>
+
+    <div style="display:flex;gap:10px">
+      <button onclick="closeSubModal()" style="flex:1;padding:11px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:9px;font-family:'DM Sans';font-size:13px;font-weight:600;color:#7090b0;cursor:pointer">Cancelar</button>
+      <button onclick="confirmSub()" style="flex:2;padding:11px;background:linear-gradient(135deg,#C9933A,#e0a840);border:none;border-radius:9px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#0a1628;cursor:pointer">✅ Confirmar Substituição</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
