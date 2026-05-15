@@ -586,7 +586,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 
   <div class="tabs-bar">
-    <button class="tab-btn on" onclick="showTab('cadastro',this)">👤 Jogadores</button>
+    <button class="tab-btn on" onclick="showTab('cadastro',this)">👤 Cadastro de Jogadores</button>
     <button class="tab-btn" onclick="showTab('setup',this)">⚙ Setup do Torneio</button>
     <button class="tab-btn" onclick="showTab('rodadas',this)">🏸 Rodadas</button>
     <button class="tab-btn" onclick="showTab('grupos',this)">🗂 Grupos</button>
@@ -2339,20 +2339,7 @@ function startTournament() {
   document.getElementById('p-rodadas').classList.add('on');
 }
 
-// ── showTab — single definition, handles all panels including game panels ──
-function showTab(id, el) {
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  if (el) el.classList.add('on');
-  const panel = document.getElementById('p-' + id);
-  if (panel) panel.classList.add('on');
-  // Render game panels on demand
-  if (id === 'rodadas')    renderRounds();
-  if (id === 'ranking')    renderRanking();
-  if (id === 'historico')  renderHistorico();
-  if (id === 'grupos')     renderGrupos();
-  if (id === 'scorecard')  renderScorecard();
-}
+// [showTab removed — duplicate, canonical definition above]
 
 // ══════════════════════════════════
 // SCORECARD · V22
