@@ -2648,15 +2648,29 @@ function renderRoster() {
       <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <div class="roster-id">#${p.id}</div>
         ${p.celular ? `<div style="font-size:10px;color:#b0c4d8">${p.celular}</div>` : ''}
-        <button onclick="openEditModal('${p.id}')"
-          style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;
-                 border:1.5px solid #C9933A;background:rgba(201,147,58,0.08);
-                 color:#865a10;font-family:'DM Mono';font-size:9px;letter-spacing:1px;
-                 cursor:pointer;transition:all .2s;white-space:nowrap"
-          onmouseover="this.style.background='rgba(201,147,58,0.18)'"
-          onmouseout="this.style.background='rgba(201,147,58,0.08)'">
-          ✏️ editar
-        </button>
+        <div style="display:flex;gap:5px">
+          <button title="Ver jogador"
+            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #2980b9;
+                   background:rgba(41,128,185,0.07);color:#2980b9;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+            onmouseover="this.style.background='rgba(41,128,185,0.18)'"
+            onmouseout="this.style.background='rgba(41,128,185,0.07)'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button onclick="openEditModal('${p.id}')" title="Editar jogador"
+            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #C9933A;
+                   background:rgba(201,147,58,0.07);color:#C9933A;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+            onmouseover="this.style.background='rgba(201,147,58,0.18)'"
+            onmouseout="this.style.background='rgba(201,147,58,0.07)'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>`;
   }).join('');
