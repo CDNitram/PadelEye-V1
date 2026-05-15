@@ -930,8 +930,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <!-- REGISTRATION MODAL -->
   <div id="reg-modal" onclick="closeRegModal(event)">
     <div class="reg-box">
-      <div class="reg-box-title">Novo Jogador</div>
-      <div class="reg-box-sub">Preencha os dados do jogador. Campos com * são obrigatórios.</div>
+      <div class="reg-box-title" id="reg-box-title">Novo Jogador</div>
+      <div class="reg-box-sub" id="reg-box-sub">Preencha os dados do jogador. Campos com * são obrigatórios.</div>
 
       <div class="reg-id-display">
         <span style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ID</span>
@@ -1002,7 +1002,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
       <div class="reg-actions">
         <button class="btn-cancel-reg" onclick="closeRegModal()">Cancelar</button>
-        <button class="btn-save-player" onclick="savePlayer()">💾 Salvar Perfil</button>
+        <button class="btn-save-player" id="reg-save-btn" onclick="savePlayer()">💾 Salvar Perfil</button>
       </div>
     </div>
   </div>
@@ -2498,17 +2498,44 @@ function displayName(p) {
   return (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
 }
 
+let _editingPlayerId = null;
+
 function openRegModal() {
-  document.getElementById('reg-nome').value        = '';
-  document.getElementById('reg-sobrenome').value   = '';
-  document.getElementById('reg-nickname').value    = '';
-  document.getElementById('reg-categoria').value   = '';
-  document.getElementById('reg-genero').value      = '';
-  document.getElementById('reg-cidade').value      = '';
-  document.getElementById('reg-nacionalidade').value = '';
-  document.getElementById('reg-email').value       = '';
-  document.getElementById('reg-celular').value     = '';
+  _editingPlayerId = null;
+  document.getElementById('reg-box-title').textContent  = 'Novo Jogador';
+  document.getElementById('reg-box-sub').textContent    = 'Preencha os dados do jogador. Campos com * são obrigatórios.';
+  document.getElementById('reg-save-btn').textContent   = '💾 Salvar Perfil';
+  document.getElementById('reg-nome').value             = '';
+  document.getElementById('reg-sobrenome').value        = '';
+  document.getElementById('reg-nickname').value         = '';
+  document.getElementById('reg-categoria').value        = '';
+  document.getElementById('reg-genero').value           = '';
+  document.getElementById('reg-cidade').value           = '';
+  document.getElementById('reg-nacionalidade').value    = '';
+  document.getElementById('reg-email').value            = '';
+  document.getElementById('reg-celular').value          = '';
   document.getElementById('reg-id-preview').textContent = `#${nextPlayerId()} (gerado ao salvar)`;
+  document.getElementById('reg-modal').classList.add('show');
+  setTimeout(() => document.getElementById('reg-nome').focus(), 100);
+}
+
+function openEditModal(playerId) {
+  const p = REGISTRY.find(r => String(r.id) === String(playerId));
+  if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
+  _editingPlayerId = p.id;
+  document.getElementById('reg-box-title').textContent  = 'Editar Jogador';
+  document.getElementById('reg-box-sub').textContent    = `A editar: ${p.nome} ${p.sobrenome} · ID #${p.id}`;
+  document.getElementById('reg-save-btn').textContent   = '💾 Guardar Alterações';
+  document.getElementById('reg-id-preview').textContent = `#${p.id}`;
+  document.getElementById('reg-nome').value             = p.nome          || '';
+  document.getElementById('reg-sobrenome').value        = p.sobrenome     || '';
+  document.getElementById('reg-nickname').value         = p.nickname      || '';
+  document.getElementById('reg-categoria').value        = p.categoria     || '';
+  document.getElementById('reg-genero').value           = p.genero        || '';
+  document.getElementById('reg-cidade').value           = p.cidade        || '';
+  document.getElementById('reg-nacionalidade').value    = p.nacionalidade || '';
+  document.getElementById('reg-email').value            = p.email         || '';
+  document.getElementById('reg-celular').value          = p.celular       || '';
   document.getElementById('reg-modal').classList.add('show');
   setTimeout(() => document.getElementById('reg-nome').focus(), 100);
 }
@@ -2548,21 +2575,33 @@ function savePlayer() {
     celular:      document.getElementById('reg-celular').value.trim(),
   };
 
-  REGISTRY.push(player);
-  DB.push({ id: newId, nome: displayName(player) });
-  PadelEyeDB.registerPlayer(player); // sync to Google Sheets
-
-  document.getElementById('reg-modal').classList.remove('show');
-  renderRoster();
-  renderDB(); // refresh tournament player grid
-
-  // Show success
-  const el = document.getElementById('alert-cadastro');
-  if (el) {
-    el.textContent = `✅ Jogador ${displayName(player)} registado com ID #${newId}.`;
-    el.className = 'alert ok';
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 4000);
+  if (_editingPlayerId !== null) {
+    const idx = REGISTRY.findIndex(r => String(r.id) === String(_editingPlayerId));
+    if (idx !== -1) REGISTRY[idx] = { ...REGISTRY[idx], ...player, id: _editingPlayerId };
+    player.id = _editingPlayerId;
+    const dbIdx = DB.findIndex(p => String(p.id) === String(_editingPlayerId));
+    if (dbIdx !== -1) DB[dbIdx].nome = displayName(player);
+    PadelEyeDB.updatePlayer(player);
+    document.getElementById('reg-modal').classList.remove('show');
+    renderRoster(); renderDB();
+    const el = document.getElementById('alert-cadastro');
+    if (el) {
+      el.textContent = `✅ Jogador ${displayName(player)} actualizado (ID #${_editingPlayerId}).`;
+      el.className = 'alert ok'; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
+  } else {
+    REGISTRY.push(player);
+    DB.push({ id: newId, nome: displayName(player) });
+    PadelEyeDB.registerPlayer(player);
+    document.getElementById('reg-modal').classList.remove('show');
+    renderRoster(); renderDB();
+    const el = document.getElementById('alert-cadastro');
+    if (el) {
+      el.textContent = `✅ Jogador ${displayName(player)} registado com ID #${newId}.`;
+      el.className = 'alert ok'; el.style.display = 'block';
+      setTimeout(() => el.style.display = 'none', 4000);
+    }
   }
 }
 
@@ -2606,9 +2645,18 @@ function renderRoster() {
           ${p.email ? `<span class="roster-tag" style="color:#3a7bd5">${p.email}</span>` : ''}
         </div>
       </div>
-      <div style="text-align:right;flex-shrink:0">
+      <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <div class="roster-id">#${p.id}</div>
-        ${p.celular ? `<div style="font-size:10px;color:#b0c4d8;margin-top:2px">${p.celular}</div>` : ''}
+        ${p.celular ? `<div style="font-size:10px;color:#b0c4d8">${p.celular}</div>` : ''}
+        <button onclick="openEditModal('${p.id}')"
+          style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;
+                 border:1.5px solid #C9933A;background:rgba(201,147,58,0.08);
+                 color:#865a10;font-family:'DM Mono';font-size:9px;letter-spacing:1px;
+                 cursor:pointer;transition:all .2s;white-space:nowrap"
+          onmouseover="this.style.background='rgba(201,147,58,0.18)'"
+          onmouseout="this.style.background='rgba(201,147,58,0.08)'">
+          ✏️ editar
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -2884,6 +2932,18 @@ const PadelEyeDB = (() => {
       result.ok
         ? '✅ [SimDB] ' + playerData.nome + ' registado (ID #' + playerData.id + ')'
         : '⚠️ [SimDB] Erro ao registar.',
+      result.ok ? 'success' : 'error'
+    );
+    return result;
+  }
+
+  async function updatePlayer(playerData) {
+    showStatus('[SimDB] A actualizar jogador...', 'loading');
+    const result = await fakeAsync(simDBAction('upsert_jogador', { row: mapJogador(playerData) }));
+    showStatus(
+      result.ok
+        ? '✅ [SimDB] ' + playerData.nome + ' actualizado (ID #' + playerData.id + ')'
+        : '⚠️ [SimDB] Erro ao actualizar.',
       result.ok ? 'success' : 'error'
     );
     return result;
