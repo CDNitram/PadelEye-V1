@@ -2751,6 +2751,56 @@ function openRegModal() {
   setTimeout(() => document.getElementById('reg-nome').focus(), 100);
 }
 
+// ── OBJETIVO: Abrir o modal de visualização do perfil do jogador (read-only) ──
+// CONTEXTO: Chamado pelo botão 👁 em cada card do Cadastro.
+//   Mostra todos os dados do jogador sem possibilidade de edição.
+function openViewModal(playerId) {
+  const p = REGISTRY.find(r => String(r.id) === String(playerId));
+  if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
+
+  const dname    = displayName(p);
+  const initials = _init(dname);
+  const col      = _COLORS[Math.abs(REGISTRY.indexOf(p)) % _COLORS.length];
+
+  document.getElementById('vm-title').textContent = dname;
+  document.getElementById('vm-sub').textContent   = `ID #${p.id} · ${p.categoria || '—'}`;
+
+  const field = (label, value) => value
+    ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4f7fc;font-size:13px">
+         <span style="color:#9ab0c8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">${label}</span>
+         <span style="color:#0d1e3a;font-weight:500">${value}</span>
+       </div>`
+    : '';
+
+  document.getElementById('vm-body').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;
+                background:#f4f7fc;border-radius:12px">
+      <div style="width:52px;height:52px;border-radius:50%;background:${col};display:flex;
+                  align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;
+                  color:#fff;flex-shrink:0">${initials}</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#0a1628">${p.nome} ${p.sobrenome}</div>
+        ${p.nickname ? `<div style="font-size:12px;color:#9ab0c8;margin-top:2px">"${p.nickname}"</div>` : ''}
+      </div>
+    </div>
+    ${field('Categoria', p.categoria)}
+    ${field('Género', p.genero)}
+    ${field('Cidade', p.cidade)}
+    ${field('Nacionalidade', p.nacionalidade)}
+    ${field('Email', p.email)}
+    ${field('Celular', p.celular)}
+    ${field('ID', '#' + p.id)}
+  `;
+
+  document.getElementById('view-modal').style.display = 'flex';
+}
+
+function closeViewModal(e) {
+  if (!e || e.target.id === 'view-modal') {
+    document.getElementById('view-modal').style.display = 'none';
+  }
+}
+
 // ── OBJETIVO: Abrir o modal em modo de edição com dados pré-preenchidos ───────
 // CONTEXTO: Chamado pelo botão "✏️ Editar" em cada card do Cadastro.
 //   Pré-preenche todos os campos com os dados actuais do jogador no REGISTRY.
@@ -2815,29 +2865,39 @@ function savePlayer() {
   };
 
   if (_editingPlayerId !== null) {
-    // ── MODO EDIÇÃO: actualizar jogador existente ─────────────────────────────
+    player.id = _editingPlayerId;
+
+    // Actualizar REGISTRY localmente
     const idx = REGISTRY.findIndex(r => String(r.id) === String(_editingPlayerId));
-    if (idx !== -1) {
-      REGISTRY[idx] = { ...REGISTRY[idx], ...player, id: _editingPlayerId };
-      player.id = _editingPlayerId;
-    }
-    // Actualizar também o DB[] (nome de exibição pode ter mudado)
+    if (idx !== -1) REGISTRY[idx] = { ...REGISTRY[idx], ...player, id: _editingPlayerId };
+
+    // Actualizar DB[] (nome de exibição)
     const dbIdx = DB.findIndex(p => String(p.id) === String(_editingPlayerId));
     if (dbIdx !== -1) DB[dbIdx].nome = displayName(player);
-
-    PadelEyeDB.updatePlayer(player); // upsert no Google Sheets
 
     document.getElementById('reg-modal').classList.remove('show');
     renderRoster();
     renderDB();
 
-    const el = document.getElementById('alert-cadastro');
-    if (el) {
-      el.textContent   = `✅ Jogador ${displayName(player)} actualizado (ID #${_editingPlayerId}).`;
-      el.className     = 'alert ok';
-      el.style.display = 'block';
-      setTimeout(() => el.style.display = 'none', 4000);
+    const elAlert = document.getElementById('alert-cadastro');
+    if (elAlert) {
+      elAlert.textContent   = `⏳ A actualizar ${displayName(player)}...`;
+      elAlert.className     = 'alert warn';
+      elAlert.style.display = 'block';
     }
+
+    PadelEyeDB.updatePlayer(player).then(result => {
+      const ok = result && result.status !== 'error';
+      if (elAlert) {
+        elAlert.textContent   = ok
+          ? `✅ ${displayName(player)} actualizado com sucesso (ID #${_editingPlayerId}).`
+          : `⚠️ Erro ao actualizar no servidor. Dados actualizados localmente.`;
+        elAlert.className     = 'alert ' + (ok ? 'ok' : 'warn');
+        elAlert.style.display = 'block';
+        setTimeout(() => { if(elAlert) elAlert.style.display = 'none'; }, 4000);
+      }
+      if (ok) loadPlayersFromDB();
+    });
 
   } else {
     // ── MODO CRIAÇÃO: novo jogador ────────────────────────────────────────────
@@ -2903,7 +2963,7 @@ function renderRoster() {
         <div class="roster-id">#${p.id}</div>
         ${p.celular ? `<div style="font-size:10px;color:#b0c4d8">${p.celular}</div>` : ''}
         <div style="display:flex;gap:5px">
-          <button title="Ver jogador"
+          <button onclick="openViewModal('${p.id}')" title="Ver jogador"
             style="width:28px;height:28px;border-radius:5px;border:1.5px solid #2980b9;
                    background:rgba(41,128,185,0.07);color:#2980b9;cursor:pointer;
                    display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
@@ -3825,6 +3885,28 @@ async function loadPlayersFromDB() {
 }
 
 </script>
+
+<!-- ═══════════════════════════════ VIEW PLAYER MODAL ═══ -->
+<div id="view-modal" onclick="closeViewModal(event)"
+  style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:700;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px" id="vm-title">Perfil do Jogador</div>
+        <div style="font-size:11px;color:#9ab0c8;margin-top:2px;font-family:'DM Mono'" id="vm-sub"></div>
+      </div>
+      <button onclick="closeViewModal()"
+        style="width:32px;height:32px;border-radius:50%;border:1px solid #dde6f0;background:#f4f7fc;
+               color:#7090b0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="vm-body"></div>
+    <div style="margin-top:20px">
+      <button onclick="closeViewModal()"
+        style="width:100%;padding:12px;border-radius:10px;background:#f0f5fb;border:none;
+               color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans'">Fechar</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════ SUBSTITUTE PLAYER MODAL ═══ -->
 <div id="modal-sub" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:9000;align-items:center;justify-content:center;padding:20px">
