@@ -459,7 +459,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   width:100%;max-width:420px;margin-bottom:20px;
 }
 .raffle-group-card {
-  background:#fff;border:1.5px solid #dde6f0;border-radius:12px;
+  background:#f8fafd;border:1.5px solid #dde6f0;border-radius:12px;
   padding:10px 12px;min-height:80px;transition:border-color .3s;
 }
 .raffle-group-card.lit { border-color:#C9933A; }
@@ -2393,48 +2393,32 @@ function renderGrupos() {
 
       // Players — original style + live stats if available
       stds.forEach((s, i) => {
-        const idx      = all.indexOf(s.name);
         const isSeed   = seedList.includes(s.name);
-        const sIdx     = seedList.indexOf(s.name) + 1;
-        const dbEntry  = DB.find(p=>p.nome===s.name);
         const advances = i < qualify;
         const medal    = MEDALS[i] || (i+1)+'º';
         const gdStr    = s.gd >= 0 ? '+'+s.gd : ''+s.gd;
         const gdCol    = s.gd > 0 ? '#1a7a44' : s.gd < 0 ? '#c0392b' : '#9ab0c8';
-        const nameCol  = advances && hasResults ? '#1a7a44' : '#0d1e3a';
-        const rowBg    = advances && hasResults ? 'rgba(26,122,68,.04)' : '';
 
-        html += `<div class="grupo-player" style="background:${rowBg}">
-          <div class="grupo-av" style="background:${_COLORS[Math.abs(idx)%_COLORS.length]}">${_init(s.name)}</div>
-          <div style="flex:1">
-            <div class="grupo-name" style="color:${nameCol}">
-              ${hasResults ? medal+' ' : ''}${s.name}
-              ${advances && hasResults && pi<2 ? '<span style="font-size:9px;color:#1a7a44;font-family:DM Mono"> →F'+(pi+2)+'</span>' : ''}
+        if (!hasResults) {
+          html += `<div style="margin-bottom:5px">${playerCardCompact(s.name, isSeed)}</div>`;
+        } else {
+          const isFinal = (pi === (T.numFases||3) - 1);
+          let badge = '';
+          if (isFinal && complete) {
+            if (i===0) badge = '<span style="font-size:9px;font-weight:700;color:#C9933A">🥇</span>';
+            else if (i===1) badge = '<span style="font-size:9px;font-weight:700;color:#7090b0">🥈</span>';
+          } else if (advances) {
+            badge = `<span style="font-size:8px;color:#1a7a44;background:#E8F8EE;padding:1px 5px;border-radius:4px">${complete?'avança':'em jogo'}</span>`;
+          }
+          html += `<div style="margin-bottom:5px;position:relative">
+            ${playerCardCompact(s.name, isSeed)}
+            <div style="position:absolute;right:36px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;gap:1px;pointer-events:none">
+              <span style="font-size:11px;font-weight:700;color:#0a1628">${medal} ${badge}</span>
+              <span style="font-size:8px;color:${gdCol};font-family:'DM Mono',monospace">${s.m>0?`${s.w}V · GD${gdStr}`:'—'}</span>
             </div>
-            <div class="grupo-id">
-              ${hasResults
-                ? `${s.m}M · <span style="color:#1a7a44;font-weight:700">${s.w}V</span> · ${s.l}D · GW ${s.gw} · <span style="color:${gdCol};font-weight:700">GD ${s.m>0?gdStr:'—'}</span>`
-                : `ID ${dbEntry?.id||'—'}`}
-            </div>
-          </div>
-          ${isSeed && !hasResults ? `<div class="grupo-seed-badge">🌱 S${sIdx}</div>` : ''}
-          ${!hasResults && !isSeed ? '' : ''}
-          ${(() => {
-            const isFinal = (pi === (T.numFases||3) - 1);
-            if (isFinal && hasResults && complete) {
-              // Final phase — show titles, nothing for 3rd/4th
-              if (i === 0) return '<div style="font-size:11px;font-weight:700;color:#C9933A;font-family:DM Mono,monospace">🥇 Campeão</div>';
-              if (i === 1) return '<div style="font-size:11px;font-weight:700;color:#7090b0;font-family:DM Mono,monospace">🥈 Vice</div>';
-              return ''; // 3rd and 4th — nothing
-            }
-            if (isFinal && hasResults && !complete) return ''; // Final in progress — nothing
-            // Non-final phases
-            if (hasResults && (i < qualify)) return '<div style="font-size:9px;color:#1a7a44;font-family:DM Mono,monospace;padding:2px 6px;background:#E8F8EE;border-radius:5px">'+(complete?'avança':'em jogo')+'</div>';
-            if (hasResults && (i >= qualify) && complete) return ''; // eliminated — nothing
-            return '';
-          })()}
-        </div>`;
-      });
+          </div>`;
+        }
+      });;
 
       html += `</div>`; // grupo-body
 
@@ -2765,12 +2749,16 @@ function openViewModal(playerId) {
   document.getElementById('vm-title').textContent = dname;
   document.getElementById('vm-sub').textContent   = `ID #${p.id} · ${p.categoria || '—'}`;
 
-  const field = (label, value) => value
-    ? `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f4f7fc;font-size:13px">
+  // row(label, value, optional): optional=true → show empty if blank; false → always show
+  const row = (label, value, optional) => {
+    const display = value || (optional ? '' : '—');
+    if (optional && !value) return '';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4f7fc;font-size:13px">
          <span style="color:#9ab0c8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">${label}</span>
-         <span style="color:#0d1e3a;font-weight:500">${value}</span>
-       </div>`
-    : '';
+         <span style="color:${value?'#0d1e3a':'#c0cdd8'};font-weight:${value?'500':'400'}">${display}</span>
+       </div>`;
+  };
+  const field = row; // backwards compat
 
   document.getElementById('vm-body').innerHTML = `
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;
@@ -2783,13 +2771,14 @@ function openViewModal(playerId) {
         ${p.nickname ? `<div style="font-size:12px;color:#9ab0c8;margin-top:2px">"${p.nickname}"</div>` : ''}
       </div>
     </div>
-    ${field('Categoria', p.categoria)}
-    ${field('Género', p.genero)}
-    ${field('Cidade', p.cidade)}
-    ${field('Nacionalidade', p.nacionalidade)}
-    ${field('Email', p.email)}
-    ${field('Celular', p.celular)}
-    ${field('ID', '#' + p.id)}
+    ${row('ID',           '#' + p.id,          false)}
+    ${row('Categoria',    p.categoria,          false)}
+    ${row('Género',       p.genero,             false)}
+    ${row('Apelido',      p.nickname,           true)}
+    ${row('Cidade',       p.cidade,             true)}
+    ${row('Nacionalidade',p.nacionalidade,      true)}
+    ${row('Email',        p.email,              true)}
+    ${row('Celular',      p.celular,            true)}
   `;
 
   document.getElementById('view-modal').style.display = 'flex';
@@ -3425,6 +3414,115 @@ let _raffleCountdown = 3;
 const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
 const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
 
+// ══════════════════════════════════════════════════════════════
+// PLAYER CARD HELPERS — used in raffle + grupos screens
+// ══════════════════════════════════════════════════════════════
+
+// Cor do header da carteirinha por categoria
+function catColor(cat) {
+  if (!cat) return '#0a1628';
+  const c = cat.toString().replace(/[^0-9]/g,'');
+  if (c === '8') return '#d97706';
+  if (c === '7') return '#b85c38';
+  if (c === '6') return '#276221';
+  if (c === '5') return '#1a5fa8';
+  return '#0a1628';
+}
+
+// Gradiente da bandeira por nacionalidade
+function flagGrad(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('brasile') || n.includes('brazil'))
+    return 'linear-gradient(135deg,#1a6e30 0%,#3aaa5c 40%,#f5d020 70%,#f5d020 100%)';
+  if (n.includes('argentin'))
+    return 'linear-gradient(135deg,#74acdf 0%,#aed6f1 45%,#fff 60%,#aed6f1 80%,#74acdf 100%)';
+  if (n.includes('paraguai') || n.includes('paraguay'))
+    return 'linear-gradient(160deg,#c8102e 0%,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8 100%)';
+  if (n.includes('uruguai') || n.includes('uruguay'))
+    return 'linear-gradient(135deg,#75aadb 0%,#fff 50%,#75aadb 100%)';
+  if (n.includes('chile') || n.includes('chilen'))
+    return 'linear-gradient(135deg,#d52b1e 0%,#fff 50%,#d52b1e 100%)';
+  return 'linear-gradient(135deg,#3a5a8a 0%,#5a7aaa 100%)';
+}
+
+// Cor do texto sobre o gradiente da bandeira
+function flagTextCol(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('argentin') || n.includes('uruguai') || n.includes('uruguay')) return '#002D6E';
+  return '#fff';
+}
+
+// Lookup player registry data by display name
+function getPlayerReg(name) {
+  return REGISTRY.find(r => displayName(r) === name)
+      || REGISTRY.find(r => r.nome === name)
+      || { nome: name, sobrenome: '', categoria: '', genero: '', cidade: '', nacionalidade: '', id: '' };
+}
+
+// ── Card completo vertical (usado no sorteio) ─────────────────────────────────
+function playerCardFull(name, isSeed) {
+  const p       = getPlayerReg(name);
+  const cat     = p.categoria || '';
+  const hdrCol  = catColor(cat);
+  const grad    = flagGrad(p.nacionalidade);
+  const txtCol  = flagTextCol(p.nacionalidade);
+  const ini     = _init(name);
+  const catNum  = cat.replace(/[^0-9]/g,'');
+  const cidade  = p.cidade || '';
+  const seedBadge = isSeed ? `<span style="font-size:8px;background:rgba(255,255,255,0.2);color:#fde68a;padding:1px 6px;border-radius:99px;margin-left:4px">🌱 SEED</span>` : '';
+
+  return `<div style="border-radius:12px;overflow:hidden;border:0.5px solid #dde6f0;animation:fadein .35s ease forwards">
+    <div style="background:${hdrCol};padding:10px 12px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:10px;color:#fff;letter-spacing:2px;font-weight:700">PADEL<span style="color:#fde68a">EYE</span></span>
+        <span style="font-size:9px;font-weight:700;color:#fde68a;background:rgba(0,0,0,0.2);padding:1px 6px;border-radius:99px">${catNum ? catNum+'ª Cat.' : '—'}${seedBadge}</span>
+      </div>
+      <div style="display:flex;justify-content:center;margin-bottom:-20px">
+        <div style="width:44px;height:44px;border-radius:50%;border:2.5px solid #fff;background:${grad};display:flex;align-items:center;justify-content:center">
+          <span style="font-size:11px;font-weight:700;color:${txtCol};text-shadow:0 1px 3px rgba(0,0,0,0.4)">${ini}</span>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fff;padding:24px 10px 10px;text-align:center">
+      <div style="font-size:14px;font-weight:700;color:#0a1628;line-height:1.1">${p.nome||name}</div>
+      <div style="font-size:11px;font-weight:500;color:#5a7090;margin-top:1px">${p.sobrenome||''}</div>
+      <div style="font-size:9px;font-weight:600;color:${hdrCol};margin-top:4px">Atleta de Padel</div>
+      ${cidade ? `<div style="font-size:8px;color:#9ab0c8;margin-top:2px">${cidade}</div>` : ''}
+      <div style="margin:7px 0;height:0.5px;background:#eef1f5"></div>
+      <div style="font-size:9px;color:#c0cdd8;font-family:'DM Mono',monospace">#${p.id||'—'}</div>
+    </div>
+  </div>`;
+}
+
+// ── Card compacto horizontal (usado nos grupos após sorteio) ──────────────────
+function playerCardCompact(name, isSeed) {
+  const p      = getPlayerReg(name);
+  const cat    = p.categoria || '';
+  const hdrCol = catColor(cat);
+  const grad   = flagGrad(p.nacionalidade);
+  const txtCol = flagTextCol(p.nacionalidade);
+  const ini    = _init(name);
+  const catNum = cat.replace(/[^0-9]/g,'');
+
+  return `<div style="border-radius:9px;overflow:hidden;border:0.5px solid #dde6f0;display:flex;align-items:center;animation:fadein .3s ease forwards">
+    <div style="width:5px;align-self:stretch;background:${hdrCol};flex-shrink:0"></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;flex:1;background:#fff">
+      <div style="width:32px;height:32px;border-radius:50%;border:2px solid #fff;outline:1px solid #eef1f5;background:${grad};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <span style="font-size:9px;font-weight:700;color:${txtCol};text-shadow:0 0 4px rgba(0,0,0,0.3)">${ini}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#0a1628;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${p.nome||name} <span style="font-weight:500;color:#5a7090">${p.sobrenome||''}</span>
+        </div>
+        <div style="font-size:8px;color:${hdrCol};font-weight:600;margin-top:1px">
+          Atleta de Padel · ${catNum ? catNum+'ª' : '—'}${isSeed ? ' 🌱' : ''}
+        </div>
+      </div>
+      <div style="font-size:8px;color:#c0cdd8;font-family:'DM Mono',monospace;flex-shrink:0">#${p.id||'—'}</div>
+    </div>
+  </div>`;
+}
+
 // ── OBJETIVO: Inicializar e mostrar o ecrã de sorteio animado de grupos ───────
 // CONTEXTO: Chamado pelo botão "🎱 Sortear Grupos & Iniciar" no overlay de confirmação.
 //   Configura T com todos os dados do torneio, constrói a fila de sorteio
@@ -3460,7 +3558,8 @@ function startRaffle() {
 
   // Render group cards
   const gc = document.getElementById('raffle-groups');
-  gc.style.gridTemplateColumns = _numG <= 2 ? '1fr 1fr' : _numG <= 4 ? '1fr 1fr' : 'repeat(auto-fill,minmax(140px,1fr))';
+  gc.style.gridTemplateColumns = _numG <= 2 ? '1fr 1fr' : _numG <= 4 ? '1fr 1fr' : 'repeat(auto-fill,minmax(160px,1fr))';
+  gc.style.maxWidth = '600px';
   gc.innerHTML = RAFFLE_LETTERS.slice(0, _numG).map((l,i) =>
     `<div class="raffle-group-card" id="rg-${l}" style="border-color:${RAFFLE_COLORS[i]}22">
       <div class="raffle-group-header" style="color:${RAFFLE_COLORS[i]}">GRUPO ${l}</div>
@@ -3535,11 +3634,11 @@ function raffleDrawOne() {
   document.getElementById('raffle-ball').style.borderColor = RAFFLE_COLORS[groupIdx];
   document.getElementById('raffle-ball').style.boxShadow   = `0 0 40px ${RAFFLE_COLORS[groupIdx]}55, 0 0 80px ${RAFFLE_COLORS[groupIdx]}22`;
 
-  // Update group card
+  // Update group card — full player card
   const grpEl = document.getElementById('rg-players-' + RAFFLE_LETTERS[groupIdx]);
   const div   = document.createElement('div');
-  div.className = 'raffle-group-player';
-  div.innerHTML = `${isSeed?'<span class="raffle-seed-star">🌱</span>':''}<span>${name}</span>`;
+  div.style.marginBottom = '6px';
+  div.innerHTML = playerCardFull(name, isSeed);
   grpEl.appendChild(div);
   // Light up the group card
   const card = document.getElementById('rg-' + RAFFLE_LETTERS[groupIdx]);
@@ -3607,8 +3706,9 @@ function raffleSkip() {
   // Refresh all group cards
   RAFFLE_LETTERS.forEach((l, gi) => {
     const el = document.getElementById('rg-players-' + l);
+    if (!el) return;
     el.innerHTML = _raffleGroups[gi].map(p =>
-      `<div class="raffle-group-player">${p.seed?'<span class="raffle-seed-star">🌱</span>':''}<span>${p.name}</span></div>`
+      `<div style="margin-bottom:6px">${playerCardFull(p.name, p.seed)}</div>`
     ).join('');
   });
   document.getElementById('raffle-ball-name').textContent = '✅';
