@@ -3606,31 +3606,56 @@ document.addEventListener('DOMContentLoaded', () => {
 //   Em caso de falha (offline, CORS, timeout), usa o REGISTRY local como fallback.
 // ATENÇÃO: A resposta esperada é { rows: [{id, nome, nickname, sobrenome, ...}] }.
 //   Se o schema do Sheets mudar, atualizar o mapeamento aqui.
+// ── OBJETIVO: Carregar jogadores do Google Sheets → DB[] e REGISTRY[] ────────
+// CONTEXTO: DB[] alimenta a grelha de seleção do Setup do torneio.
+//   REGISTRY[] alimenta o Cadastro de Jogadores (renderRoster).
+//   Ambos precisam de ser populados com os dados do Sheets.
+// ATENÇÃO: O Sheet usa 'apelido' (não 'nickname') e 'jogador_id' (não 'id').
 async function loadPlayersFromDB() {
   try {
-    const res  = await fetch(PadelEyeDB._url ? PadelEyeDB._url() + '?action=get_jogadores' : WEB_APP_URL + '?action=get_jogadores');
+    const res  = await fetch(WEB_APP_URL + '?action=get_jogadores');
     const data = await res.json();
-    DB.length = 0;
+
+    DB.length       = 0;
+    REGISTRY.length = 0; // Limpar antes de re-popular
+
     (data.rows || []).forEach(p => {
-      const nome = p.nickname || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
-      // jogador_id é a PK no Sheet (ex: 2619) — mapeamos para id no DB[] local
-      if (nome) DB.push({ id: p.jogador_id || p.id, nome });
+      const nome = p.apelido || (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+      if (!nome) return;
+
+      // DB[]: usado na seleção de jogadores no Setup
+      DB.push({ id: p.jogador_id || p.id, nome });
+
+      // REGISTRY[]: usado no Cadastro de Jogadores (renderRoster)
+      REGISTRY.push({
+        id:            p.jogador_id  || p.id || '',
+        nome:          p.nome        || '',
+        sobrenome:     p.sobrenome   || '',
+        nickname:      p.apelido     || '',   // Sheet usa 'apelido'
+        categoria:     p.categoria   || '',
+        genero:        p.genero      || '',
+        cidade:        p.cidade      || '',
+        nacionalidade: p.nacionalidade || '',
+        email:         p.email       || '',
+        celular:       p.celular     || '',
+      });
     });
+
   } catch(e) {
-    // Fallback: sem rede → DB fica vazio (sem jogadores dummy na produção)
-    // O utilizador verá a lista de jogadores vazia e uma mensagem de erro.
     console.warn('[loadPlayersFromDB] fetch failed — DB will be empty:', e.message);
     DB.length = 0;
   }
-  // Se o DB ficou vazio (fetch falhou), mostrar aviso ao utilizador
+
+  // Aviso se DB ficou vazio
   if (DB.length === 0) {
     const el = document.getElementById('alert-cadastro');
     if (el) {
-      el.textContent = '⚠️ Não foi possível carregar jogadores do servidor. Verifique a ligação e recarregue.';
-      el.className   = 'alert warn';
+      el.textContent   = '⚠️ Não foi possível carregar jogadores do servidor. Verifique a ligação e recarregue.';
+      el.className     = 'alert warn';
       el.style.display = 'block';
     }
   }
+
   renderDB();
   renderRoster();
 }
