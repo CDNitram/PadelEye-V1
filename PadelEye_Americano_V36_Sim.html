@@ -3450,21 +3450,19 @@ const PadelEyeDB = (() => {
 
   async function saveTournament(T, organizador, scoreData) {
     showStatus('[SimDB] A guardar torneio...', 'loading');
-    // ── V36: Mark tournament as finalizado ───────────────────────────────────
-    if (T.id) {
-      fakeAsync(simDBAction('update_torneio_status', { torneio_id: T.id, status: 'finalizado' }));
-    }
-    const torneioRow   = mapTorneio(T, organizador);
-    const torneioId    = T.id || torneioRow.id;
+    const torneioRow   = mapTorneio(T, organizador);  // status:'finalizado' included
+    const torneioId    = T.id || torneioRow.torneio_id;
     const partidasRows = mapPartidas(T, torneioId);
     const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
 
-    await fakeAsync(simDBAction('insert_torneio',   { row:  torneioRow }));
-    await fakeAsync(simDBAction('insert_partidas',  { rows: partidasRows }));
+    // ── Update status first (awaited), then write all data ───────────────────
+    await fakeAsync(simDBAction('update_torneio_status', { torneio_id: torneioId, status: 'finalizado' }));
+    await fakeAsync(simDBAction('upsert_torneio',        { row: torneioRow }));
+    await fakeAsync(simDBAction('insert_partidas',       { rows: partidasRows }));
     if (scRows.length) await fakeAsync(simDBAction('insert_scorecard', { rows: scRows }));
 
     showStatus(
-      '✅ [SimDB] Torneio "' + T.name + '" guardado (' + partidasRows.length + ' partidas · ' + scRows.length + ' scorecard entries)',
+      '✅ [SimDB] Torneio "' + T.name + '" finalizado (' + partidasRows.length + ' partidas · ' + scRows.length + ' scorecard entries)',
       'success'
     );
     return { torneioId, ok:true };
@@ -4550,6 +4548,12 @@ function launchManualGroups() {
   document.getElementById('p-rodadas').classList.add('on');
 
   safeAlert('✅ Torneio iniciado com grupos manuais!', 'ok');
+
+  // ── Show simulation buttons (Sim mode only) ──────────────────────────────
+  setTimeout(() => {
+    const sb = document.getElementById('sim-buttons');
+    if (sb) sb.style.display = 'block';
+  }, 300);
 
   // ── Register tournament in DB (non-blocking) ──────────────────────────────
   try {
