@@ -1510,6 +1510,16 @@ function clearPersistedT() {
 
 let T_groups = [];   // working copy for grupos screen
 
+// ── getPhaseConfig: handles 2-phase mode (Final = phaseConfig[2], not [1]) ──
+function getPhaseConfig(phaseIdx) {
+  // In 2-phase mode (F1 → Final): T.phases[1] IS the Final,
+  // but phaseConfig[1] holds F2 config — must use phaseConfig[2] for the Final
+  if ((T.numFases === 2) && phaseIdx === 1) {
+    return T.phaseConfig?.[2] || { maxScore: 7, tbAt: 6 };
+  }
+  return getPhaseConfig(phaseIdx) || { maxScore: 7, tbAt: 6 };
+}
+
 // ── MATCH PAIRINGS for a group of 4 [A,B,C,D] ──
 // ── OBJETIVO: Gerar as 3 partidas Americanas de um grupo de 4 jogadores ───────
 // CONTEXTO: [A+B vs C+D] · [A+C vs B+D] · [A+D vs B+C].
@@ -1705,7 +1715,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   if (!inA || !inB) return;
   const sa = parseInt(inA.value), sb = parseInt(inB.value);
   if (isNaN(sa) || isNaN(sb)) { gameAlert('Insira o placar dos dois lados antes de guardar.','warn'); return; }
-  const _cfg   = T.phaseConfig?.[phaseIdx] || { maxScore:9, tbAt:9 };
+  const _cfg   = getPhaseConfig(phaseIdx) || { maxScore:9, tbAt:9 };
   const maxSc  = _cfg.maxScore ?? 9;
   const tbAt   = _cfg.tbAt ?? 9;
   // ── V36: Padel/Tennis score validation ─────────────────────────────────────
@@ -1714,14 +1724,17 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
 
   // isDeuceFormat: max 6, 8, 9 allow deuce (winner can reach maxSc+1)
   // Max 7: TB directly at tbAt×tbAt, winner stays at maxSc
-  // ── Padel/Tennis scoring rule (all maxScore formats) ────────────────────────
-  // maxSc = score máximo configurado (ex: 7)
-  // tbAt  = threshold de tie-break (ex: 6, i.e. TB a 6×6)
+  // ── Padel scoring rule ────────────────────────────────────────────────────
+  // Dois formatos cobertos:
+  //   Formato curto (ex: maxSc=6, tbAt=5): vence quem chegar a maxSc (6×0-6×4 válidos)
+  //   Formato longo (ex: maxSc=7, tbAt=6): vence a 6 normalmente (6×0-6×4) ou a 7 via deuce (7×5 / 7×6+TB)
   //
-  // Normal win : w = maxSc-1, l ≤ maxSc-3   → 6×0, 6×1, 6×2, 6×3, 6×4
-  // Deuce win  : w = maxSc,   l = tbAt-1     → 7×5  (após 5×5)
-  // TB win     : w = maxSc,   l = tbAt + TB  → 7×6+TB (após 6×6)
-  // Invalid    : 6×5 (sem vantagem), 7×0-7×4 (impossível), w > maxSc
+  // Regras válidas:
+  //   A) w=maxSc, l<tbAt, w-l≥2   → vitória normal curta  (6×1 para maxSc=6)
+  //   B) w=tbAt,  l≤tbAt-2         → vitória normal longa  (6×1 para maxSc=7)
+  //   C) w=maxSc, l=tbAt,  +TB    → vitória por tie-break
+  //
+  // Inválido: empate, w>maxSc, 6×5 sem TB, l>tbAt
   const w = Math.max(sa, sb);
   const l = Math.min(sa, sb);
 
@@ -1730,31 +1743,32 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     return;
   }
 
-  if (w === maxSc - 1 && l <= maxSc - 3) {
-    // Normal win ✅ — ex: 6×0, 6×1, 6×2, 6×3, 6×4 (max=7)
-    // Vence com 2+ de vantagem antes do threshold de deuce
+  if (w > maxSc) {
+    gameAlert(`Placar ${w}×${l} inválido — score máximo configurado é ${maxSc}.`, 'warn');
+    return;
+  }
 
-  } else if (w === maxSc && l === tbAt - 1) {
-    // Deuce win ✅ — ex: 7×5 (jogo chegou a 5×5, vencedor fez +2)
+  const normalShort = (w === maxSc && l < tbAt && w - l >= 2);          // A: 6×0-6×4 para maxSc=6
+  const normalLong  = (w === tbAt  && l <= tbAt - 2);                    // B: 6×0-6×4 para maxSc=7
+  const tbWin       = (w === maxSc && l === tbAt);                       // C: 7×6+TB ou 6×5+TB
 
-  } else if (w === maxSc && l === tbAt) {
-    // Tie-Break win ✅ — ex: 7×6 (jogo foi a 6×6, decidido em TB)
+  if (normalShort || normalLong) {
+    // Vitória normal ✅
+
+  } else if (tbWin) {
     if (!hasTB) {
-      gameAlert(`Placar ${w}×${l} requer o Tie-Break activo — o jogo foi a ${tbAt}×${tbAt}.`, 'warn');
+      gameAlert(`Placar ${w}×${l} requer o Tie-Break activo — o jogo chegou a ${tbAt}×${tbAt}.`, 'warn');
       return;
     }
+    // Vitória por Tie-Break ✅
 
-  } else if (w === maxSc - 1 && l === maxSc - 2) {
-    // 6×5 — sem vantagem suficiente, o jogo continua para 7×5 ou TB
-    gameAlert(`Placar ${w}×${l} inválido — com ${l}×${l} o jogo continua (deuce): vence em ${maxSc}×${tbAt-1} ou ${maxSc}×${tbAt} com Tie-Break.`, 'warn');
-    return;
-
-  } else if (w > maxSc) {
-    gameAlert(`Placar ${w}×${l} inválido — score máximo configurado é ${maxSc}.`, 'warn');
+  } else if (w === maxSc && l === tbAt - 1 && !normalShort && !normalLong) {
+    // Vantagem insuficiente sem TB — ex: 6×5 sem ter passado pelo TB
+    gameAlert(`Placar ${w}×${l} — active o Tie-Break se o jogo foi a ${tbAt}×${tbAt}.`, 'warn');
     return;
 
   } else {
-    gameAlert(`Placar ${sa}×${sb} inválido neste formato (máx ${maxSc}, TB em ${tbAt}×${tbAt}).`, 'warn');
+    gameAlert(`Placar ${sa}×${sb} inválido (máx ${maxSc}, TB a ${tbAt}×${tbAt}).`, 'warn');
     return;
   }
   // TB validation
@@ -3920,36 +3934,34 @@ function simDBReset() {
 //   12% de probabilidade de Tie-Break. O perdedor recebe entre 0 e tbAt-1 games.
 //   Respeita os limites de score máximo e TB configurados por fase.
 function simScore(phaseIdx) {
-  // Padel/tennis scoring rule — mirrors saveMatch() validation
-  // Normal : w = max-1, l = 0 to max-3   → e.g. 6×0–6×4 for max=7
-  // Deuce  : w = max,   l = tb-1          → e.g. 7×5
-  // TB     : w = max,   l = tb            → e.g. 7×6+TB
-  const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:7, tbAt:6};
+  // Padel scoring — two formats:
+  //   55%: Format A normal win: w=max, l<tb (6×0-6×4 for maxSc=6)
+  //   30%: Format B normal win: w=tb,  l≤tb-2 (6×0-6×4 for maxSc=7)
+  //   15%: TB win: w=max, l=tb
+  const cfg = getPhaseConfig(phaseIdx);
   const max = cfg.maxScore || 7;
   const tb  = cfg.tbAt    || 6;
+  const r   = Math.random();
 
-  const r = Math.random();
-
-  if (r < 0.70) {
-    // Normal win: w = max-1, l = random 0 to max-3 (ensures 2-game lead)
-    const loser = Math.floor(Math.random() * (max - 2)); // 0 to max-3
+  if (r < 0.55) {
+    // Format A: w=max, l<tb, 2-lead
+    const loser = Math.floor(Math.random() * (tb - 1));
     return Math.random() > 0.5
-      ? {sa: max-1, sb: loser, tb:false, tba:null, tbb:null}
-      : {sa: loser, sb: max-1, tb:false, tba:null, tbb:null};
-
+      ? {sa:max, sb:loser, tb:false, tba:null, tbb:null}
+      : {sa:loser, sb:max, tb:false, tba:null, tbb:null};
   } else if (r < 0.85) {
-    // Deuce win: 7×5
+    // Format B: w=tb, l≤tb-2
+    const loser = Math.floor(Math.random() * (tb - 1));
     return Math.random() > 0.5
-      ? {sa: max, sb: tb-1, tb:false, tba:null, tbb:null}
-      : {sa: tb-1, sb: max, tb:false, tba:null, tbb:null};
-
+      ? {sa:tb, sb:loser, tb:false, tba:null, tbb:null}
+      : {sa:loser, sb:tb, tb:false, tba:null, tbb:null};
   } else {
-    // TB win: 7×6 + tie-break
+    // TB win: w=max, l=tb
     const tba = 7 + Math.floor(Math.random()*4);
     const tbb = Math.floor(Math.random() * Math.max(1, tba - 2));
     return Math.random() > 0.5
-      ? {sa: max,  sb: tb,  tb:true, tba, tbb}
-      : {sa: tb,   sb: max, tb:true, tba:tbb, tbb:tba};
+      ? {sa:max, sb:tb, tb:true, tba, tbb}
+      : {sa:tb,  sb:max, tb:true, tba:tbb, tbb:tba};
   }
 }
 
