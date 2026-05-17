@@ -1771,12 +1771,13 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     gameAlert(`Placar ${sa}×${sb} inválido (máx ${maxSc}, TB a ${tbAt}×${tbAt}).`, 'warn');
     return;
   }
-  // TB validation
+  // TB validation — only required when the actual result IS a TB win (l === tbAt)
   let tba = null, tbb = null;
-  if (hasTB) {
+  const needsTBScores = (hasTB && l === tbAt);
+  if (needsTBScores) {
     tba = parseInt(document.getElementById(`tb-${key}-a`)?.value || '');
     tbb = parseInt(document.getElementById(`tb-${key}-b`)?.value || '');
-    if (isNaN(tba) || isNaN(tbb)) { gameAlert('Insira o placar do Tie-Break.','warn'); return; }
+    if (isNaN(tba) || isNaN(tbb)) { gameAlert('Insira o placar do Tie-Break (mini-jogo).','warn'); return; }
     if (tba === tbb)              { gameAlert('Tie-Break não pode terminar empatado.','warn'); return; }
   }
   T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb };
@@ -1815,6 +1816,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   }
 
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
+  gameAlert(`✅ ${sa}×${sb} guardado.`, 'ok');
 }
 
 // ── OBJETIVO: Feedback visual em tempo real ao inserir placares ───────────────
@@ -1828,12 +1830,20 @@ function liveScore(key) {
     const ia = parseInt(sa), ib = parseInt(sb);
     inA.className = 'score-in ' + (ia>ib?'win':ia<ib?'lose':'');
     inB.className = 'score-in ' + (ib>ia?'win':ib<ia?'lose':'');
-    // Auto-suggest TB when both reach phase threshold
-    const _cfg2 = T.phaseConfig?.[T.currentPhase] || {};
+    // Auto-manage TB button based on current scores
+    const _cfg2 = getPhaseConfig(T.currentPhase);
     const _tbAt = _cfg2.tbAt ?? 9;
-    if (ia === _tbAt && ib === _tbAt) {
-      const tbBtn = document.getElementById(`tb-btn-${key}`);
-      if (tbBtn && !tbBtn.classList.contains('active')) tbBtn.click();
+    const tbBtn = document.getElementById(`tb-btn-${key}`);
+    if (tbBtn) {
+      const isTbScore = (ia === _tbAt && ib === _tbAt);
+      const isActive  = tbBtn.dataset.active === '1';
+      if (isTbScore && !isActive) {
+        // Auto-activate: both reached tbAt×tbAt
+        tbBtn.click();
+      } else if (!isTbScore && isActive) {
+        // Auto-deactivate: score moved away from tbAt×tbAt (e.g. user typed 7×5)
+        tbBtn.click();
+      }
     }
   }
 }
@@ -2032,6 +2042,7 @@ function renderRounds() {
         ${!saved ? `
         <div style="display:flex;gap:6px;padding:0 12px 10px">
           <button id="tb-btn-${key}" onclick="toggleTB('${key}')"
+            data-active="${hasTB?'1':'0'}"
             style="flex:1;padding:5px 0;border-radius:6px;border:1px solid ${hasTB?'#C9933A':'#e8c870'};
                    background:${hasTB?'rgba(201,147,58,0.12)':'#fffbf0'};color:#865a10;
                    font-family:'DM Mono';font-size:9px;font-weight:600;letter-spacing:0.05em;cursor:pointer;
