@@ -2081,7 +2081,7 @@ function renderRounds() {
             <div style="font-size:10px;color:#9ab0c8">${group.join(' · ')}</div>
           </div>
         </div>
-        <div class="round-status ${allSaved?'done':''}">${allSaved?'✅ Concluído':`3 partidas · máx ${T.phaseConfig?.[phIdx]?.maxScore??9} · TB@${T.phaseConfig?.[phIdx]?.tbAt??9}×${T.phaseConfig?.[phIdx]?.tbAt??9}`}</div>
+        <div class="round-status ${allSaved?'done':''}">${allSaved?'✅ Concluído':`3 partidas · máx ${getPhaseConfig(phIdx).maxScore??9} · TB@${getPhaseConfig(phIdx).tbAt??9}×${getPhaseConfig(phIdx).tbAt??9}`}</div>
       </div>`;
 
     matches.forEach((match, mi) => {
@@ -2095,7 +2095,7 @@ function renderRounds() {
       const hasTB  = res.tb   || false;
       const tbaVal = res.tba  ?? '';
       const tbbVal = res.tbb  ?? '';
-      const maxSc  = T.phaseConfig?.[phIdx]?.maxScore ?? 9;
+      const maxSc  = getPhaseConfig(phIdx).maxScore ?? 9;
 
       // ── Premier Padel style: equipa esquerda × score × equipa direita ─────
       const borderColor = saved ? 'rgba(39,174,96,.4)' : '#dde6f0';
