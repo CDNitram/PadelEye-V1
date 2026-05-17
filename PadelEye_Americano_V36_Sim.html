@@ -1714,42 +1714,46 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
 
   // isDeuceFormat: max 6, 8, 9 allow deuce (winner can reach maxSc+1)
   // Max 7: TB directly at tbAt×tbAt, winner stays at maxSc
-  // ── Universal scoring rule (all maxScore formats) ──────────────────────────
-  // The game always goes through (tbAt-1)×(tbAt-1) before it can be decided.
-  // Valid results: maxSc×(tbAt-1) normal win  |  maxSc×tbAt + TB active
-  // Invalid: winner < maxSc | winner > maxSc | loser < tbAt-1 | loser > tbAt
+  // ── Padel/Tennis scoring rule (all maxScore formats) ────────────────────────
+  // maxSc = score máximo configurado (ex: 7)
+  // tbAt  = threshold de tie-break (ex: 6, i.e. TB a 6×6)
+  //
+  // Normal win : w = maxSc-1, l ≤ maxSc-3   → 6×0, 6×1, 6×2, 6×3, 6×4
+  // Deuce win  : w = maxSc,   l = tbAt-1     → 7×5  (após 5×5)
+  // TB win     : w = maxSc,   l = tbAt + TB  → 7×6+TB (após 6×6)
+  // Invalid    : 6×5 (sem vantagem), 7×0-7×4 (impossível), w > maxSc
   const w = Math.max(sa, sb);
   const l = Math.min(sa, sb);
 
-  // Draw: never valid
   if (sa === sb) {
     gameAlert(`Placar ${sa}×${sb} — empate não é um resultado final válido.`, 'warn');
     return;
   }
 
-  // Winner must reach exactly maxSc (no more, no less)
-  if (w !== maxSc) {
-    gameAlert(`Placar ${sa}×${sb} inválido — o vencedor deve chegar a exatamente ${maxSc} games.`, 'warn');
-    return;
-  }
+  if (w === maxSc - 1 && l <= maxSc - 3) {
+    // Normal win ✅ — ex: 6×0, 6×1, 6×2, 6×3, 6×4 (max=7)
+    // Vence com 2+ de vantagem antes do threshold de deuce
 
-  if (l === tbAt - 1) {
-    // Normal win ✅ — e.g. 6×4, 7×5, 8×6, 9×7
-    // Game passed through (tbAt-1)×(tbAt-1), then winner took 2 more
-  } else if (l === tbAt) {
-    // Tie-Break win ✅ — e.g. 6×5+TB, 7×6+TB, 8×7+TB, 9×8+TB
-    // Game reached tbAt×tbAt → Tie-Break played
+  } else if (w === maxSc && l === tbAt - 1) {
+    // Deuce win ✅ — ex: 7×5 (jogo chegou a 5×5, vencedor fez +2)
+
+  } else if (w === maxSc && l === tbAt) {
+    // Tie-Break win ✅ — ex: 7×6 (jogo foi a 6×6, decidido em TB)
     if (!hasTB) {
-      gameAlert(`Placar ${w}×${l} requer o Tie-Break Limit activo — o jogo chegou a ${tbAt}×${tbAt}.`, 'warn');
+      gameAlert(`Placar ${w}×${l} requer o Tie-Break activo — o jogo foi a ${tbAt}×${tbAt}.`, 'warn');
       return;
     }
-  } else if (l < tbAt - 1) {
-    // INVALID — loser has too few games
-    // e.g. 6×0–6×3, 7×0–7×4, 8×0–8×5, 9×0–9×6
-    gameAlert(`Placar ${w}×${l} inválido — o perdedor deve ter no mínimo ${tbAt-1} games.\nO jogo obrigatoriamente passa por ${tbAt-1}×${tbAt-1} antes de ser decidido.`, 'warn');
+
+  } else if (w === maxSc - 1 && l === maxSc - 2) {
+    // 6×5 — sem vantagem suficiente, o jogo continua para 7×5 ou TB
+    gameAlert(`Placar ${w}×${l} inválido — com ${l}×${l} o jogo continua (deuce): vence em ${maxSc}×${tbAt-1} ou ${maxSc}×${tbAt} com Tie-Break.`, 'warn');
     return;
+
+  } else if (w > maxSc) {
+    gameAlert(`Placar ${w}×${l} inválido — score máximo configurado é ${maxSc}.`, 'warn');
+    return;
+
   } else {
-    // l > tbAt — impossible
     gameAlert(`Placar ${sa}×${sb} inválido neste formato (máx ${maxSc}, TB em ${tbAt}×${tbAt}).`, 'warn');
     return;
   }
@@ -3497,7 +3501,7 @@ const PadelEyeDB = (() => {
     if (type !== 'loading') setTimeout(() => el.style.display='none', 4000);
   }
 
-  return { registerPlayer, saveTournament, logSession, ping, upsertPartida };
+  return { registerPlayer, updatePlayer, saveTournament, logSession, ping, upsertPartida };
 })();
 
 // ══════════════════════════════════════════
@@ -3918,27 +3922,37 @@ function simDBReset() {
 //   12% de probabilidade de Tie-Break. O perdedor recebe entre 0 e tbAt-1 games.
 //   Respeita os limites de score máximo e TB configurados por fase.
 function simScore(phaseIdx) {
-  // Universal scoring rule: loser must have exactly tbAt-1 (normal) or tbAt (TB)
-  // Same rule as manual entry: winner=max, loser=tb-1 or loser=tb+TB
-  const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:6, tbAt:5};
-  const max = cfg.maxScore || 6;
-  const tb  = cfg.tbAt    || 5;
+  // Padel/tennis scoring rule — mirrors saveMatch() validation
+  // Normal : w = max-1, l = 0 to max-3   → e.g. 6×0–6×4 for max=7
+  // Deuce  : w = max,   l = tb-1          → e.g. 7×5
+  // TB     : w = max,   l = tb            → e.g. 7×6+TB
+  const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:7, tbAt:6};
+  const max = cfg.maxScore || 7;
+  const tb  = cfg.tbAt    || 6;
 
-  const goTB = Math.random() < 0.2; // 20% chance of TB
+  const r = Math.random();
 
-  if (goTB) {
-    // TB match: max × tb, winner decided by tie-break points
-    const tba = 7 + Math.floor(Math.random()*4);          // 7–10
-    const tbb = Math.floor(Math.random() * (tba - 2));     // 0 to tba-3
+  if (r < 0.70) {
+    // Normal win: w = max-1, l = random 0 to max-3 (ensures 2-game lead)
+    const loser = Math.floor(Math.random() * (max - 2)); // 0 to max-3
     return Math.random() > 0.5
-      ? {sa:max, sb:tb, tb:true, tba, tbb}
-      : {sa:tb,  sb:max, tb:true, tba:tbb, tbb:tba};
-  }
+      ? {sa: max-1, sb: loser, tb:false, tba:null, tbb:null}
+      : {sa: loser, sb: max-1, tb:false, tba:null, tbb:null};
 
-  // Normal win: max × (tb-1)
-  return Math.random() > 0.5
-    ? {sa:max,    sb:tb-1, tb:false, tba:null, tbb:null}
-    : {sa:tb-1,   sb:max,  tb:false, tba:null, tbb:null};
+  } else if (r < 0.85) {
+    // Deuce win: 7×5
+    return Math.random() > 0.5
+      ? {sa: max, sb: tb-1, tb:false, tba:null, tbb:null}
+      : {sa: tb-1, sb: max, tb:false, tba:null, tbb:null};
+
+  } else {
+    // TB win: 7×6 + tie-break
+    const tba = 7 + Math.floor(Math.random()*4);
+    const tbb = Math.floor(Math.random() * Math.max(1, tba - 2));
+    return Math.random() > 0.5
+      ? {sa: max,  sb: tb,  tb:true, tba, tbb}
+      : {sa: tb,   sb: max, tb:true, tba:tbb, tbb:tba};
+  }
 }
 
 // ── OBJETIVO: Simular todos os resultados em falta de uma fase ───────────────
@@ -4526,17 +4540,7 @@ function launchManualGroups() {
   T.phases = [{ name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }];
   persistT();
 
-  if (T.id) {
-    const numGrupos = T_groups.length;
-    const jogPorGrupo = numGrupos > 0 ? Math.ceil(T.players.length / numGrupos) : 4;
-    PadelEyeDB.send('create_torneio', { row: {
-      torneio_id: T.id, nome: T.name, data: T.date, local: T.local || '',
-      formato: 'Americano · Modelo Brasileiro', num_grupos: numGrupos,
-      jogadores_por_grupo: jogPorGrupo, num_fases: T.numFases || 3,
-      categoria: T.categoria || '', status: 'em_curso', criado_em: new Date().toISOString(),
-    }});
-  }
-
+  // ── Navigate first — DB call is async and must not block navigation ─────────
   renderGrupos(); renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
   _updateSubButtons();
 
@@ -4546,6 +4550,20 @@ function launchManualGroups() {
   document.getElementById('p-rodadas').classList.add('on');
 
   safeAlert('✅ Torneio iniciado com grupos manuais!', 'ok');
+
+  // ── Register tournament in DB (non-blocking) ──────────────────────────────
+  try {
+    if (T.id) {
+      const numGrupos   = T_groups.length;
+      const jogPorGrupo = numGrupos > 0 ? Math.ceil(T.players.length / numGrupos) : 4;
+      PadelEyeDB.logSession('manual_launch', 'create_torneio', 'torneio', {
+        torneio_id: T.id, nome: T.name, data: T.date, local: T.local || '',
+        formato: 'Americano · Modelo Brasileiro', num_grupos: numGrupos,
+        jogadores_por_grupo: jogPorGrupo, num_fases: T.numFases || 3,
+        categoria: T.categoria || '', status: 'em_curso',
+      });
+    }
+  } catch(e) { console.warn('[launchManualGroups] DB log failed:', e.message); }
 }
 
 </script>
