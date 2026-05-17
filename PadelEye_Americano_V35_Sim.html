@@ -1067,7 +1067,7 @@ let selectedPlayers = [];  // names of players added to tournament
 let extraPlayers    = [];  // manually added players
 let seedList        = [];  // cabeças de chave, max 4
 
-function allPlayers() { return [...DB.map(p=>p.nome), ...extraPlayers]; }
+function allPlayers() { return [...DB.map(p=>p.nome), ...extraPlayers].sort((a,b) => a.localeCompare(b,'pt-BR')); }
 
 // ══════════════════════════════════
 // AUTH
@@ -1185,11 +1185,12 @@ function renderDB() {
     const hidden   = q && !name.toLowerCase().includes(q);
     const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const dbEntry  = DB.find(p=>p.nome===name);
+    const regEntry = REGISTRY.find(r => displayName(r) === name || r.nome === name);
     return `<div class="db-card ${sel?'selected':''} ${hidden?'hidden':''}" onclick="togglePlayer('${name.replace(/'/g, "\\\'")}')" >
       <div class="db-check-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
-      <div class="db-avatar" style="background:${pc(i)}">${initials}</div>
+      <div class="db-avatar" style="background:${flagGrad(regEntry?.nacionalidade||'')};color:${flagTextCol(regEntry?.nacionalidade||'')};text-shadow:0 1px 3px rgba(0,0,0,0.35)">${initials}</div>
       <div class="db-name">${name}</div>
       <div class="db-id">ID ${dbEntry?.id||'—'}</div>
     </div>`;
@@ -1793,13 +1794,14 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
       partida:    matchIdx + 1,
       equipa_a:   (m?.a || []).join('+'),
       equipa_b:   (m?.b || []).join('+'),
+      vencedor:   sa > sb ? (m?.a || []).join('+') : (m?.b || []).join('+'),
       score_a:    sa,
       score_b:    sb,
       tie_break:  hasTB ? 1 : 0,
       tb_a:       tba ?? '',
       tb_b:       tbb ?? '',
       saved_at:   new Date().toISOString(),
-      created_at: new Date().toISOString(),
+      criado_em:  new Date().toISOString(),
     }).then(r => {
       if (!r?.ok) console.warn('[V35] upsertPartida failed:', r);
     });
@@ -3005,13 +3007,15 @@ function renderRoster() {
   if (!container) return;
 
   const q = (document.getElementById('roster-search')?.value || '').toLowerCase();
-  const filtered = REGISTRY.filter(p => {
-    if (!q) return true;
-    return displayName(p).toLowerCase().includes(q) ||
-           p.cidade?.toLowerCase().includes(q)       ||
-           p.categoria?.toLowerCase().includes(q)    ||
-           String(p.id).includes(q);
-  });
+  const filtered = REGISTRY
+    .filter(p => {
+      if (!q) return true;
+      return displayName(p).toLowerCase().includes(q) ||
+             p.cidade?.toLowerCase().includes(q)       ||
+             p.categoria?.toLowerCase().includes(q)    ||
+             String(p.id).includes(q);
+    })
+    .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
 
   if (badge) badge.textContent = `${filtered.length} / ${REGISTRY.length} jogadores`;
 
@@ -3308,12 +3312,14 @@ const PadelEyeDB = (() => {
             partida:    mi + 1,
             equipa_a:   m.a.join(' / '),
             equipa_b:   m.b.join(' / '),
+            vencedor:   res.saved ? (res.sa > res.sb ? m.a.join(' / ') : m.b.join(' / ')) : '',
             score_a:    res.sa  ?? '',
             score_b:    res.sb  ?? '',
             tie_break:  res.tb  ? 'Sim' : 'Não',
             tb_a:       res.tba ?? '',
             tb_b:       res.tbb ?? '',
             saved_at:   res.saved ? now() : '',
+            criado_em:  res.saved ? now() : '',
           });
         });
       });
@@ -3418,7 +3424,7 @@ const PadelEyeDB = (() => {
     if (type !== 'loading') setTimeout(() => el.style.display='none', 4000);
   }
 
-  return { registerPlayer, saveTournament, logSession, ping };
+  return { registerPlayer, saveTournament, logSession, ping, upsertPartida };
 })();
 
 // ══════════════════════════════════════════
