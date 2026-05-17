@@ -3491,25 +3491,26 @@ const PadelEyeDB = (() => {
 
   async function saveTournament(T, organizador, scoreData) {
     showStatus('A guardar torneio...', 'loading');
-    // ── V36: Mark tournament as finalizado ────────────────────────────────────
-    if (T.id) {
-      send('update_torneio_status', { torneio_id: T.id, status: 'finalizado' });
-    }
-    const torneioRow   = mapTorneio(T, organizador);
-    const torneioId    = T.id || torneioRow.id;
+    const torneioRow   = mapTorneio(T, organizador);  // status:'finalizado' included
+    const torneioId    = T.id || torneioRow.torneio_id;
     const partidasRows = mapPartidas(T, torneioId);
     const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
-    const [r1, r2, r3] = await Promise.all([
-      send('upsert_torneio',  { row: torneioRow }),
-      send('insert_partidas', { table:'Partidas_Torneios', rows: partidasRows }),
+
+    // ── Run all writes + status update concurrently ───────────────────────────
+    const [r1, r2, r3, r4] = await Promise.all([
+      send('upsert_torneio',         { row: torneioRow }),               // includes status:'finalizado'
+      send('update_torneio_status',  { torneio_id: torneioId, status: 'finalizado' }), // explicit status update
+      send('insert_partidas',        { table:'Partidas_Torneios', rows: partidasRows }),
       scRows.length ? send('insert_scorecard', { table:'Scorecard_Torneios', rows: scRows }) : Promise.resolve({ status:'skipped' }),
     ]);
-    const ok = r1.status !== 'error';
+
+    const ok = r1?.ok || r1?.status !== 'error';
     showStatus(
-      ok ? `✅ Torneio "${T.name}" guardado (${partidasRows.length} partidas)` : '⚠️ Erro ao guardar torneio.',
+      ok ? `✅ Torneio "${T.name}" guardado e finalizado (${partidasRows.length} partidas)`
+         : '⚠️ Erro ao guardar torneio.',
       ok ? 'success' : 'error'
     );
-    return { torneioId, results:{ torneio:r1, partidas:r2, scorecard:r3 } };
+    return { torneioId, results:{ torneio:r1, status:r2, partidas:r3, scorecard:r4 } };
   }
 
   async function logSession(user, action, entity='', metadata={}) {
@@ -4568,6 +4569,12 @@ function launchManualGroups() {
   document.getElementById('p-rodadas').classList.add('on');
 
   safeAlert('✅ Torneio iniciado com grupos manuais!', 'ok');
+
+  // ── Show simulation buttons (Sim mode only) ──────────────────────────────
+  setTimeout(() => {
+    const sb = document.getElementById('sim-buttons');
+    if (sb) sb.style.display = 'block';
+  }, 300);
 
   // ── Register tournament in DB (non-blocking) ──────────────────────────────
   try {
