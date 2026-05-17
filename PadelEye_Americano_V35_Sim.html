@@ -1199,7 +1199,8 @@ function renderDB() {
   // Chips strip
   strip.innerHTML = selectedPlayers.map(name => {
     const i = all.indexOf(name);
-    return `<div class="sel-chip" style="background:${pc(i)}">
+    const _cr = REGISTRY.find(r => displayName(r) === name || r.nome === name);
+    return `<div class="sel-chip" style="background:${flagGrad(_cr?.nacionalidade||'')};color:${flagTextCol(_cr?.nacionalidade||'')};text-shadow:0 1px 3px rgba(0,0,0,0.25)">
       ${name}
       <button class="sel-chip-x" onclick="event.stopPropagation();removePlayer('${name.replace(/'/g, "\\\'")}')" >×</button>
     </div>`;
@@ -1296,8 +1297,9 @@ function renderSeedPicker() {
     const active   = seedList.includes(name);
     const sIdx     = seedList.indexOf(name)+1;
     const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const _sr = REGISTRY.find(r=>displayName(r)===name||r.nome===name);
     return `<div class="seed-chip ${active?'active':''}" onclick="toggleSeed('${name.replace(/'/g, "\\\'")}')" >
-      <div class="seed-chip-av" style="background:${pc(i)}">${initials}</div>
+      <div class="seed-chip-av" style="background:${flagGrad(_sr?.nacionalidade||'')};color:${flagTextCol(_sr?.nacionalidade||'')};text-shadow:0 1px 3px rgba(0,0,0,0.25)">${initials}</div>
       <span class="seed-chip-name">${name}</span>
       ${active?`<span class="seed-chip-badge">🌱 S${sIdx}</span>`:''}
     </div>`;
@@ -1650,15 +1652,16 @@ function syncMaxTb(maxId, tbId) {
   const tbEl  = document.getElementById(tbId);
   if (!maxEl || !tbEl) return;
   const maxVal = parseInt(maxEl.value);
-  // Disable TB options above maxScore - 1
+
+  // Auto-select recommended tbAt = maxSc - 1 (e.g. max=7 → TB at 6×6)
+  const recommended = maxVal - 1;
+  const recOpt = Array.from(tbEl.options).find(o => parseInt(o.value) === recommended);
+  if (recOpt) tbEl.value = recommended;
+
+  // Disable TB options that are >= maxScore (can't have TB at or above max)
   Array.from(tbEl.options).forEach(opt => {
     opt.disabled = parseInt(opt.value) >= maxVal;
   });
-  // If current tb >= max, reset to max-1
-  if (parseInt(tbEl.value) >= maxVal) {
-    const best = Array.from(tbEl.options).filter(o=>!o.disabled).pop();
-    if (best) tbEl.value = best.value;
-  }
 }
 // ── GAME ALERT (self-contained — no dependency on Setup panel) ──
 function gameAlert(msg, type='ok') {
@@ -1710,59 +1713,44 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
 
   // isDeuceFormat: max 6, 8, 9 allow deuce (winner can reach maxSc+1)
   // Max 7: TB directly at tbAt×tbAt, winner stays at maxSc
-  const isDeuceFormat = (maxSc !== 7);
+  // ── Universal scoring rule (all maxScore formats) ──────────────────────────
+  // The game always goes through (tbAt-1)×(tbAt-1) before it can be decided.
+  // Valid results: maxSc×(tbAt-1) normal win  |  maxSc×tbAt + TB active
+  // Invalid: winner < maxSc | winner > maxSc | loser < tbAt-1 | loser > tbAt
   const w = Math.max(sa, sb);
   const l = Math.min(sa, sb);
 
-  // Draw: never a valid terminal score
+  // Draw: never valid
   if (sa === sb) {
     gameAlert(`Placar ${sa}×${sb} — empate não é um resultado final válido.`, 'warn');
     return;
   }
 
-  if (isDeuceFormat) {
-    // Max 6, 8, 9 — deuce format
-    const absMax = maxSc + 1;
-    if (w > absMax) {
-      gameAlert(`Placar máximo possível neste formato: ${absMax}×${maxSc}.`, 'warn');
+  // Winner must reach exactly maxSc (no more, no less)
+  if (w !== maxSc) {
+    gameAlert(`Placar ${sa}×${sb} inválido — o vencedor deve chegar a exatamente ${maxSc} games.`, 'warn');
+    return;
+  }
+
+  if (l === tbAt - 1) {
+    // Normal win ✅ — e.g. 6×4, 7×5, 8×6, 9×7
+    // Game passed through (tbAt-1)×(tbAt-1), then winner took 2 more
+  } else if (l === tbAt) {
+    // Tie-Break win ✅ — e.g. 6×5+TB, 7×6+TB, 8×7+TB, 9×8+TB
+    // Game reached tbAt×tbAt → Tie-Break played
+    if (!hasTB) {
+      gameAlert(`Placar ${w}×${l} requer o Tie-Break Limit activo — o jogo chegou a ${tbAt}×${tbAt}.`, 'warn');
       return;
     }
-    if (w === maxSc && l < tbAt) {
-      // Normal win ✅
-    } else if (w === maxSc && l === tbAt) {
-      // Deuce intermediate (e.g. 6×5, 9×8) — invalid terminal
-      gameAlert(`Placar ${w}×${l} inválido — com ${tbAt}a igualdade o jogo entra em deuce.\nResultado deve ser ${maxSc+1}×${tbAt} (vantagem) ou ${maxSc+1}×${maxSc} com Tie-Break Limit.`, 'warn');
-      return;
-    } else if (w === maxSc + 1 && l === tbAt) {
-      // Deuce win (e.g. 7×5, 10×8) ✅
-    } else if (w === maxSc + 1 && l === maxSc) {
-      // TB win (e.g. 7×6, 10×9) — requires TB active
-      if (!hasTB) {
-        gameAlert(`Placar ${w}×${l} requer o Tie-Break Limit activo.`, 'warn');
-        return;
-      }
-    } else {
-      gameAlert(`Placar ${sa}×${sb} inválido para este formato (máx ${maxSc}).`, 'warn');
-      return;
-    }
+  } else if (l < tbAt - 1) {
+    // INVALID — loser has too few games
+    // e.g. 6×0–6×3, 7×0–7×4, 8×0–8×5, 9×0–9×6
+    gameAlert(`Placar ${w}×${l} inválido — o perdedor deve ter no mínimo ${tbAt-1} games.\nO jogo obrigatoriamente passa por ${tbAt-1}×${tbAt-1} antes de ser decidido.`, 'warn');
+    return;
   } else {
-    // Max 7 — direct TB format, winner stays at maxSc
-    if (w > maxSc) {
-      gameAlert(`Neste formato (máx ${maxSc}), o placar máximo é ${maxSc}×${tbAt}. Placar ${w} não é válido.`, 'warn');
-      return;
-    }
-    if (w === maxSc && l < tbAt) {
-      // Normal win ✅
-    } else if (w === maxSc && l === tbAt) {
-      // Direct TB win (7×6) — requires TB active
-      if (!hasTB) {
-        gameAlert(`Placar ${w}×${l} requer Tie-Break Limit activo (vem de ${tbAt}×${tbAt}).`, 'warn');
-        return;
-      }
-    } else {
-      gameAlert(`Placar ${sa}×${sb} inválido neste formato.`, 'warn');
-      return;
-    }
+    // l > tbAt — impossible
+    gameAlert(`Placar ${sa}×${sb} inválido neste formato (máx ${maxSc}, TB em ${tbAt}×${tbAt}).`, 'warn');
+    return;
   }
   // TB validation
   let tba = null, tbb = null;
@@ -1918,7 +1906,7 @@ function renderRounds() {
   // Show current phase groups
   ph.groups.forEach((group, gi) => {
     const isFinalPhase = (phIdx === (T.numFases||3) - 1);
-    const letter = isFinalPhase ? 'Final' : GROUP_LETTERS[gi + (phIdx===1?4:0)];
+    const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi + (phIdx===1?4:0)];
     const color  = GROUP_COLORS[gi % GROUP_COLORS.length];
     const matches = groupMatches(group);
     const allSaved = matches.every((_, mi) => ph.results[`${phIdx}-${gi}-${mi}`]?.saved);
@@ -2009,7 +1997,7 @@ function renderRounds() {
           <div>
             ${match.a.map(p=>`
               <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                <div style="width:7px;height:7px;border-radius:50%;background:${_pc(p)};flex-shrink:0"></div>
+                <div style="width:11px;height:11px;border-radius:50%;background:${flagGrad(getPlayerReg(p).nacionalidade)};flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
                 <span style="font-size:13px;font-weight:600;color:${saved&&aWin?'#0a1628':'#0a1628'}">${p}</span>
               </div>`).join('')}
           </div>
@@ -2018,7 +2006,7 @@ function renderRounds() {
             ${match.b.map(p=>`
               <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:4px">
                 <span style="font-size:13px;font-weight:600;color:${saved&&bWin?'#0a1628':'#9ab0c8'}">${p}</span>
-                <div style="width:7px;height:7px;border-radius:50%;background:${_pc(p)};flex-shrink:0"></div>
+                <div style="width:11px;height:11px;border-radius:50%;background:${flagGrad(getPlayerReg(p).nacionalidade)};flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
               </div>`).join('')}
           </div>
         </div>
@@ -2187,9 +2175,9 @@ function renderRanking() {
 
   // ── SORT TABS ──
   html += `<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap">
-    <button id="etab-sets" onclick="estatSwitch('sets')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff;transition:all .2s">Sets Vencidos</button>
-    <button id="etab-games" onclick="estatSwitch('games')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Games Marcados</button>
-    <button id="etab-pct" onclick="estatSwitch('pct')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Win Rate</button>
+    <button id="etab-pct" onclick="estatSwitch('pct')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff;transition:all .2s">Win Rate</button>
+    <button id="etab-sets" onclick="estatSwitch('sets')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Sets Vencidos</button>
+    <button id="etab-games" onclick="estatSwitch('games')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Games Vencidos</button>
   </div>`;
 
   // ── TABLE ──
@@ -2217,15 +2205,15 @@ function renderRanking() {
 
   // Store for sub-sort
   window._estatRanked = ranked;
-  window._estatSort   = 'sets';
-  _renderEstatRows('sets');
+  window._estatSort   = 'pct';
+  _renderEstatRows('pct');
 }
 
 // ── OBJETIVO: Mudar ordenação da tabela de estatísticas ───────────────────────
 // CONTEXTO: Reutiliza window._estatRanked já calculado para evitar re-cálculo.
 function estatSwitch(mode) {
   window._estatSort = mode;
-  ['sets','games','pct'].forEach(m => {
+  ['pct','sets','games'].forEach(m => {
     const btn = document.getElementById('etab-'+m);
     if(btn){ btn.style.background = m===mode?'#0a1628':'#f4f7fc'; btn.style.color = m===mode?'#fff':'#9ab0c8'; }
   });
@@ -2303,8 +2291,32 @@ function renderHistorico() {
     return;
   }
 
+  // ── Tournament summary header (moved from Scorecard) ────────────────────────
+  const _hScData   = typeof computeScorecard === 'function' ? computeScorecard() : [];
+  const _hChampion = _hScData.find(p => p.medal === '🥇');
+  const _hFinalIdx = (T.numFases || 3) - 1;
+  const _hPhase    = T.currentPhase === 0 ? 'Fase 1 em curso'
+    : (T.numFases === 2 ? (isPhaseComplete(1) ? '🏆 Torneio Concluído' : 'Final em curso')
+      : T.currentPhase === 1 ? 'Fase 2 em curso'
+      : isPhaseComplete(_hFinalIdx) ? '🏆 Torneio Concluído' : 'Final em curso');
+  const _hF1Elim    = _hScData.filter(p => p.phaseKey === 'f1').length;
+  const _hF2Elim    = _hScData.filter(p => p.phaseKey === 'f2').length;
+  const _hFinalists = _hScData.filter(p => p.phaseKey === 'final').length;
+
+  let summaryHtml = T.started ? `
+    <div class="sc-header" style="margin-bottom:16px">
+      <div class="sc-header-title">${T.name} · Histórico</div>
+      <div class="sc-header-sub">${T.date} · ${T.players.length} jogadores · ${_hPhase}</div>
+      <div class="sc-kpis">
+        <div class="sc-kpi"><div class="sc-kpi-v">${_hF1Elim}</div><div class="sc-kpi-l">Elim. F1 · 10pts</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${_hF2Elim}</div><div class="sc-kpi-l">Elim. F2 · 50pts</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${_hFinalists}</div><div class="sc-kpi-l">Finalistas · 100+</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${_hChampion ? _hChampion.name.split(' ')[0] : '—'}</div><div class="sc-kpi-l">🥇 Campeão</div></div>
+      </div>
+    </div>` : '';
+
   let hasAny = false;
-  let html   = '';
+  let html   = summaryHtml;
 
   T.phases.forEach((ph, phIdx) => {
     let phHtml = '';
@@ -2331,7 +2343,7 @@ function renderHistorico() {
             <div>
               ${match.a.map(p=>`
                 <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                  <div style="width:7px;height:7px;border-radius:50%;background:${_pc(p)};flex-shrink:0"></div>
+                  <div style="width:11px;height:11px;border-radius:50%;background:${flagGrad(getPlayerReg(p).nacionalidade)};flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
                   <span style="font-size:13px;font-weight:600;color:${aWin?'#0a1628':'#9ab0c8'}">${p}</span>
                 </div>`).join('')}
             </div>
@@ -2351,7 +2363,7 @@ function renderHistorico() {
               ${match.b.map(p=>`
                 <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-bottom:4px">
                   <span style="font-size:13px;font-weight:600;color:${!aWin?'#0a1628':'#9ab0c8'}">${p}</span>
-                  <div style="width:7px;height:7px;border-radius:50%;background:${_pc(p)};flex-shrink:0"></div>
+                  <div style="width:11px;height:11px;border-radius:50%;background:${flagGrad(getPlayerReg(p).nacionalidade)};flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.2)"></div>
                 </div>`).join('')}
             </div>
           </div>
@@ -2369,6 +2381,72 @@ function renderHistorico() {
       </div>`;
     }
   });
+
+  // ── PODIUM: show after Final phase if complete ──────────────────────────────
+  const _finalIdx = (T.numFases || 3) - 1;
+  if (hasAny && T.phases[_finalIdx] && isPhaseComplete(_finalIdx)) {
+    const _finalStds = groupStandings(T.phases[_finalIdx].groups[0], _finalIdx, 0);
+    const _p1 = _finalStds[0], _p2 = _finalStds[1], _p3 = _finalStds[2];
+    const _podColor = p => flagGrad(getPlayerReg(p?.name||'').nacionalidade);
+    const _podTxt   = p => flagTextCol(getPlayerReg(p?.name||'').nacionalidade);
+    const _podInit  = p => _init(p?.name||'');
+
+    html += `
+    <div style="margin-top:24px;padding:28px 20px 20px;background:linear-gradient(160deg,#0a1628 0%,#1a3052 100%);border-radius:16px;text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:3px;color:#93C5FD;margin-bottom:20px;text-transform:uppercase">🏆 Pódio Final</div>
+
+      <!-- Podium display: 2nd | 1st | 3rd -->
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:20px">
+
+        <!-- 2nd -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="width:52px;height:52px;border-radius:50%;background:${_podColor(_p2)};border:3px solid #94a3b8;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;color:${_podTxt(_p2)};box-shadow:0 2px 12px rgba(0,0,0,.3);text-shadow:0 1px 4px rgba(0,0,0,.4)">${_podInit(_p2)}</div>
+          <div style="font-size:11px;font-weight:700;color:#e2e8f0;max-width:72px;line-height:1.2;text-align:center">${_p2?.name||'—'}</div>
+          <div style="background:#475569;border-radius:8px 8px 0 0;width:72px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+            <div style="font-size:22px">🥈</div>
+          </div>
+        </div>
+
+        <!-- 1st -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="width:64px;height:64px;border-radius:50%;background:${_podColor(_p1)};border:3px solid #C9933A;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:22px;color:${_podTxt(_p1)};box-shadow:0 4px 20px rgba(201,147,58,.4);text-shadow:0 1px 4px rgba(0,0,0,.4)">${_podInit(_p1)}</div>
+          <div style="font-size:13px;font-weight:700;color:#fff;max-width:88px;line-height:1.2;text-align:center">${_p1?.name||'—'}</div>
+          <div style="background:linear-gradient(160deg,#b7791f,#C9933A);border-radius:8px 8px 0 0;width:88px;height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+            <div style="font-size:28px">🥇</div>
+          </div>
+        </div>
+
+        <!-- 3rd -->
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <div style="width:46px;height:46px;border-radius:50%;background:${_podColor(_p3)};border:3px solid #92400e;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;color:${_podTxt(_p3)};box-shadow:0 2px 12px rgba(0,0,0,.3);text-shadow:0 1px 4px rgba(0,0,0,.4)">${_podInit(_p3)}</div>
+          <div style="font-size:11px;font-weight:700;color:#d1d5db;max-width:68px;line-height:1.2;text-align:center">${_p3?.name||'—'}</div>
+          <div style="background:#78350f;border-radius:8px 8px 0 0;width:68px;height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px">
+            <div style="font-size:18px">🥉</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Base platform -->
+      <div style="height:4px;background:linear-gradient(90deg,#1e3a5f,#C9933A,#1e3a5f);border-radius:2px;margin:0 8px"></div>
+
+      <!-- Stats row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px">
+        ${(function(){
+          return [_p1,_p2,_p3].map(function(p,i){
+            if(!p) return '';
+            var medals=['🥇','🥈','🥉'];
+            var gd = p.gd>=0?'+'+p.gd:''+p.gd;
+            return '<div style="background:rgba(255,255,255,.06);border-radius:8px;padding:8px 6px">'
+              +'<div style="font-size:9px;color:#93C5FD;font-family:DM Mono;letter-spacing:1px;margin-bottom:4px">'+medals[i]+'</div>'
+              +'<div style="font-size:10px;font-weight:700;color:#f1f5f9;margin-bottom:3px">'+p.name+'</div>'
+              +'<div style="font-size:9px;color:#94a3b8;font-family:DM Mono">'+p.w+'V · GD'+gd+'</div>'
+              +'</div>';
+          }).join('');
+        })()}
+      </div>
+    </div>`;
+  }
 
   container.innerHTML = hasAny ? html
     : '<div class="empty-panel"><div class="empty-icon" style="font-size:30px">⏳</div><div>Nenhuma partida concluída ainda.</div></div>';
@@ -2451,7 +2529,8 @@ function renderGrupos() {
 
     ph.groups.forEach((group, gi) => {
       const color   = GROUP_COLORS[gi % GROUP_COLORS.length];
-      const letter  = G_LETTERS[gi];
+      const isFinalGrupo = (pi === (T.numFases||3) - 1);
+      const letter  = isFinalGrupo ? 'Z' : G_LETTERS[gi];
       const stds    = groupStandings(group, pi, gi);
       const matches = groupMatches(group);
 
@@ -2718,17 +2797,7 @@ function renderScorecard() {
   const finalists = data.filter(p=>p.phaseKey==='final').length;
   const champion  = data.find(p=>p.medal==='🥇');
 
-  let html = `
-    <div class="sc-header">
-      <div class="sc-header-title">${T.name} · Scorecard</div>
-      <div class="sc-header-sub">${T.date} · ${T.players.length} jogadores · ${phase}</div>
-      <div class="sc-kpis">
-        <div class="sc-kpi"><div class="sc-kpi-v">${f1Elim}</div><div class="sc-kpi-l">Elim. F1 · 10pts</div></div>
-        <div class="sc-kpi"><div class="sc-kpi-v">${f2Elim}</div><div class="sc-kpi-l">Elim. F2 · 50pts</div></div>
-        <div class="sc-kpi"><div class="sc-kpi-v">${finalists}</div><div class="sc-kpi-l">Finalistas · 100+</div></div>
-        <div class="sc-kpi"><div class="sc-kpi-v">${champion?champion.name.split(' ')[0]:'—'}</div><div class="sc-kpi-l">🥇 Campeão</div></div>
-      </div>
-    </div>`;
+  let html = ``;
 
   data.forEach((p, i) => {
     const col = _pc(p.name);
@@ -2747,7 +2816,7 @@ function renderScorecard() {
       </div>
       <div class="sc-pts-wrap">
         <div class="sc-pts ${cls}">${p.total}</div>
-        <div class="sc-pts-lbl">pts temporada</div>
+        <div class="sc-pts-lbl">Score acumulado neste torneio</div>
         <div class="sc-bar-wrap">
           <div class="sc-bar-fill" style="width:${Math.round(p.total/maxPts*100)}%;background:${col}"></div>
         </div>
@@ -2767,7 +2836,10 @@ function renderScorecard() {
         <div class="sc-legend-item"><div class="sc-legend-pts">200</div><div class="sc-legend-lbl">🥉 3º Lugar (100+100)</div></div>
       </div>
       <div style="margin-top:10px;font-size:10px;color:#c0cdd8">
-        Pontos acumulam entre torneios ao longo da temporada · futura integração Google Sheets
+        Pontos acumulados neste torneio
+      </div>
+      <div style="margin-top:6px;font-size:10px;color:#c0cdd8">
+        Pontos acumulam entre torneios ao longo da temporada
       </div>
     </div>`;
 
@@ -3845,19 +3917,27 @@ function simDBReset() {
 //   12% de probabilidade de Tie-Break. O perdedor recebe entre 0 e tbAt-1 games.
 //   Respeita os limites de score máximo e TB configurados por fase.
 function simScore(phaseIdx) {
+  // Universal scoring rule: loser must have exactly tbAt-1 (normal) or tbAt (TB)
+  // Same rule as manual entry: winner=max, loser=tb-1 or loser=tb+TB
   const cfg = T.phaseConfig?.[phaseIdx] || {maxScore:6, tbAt:5};
   const max = cfg.maxScore || 6;
   const tb  = cfg.tbAt    || 5;
-  const goTB = Math.random() < 0.12;
+
+  const goTB = Math.random() < 0.2; // 20% chance of TB
+
   if (goTB) {
-    const tba = 7 + Math.floor(Math.random()*3);
-    const tbb = tba - 1 - Math.floor(Math.random()*3);
-    return {sa:tb, sb:tb, tb:true, tba, tbb};
+    // TB match: max × tb, winner decided by tie-break points
+    const tba = 7 + Math.floor(Math.random()*4);          // 7–10
+    const tbb = Math.floor(Math.random() * (tba - 2));     // 0 to tba-3
+    return Math.random() > 0.5
+      ? {sa:max, sb:tb, tb:true, tba, tbb}
+      : {sa:tb,  sb:max, tb:true, tba:tbb, tbb:tba};
   }
-  const loser = Math.floor(Math.random()*tb);
-  return Math.random()>0.5
-    ? {sa:max, sb:loser, tb:false, tba:null, tbb:null}
-    : {sa:loser, sb:max,  tb:false, tba:null, tbb:null};
+
+  // Normal win: max × (tb-1)
+  return Math.random() > 0.5
+    ? {sa:max,    sb:tb-1, tb:false, tba:null, tbb:null}
+    : {sa:tb-1,   sb:max,  tb:false, tba:null, tbb:null};
 }
 
 // ── OBJETIVO: Simular todos os resultados em falta de uma fase ───────────────
