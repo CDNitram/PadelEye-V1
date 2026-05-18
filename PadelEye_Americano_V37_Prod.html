@@ -1489,6 +1489,8 @@ function updateSummary() {
   const rb = document.getElementById('ready-badge');
   rb.textContent = n >= 4 ? '✅ Pronto!' : 'Aguardando jogadores';
   rb.className   = 'card-badge ' + (n >= 4 ? 'green' : '');
+  // Sync fases toggle visibility whenever setup changes
+  if (typeof updateFasesToggle === 'function') updateFasesToggle();
 }
 
 // ══════════════════════════════════
@@ -4350,8 +4352,9 @@ function updateFasesToggle() {
   if (finalSub) finalSub.textContent = (numFases === 2) ? '1 GRUPO · 3 PARTIDAS · DIRETO DA F1' : '1 GRUPO · 3 PARTIDAS';
 }
 
-// Hook: also call on fases select change
+// Hook: sync on page load + on fases select change
 document.addEventListener('DOMContentLoaded', () => {
+  updateFasesToggle(); // sync initial state (covers restored sessions)
   document.getElementById('cfg-num-fases')?.addEventListener('change', updateFasesToggle);
 });
 
