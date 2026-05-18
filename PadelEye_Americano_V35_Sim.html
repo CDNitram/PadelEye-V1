@@ -1019,7 +1019,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="ok-title">Torneio Criado!</div>
     <div class="ok-sub">O torneio foi configurado com sucesso.</div>
     <div class="ok-details" id="ok-details"></div>
-    <button class="btn btn-gold btn-full" onclick="startRaffle()">🎱 Sortear Grupos &amp; Iniciar</button>
+    <button class="btn btn-gold btn-full" onclick="startRaffle()" style="margin-bottom:10px">🎱 Sortear Grupos &amp; Iniciar</button>
+    <button class="btn btn-secondary btn-full" onclick="startManualGroups()" style="font-size:13px;padding:13px">⚙ Montar Grupos Manualmente</button>
   </div>
 </div>
 
@@ -4313,6 +4314,240 @@ function loadPlayersFromDB() {
   renderRoster();
 }
 
+
+// ══════════════════════════════════════════
+// MANUAL GROUP ASSEMBLY
+// ══════════════════════════════════════════
+let _mgGroups   = [];   // array of arrays [groupIdx] → [playerName,...]
+let _mgNumG     = 0;
+let _mgSelected = null; // currently selected player chip
+
+function startManualGroups() {
+  document.getElementById('overlay-ok').classList.remove('show');
+
+  // Init from T config
+  const n = selectedPlayers.length;
+  _mgNumG   = Math.max(1, Math.floor(n / 4));
+  _mgGroups = Array.from({length: _mgNumG}, () => []);
+  _mgSelected = null;
+
+  _mgRenderPool();
+  _mgRenderGroups();
+  _mgUpdateProgress();
+  document.getElementById('s-manual').style.display = 'block';
+}
+
+function cancelManualGroups() {
+  document.getElementById('s-manual').style.display = 'none';
+  _mgSelected = null;
+}
+
+function _mgUnassigned() {
+  const assigned = _mgGroups.flat();
+  return [...selectedPlayers].filter(p => !assigned.includes(p));
+}
+
+function _mgRenderPool() {
+  const pool = document.getElementById('mg-pool');
+  const unassigned = _mgUnassigned();
+  if (!unassigned.length) {
+    pool.innerHTML = '<div style="font-size:12px;color:#b0c4d8;font-style:italic">Todos os jogadores foram atribuídos.</div>';
+    return;
+  }
+  pool.innerHTML = unassigned.map(name => {
+    const reg   = REGISTRY.find(r => displayName(r) === name || r.nome === name);
+    const grad  = flagGrad(reg?.nacionalidade || '');
+    const txt   = flagTextCol(reg?.nacionalidade || '');
+    const ini   = _init(name);
+    const isSel = _mgSelected === name;
+    return `<div id="mgp-${name.replace(/\s/g,'_')}"
+      onclick="mgSelectPlayer('${name.replace(/'/g,"\'")}')"
+      draggable="true"
+      ondragstart="mgDragStart(event,'${name.replace(/'/g,"\'")}');"
+      style="display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:99px;cursor:pointer;
+             transition:all .18s;user-select:none;border:2px solid ${isSel?'#C9933A':'#dde6f0'};
+             background:${isSel?'#FFF8E0':'#f8fafd'};
+             box-shadow:${isSel?'0 0 0 3px rgba(201,147,58,.2)':'none'}">
+      <div style="width:24px;height:24px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:10px;color:${txt};flex-shrink:0">${ini}</div>
+      <span style="font-size:12px;font-weight:600;color:${isSel?'#865a10':'#0d1e3a'}">${name}</span>
+      ${isSel?'<span style="font-size:10px;color:#C9933A">✓</span>':''}
+    </div>`;
+  }).join('');
+}
+
+function mgSelectPlayer(name) {
+  _mgSelected = (_mgSelected === name) ? null : name;
+  _mgRenderPool();
+}
+
+function mgDragStart(e, name) {
+  e.dataTransfer.setData('text/plain', name);
+  _mgSelected = name;
+}
+
+function mgDropOnGroup(e, gi) {
+  e.preventDefault();
+  const name = e.dataTransfer.getData('text/plain') || _mgSelected;
+  if (name) mgAssignToGroup(name, gi);
+}
+
+function mgDragOver(e) { e.preventDefault(); }
+
+function mgAssignToGroup(name, gi) {
+  // Already in this group?
+  if (_mgGroups[gi].includes(name)) return;
+  // Full? (max 4)
+  if (_mgGroups[gi].length >= 4) {
+    safeAlert('Grupo ' + ['A','B','C','D','E','F','G','H'][gi] + ' já tem 4 jogadores.', 'warn');
+    return;
+  }
+  // Remove from other group if reassigning
+  _mgGroups.forEach((g, i) => {
+    const idx = g.indexOf(name);
+    if (idx !== -1) g.splice(idx, 1);
+  });
+  _mgGroups[gi].push(name);
+  _mgSelected = null;
+  _mgRenderPool();
+  _mgRenderGroups();
+  _mgUpdateProgress();
+}
+
+function mgRemoveFromGroup(name, gi) {
+  _mgGroups[gi] = _mgGroups[gi].filter(p => p !== name);
+  _mgRenderPool();
+  _mgRenderGroups();
+  _mgUpdateProgress();
+}
+
+function _mgRenderGroups() {
+  const LETTERS = ['A','B','C','D','E','F','G','H'];
+  const COLORS  = ['#0a1628','#1a5276','#155432','#6e2a00'];
+  const cont = document.getElementById('mg-groups');
+
+  cont.innerHTML = _mgGroups.map((group, gi) => {
+    const letter = LETTERS[gi];
+    const color  = COLORS[gi % COLORS.length];
+    const full   = group.length === 4;
+    const hasSel = _mgSelected !== null;
+
+    const players = group.map(name => {
+      const reg  = REGISTRY.find(r => displayName(r) === name || r.nome === name);
+      const grad = flagGrad(reg?.nacionalidade || '');
+      const txt  = flagTextCol(reg?.nacionalidade || '');
+      const ini  = _init(name);
+      const isSeed = seedList.includes(name);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f0f5fb">
+        <div style="width:28px;height:28px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:11px;color:${txt};flex-shrink:0">${ini}</div>
+        <span style="font-size:12px;font-weight:600;color:#0d1e3a;flex:1">${name}${isSeed?' 🌱':''}</span>
+        <button onclick="mgRemoveFromGroup('${name.replace(/'/g,"\'")}',${gi})"
+          style="width:20px;height:20px;border-radius:50%;border:none;background:#f0f5fb;color:#9ab0c8;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">×</button>
+      </div>`;
+    }).join('');
+
+    const emptySlots = Array.from({length: 4 - group.length}, (_, si) => `
+      <div style="padding:7px 0;border-bottom:1px solid #f0f5fb;font-size:11px;color:#c0cdd8;font-style:italic;text-align:center">
+        vaga ${group.length + si + 1}
+      </div>`).join('');
+
+    const dropActive = hasSel && !full;
+
+    return `<div style="background:#fff;border:2px solid ${full?color+'60':'#dde6f0'};border-radius:12px;overflow:hidden;transition:border-color .2s"
+      ondragover="mgDragOver(event)"
+      ondrop="mgDropOnGroup(event,${gi})"
+      ondragenter="this.style.borderColor='${color}'"
+      ondragleave="this.style.borderColor='${full?color+'60':'#dde6f0'}'">
+      <!-- Header -->
+      <div style="background:${color};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-family:'Bebas Neue';font-size:20px;color:#C9933A;letter-spacing:2px">Grupo ${letter}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.7);font-family:'DM Mono'">${group.length}/4 ${full?'✅':''}</div>
+      </div>
+      <!-- Players -->
+      <div style="padding:8px 12px">
+        ${players}
+        ${emptySlots}
+        ${dropActive ? `<div onclick="if(_mgSelected)mgAssignToGroup(_mgSelected,${gi})"
+          style="margin-top:6px;padding:8px;border:2px dashed #C9933A;border-radius:8px;
+                 text-align:center;font-size:11px;color:#C9933A;cursor:pointer;background:#fffbf0">
+          ▾ Colocar aqui
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _mgUpdateProgress() {
+  const total    = selectedPlayers.length;
+  const assigned = _mgGroups.flat().length;
+  const allFull  = _mgGroups.every(g => g.length === 4);
+  const pct      = total > 0 ? Math.round(assigned / total * 100) : 0;
+
+  document.getElementById('mg-prog-text').textContent = `${assigned} / ${total} jogadores atribuídos`;
+  document.getElementById('mg-prog-bar').style.width  = pct + '%';
+  document.getElementById('mg-prog-pct').textContent  = pct + '%';
+
+  const btn = document.getElementById('mg-launch-btn');
+  if (allFull) {
+    btn.disabled = false;
+    btn.style.background  = 'linear-gradient(135deg,#C9933A,#e0a840)';
+    btn.style.color       = '#0a1628';
+    btn.style.cursor      = 'pointer';
+    btn.textContent       = '▶ Iniciar Torneio com Estes Grupos';
+  } else {
+    btn.disabled = true;
+    btn.style.background  = '#c0cdd8';
+    btn.style.color       = '#fff';
+    btn.style.cursor      = 'not-allowed';
+    btn.textContent       = '▶ Iniciar Torneio (' + (total - assigned) + ' jogadores por atribuir)';
+  }
+}
+
+function launchManualGroups() {
+  if (!_mgGroups.every(g => g.length === 4)) return;
+  document.getElementById('s-manual').style.display = 'none';
+
+  // Same as startTournament but with manual groups
+  if (!T.id) T.id = generateTorneiId();
+  T.started      = true;
+  T.name         = document.getElementById('cfg-name').value || 'Torneio Americano EcoTenis';
+  T.date         = getCfgDate();
+  T.courts       = parseInt(document.getElementById('cfg-courts').value);
+  T.scoring      = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
+  T.players      = [...selectedPlayers];
+  T.currentPhase = 0;
+  T.numFases     = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  T.phaseConfig  = [
+    { maxScore: parseInt(document.getElementById('cfg-max-f1')?.value    || 6), tbAt: parseInt(document.getElementById('cfg-tb-f1')?.value     || 5) },
+    { maxScore: parseInt(document.getElementById('cfg-max-f2')?.value    || 6), tbAt: parseInt(document.getElementById('cfg-tb-f2')?.value     || 5) },
+    { maxScore: parseInt(document.getElementById('cfg-max-final')?.value || 9), tbAt: parseInt(document.getElementById('cfg-tb-final')?.value  || 9) },
+  ];
+
+  T_groups = _mgGroups.map(g => [...g]);
+  T.phases = [{ name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }];
+  persistT();
+
+  if (T.id) {
+    const numGrupos = T_groups.length;
+    const jogPorGrupo = numGrupos > 0 ? Math.ceil(T.players.length / numGrupos) : 4;
+    PadelEyeDB.send('create_torneio', { row: {
+      torneio_id: T.id, nome: T.name, data: T.date, local: T.local || '',
+      formato: 'Americano · Modelo Brasileiro', num_grupos: numGrupos,
+      jogadores_por_grupo: jogPorGrupo, num_fases: T.numFases || 3,
+      categoria: T.categoria || '', status: 'em_curso', criado_em: new Date().toISOString(),
+    }});
+  }
+
+  renderGrupos(); renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
+  _updateSubButtons();
+
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelector('[onclick*="rodadas"]').classList.add('on');
+  document.getElementById('p-rodadas').classList.add('on');
+
+  safeAlert('✅ Torneio iniciado com grupos manuais!', 'ok');
+}
+
 </script>
 
 <!-- ═══════════════════════════════ VIEW PLAYER MODAL ═══ -->
@@ -4370,5 +4605,49 @@ function loadPlayersFromDB() {
   </div>
 </div>
 
+
+<!-- ════════ MANUAL GROUPS SCREEN ════════ -->
+<div id="s-manual" style="display:none;position:fixed;inset:0;z-index:9999;background:#f0f5fb;overflow-y:auto;padding:20px 16px 40px">
+
+  <div style="max-width:680px;margin:0 auto">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;color:#0a1628">MONTAGEM DE GRUPOS</div>
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase">Arraste ou clique para atribuir jogadores</div>
+      </div>
+      <button onclick="cancelManualGroups()" style="padding:7px 16px;border-radius:8px;border:1px solid #dde6f0;background:#fff;color:#9ab0c8;font-size:12px;cursor:pointer;font-family:'DM Sans'">✕ Cancelar</button>
+    </div>
+
+    <!-- Progress -->
+    <div id="mg-progress" style="background:#fff;border:1px solid #dde6f0;border-radius:10px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;font-size:12px;color:#5a7090">
+      <div id="mg-prog-text">0 jogadores atribuídos</div>
+      <div style="flex:1;height:5px;background:#eaf0f8;border-radius:99px;overflow:hidden">
+        <div id="mg-prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#3a7bd5,#C9933A);border-radius:99px;transition:width .3s"></div>
+      </div>
+      <div id="mg-prog-pct" style="font-family:'DM Mono';font-weight:700;color:#0a1628">0%</div>
+    </div>
+
+    <!-- Player pool -->
+    <div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin-bottom:10px">
+        Jogadores disponíveis — clique para selecionar, depois clique num grupo
+      </div>
+      <div id="mg-pool" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px"></div>
+    </div>
+
+    <!-- Groups grid -->
+    <div id="mg-groups" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px"></div>
+
+    <!-- Launch button -->
+    <button id="mg-launch-btn" onclick="launchManualGroups()" disabled
+      style="width:100%;padding:16px;border-radius:12px;border:none;
+             background:#c0cdd8;color:#fff;font-family:'DM Sans';font-size:15px;font-weight:700;
+             cursor:not-allowed;transition:all .3s">
+      ▶ Iniciar Torneio
+    </button>
+  </div>
+</div>
 </body>
 </html>
