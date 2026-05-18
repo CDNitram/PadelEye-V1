@@ -1781,7 +1781,9 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     return;
   }
 
-  // ── V37 FIX 2: TB points — vencedor ≥ 7 E margem ≥ 2 ─────────────────────
+  // ── V37 FIX 2: TB points ──────────────────────────────────────────────────
+  // maxSc=6 ou 7 → regras estritas: vencedor ≥ 7 E margem ≥ 2
+  // maxSc=8 ou 9 → MVP livre: admin insere o que foi jogado (só valida preenchimento e não-empate)
   let tba = null, tbb = null;
   const needsTBScores = (hasTB && l === tbAt);
   if (needsTBScores) {
@@ -1789,21 +1791,20 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     tbb = parseInt(document.getElementById(`tb-${key}-b`)?.value || '');
     if (isNaN(tba) || isNaN(tbb)) { gameAlert('Insira o placar do Tie-Break (mini-jogo).','warn'); return; }
     if (tba === tbb)              { gameAlert('Tie-Break não pode terminar empatado.','warn'); return; }
-    const tbW = Math.max(tba, tbb);
-    const tbL = Math.min(tba, tbb);
-    if (tbW < 7) {
-      gameAlert(`TB ${tba}×${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`, 'warn');
-      return;
+    if (maxSc <= 7) {
+      // Regras estritas (padel standard)
+      const tbW = Math.max(tba, tbb);
+      const tbL = Math.min(tba, tbb);
+      if (tbW < 7) {
+        gameAlert(`TB ${tba}×${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`, 'warn');
+        return;
+      }
+      if (tbW - tbL < 2) {
+        gameAlert(`TB ${tba}×${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`, 'warn');
+        return;
+      }
     }
-    if (tbW - tbL < 2) {
-      gameAlert(`TB ${tba}×${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`, 'warn');
-      return;
-    }
-    if (tbL >= tbW - 1 && tbW === 7) {
-      // Edge: 7×6 caught by margin check above, but explicit message for clarity
-      gameAlert(`TB 7×6 inválido — margem insuficiente. Continue: próximo ponto vence (8×6 ou seguinte).`, 'warn');
-      return;
-    }
+    // maxSc=8 ou 9: sem validação adicional — admin insere o resultado real
   }
   T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb };
   persistT();
