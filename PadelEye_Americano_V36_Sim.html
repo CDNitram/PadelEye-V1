@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Ecotenis MVP · Torneio Americano · V36</title>
+<title>PadelEye · Ecotenis MVP · Torneio Americano · V37</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -566,7 +566,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
       <button class="btn-login" onclick="doLogin()">Entrar no PadelEye →</button>
     </div>
-    <div class="login-footer">Tournament Manager V36 Sim - BY TECHNIGMA AI LAB</div>
+    <div class="login-footer">Tournament Manager V37 Sim - BY TECHNIGMA AI LAB</div>
   </div>
 </div>
 
@@ -1374,6 +1374,8 @@ function updateSummary() {
   const rb = document.getElementById('ready-badge');
   rb.textContent = n >= 4 ? '✅ Pronto!' : 'Aguardando jogadores';
   rb.className   = 'card-badge ' + (n >= 4 ? 'green' : '');
+  // Sync fases toggle visibility whenever setup changes
+  if (typeof updateFasesToggle === 'function') updateFasesToggle();
 }
 
 // ══════════════════════════════════
@@ -1517,7 +1519,7 @@ function getPhaseConfig(phaseIdx) {
   if ((T.numFases === 2) && phaseIdx === 1) {
     return T.phaseConfig?.[2] || { maxScore: 7, tbAt: 6 };
   }
-  return getPhaseConfig(phaseIdx) || { maxScore: 7, tbAt: 6 };
+  return T.phaseConfig?.[phaseIdx] || { maxScore: 7, tbAt: 6 };
 }
 
 // ── MATCH PAIRINGS for a group of 4 [A,B,C,D] ──
@@ -1734,7 +1736,13 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   //   B) w=tbAt,  l≤tbAt-2         → vitória normal longa  (6×1 para maxSc=7)
   //   C) w=maxSc, l=tbAt,  +TB    → vitória por tie-break
   //
-  // Inválido: empate, w>maxSc, 6×5 sem TB, l>tbAt
+  // ── V37: Regras corrigidas per spec ───────────────────────────────────────
+  // Impossíveis (bloqueados):
+  //   • Empate                                 → nunca é resultado final
+  //   • w > maxSc                              → acima do máximo configurado
+  //   • maxSc=7 e w=7 com l<5                 → 7 games só alcançável com adversário em 5 ou 6
+  //   • TB points: vencedor < 7               → mínimo 7 pontos no TB
+  //   • TB points: |tba-tbb| < 2             → obrigatória margem de 2
   const w = Math.max(sa, sb);
   const l = Math.min(sa, sb);
 
@@ -1748,11 +1756,14 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     return;
   }
 
-  const normalShort = (w === maxSc && l < tbAt && w - l >= 2);          // A: 6×0-6×4 para maxSc=6
-  const normalLong  = (w === tbAt  && l <= tbAt - 2);                    // B: 6×0-6×4 para maxSc=7
-  const tbWin       = (w === maxSc && l === tbAt);                       // C: 7×6+TB ou 6×5+TB
+  // ── V37 FIX 1: Para maxSc=7, w=7 só é válido com l=5 (7×5) ou l=6+TB (7×6)
+  // 7×0 até 7×4 são impossíveis: 7 games só se atinge depois de 5×5.
+  const normal6Win   = (w === 6 && l <= 4);                             // 6×0–6×4 (qualquer formato)
+  const normal7Win   = (maxSc === 7 && w === 7 && l === 5);             // 7×5 (único resultado normal com w=7)
+  const normalWin    = normal6Win || normal7Win;
+  const tbWin        = (w === maxSc && l === tbAt);                      // 6×5+TB ou 7×6+TB
 
-  if (normalShort || normalLong) {
+  if (normalWin) {
     // Vitória normal ✅
 
   } else if (tbWin) {
@@ -1762,16 +1773,19 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     }
     // Vitória por Tie-Break ✅
 
-  } else if (w === maxSc && l === tbAt - 1 && !normalShort && !normalLong) {
-    // Vantagem insuficiente sem TB — ex: 6×5 sem ter passado pelo TB
+  } else if (w === maxSc && l === tbAt - 1 && !normalWin) {
+    // Score como 6×5 (maxSc=6) ou 7×6 (maxSc=7) sem TB activo
     gameAlert(`Placar ${w}×${l} — active o Tie-Break se o jogo foi a ${tbAt}×${tbAt}.`, 'warn');
     return;
 
   } else {
-    gameAlert(`Placar ${sa}×${sb} inválido (máx ${maxSc}, TB a ${tbAt}×${tbAt}).`, 'warn');
+    gameAlert(`Placar ${sa}×${sb} inválido — com maxSc=${maxSc}, w=${w} só é possível com adversário em ${tbAt-1} ou ${tbAt}.`, 'warn');
     return;
   }
-  // TB validation — only required when the actual result IS a TB win (l === tbAt)
+
+  // ── V37 FIX 2: TB points ──────────────────────────────────────────────────
+  // maxSc=6 ou 7 → regras estritas: vencedor ≥ 7 E margem ≥ 2
+  // maxSc=8 ou 9 → MVP livre: admin insere o que foi jogado (só valida preenchimento e não-empate)
   let tba = null, tbb = null;
   const needsTBScores = (hasTB && l === tbAt);
   if (needsTBScores) {
@@ -1779,6 +1793,20 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     tbb = parseInt(document.getElementById(`tb-${key}-b`)?.value || '');
     if (isNaN(tba) || isNaN(tbb)) { gameAlert('Insira o placar do Tie-Break (mini-jogo).','warn'); return; }
     if (tba === tbb)              { gameAlert('Tie-Break não pode terminar empatado.','warn'); return; }
+    if (maxSc <= 7) {
+      // Regras estritas (padel standard)
+      const tbW = Math.max(tba, tbb);
+      const tbL = Math.min(tba, tbb);
+      if (tbW < 7) {
+        gameAlert(`TB ${tba}×${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`, 'warn');
+        return;
+      }
+      if (tbW - tbL < 2) {
+        gameAlert(`TB ${tba}×${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`, 'warn');
+        return;
+      }
+    }
+    // maxSc=8 ou 9: sem validação adicional — admin insere o resultado real
   }
   T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb };
   persistT();
@@ -1891,8 +1919,14 @@ function renderRounds() {
   }
 
   const ph     = T.phases[T.currentPhase];
+  if (!ph) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Fase não encontrada.</div></div>';
+    return;
+  }
   const phName = ph.name;
   const phIdx  = T.currentPhase;
+  let html = '';
+  try {
 
   // Count totals
   let totalM = 0, doneM = 0;
@@ -1915,7 +1949,7 @@ function renderRounds() {
     </div>`
   ).join('');
 
-  let html = `
+  html = `
     <div class="card" style="margin-bottom:14px">
       <div class="card-hd" style="margin-bottom:10px">
         <div class="card-title">🏸 ${T.name}</div>
@@ -2111,6 +2145,14 @@ function renderRounds() {
     </div>`;
   }
 
+  } catch(e) {
+    console.error('[renderRounds] error:', e);
+    c.innerHTML = '<div style="color:red;padding:20px;font-size:12px;font-family:monospace;background:#fff">'
+      + '❌ renderRounds error: ' + e.message + '<br>'
+      + (e.stack||'').slice(0,400)
+      + '</div>';
+    return;
+  }
   c.innerHTML = html;
 }
 
@@ -2749,9 +2791,11 @@ function startTournament() {
   renderHistorico();
 
   // Go directly to Rodadas — Grupos tab is still accessible to see the draw
-  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelector('[onclick*="rodadas"]').classList.add('on');
+  // Navigate directly (V31 pattern)
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const _nav = document.querySelector('.tab-btn[onclick*="rodadas"]') || document.querySelector('[onclick*="rodadas"]');
+  if (_nav) _nav.classList.add('on');
   document.getElementById('p-rodadas').classList.add('on');
 }
 
@@ -3837,24 +3881,49 @@ function raffleFinish() {
   clearInterval(_raffleTimer);
   document.getElementById('s-raffle').classList.remove('show');
 
-  // Use raffle groups as T_groups
+  // Guarantee T state is complete before any render
+  T.started      = true;
+  T.currentPhase = 0;
   T_groups = _raffleGroups.map(g => g.map(p => p.name));
-
   T.phases = [
     { name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }
   ];
+  persistT();
+  _updateSubButtons();
 
+  // ── V37: Register tournament in Sheet (was missing from raffle flow) ───────
+  if (T.id) {
+    const numGrupos   = T_groups.length;
+    const jogPorGrupo = numGrupos > 0 ? Math.ceil(T.players.length / numGrupos) : 4;
+    PadelEyeDB.send('create_torneio', {
+      row: {
+        torneio_id:          T.id,
+        nome:                T.name,
+        data:                T.date,
+        local:               T.local     || '',
+        formato:             'Americano · Modelo Brasileiro',
+        num_grupos:          numGrupos,
+        jogadores_por_grupo: jogPorGrupo,
+        num_fases:           T.numFases  || 3,
+        categoria:           T.categoria || '',
+        status:              'em_curso',
+        criado_em:           new Date().toISOString(),
+      }
+    });
+  }
+
+  // Pre-render all panels (V31 pattern — direct call before navigation)
   renderGrupos();
   renderRounds();
   renderRanking();
   renderHistorico();
-  renderScorecard();
-  _updateSubButtons();
 
-  // Navigate to Rodadas
-  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelector('[onclick*="rodadas"]').classList.add('on');
+  // Navigate directly to Rodadas (V31 pattern — no showTab dependency)
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const _rfBtn = document.querySelector('.tab-btn[onclick*="rodadas"]') ||
+                 document.querySelector('[onclick*="rodadas"]');
+  if (_rfBtn) _rfBtn.classList.add('on');
   document.getElementById('p-rodadas').classList.add('on');
 }
 
@@ -3942,38 +4011,40 @@ function simDBReset() {
 
 // ── OBJETIVO: Gerar um resultado aleatório realista para uma partida ──────────
 // CONTEXTO: Chamado por simPhaseMatches() para cada partida não guardada.
-//   12% de probabilidade de Tie-Break. O perdedor recebe entre 0 e tbAt-1 games.
-//   Respeita os limites de score máximo e TB configurados por fase.
+//   Respeita a spec de pontuação — scores impossíveis nunca são gerados:
+//   • Normal 6-win: w=6, l=0..4 (qualquer formato)
+//   • Normal 7-win: w=7, l=5    (ÚNICO resultado sem TB quando max=7)
+//   • TB win:       w=max, l=tb  (6×5+TB ou 7×6+TB)
+//   TB points: vencedor ≥7, margem ≥2 (ex: 7×0-7×5, 8×6, 9×7)
 function simScore(phaseIdx) {
-  // Padel scoring — two formats:
-  //   55%: Format A normal win: w=max, l<tb (6×0-6×4 for maxSc=6)
-  //   30%: Format B normal win: w=tb,  l≤tb-2 (6×0-6×4 for maxSc=7)
-  //   15%: TB win: w=max, l=tb
   const cfg = getPhaseConfig(phaseIdx);
   const max = cfg.maxScore || 7;
   const tb  = cfg.tbAt    || 6;
   const r   = Math.random();
+  const flip = () => Math.random() > 0.5;
 
-  if (r < 0.55) {
-    // Format A: w=max, l<tb, 2-lead
-    const loser = Math.floor(Math.random() * (tb - 1));
-    return Math.random() > 0.5
-      ? {sa:max, sb:loser, tb:false, tba:null, tbb:null}
-      : {sa:loser, sb:max, tb:false, tba:null, tbb:null};
-  } else if (r < 0.85) {
-    // Format B: w=tb, l≤tb-2
-    const loser = Math.floor(Math.random() * (tb - 1));
-    return Math.random() > 0.5
-      ? {sa:tb, sb:loser, tb:false, tba:null, tbb:null}
-      : {sa:loser, sb:tb, tb:false, tba:null, tbb:null};
+  let sa, sb, hasTB = false, tba = null, tbb = null;
+
+  if (r < 0.15) {
+    // ── TB win (15%): w=max, l=tb ─────────────────────────────────────────
+    hasTB = true;
+    // TB points: winner 7..10, loser 0..(winner-2) — garante margem ≥ 2
+    const tbW = 7 + Math.floor(Math.random() * 4);             // 7, 8, 9 ou 10
+    const tbL = Math.floor(Math.random() * (tbW - 1));         // 0..(tbW-2)
+    if (flip()) { tba = tbW; tbb = tbL; sa = max; sb = tb; }
+    else        { tba = tbL; tbb = tbW; sa = tb;  sb = max; }
+
+  } else if (max === 7 && r < 0.30) {
+    // ── 7×5 (15% quando max=7): único resultado normal com w=7 ───────────
+    if (flip()) { sa = 7; sb = 5; } else { sa = 5; sb = 7; }
+
   } else {
-    // TB win: w=max, l=tb
-    const tba = 7 + Math.floor(Math.random()*4);
-    const tbb = Math.floor(Math.random() * Math.max(1, tba - 2));
-    return Math.random() > 0.5
-      ? {sa:max, sb:tb, tb:true, tba, tbb}
-      : {sa:tb,  sb:max, tb:true, tba:tbb, tbb:tba};
+    // ── Normal 6-win (70%+): w=6, l=0..4 — válido em qualquer formato ────
+    const loser = Math.floor(Math.random() * 5);               // 0, 1, 2, 3 ou 4
+    if (flip()) { sa = 6; sb = loser; } else { sa = loser; sb = 6; }
   }
+
+  return { sa, sb, tb: hasTB, tba, tbb };
 }
 
 // ── OBJETIVO: Simular todos os resultados em falta de uma fase ───────────────
@@ -4316,8 +4387,9 @@ function updateFasesToggle() {
   if (finalSub) finalSub.textContent = (numFases === 2) ? '1 GRUPO · 3 PARTIDAS · DIRETO DA F1' : '1 GRUPO · 3 PARTIDAS';
 }
 
-// Hook: also call on fases select change
+// Hook: sync on page load + on fases select change
 document.addEventListener('DOMContentLoaded', () => {
+  updateFasesToggle(); // sync initial state (covers restored sessions)
   document.getElementById('cfg-num-fases')?.addEventListener('change', updateFasesToggle);
 });
 
@@ -4565,9 +4637,11 @@ function launchManualGroups() {
   renderGrupos(); renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
   _updateSubButtons();
 
-  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
-  document.querySelector('[onclick*="rodadas"]').classList.add('on');
+  // Navigate directly (V31 pattern)
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const _nav = document.querySelector('.tab-btn[onclick*="rodadas"]') || document.querySelector('[onclick*="rodadas"]');
+  if (_nav) _nav.classList.add('on');
   document.getElementById('p-rodadas').classList.add('on');
 
   safeAlert('✅ Torneio iniciado com grupos manuais!', 'ok');
