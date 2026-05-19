@@ -4179,6 +4179,27 @@ function raffleFinish() {
   persistT();
   _updateSubButtons();
 
+  // ── V37: Register tournament in Sheet (was missing from raffle flow) ───────
+  if (T.id) {
+    const numGrupos   = T_groups.length;
+    const jogPorGrupo = numGrupos > 0 ? Math.ceil(T.players.length / numGrupos) : 4;
+    PadelEyeDB.send('create_torneio', {
+      row: {
+        torneio_id:          T.id,
+        nome:                T.name,
+        data:                T.date,
+        local:               T.local     || '',
+        formato:             'Americano · Modelo Brasileiro',
+        num_grupos:          numGrupos,
+        jogadores_por_grupo: jogPorGrupo,
+        num_fases:           T.numFases  || 3,
+        categoria:           T.categoria || '',
+        status:              'em_curso',
+        criado_em:           new Date().toISOString(),
+      }
+    });
+  }
+
   // Pre-render all panels (V31 pattern — direct call before navigation)
   renderGrupos();
   renderRounds();
