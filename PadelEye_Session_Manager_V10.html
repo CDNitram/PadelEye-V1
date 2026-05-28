@@ -609,6 +609,7 @@ const COLORS = ['#3498DB','#2ECC71','#E74C3C','#F39C12','#9B59B6','#1ABC9C','#E6
 const pc   = name => COLORS[Math.abs(name.split('').reduce((h,c)=>h*31+c.charCodeAt(0),0)) % COLORS.length];
 const init = name => name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 const _init = init; // alias used in histOpen
+let PLAYER_REGISTRY = [];
 let currentUser   = null;
 let sessionSaved  = false;
 let activePlayers = [];
@@ -1651,9 +1652,7 @@ let _histSessions=[], _histCurrent=null;
 function histBack(){ document.getElementById('hist-list-view').style.display='block'; document.getElementById('hist-detail-view').style.display='none'; }
 function histSwitch(t){ document.querySelectorAll('.hist-tab-panel').forEach(p=>p.style.display='none'); const el=document.getElementById('hist-tab-'+t); if(el)el.style.display='block'; document.querySelectorAll('.hist-tab-btn').forEach(b=>{b.classList.toggle('on',b.dataset.tab===t);}); }
 
-// ── Avatar helpers (used in histOpen) ──
-function pc(n){ return rkCol(n); }
-function init(n){ return rkIni(n); }
+// ── Avatar helpers — pc() and init() defined as const above, no redeclaration needed ──
 
 // ══════════════════════════════════════════
 // SHARE
@@ -1710,59 +1709,33 @@ function parseSmartDate(s){
 // ADD PLAYER MODAL
 // ══════════════════════════════════════════
 // ── OBJETIVO: Registar novo jogador localmente e no Google Sheets ─────────────
-function openAddPlayer(){ document.getElementById('modal-add-player').style.display='flex'; }
-function closeAddPlayer(){ document.getElementById('modal-add-player').style.display='none'; }
+function openAddPlayer(){ document.getElementById('add-player-modal').style.display='flex'; }
+function closeAddPlayer(){ document.getElementById('add-player-modal').style.display='none'; }
 async function saveNewPlayer(){
-  const nome  = document.getElementById('new-player-name')?.value?.trim();
-  const nick  = document.getElementById('new-player-nick')?.value?.trim();
-  const cat   = document.getElementById('new-player-cat')?.value||'';
-  if(!nome){showAlert('alert-player','Name required.','warn');return;}
+  const nome  = document.getElementById('ap-nome')?.value?.trim();
+  const sobr  = document.getElementById('ap-sobrenome')?.value?.trim()||'';
+  const nick  = document.getElementById('ap-nickname')?.value?.trim();
+  const cat   = document.getElementById('ap-categoria')?.value||'';
+  const gen   = document.getElementById('ap-genero')?.value||'';
+  const city  = document.getElementById('ap-cidade')?.value?.trim()||'';
+  const nat   = document.getElementById('ap-nacionalidade')?.value?.trim()||'';
+  const email = document.getElementById('ap-email')?.value?.trim()||'';
+  const cel   = document.getElementById('ap-celular')?.value?.trim()||'';
+  if(!nome){showAlert('ap-status','Nome obrigatório.','warn');document.getElementById('ap-status').style.display='block';return;}
   const id='p_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
   const display = nick||nome;
   if(!BASE_PLAYERS.includes(display)) BASE_PLAYERS.push(display);
   renderPlayerGrid();
   updateMatchSelects();
   closeAddPlayer();
-  const res = await PadelEyeDB.registerPlayer({id, nome, nickname:nick, categoria:cat});
-  showAlert('alert-player', res.status==='error'?'⚠️ Save failed (local ok)':'✅ Player saved!', res.status==='error'?'warn':'ok');
+  const res = await PadelEyeDB.registerPlayer({id, nome, sobrenome:sobr, nickname:nick, categoria:cat, genero:gen, cidade:city, nacionalidade:nat, email, celular:cel});
+  const apSt = document.getElementById('ap-status');
+  if(apSt){apSt.style.display='block';apSt.textContent=res.status==='error'?'⚠️ Erro ao salvar (local ok)':'✅ Jogador salvo!';}
+  setTimeout(()=>closeAddPlayer(),1200);
   await PadelEyeDB.logSession('App','insert_player',id,{nome,nick,cat});
 }
 
-// ══════════════════════════════════════════
-// SAVE SESSION
-// ══════════════════════════════════════════
-// ── OBJETIVO: Gravar sessão completa (sessão + partidas + stats + ranking) ────
-async function saveSession(){
-  if(!matches.length){showAlert('alert-save','No matches to save.','warn');return;}
-  const num   = document.getElementById('session-label')?.textContent||'';
-  const date  = document.getElementById('session-date')?.value||new Date().toISOString().slice(0,10);
-  const local = document.getElementById('session-venue')?.value||'';
-  const fmt   = document.getElementById('session-format')?.value||'';
-  const notes = document.getElementById('session-notes')?.value||'';
-  const mvp   = scoreboard.length?[...scoreboard].sort((a,b)=>b.wins-a.wins)[0]?.name||'':'';
-  const stats = computeStats();
-  const sessData = { numero:num, data:date, local, formato:fmt, observacoes:notes, mvp, jogadores:activePlayers, partidas:matches };
-  const partidas = matches.map(m=>({
-    equipa_a:m.teamA, equipa_b:m.teamB,
-    score_a:m.sa, score_b:m.sb,
-    tb:m.tb, tba:m.tba, tbb:m.tbb
-  }));
-  await PadelEyeDB.saveSessao(sessData, partidas, stats);
-  await PadelEyeDB.logSession('App','save_session',num,{players:activePlayers.length,matches:matches.length});
-}
-function computeStats(){
-  const map={};
-  activePlayers.forEach(p=>{map[p]={jogador:p,m:0,w:0,l:0,gw:0,gl:0,gd:0,mvp:false};});
-  matches.forEach(m=>{
-    if(m.sa===null||m.sb===null)return;
-    const aWin=m.sa>m.sb;
-    [...m.teamA].forEach(p=>{if(map[p]){map[p].m++;map[p].gw+=m.sa;map[p].gl+=m.sb;map[p].gd+=(m.sa-m.sb);aWin?map[p].w++:map[p].l++;}});
-    [...m.teamB].forEach(p=>{if(map[p]){map[p].m++;map[p].gw+=m.sb;map[p].gl+=m.sa;map[p].gd+=(m.sb-m.sa);!aWin?map[p].w++:map[p].l++;}});
-  });
-  const arr=Object.values(map).sort((a,b)=>b.w-a.w||(b.gd-a.gd));
-  if(arr.length)arr[0].mvp=true;
-  return arr;
-}
+// ── SAVE SESSION — function defined above in SAVE TAB section (correct IDs: cfg-num, cfg-date, cfg-local) ──
 
 // ══════════════════════════════════════════
 // TEST DB TAB
@@ -1799,16 +1772,8 @@ function editDBUrl(){
 // ══════════════════════════════════════════
 // ── OBJETIVO: Bootstrap — session number, data default, load players ──────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // Session number
-  const lbl = document.getElementById('session-label');
-  if(lbl){
-    lbl.textContent = 'Carregando...';
-    const n = await PadelEyeDB.fetchNextSessionNumber();
-    lbl.textContent = n;
-  }
-  // Date default
-  const dateEl = document.getElementById('session-date');
-  if(dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0,10);
+  // Session number preloaded — will be set in doLogin via cfg-num
+  // Date default — will be set in doLogin via cfg-date
   // Load players
   await loadPlayersFromDB();
   // Render test DB tab
