@@ -946,24 +946,12 @@ function confirmRandom(){
 }
 function cancelRandom(){window._pendingMatches=null;document.getElementById('random-preview').style.display='none';}
 
-// ══════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
 // DB MODULE · PadelEyeDB V10
-// ══════════════════════════════════════════
+// GS V7 unified endpoint — Sessions + Tournaments
+// ── OBJETIVO: Todas as operações de leitura/escrita no Google Sheets ─────
+// V10: EN schema, session_format, notes, tb_a, tb_b, tie_break='Yes'/'No'
 // ══════════════════════════════════════════════════════════════════
-// PadelEye · Session Manager DB Module · V10
-// Sessions Apps Script V2 (separate from Tournaments GS V6)
-// ══════════════════════════════════════════════════════════════════
-//
-// V10 changelog vs V9:
-//   - All DB field names updated to English schema
-//   - Sessions_Sessions: +session_format, +notes
-//   - Matches_Sessions: +tie_break, +tb_a, +tb_b, +winner_team, +date
-//   - Stats_Sessions: gw→points_for, gl→points_against, gd→points_difference
-//   - Ranking_Sessions: jogador→player, sessoes→sessions, etc.
-//   - Players: id→player_id, nome→player_name, etc.
-//   - Action names updated throughout
-//   - WEB_APP_URL: let + localStorage (editable without redeploy)
-//   - tie_break keeps 'Yes'/'No' (EN convention for sessions)
 
 let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') ||
   "https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec";
@@ -1194,12 +1182,9 @@ const PadelEyeDB = (() => {
   return { saveSessao, logSession, registerPlayer, fetchNextSessionNumber, _url };
 })();
 
-// ══════════════════════════════════════════
-// READ FUNCTIONS · V10
-// ══════════════════════════════════════════
 // ══════════════════════════════════════════════════════════════════
-// V10 — Updated read functions (DB field name changes)
-// Replaces corresponding V9 functions in full V10 HTML
+// READ FUNCTIONS · V10
+// Ranking, Consistency, History — EN field names + PT fallback
 // ══════════════════════════════════════════════════════════════════
 
 // ── loadPlayersFromDB — reads Players with EN field names ──
@@ -1641,8 +1626,9 @@ function rkSetSort(key, el) {
 }
 
 // ══════════════════════════════════════════
-// RANKING STATE VARS
+// RANKING STATE VARS & HELPERS
 // ══════════════════════════════════════════
+// ── OBJETIVO: Variáveis de estado e helpers visuais do ranking ────────────────
 let rkData = [], rkSort = 'wins', rkPeriod = 3, rkTotalSessions = 0, rkSessData = [];
 function rkWR(s){ return parseFloat(String(s).replace('%',''))||0; }
 function rkWCol(v){ return v>=60?'#27AE60':v<30?'#E74C3C':'#0d1e3a'; }
@@ -1671,6 +1657,7 @@ function init(n){ return rkIni(n); }
 // ══════════════════════════════════════════
 // SHARE
 // ══════════════════════════════════════════
+// ── OBJETIVO: Partilhar resumo de sessão via navigator.share ou clipboard ─────
 function shareSession(){
   const num   = document.getElementById('session-label')?.textContent||'Session';
   const date  = document.getElementById('session-date')?.value||'';
@@ -1701,6 +1688,7 @@ function initShareMode(){
 // ══════════════════════════════════════════
 // DATE HELPERS
 // ══════════════════════════════════════════
+// ── OBJETIVO: Formatar e parsear datas em PT-BR ───────────────────────────────
 function formatDateBR(d, opts){
   if(!d)return '—';
   try{
@@ -1720,6 +1708,7 @@ function parseSmartDate(s){
 // ══════════════════════════════════════════
 // ADD PLAYER MODAL
 // ══════════════════════════════════════════
+// ── OBJETIVO: Registar novo jogador localmente e no Google Sheets ─────────────
 function openAddPlayer(){ document.getElementById('modal-add-player').style.display='flex'; }
 function closeAddPlayer(){ document.getElementById('modal-add-player').style.display='none'; }
 async function saveNewPlayer(){
@@ -1741,6 +1730,7 @@ async function saveNewPlayer(){
 // ══════════════════════════════════════════
 // SAVE SESSION
 // ══════════════════════════════════════════
+// ── OBJETIVO: Gravar sessão completa (sessão + partidas + stats + ranking) ────
 async function saveSession(){
   if(!matches.length){showAlert('alert-save','No matches to save.','warn');return;}
   const num   = document.getElementById('session-label')?.textContent||'';
@@ -1776,6 +1766,7 @@ function computeStats(){
 // ══════════════════════════════════════════
 // TEST DB TAB
 // ══════════════════════════════════════════
+// ── OBJETIVO: Painel de diagnóstico e edição de URL do GS V7 ─────────────────
 function renderTestDBTab(){
   const url = SESSION_MANAGER_URL||'(not set)';
   const el  = document.getElementById('test-db-url-display');
@@ -1805,6 +1796,7 @@ function editDBUrl(){
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
+// ── OBJETIVO: Bootstrap — session number, data default, load players ──────────
 document.addEventListener('DOMContentLoaded', async () => {
   // Session number
   const lbl = document.getElementById('session-label');
