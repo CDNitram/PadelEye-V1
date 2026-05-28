@@ -755,77 +755,11 @@ function buildSetup(t) {
 }
 
 // ── RODADAS TAB ────────────────────────────────────────────────────
-function buildRodadas(tm) {
-  const phases = [...new Set(tm.map(m=>m.phase).filter(Boolean))];
-  if (!phases.length) return '<div class="ctr">Sem partidas registadas.</div>';
-  const PHASE_ORDER = ['Fase 1','Fase 2','Fase 3','Semi-final','Final'];
-  phases.sort((a,b)=>(PHASE_ORDER.indexOf(a)+99)-(PHASE_ORDER.indexOf(b)+99));
-
-  return phases.map(phase => {
-    const pm = tm.filter(m=>m.phase===phase);
-    const groups = [...new Set(pm.map(m=>m.group).filter(Boolean))].sort();
-    return `<div class="grp-section">
-      <div class="grp-title">${phase} <span class="grp-badge">${pm.length} partidas</span></div>
-      ${groups.map(g => {
-        const gm = pm.filter(m=>m.group===g);
-        return `<div style="margin-bottom:12px">
-          <div style="font-family:DM Mono,monospace;font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;padding:0 2px">Grupo ${g}</div>
-          ${gm.map(m=>matchRow(m)).join('')}
-        </div>`;
-      }).join('')}
-    </div>`;
-  }).join('');
-}
-
-// ── GRUPOS TAB ─────────────────────────────────────────────────────
-function buildGrupos(tm) {
-  // Only use Fase 1 (group stage matches)
-  const gm = tm.filter(m => m.phase && m.phase.toLowerCase().includes('fase'));
-  if (!gm.length) return '<div class="ctr">Sem partidas de fase de grupos.</div>';
-  const groups = [...new Set(gm.map(m=>m.group).filter(Boolean))].sort();
-
-  return groups.map(g => {
-    const matches = gm.filter(m=>m.group===g);
-    const players = {};
-    matches.forEach(m => {
-      const ta = (m.team_a||'').split(' / ').filter(Boolean);
-      const tb = (m.team_b||'').split(' / ').filter(Boolean);
-      const sa = +(m.score_a||0), sb = +(m.score_b||0);
-      const aWin = sa > sb;
-      [...ta,...tb].forEach(p=>{if(!players[p])players[p]={p,m:0,w:0,l:0,pf:0,pa:0};});
-      ta.forEach(p=>{players[p].m++;players[p].pf+=sa;players[p].pa+=sb;if(aWin)players[p].w++;else players[p].l++;});
-      tb.forEach(p=>{players[p].m++;players[p].pf+=sb;players[p].pa+=sa;if(!aWin)players[p].w++;else players[p].l++;});
-    });
-    const sorted = Object.values(players).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
-    return `<div class="grp-section">
-      <div class="grp-title">Grupo ${g} <span class="grp-badge">${matches.length} partidas</span></div>
-      <div class="card"><div class="tbl-wrap"><table>
-        <thead><tr>
-          <th>#</th><th>Jogador</th><th>P</th><th>V</th><th>D</th><th>PF</th><th>PA</th><th>GD</th>
-        </tr></thead>
-        <tbody>${sorted.map((p,i)=>{
-          const gd=p.pf-p.pa;
-          return `<tr ${i===0?'style="background:#fffbf0"':''}>
-            <td style="font-family:Bebas Neue;font-size:18px;color:var(--muted)">${i+1}</td>
-            <td style="font-weight:700">${p.p}</td>
-            <td class="mono">${p.m}</td>
-            <td class="mono" style="color:var(--green);font-weight:700">${p.w}</td>
-            <td class="mono" style="color:var(--muted)">${p.l}</td>
-            <td class="mono">${p.pf}</td>
-            <td class="mono">${p.pa}</td>
-            <td class="mono" style="font-weight:700;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table></div></div>
-    </div>`;
-  }).join('');
-}
-
-// ── ESTATÍSTICAS TAB ───────────────────────────────────────────────
-function buildStats(tm) {
-  if (!tm.length) return '<div class="ctr">Sem partidas.</div>';
+// ── shared helpers ──
+const PHASE_ORDER_CONST = ['Fase 1','Fase 2','Fase 3','Semi-final','Final'];
+function _calcPlayers(matches) {
   const players = {};
-  tm.forEach(m => {
+  matches.forEach(m => {
     const ta = (m.team_a||'').split(' / ').filter(Boolean);
     const tb = (m.team_b||'').split(' / ').filter(Boolean);
     const sa = +(m.score_a||0), sb = +(m.score_b||0);
@@ -834,59 +768,171 @@ function buildStats(tm) {
     ta.forEach(p=>{players[p].m++;players[p].pf+=sa;players[p].pa+=sb;if(aWin)players[p].w++;else players[p].l++;});
     tb.forEach(p=>{players[p].m++;players[p].pf+=sb;players[p].pa+=sa;if(!aWin)players[p].w++;else players[p].l++;});
   });
-  const sorted = Object.values(players).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
-  return `<div class="card"><div class="tbl-wrap"><table class="stats-tbl">
+  return Object.values(players).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
+}
+
+// ── MATCH ROW — compact centered ──────────────────────────────────
+function matchRow(m, showPhase=false) {
+  const sa = +(m.score_a||0), sb = +(m.score_b||0);
+  const aWin = sa > sb;
+  const hasTB = m.tie_break==='Sim'||m.tie_break==='Yes';
+  const meta = showPhase
+    ? `${m.phase||''}${m.group?' · Grp '+m.group:''} · #${m.match_serial_number||'?'}`
+    : `#${m.match_serial_number||'?'}`;
+  const tbTag = hasTB
+    ? `<div style="font-size:9px;color:var(--accent);font-family:'DM Mono';letter-spacing:.5px;margin-top:1px">TB ${m.tb_a||''}×${m.tb_b||''}</div>`
+    : '';
+  const pill = (name, isWin) =>
+    (name||'—').split(' / ').map(n =>
+      `<span style="display:inline-block;padding:2px 9px;border-radius:20px;background:${isWin?'#edf3ff':'#f8fafd'};color:${isWin?'#0d1e3a':'#9ab0c8'};font-size:11px;font-weight:${isWin?700:400};white-space:nowrap;margin:1px 2px">${n.trim()}</span>`
+    ).join('');
+  return `<div style="max-width:680px;margin:0 auto 6px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;gap:8px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;justify-content:flex-end">${pill(m.team_a,aWin)}</div>
+    <div style="text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1">
+        <span style="color:${aWin?'var(--green)':'#c0cdd8'}">${sa}</span>
+        <span style="color:#d8e0ea;font-size:15px"> × </span>
+        <span style="color:${!aWin?'var(--green)':'#c0cdd8'}">${sb}</span>
+      </div>
+      ${tbTag}
+      <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:.5px;margin-top:2px">${meta}</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px">${pill(m.team_b,!aWin)}</div>
+  </div>`;
+}
+
+// ── RODADAS TAB ────────────────────────────────────────────────────
+function buildRodadas(tm) {
+  const phases = [...new Set(tm.map(m=>m.phase).filter(Boolean))];
+  if (!phases.length) return '<div class="ctr">Sem partidas registadas.</div>';
+  phases.sort((a,b)=>(PHASE_ORDER_CONST.indexOf(a)+99)-(PHASE_ORDER_CONST.indexOf(b)+99));
+  return `<div style="max-width:680px;margin:0 auto">${phases.map(phase => {
+    const pm = tm.filter(m=>m.phase===phase);
+    const groups = [...new Set(pm.map(m=>m.group).filter(Boolean))].sort();
+    return `<div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-family:'Bebas Neue';font-size:18px;color:var(--dark);letter-spacing:1px">${phase}</div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-family:'DM Mono';font-size:9px;color:var(--muted)">${pm.length} partidas</span>
+      </div>
+      ${groups.map(g => {
+        const gm = pm.filter(m=>m.group===g);
+        return `<div style="margin-bottom:14px">
+          <div style="font-family:'DM Mono';font-size:8px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin-bottom:7px;text-align:center">— GRUPO ${g} —</div>
+          ${gm.map(m=>matchRow(m)).join('')}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── GRUPOS TAB ─────────────────────────────────────────────────────
+function buildGrupos(tm) {
+  const gm = tm.filter(m => m.phase && m.phase.toLowerCase().includes('fase'));
+  if (!gm.length) return '<div class="ctr">Sem partidas de fase de grupos.</div>';
+  const groups = [...new Set(gm.map(m=>m.group).filter(Boolean))].sort();
+  const MEDAL = ['🥇','🥈','🥉'];
+  return `<div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">` +
+    groups.map(g => {
+      const matches = gm.filter(m=>m.group===g);
+      const sorted  = _calcPlayers(matches);
+      return `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+        <div style="background:linear-gradient(135deg,var(--dark),var(--mid));padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:2px">GRUPO ${g}</div>
+          <div style="font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.4)">${matches.length} partidas</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr style="background:#f8fafd">
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">#</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">JOGADOR</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">P</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">V</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">D</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PF</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PA</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 12px;text-align:right;border-bottom:1px solid var(--border)">GD</th>
+          </tr></thead>
+          <tbody>${sorted.map((p,i) => {
+            const gd = p.pf-p.pa;
+            const bg = i===0?'linear-gradient(135deg,#fffbf0,#fff8e8)':i%2?'#fafcff':'#fff';
+            return `<tr style="background:${bg};border-bottom:1px solid #f0f5fb">
+              <td style="padding:9px 12px;font-size:16px">${MEDAL[i]||i+1}</td>
+              <td style="padding:9px 12px;font-size:12px;font-weight:${i===0?700:600};color:var(--dark)">${p.p}</td>
+              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:var(--muted)">${p.m}</td>
+              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:var(--green)">${p.w}</td>
+              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:var(--muted)">${p.l}</td>
+              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pf}</td>
+              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pa}</td>
+              <td style="padding:9px 12px;text-align:right;font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ── ESTATÍSTICAS TAB ───────────────────────────────────────────────
+function buildStats(tm) {
+  if (!tm.length) return '<div class="ctr">Sem partidas.</div>';
+  const sorted = _calcPlayers(tm);
+  return `<div style="max-width:680px;margin:0 auto"><div class="card"><div class="tbl-wrap"><table class="stats-tbl">
     <thead><tr>
       <th>#</th><th>Jogador</th><th>Partidas</th><th>Vitórias</th><th>Derrotas</th>
       <th>Win%</th><th>PF</th><th>PA</th><th>GD</th>
     </tr></thead>
     <tbody>${sorted.map((p,i)=>{
-      const gd=p.pf-p.pa;
-      const wr=p.m>0?Math.round(p.w/p.m*100):0;
+      const gd=p.pf-p.pa, wr=p.m>0?Math.round(p.w/p.m*100):0;
       return `<tr>
-        <td style="font-family:Bebas Neue;font-size:18px;color:var(--muted)">${i+1}</td>
+        <td style="font-family:'Bebas Neue';font-size:18px;color:var(--muted)">${i+1}</td>
         <td style="font-weight:700">${p.p}</td>
         <td class="mono">${p.m}</td>
         <td class="mono" style="color:var(--green);font-weight:700">${p.w}</td>
         <td class="mono" style="color:var(--muted)">${p.l}</td>
         <td class="mono" style="font-weight:700;color:${wr>=60?'var(--green)':wr<30?'var(--red)':'var(--text)'}">${wr}%</td>
-        <td class="mono">${p.pf}</td>
-        <td class="mono">${p.pa}</td>
+        <td class="mono">${p.pf}</td><td class="mono">${p.pa}</td>
         <td class="mono" style="font-weight:700;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</td>
       </tr>`;
     }).join('')}</tbody>
-  </table></div></div>`;
+  </table></div></div></div>`;
 }
 
 // ── HISTÓRICO TAB ──────────────────────────────────────────────────
 function buildHistorico(tm) {
   if (!tm.length) return '<div class="ctr">Sem partidas.</div>';
-  const PHASE_ORDER = ['Fase 1','Fase 2','Fase 3','Semi-final','Final'];
   const sorted = [...tm].sort((a,b)=>{
-    const pi = (x) => PHASE_ORDER.indexOf(x.phase);
-    if (pi(a) !== pi(b)) return pi(a) - pi(b);
-    return (+(a.match_serial_number||0)) - (+(b.match_serial_number||0));
+    const pi = x => PHASE_ORDER_CONST.indexOf(x.phase);
+    if (pi(a)!==pi(b)) return pi(a)-pi(b);
+    return (+(a.match_serial_number||0))-(+(b.match_serial_number||0));
   });
-  return sorted.map(m => matchRow(m, true)).join('');
+  let lastPhase = null;
+  const rows = sorted.map(m => {
+    let header = '';
+    if (m.phase !== lastPhase) {
+      lastPhase = m.phase;
+      header = `<div style="display:flex;align-items:center;gap:10px;margin:16px auto 10px;max-width:680px">
+        <div style="font-family:'Bebas Neue';font-size:15px;color:var(--dark);letter-spacing:1px">${m.phase||''}</div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>`;
+    }
+    return header + matchRow(m, true);
+  });
+  return `<div style="max-width:680px;margin:0 auto">${rows.join('')}</div>`;
 }
 
 // ── SCORECARD TAB ──────────────────────────────────────────────────
 function buildScorecard(sc) {
   if (!sc.length) return '<div class="ctr">Sem scorecard.</div>';
   const sorted = [...sc].sort((a,b) => {
-    const rankOrder = ['🥇','🥈','🥉','4º'];
-    const ai = rankOrder.indexOf(a.rank), bi = rankOrder.indexOf(b.rank);
-    if (ai>=0&&bi>=0) return ai-bi;
-    if (ai>=0) return -1;
-    if (bi>=0) return 1;
-    return (+(b.pts_total||0)) - (+(a.pts_total||0));
+    const ro = ['🥇','🥈','🥉','4º'];
+    const ai=ro.indexOf(a.rank), bi=ro.indexOf(b.rank);
+    if (ai>=0&&bi>=0) return ai-bi; if (ai>=0) return -1; if (bi>=0) return 1;
+    return (+(b.pts_total||0))-(+(a.pts_total||0));
   });
   const rankClass = r => r==='🥇'?'gold':r==='🥈'?'silver':'';
   const colors = ['#3a7bd5','#e74c3c','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#607d8b'];
-  const pc = name => colors[Math.abs((name||'').split('').reduce((h,c)=>h*31+c.charCodeAt(0),0))%colors.length];
-  const ini = name => { if(!name)return'?'; const p=name.trim().split(' '); return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():name.slice(0,2).toUpperCase(); };
-
-  return sorted.map(s => `
+  const pc  = n => colors[Math.abs((n||'').split('').reduce((h,c)=>h*31+c.charCodeAt(0),0))%colors.length];
+  const ini = n => { if(!n)return'?'; const p=n.trim().split(' '); return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():n.slice(0,2).toUpperCase(); };
+  return `<div style="max-width:600px;margin:0 auto">${sorted.map(s => `
     <div class="sc-row ${rankClass(s.rank)}">
       <div class="sc-rank">${s.rank||'—'}</div>
       <div class="sc-av" style="background:${pc(s.player)}">${ini(s.player)}</div>
@@ -895,29 +941,7 @@ function buildScorecard(sc) {
         <div class="sc-phase">${s.phase_achieved||'—'} · Base: ${s.pts_base||0} + Bónus: ${s.pts_bonus||0}</div>
       </div>
       <div class="sc-pts">${s.pts_total||0}<span style="font-size:11px;color:var(--muted);font-family:'DM Sans'"> pts</span></div>
-    </div>`).join('');
-}
-
-// ── MATCH ROW (shared) ─────────────────────────────────────────────
-function matchRow(m, showPhase=false) {
-  const sa = +(m.score_a||0), sb = +(m.score_b||0);
-  const aWin = sa > sb;
-  const hasTB = m.tie_break==='Sim'||m.tie_break==='Yes';
-  const tbTag = hasTB ? `<div style="font-size:9px;color:var(--accent);font-family:DM Mono,monospace">TB ${m.tb_a||''}×${m.tb_b||''}</div>` : '';
-  const meta = showPhase ? `${m.phase||''}${m.group?' · Grupo '+m.group:''}` : `Grupo ${m.group||'?'}`;
-  return `<div class="hist-match">
-    <div class="hist-team ${aWin?'win':'lose'}">${m.team_a||'—'}</div>
-    <div>
-      <div class="hist-score">
-        <span style="color:${aWin?'var(--green)':'var(--muted)'}">${sa}</span>
-        <span style="color:var(--border);font-size:14px"> × </span>
-        <span style="color:${!aWin?'var(--green)':'var(--muted)'}">${sb}</span>
-      </div>
-      ${tbTag}
-      <div class="hist-meta">${meta} · #${m.match_serial_number||'?'}</div>
-    </div>
-    <div class="hist-team right ${aWin?'lose':'win'}">${m.team_b||'—'}</div>
-  </div>`;
+    </div>`).join('')}</div>`;
 }
 
 // ── UTILS ─────────────────────────────────────────────────────────
