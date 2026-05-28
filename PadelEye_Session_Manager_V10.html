@@ -256,13 +256,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
   </div>
   <div class="tabs">
-    <button class="tab on" id="tab-session" onclick="showTab('session',this)">📋 Config</button>
+    <button class="tab" id="tab-cadastro" onclick="showTab('cadastro',this);loadCadastro()">👤 Cadastro de Jogadores</button>
+    <button class="tab on" id="tab-session" onclick="showTab('session',this)">📋 Configuração de Sessão</button>
     <button class="tab disabled" id="tab-match"      onclick="showTab('match',this)">🏸 Partidas</button>
     <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Placar &amp; MVP</button>
     <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Salvar</button>
     <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()">📊 Ranking</button>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()">📋 Histórico</button>
-    <button class="tab" id="tab-cadastro" onclick="showTab('cadastro',this);loadCadastro()">👤 Jogadores</button>
     <button class="tab" id="tab-testdb" onclick="showTab('testdb',this);renderTestDBTab()">🔧 Test DB</button>
   </div>
 
@@ -549,20 +549,18 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div id="hist-tab-stats" style="display:none"></div>
     </div>
   </div>
-</div>
-
   <!-- ── CADASTRO DE JOGADORES TAB ── -->
   <div class="panel" id="p-cadastro">
     <div class="alert" id="alert-cadastro"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-      <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px">Jogadores Registados</div>
+      <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px">Cadastro de Jogadores</div>
       <span class="badge gray" id="cadastro-count-badge">—</span>
     </div>
     <div style="margin-bottom:12px">
       <input class="team-select" id="cadastro-search" placeholder="🔍 Pesquisar jogador..." oninput="filterCadastro(this.value)">
     </div>
     <div id="cadastro-grid" style="display:flex;flex-direction:column;gap:8px">
-      <div class="empty"><div class="empty-icon">👤</div>Clique no tab para carregar.</div>
+      <div class="empty"><div class="empty-icon">👤</div>A carregar jogadores...</div>
     </div>
   </div>
 
@@ -570,13 +568,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="panel" id="p-testdb">
     <div class="alert" id="alert-testdb"></div>
     <div class="card">
-      <div class="card-title" style="padding:14px 18px 0">🔧 Test Connection to DB</div>
+      <div style="padding:14px 18px 0;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8">🔧 Test Connection to DB</div>
       <div style="font-size:11px;color:#9ab0c8;padding:4px 18px 14px">Google Sheets · Apps Script Web App · GS V7</div>
       <div style="padding:0 18px 18px">
         <div style="background:#f4f7fc;border:1px solid #dde6f0;border-radius:10px;padding:12px 14px;margin-bottom:14px">
-          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;margin-bottom:6px;text-transform:uppercase">Apps Script URL</div>
-          <div id="test-db-url-display" style="font-family:'DM Mono';font-size:10px;color:#0d1e3a;word-break:break-all;cursor:pointer" onclick="editDBUrl()"></div>
-          <button onclick="editDBUrl()" style="margin-top:8px;padding:5px 12px;background:#fff;border:1px solid #dde6f0;border-radius:6px;font-family:'DM Mono';font-size:9px;cursor:pointer;color:#5a8aaa">✏ Editar</button>
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;margin-bottom:6px;text-transform:uppercase">Apps Script URL · GS V7</div>
+          <div id="test-db-url-display" style="font-family:'DM Mono';font-size:10px;color:#0d1e3a;word-break:break-all"></div>
+          <button onclick="editDBUrl()" style="margin-top:8px;padding:5px 12px;background:#fff;border:1px solid #dde6f0;border-radius:6px;font-family:'DM Mono';font-size:9px;cursor:pointer;color:#5a8aaa">✏ Editar URL</button>
         </div>
         <button onclick="testDBConnection()" style="width:100%;padding:13px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:14px">
           ⚡ TESTAR CONEXÃO COMPLETA
@@ -585,6 +583,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
     </div>
   </div>
+
+</div>
 <!-- ADD PLAYER MODAL -->
 <div id="add-player-modal" onclick="closeAddPlayer(event)">
   <div class="ap-box" onclick="event.stopPropagation()">
@@ -1843,29 +1843,25 @@ function renderCadastro() {
     grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>Nenhum resultado.</div>';
     return;
   }
+  // ── V38-style grid layout ──
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(auto-fill,minmax(110px,1fr))';
+  grid.style.gap = '10px';
   grid.innerHTML = rows.map(p => {
     const nick    = p.player_nickname || p.nickname  || '';
     const fname   = p.player_name     || p.nome      || '';
     const lname   = p.player_surname  || p.sobrenome || '';
     const display = nick || (fname + (lname ? ' ' + lname : '')).trim();
-    const cat     = p.player_category || p.categoria || '';
-    const city    = p.player_city     || p.cidade    || '';
     const nat     = p.player_nationality || p.nacionalidade || '';
-    const gen     = p.player_gender   || p.genero    || '';
     const grad    = flagGrad(nat);
     const txtCol  = flagTextCol(nat);
     const ini     = rkIni(display);
-    const tags    = [cat, city, nat].filter(Boolean);
-    return `<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
-      <div style="width:42px;height:42px;border-radius:50%;background:${grad};color:${txtCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0;text-shadow:0 1px 3px rgba(0,0,0,.3)">${ini}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:#0d1e3a">${fname} <span style="font-weight:500;color:#5a7090">${lname}</span>${nick?' <span style="font-size:11px;color:#9ab0c8">"'+nick+'"</span>':''}</div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">${tags.map(t=>`<span style="background:#f0f5fb;color:#5a7090;border-radius:20px;padding:2px 8px;font-size:10px;font-family:'DM Mono'">${t}</span>`).join('')}</div>
-      </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:10px;color:#b0c4d8;font-family:'DM Mono'">${p.player_id||p.id||''}</div>
-        ${nat ? `<div style="width:11px;height:11px;border-radius:50%;background:${grad};margin:4px 0 0 auto;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>` : ''}
-      </div>
+    const pid     = p.player_id || p.id || '';
+    const shortId = pid ? 'ID ' + String(pid).slice(-7) : '';
+    return `<div style="background:#fff;border:1px solid #e8eef6;border-radius:12px;padding:14px 8px 12px;text-align:center;box-shadow:0 1px 4px rgba(10,22,40,.05);transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 14px rgba(10,22,40,.12)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(10,22,40,.05)'">
+      <div style="width:52px;height:52px;border-radius:50%;background:${grad};color:${txtCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;margin:0 auto 8px;box-shadow:0 2px 8px rgba(0,0,0,.15);text-shadow:0 1px 3px rgba(0,0,0,.25)">${ini}</div>
+      <div style="font-size:11px;font-weight:700;color:#0d1e3a;line-height:1.3;word-break:break-word">${display}</div>
+      <div style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;margin-top:4px;letter-spacing:.5px">${shortId}</div>
     </div>`;
   }).join('');
 }
@@ -1935,8 +1931,10 @@ async function testDBConnection() {
 // ── OBJETIVO: Painel de diagnóstico e edição de URL do GS V7 ─────────────────
 function renderTestDBTab(){
   const url = SESSION_MANAGER_URL||'(not set)';
-  const el  = document.getElementById('test-db-url-display');
-  if(el) el.textContent = url;
+  ['test-db-url-display'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.textContent = url;
+  });
 }
 function editDBUrl(){
   const el = document.getElementById('test-db-url-display');
