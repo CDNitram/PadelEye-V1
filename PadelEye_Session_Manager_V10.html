@@ -231,16 +231,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="login-sub">Session Manager · Ecotenis MVP · V10</div>
   </div>
   <div class="login-card">
-    <div class="login-card-title">Session Organizer Login</div>
-    <div class="login-card-sub">Sign in to open today's session.</div>
-    <div class="login-error" id="login-err">Incorrect credentials. Try again.</div>
-    <div class="lfield"><label>Username</label>
-      <input type="text" id="l-user" placeholder="email or username" value="organizer@padeleye.com" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-card-title">Login do Organizador</div>
+    <div class="login-card-sub">Acesse para abrir a sessão de hoje.</div>
+    <div class="login-error" id="login-err">Credenciais incorretas. Tente novamente.</div>
+    <div class="lfield"><label>Usuário</label>
+      <input type="text" id="l-user" placeholder="email ou usuário" value="organizer@padeleye.com" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div class="lfield"><label>Password</label>
+    <div class="lfield"><label>Senha</label>
       <input type="password" id="l-pass" placeholder="••••••••" value="654321" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <button class="btn-login" onclick="doLogin()">Open Session →</button>
+    <button class="btn-login" onclick="doLogin()">Abrir Sessão →</button>
   </div>
   <div class="login-footer">PADELEYE · SESSION MANAGER · V10 · BY TECHNIGMA AI LAB</div>
 </div>
@@ -252,16 +252,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="topbar-center" id="tb-session-label">SESSION</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
-      <button class="btn-out" onclick="doLogout()">Sign out</button>
+      <button class="btn-out" onclick="doLogout()">Sair</button>
     </div>
   </div>
   <div class="tabs">
-    <button class="tab on" id="tab-session" onclick="showTab('session',this)">📋 Parameters</button>
-    <button class="tab disabled" id="tab-match"      onclick="showTab('match',this)">🏸 Matches</button>
-    <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Scoreboard &amp; MVP</button>
-    <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Save</button>
-    <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()">📊 Season Rankings</button>
-    <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()">📋 Session History</button>
+    <button class="tab on" id="tab-session" onclick="showTab('session',this)">📋 Config</button>
+    <button class="tab disabled" id="tab-match"      onclick="showTab('match',this)">🏸 Partidas</button>
+    <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Placar &amp; MVP</button>
+    <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Salvar</button>
+    <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()">📊 Ranking</button>
+    <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()">📋 Histórico</button>
   </div>
 
   <!-- ── SESSION TAB ── -->
@@ -274,8 +274,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="session-local" id="hero-local">—</div>
       </div>
       <div class="session-hero-right">
-        <div class="session-stat"><div class="session-stat-v" id="hero-players">0</div><div class="session-stat-l">PLAYERS</div></div>
-        <div class="session-stat"><div class="session-stat-v" id="hero-matches">0</div><div class="session-stat-l">MATCHES</div></div>
+        <div class="session-stat"><div class="session-stat-v" id="hero-players">0</div><div class="session-stat-l">JOGADORES</div></div>
+        <div class="session-stat"><div class="session-stat-v" id="hero-matches">0</div><div class="session-stat-l">PARTIDAS</div></div>
       </div>
     </div>
     <div class="card">
@@ -295,15 +295,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
       <div style="margin-bottom:10px">
         <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">VENUE</label>
-        <input class="team-select" id="cfg-local" placeholder="e.g. EcoTenis · Outdoor Field">
+        <input class="team-select" id="cfg-local" placeholder="ex: EcoTenis · Quadra Outdoor">
       </div>
       <div>
         <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">FORMAT</label>
         <select class="team-select" id="cfg-format">
-          <option>Doubles · Rotating</option>
-          <option>Doubles · Fixed Pairs</option>
+          <option>Duplas · Rotativo</option>
+          <option>Duplas · Pares Fixos</option>
           <option>Singles</option>
-          <option>King of the Court</option>
+          <option>Rei da Quadra</option>
         </select>
       </div>
     </div>
@@ -311,9 +311,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div>
         <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">SCORE MAX</label>
         <select class="team-select" id="cfg-max-score">
-          <option value="3">3 sets</option><option value="4" selected>4 sets</option>
-          <option value="5">5 sets</option><option value="6">6 sets</option>
-          <option value="7">7 sets</option><option value="8">8 sets</option><option value="9">9 sets</option>
+          <option value="3">3 games</option><option value="4" selected>4 games</option>
+          <option value="5">5 games</option><option value="6">6 games</option>
+          <option value="7">7 games</option><option value="8">8 games</option><option value="9">9 games</option>
         </select>
       </div>
       <div>
@@ -326,22 +326,22 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
     </div>
     <div id="score-cfg-preview" style="margin-top:8px;font-size:11px;color:#9ab0c8;font-family:'DM Mono';padding:6px 10px;background:#f4f7fc;border-radius:7px;">
-      First to <strong id="prev-max" style="color:#0d1e3a">4</strong> sets wins · TB at <strong id="prev-tb" style="color:#C9933A">4×4</strong>
+      Primeiro a <strong id="prev-max" style="color:#0d1e3a">4</strong> games ganha · TB em <strong id="prev-tb" style="color:#C9933A">4×4</strong>
     </div>
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="card-title" style="margin-bottom:0">Who's Playing Today?</div>
-        <span class="badge gray" id="player-count-badge">0 selected</span>
+        <div class="card-title" style="margin-bottom:0">Quem Joga Hoje?</div>
+        <span class="badge gray" id="player-count-badge">0 selecionados</span>
       </div>
       <div class="player-grid" id="player-grid"></div>
       <button onclick="openAddPlayer()" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;background:#fff;border:1.5px dashed #9ab0c8;border-radius:8px;font-size:12px;font-weight:600;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .2s" onmouseover="this.style.borderColor='#3a7bd5';this.style.color='#0d1e3a'" onmouseout="this.style.borderColor='#9ab0c8';this.style.color='#5a7090'">➕ Novo Jogador to Database</button>
       <div style="display:flex;gap:8px;margin-top:8px">
-        <input class="team-select" id="guest-input" placeholder="Add guest player..." maxlength="20" onkeydown="if(event.key==='Enter')addGuest()">
-        <button onclick="addGuest()" style="padding:8px 14px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Guest</button>
+        <input class="team-select" id="guest-input" placeholder="Adicionar convidado..." maxlength="20" onkeydown="if(event.key==='Enter')addGuest()">
+        <button onclick="addGuest()" style="padding:8px 14px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">+ Convidado</button>
       </div>
     </div>
     <div id="start-session-wrap" style="margin-top:16px">
-      <button onclick="startSession()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;">Start Session → Add Matches</button>
+      <button onclick="startSession()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;">Iniciar Sessão → Registrar Partidas</button>
     </div>
   </div>
 
@@ -349,13 +349,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="panel" id="p-match">
     <div class="alert" id="alert-match"></div>
     <div class="match-builder">
-      <div class="mb-title">New Match · Select 4 players</div>
+      <div class="mb-title">Nova Partida · Selecione 4 jogadores</div>
       <div class="team-row">
         <div>
           <label style="font-size:9px;color:#9ab0c8;display:block;margin-bottom:4px;font-family:'DM Mono'">TEAM A · P1</label>
-          <select class="team-select" id="sel-a1"><option value="">— Player —</option></select>
+          <select class="team-select" id="sel-a1"><option value="">— Jogador —</option></select>
           <label style="font-size:9px;color:#9ab0c8;display:block;margin:6px 0 4px;font-family:'DM Mono'">TEAM A · P2</label>
-          <select class="team-select" id="sel-a2"><option value="">— Player —</option></select>
+          <select class="team-select" id="sel-a2"><option value="">— Jogador —</option></select>
         </div>
         <div class="vs-label">VS</div>
         <div>
@@ -382,34 +382,34 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
         </div>
       </div>
-      <button class="btn-add-match" onclick="addMatch()">+ Add Match</button>
+      <button class="btn-add-match" onclick="addMatch()">+ Adicionar Partida</button>
     </div>
     <div class="card" style="border:1.5px dashed #dde6f0;background:#f8fafd">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div><div class="card-title" style="margin-bottom:2px">🎲 Generate Random Matches</div>
-        <div style="font-size:11px;color:#9ab0c8">No repeats · All pairs · Based on selected players</div></div>
+        <div><div class="card-title" style="margin-bottom:2px">🎲 Gerar Partidas Aleatórias</div>
+        <div style="font-size:11px;color:#9ab0c8">Sem repetições · Todos os pares · Baseado nos jogadores selecionados</div></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex:1">🎯 Americano Rotation</button>
+        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex:1">🎯 Rotação Americano</button>
         <button onclick="generateRandom('round')" style="padding:9px 16px;background:#fff;color:#0a1628;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex:1">🔄 Round Robin</button>
       </div>
       <div id="random-preview" style="margin-top:10px;display:none">
         <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin-bottom:6px" id="random-preview-label"></div>
         <div id="random-preview-list" style="display:flex;flex-direction:column;gap:5px"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="confirmRandom()" style="flex:1;padding:10px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✓ Add All to Session</button>
+          <button onclick="confirmRandom()" style="flex:1;padding:10px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✓ Adicionar Tudo à Sessão</button>
           <button onclick="cancelRandom()" style="padding:10px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;cursor:pointer;color:#9ab0c8">✕</button>
         </div>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Match Log · <span id="match-count">0 matches</span></div>
+      <div class="card-title">Registro · <span id="match-count">0 partidas</span></div>
       <div class="match-log" id="match-log">
-        <div class="empty"><div class="empty-icon">🏸</div>No matches yet.</div>
+        <div class="empty"><div class="empty-icon">🏸</div>Nenhuma partida ainda.</div>
       </div>
     </div>
     <div style="margin-top:8px">
-      <button id="btn-close-session" onclick="closeSession()" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;display:none">🏁 Close Session &amp; Calculate Results</button>
+      <button id="btn-close-session" onclick="closeSession()" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;display:none">🏁 Fechar Sessão &amp; Calcular Resultados</button>
     </div>
   </div>
 
@@ -417,12 +417,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="panel" id="p-scoreboard">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="card-title" style="margin-bottom:0">Live Scoreboard</div>
+        <div class="card-title" style="margin-bottom:0">Placar ao Vivo</div>
         <span class="badge gold" id="sb-session-label">—</span>
-        <button id="btn-share" onclick="shareSession()" style="display:none;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer">🔗 Share</button>
+        <button id="btn-share" onclick="shareSession()" style="display:none;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer">🔗 Compartilhar</button>
       </div>
       <div class="scoreboard" id="scoreboard">
-        <div class="empty"><div class="empty-icon">🏆</div>Scoreboard updates as matches are added.</div>
+        <div class="empty"><div class="empty-icon">🏆</div>O placar atualiza conforme as partidas são registradas.</div>
       </div>
     </div>
     <div class="card" id="mvp-card" style="display:none">
@@ -435,29 +435,29 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="panel" id="p-save">
     <div class="alert" id="alert-save"></div>
     <div class="card save-card">
-      <div class="card-title">Save Session to Google Sheets</div>
+      <div class="card-title">Salvar Sessão no Google Sheets</div>
       <div class="save-summary">
-        <div class="save-kpi"><div class="save-kpi-v" id="sv-players">0</div><div class="save-kpi-l">Players</div></div>
-        <div class="save-kpi"><div class="save-kpi-v" id="sv-matches">0</div><div class="save-kpi-l">Matches</div></div>
+        <div class="save-kpi"><div class="save-kpi-v" id="sv-players">0</div><div class="save-kpi-l">Jogadores</div></div>
+        <div class="save-kpi"><div class="save-kpi-v" id="sv-matches">0</div><div class="save-kpi-l">Partidas</div></div>
         <div class="save-kpi"><div class="save-kpi-v" id="sv-mvp">—</div><div class="save-kpi-l">MVP</div></div>
       </div>
       <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px;line-height:1.6">
-        Saves to <strong style="color:#0d1e3a">PadelEye · Database</strong> — Sessions_Sessions, Matches_Sessions, Stats_Sessions and Ranking_Sessions.
+        Salva em <strong style="color:#0d1e3a">PadelEye · Database</strong> — Sessions_Sessions, Matches_Sessions, Stats_Sessions e Ranking_Sessions.
       </div>
       <div style="margin-bottom:14px;background:#FFF8E0;border:1px solid #e8c870;border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
         <span style="font-size:22px">🏅</span>
         <div>
-          <div style="font-size:9px;color:#9ab0c8;letter-spacing:1px;text-transform:uppercase;font-family:'DM Mono';margin-bottom:3px">Session MVP · Auto-calculated</div>
+          <div style="font-size:9px;color:#9ab0c8;letter-spacing:1px;text-transform:uppercase;font-family:'DM Mono';margin-bottom:3px">MVP da Sessão · Calculado automaticamente</div>
           <div id="mvp-display-save" style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px">—</div>
-          <div id="mvp-stat-save" style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">Highest win rate in session</div>
+          <div id="mvp-stat-save" style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">Maior taxa de vitórias na sessão</div>
         </div>
       </div>
       <div style="margin-bottom:14px">
-        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:5px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Notes</label>
-        <input class="team-select" id="cfg-notes" placeholder="e.g. Great session, sunny afternoon...">
+        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:5px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Observações</label>
+        <input class="team-select" id="cfg-notes" placeholder="ex: Ótima sessão, tarde de sol...">
       </div>
-      <div class="save-done-box" id="save-done-box"><div class="save-done-title">✅ Session Saved</div><div class="save-done-log" id="save-done-log"></div></div>
-      <button class="btn-save-session" id="btn-save-session" onclick="saveSession()">💾 Save Session to Google Sheets</button>
+      <div class="save-done-box" id="save-done-box"><div class="save-done-title">✅ Sessão Salva</div><div class="save-done-log" id="save-done-log"></div></div>
+      <button class="btn-save-session" id="btn-save-session" onclick="saveSession()">💾 Salvar Sessão no Google Sheets</button>
     </div>
   </div>
 
@@ -501,7 +501,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="rk-upd" id="rk-upd"></div>
     <div class="rk-sec">Consistência por Período</div>
     <div class="cb-band">
-      <div class="cb-band-title">Consistency Score</div>
+      <div class="cb-band-title">Score de Consistência</div>
       <div class="cb-band-sub">Proximidade à win rate média do grupo. Score 100 = na média exata.</div>
       <div class="rk-period-tabs">
         <button class="rk-ptab on" onclick="rkSetPeriod(6,this)">6M</button>
@@ -519,9 +519,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="panel" id="p-history">
     <div id="hist-debug" style="background:#0a1628;color:#93C5FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-family:'DM Mono';font-size:10px;line-height:1.8;display:none"></div>
     <div id="hist-list-view">
-      <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:12px">Session History</div>
+      <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:12px">Histórico de Sessões</div>
       <div style="margin-bottom:16px">
-        <button id="hist-main-btn" onclick="loadHistory()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:'DM Mono';font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer">↻ CARREGAR SESSION HISTORY</button>
+        <button id="hist-main-btn" onclick="loadHistory()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-family:'DM Mono';font-size:12px;font-weight:700;letter-spacing:1px;cursor:pointer">↻ CARREGAR HISTÓRICO</button>
       </div>
       <div id="hist-error" style="display:none;background:#fff0f0;border:1.5px solid #f5c0c0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-family:'DM Mono';font-size:11px;color:#c0392b"></div>
       <div id="hist-sessions-grid" style="display:flex;flex-direction:column;gap:8px">
@@ -530,7 +530,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div id="hist-detail-view" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-        <button onclick="histBack()" style="padding:7px 12px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;cursor:pointer;color:#5a8aaa">← Back</button>
+        <button onclick="histBack()" style="padding:7px 12px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;cursor:pointer;color:#5a8aaa">← Voltar</button>
         <div>
           <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px" id="hist-detail-num"></div>
           <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8" id="hist-detail-meta"></div>
@@ -538,9 +538,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <button id="btn-hist-share" onclick="shareHistSession()" style="margin-left:auto;padding:6px 12px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;cursor:pointer">🔗 Share</button>
       </div>
       <div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">
-        <button id="hstab-matches"    onclick="histSwitch('matches')"    style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff">🎯 Matches</button>
-        <button id="hstab-scoreboard" onclick="histSwitch('scoreboard')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8">🏆 Scoreboard</button>
-        <button id="hstab-stats"      onclick="histSwitch('stats')"      style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8">📊 Stats</button>
+        <button id="hstab-matches"    onclick="histSwitch('matches')"    style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff">🎯 Partidas</button>
+        <button id="hstab-scoreboard" onclick="histSwitch('scoreboard')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8">🏆 Placar</button>
+        <button id="hstab-stats"      onclick="histSwitch('stats')"      style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8">📊 Estatísticas</button>
       </div>
       <div id="hist-tab-matches"></div>
       <div id="hist-tab-scoreboard" style="display:none"></div>
@@ -707,7 +707,7 @@ function renderPlayerGrid() {
   const grid = document.getElementById('player-grid');
   if (!allPlayers().length) {
     grid.innerHTML="<div style='text-align:center;padding:24px;color:#9ab0c8;font-family:monospace;font-size:11px'>Nenhum jogador cadastrado ainda.</div>";
-    document.getElementById('player-count-badge').textContent='0 selected';
+    document.getElementById('player-count-badge').textContent='0 selecionados';
     return;
   }
   grid.innerHTML = allPlayers().map(name => {
@@ -716,10 +716,10 @@ function renderPlayerGrid() {
       <div class="player-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="player-chip-av" style="background:${pc(name)}">${init(name)}</div>
       <div class="player-chip-name">${name}</div>
-      <div class="player-chip-pts">${getPlayerStats(name).w}W · ${getPlayerStats(name).m}M</div>
+      <div class="player-chip-pts">${getPlayerStats(name).w}V · ${getPlayerStats(name).m}P</div>
     </div>`;
   }).join('');
-  document.getElementById('player-count-badge').textContent = activePlayers.length+' selected';
+  document.getElementById('player-count-badge').textContent = activePlayers.length+' selecionados';
   updateHero();
 }
 
@@ -773,17 +773,17 @@ function addMatch() {
   const a1=document.getElementById('sel-a1').value, a2=document.getElementById('sel-a2').value;
   const b1=document.getElementById('sel-b1').value, b2=document.getElementById('sel-b2').value;
   const sa=parseInt(document.getElementById('sc-a').value), sb=parseInt(document.getElementById('sc-b').value);
-  if (!a1||!a2||!b1||!b2){showAlert('alert-match','Select all 4 players.','warn');return;}
-  if (new Set([a1,a2,b1,b2]).size<4){showAlert('alert-match','Each player can appear only once per match.','warn');return;}
-  if (isNaN(sa)||isNaN(sb)){showAlert('alert-match','Enter the score for both teams.','warn');return;}
+  if (!a1||!a2||!b1||!b2){showAlert('alert-match','Selecione os 4 jogadores.','warn');return;}
+  if (new Set([a1,a2,b1,b2]).size<4){showAlert('alert-match','Cada jogador pode aparecer só uma vez por partida.','warn');return;}
+  if (isNaN(sa)||isNaN(sb)){showAlert('alert-match','Informe o placar de ambas as equipes.','warn');return;}
   const _maxSc=parseInt(document.getElementById('cfg-max-score')?.value||4);
   const _tbAt=parseInt(document.getElementById('cfg-tb-at')?.value||4);
-  if (sa>_maxSc||sb>_maxSc){showAlert('alert-match',`Max score is ${_maxSc}.`,'warn');return;}
+  if (sa>_maxSc||sb>_maxSc){showAlert('alert-match',`Placar máximo é ${_maxSc}.`,'warn');return;}
   const hasTB=document.getElementById('tb-btn').classList.contains('on');
   const tba=hasTB?parseInt(document.getElementById('tb-a').value)||null:null;
   const tbb=hasTB?parseInt(document.getElementById('tb-b').value)||null:null;
-  if (sa===_tbAt&&sb===_tbAt&&!hasTB){showAlert('alert-match',`Score ${_tbAt}×${_tbAt} — activate Tie-Break first.`,'warn');return;}
-  if (sa===sb&&sa!==_tbAt){showAlert('alert-match','Draws are not allowed.','warn');return;}
+  if (sa===_tbAt&&sb===_tbAt&&!hasTB){showAlert('alert-match',`Placar ${_tbAt}×${_tbAt} — ative o Tie-Break primeiro.`,'warn');return;}
+  if (sa===sb&&sa!==_tbAt){showAlert('alert-match','Empates não são permitidos.','warn');return;}
   matches.push({teamA:[a1,a2],teamB:[b1,b2],sa,sb,tb:hasTB,tba,tbb});
   ['sel-a1','sel-a2','sel-b1','sel-b2'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('sc-a').value=''; document.getElementById('sc-b').value='';
@@ -791,14 +791,14 @@ function addMatch() {
   document.getElementById('tb-btn').classList.remove('on'); document.getElementById('tb-inputs').classList.remove('show');
   document.getElementById('tb-a').value=''; document.getElementById('tb-b').value='';
   renderMatchLog(); renderScoreboard(); updateHero();
-  showAlert('alert-match',`✅ Match ${matches.length} recorded.`,'ok');
+  showAlert('alert-match',`✅ Partida ${matches.length} registrada.`,'ok');
   if(matches.length>0)document.getElementById('btn-close-session').style.display='block';
 }
 function deleteMatch(idx){matches.splice(idx,1);renderMatchLog();renderScoreboard();updateHero();}
 function renderMatchLog() {
   const c=document.getElementById('match-log');
-  document.getElementById('match-count').textContent=matches.length+' match'+(matches.length!==1?'es':'');
-  if(!matches.length){c.innerHTML='<div class="empty"><div class="empty-icon">🏸</div>No matches yet.</div>';return;}
+  document.getElementById('match-count').textContent=matches.length+' partida'+(matches.length!==1?'s':'');
+  if(!matches.length){c.innerHTML='<div class="empty"><div class="empty-icon">🏸</div>Sem partidas ainda.</div>';return;}
   c.innerHTML=matches.map((m,i)=>{
     const aWin=m.sa>m.sb, tbTag=m.tb?`<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>`:'';
     return `<div class="match-item saved">
@@ -828,7 +828,7 @@ function getPlayerStats(name) {
 function renderScoreboard() {
   const c=document.getElementById('scoreboard');
   const played=activePlayers.filter(p=>getPlayerStats(p).m>0);
-  if(!played.length){c.innerHTML='<div class="empty"><div class="empty-icon">🏆</div>Scoreboard updates as matches are added.</div>';document.getElementById('mvp-card').style.display='none';return;}
+  if(!played.length){c.innerHTML='<div class="empty"><div class="empty-icon">🏆</div>O placar atualiza conforme as partidas são registradas.</div>';document.getElementById('mvp-card').style.display='none';return;}
   const ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort((a,b)=>b.w-a.w||b.gd-a.gd||b.gw-a.gw);
   const maxW=ranked[0]?.w||1;
   const medal=['🥇','🥈','🥉'];
@@ -839,7 +839,7 @@ function renderScoreboard() {
       <div class="sb-av" style="background:${pc(p.name)}">${init(p.name)}</div>
       <div class="sb-info">
         <div class="sb-name">${p.name}</div>
-        <div class="sb-stats">${p.m}M · ${p.w}W · ${p.l}L · GD <span style="${gdClass}">${p.gd>0?'+':''}${p.gd}</span></div>
+        <div class="sb-stats">${p.m}P · ${p.w}V · ${p.l}D · GD <span style="${gdClass}">${p.gd>0?'+':''}${p.gd}</span></div>
         <div class="sb-bar"><div class="sb-bar-fill" style="width:${p.w/maxW*100}%;background:${pc(p.name)}"></div></div>
       </div>
       <div class="sb-pts ${i===0&&p.w>0?'leader':''}">${p.gw}</div>
@@ -862,11 +862,11 @@ function updateSaveTab() {
   document.getElementById('sv-mvp').textContent=mvp?.name?.split(' ')[0]||'—';
   const mvpWR=mvp?Math.round(mvp.w/(mvp.m||1)*100):0;
   document.getElementById('mvp-display-save').textContent=mvp?.name||'—';
-  document.getElementById('mvp-stat-save').textContent=mvp?`${mvp.w}W · ${mvpWR}% WR · GD ${mvp.gd>=0?'+':''}${mvp.gd}`:'No matches yet';
+  document.getElementById('mvp-stat-save').textContent=mvp?`${mvp.w}W · ${mvpWR}% WR · GD ${mvp.gd>=0?'+':''}${mvp.gd}`:'Sem partidas ainda';
 }
 async function saveSession() {
-  if(sessionSaved){showAlert('alert-save','This session was already saved.','warn');return;}
-  if(!matches.length){showAlert('alert-save','Add at least one match before saving.','warn');return;}
+  if(sessionSaved){showAlert('alert-save','Esta sessão já foi salva.','warn');return;}
+  if(!matches.length){showAlert('alert-save','Adicione ao menos uma partida antes de salvar.','warn');return;}
   const num   =document.getElementById('cfg-num')?.textContent?.trim()||'S?';
   const date  =document.getElementById('cfg-date').value||new Date().toISOString().slice(0,10);
   const local =document.getElementById('cfg-local').value||'';
@@ -885,23 +885,23 @@ async function saveSession() {
       document.getElementById('btn-save-session').style.display='none';
       const savedAt=new Date().toLocaleString('pt-BR');
       document.getElementById('save-done-box').style.display='block';
-      document.getElementById('save-done-log').innerHTML=`Session: <strong>${num}</strong><br>Saved at: <strong>${savedAt}</strong><br>Matches: <strong>${matches.length}</strong> · Players: <strong>${activePlayers.length}</strong> · MVP: <strong>${mvp||'—'}</strong>`;
-      showAlert('alert-save',`✅ ${num} saved and locked.`,'ok');
+      document.getElementById('save-done-log').innerHTML=`Sessão: <strong>${num}</strong><br>Salvo em: <strong>${savedAt}</strong><br>Partidas: <strong>${matches.length}</strong> · Jogadores: <strong>${activePlayers.length}</strong> · MVP: <strong>${mvp||'—'}</strong>`;
+      showAlert('alert-save',`✅ ${num} salva e bloqueada.`,'ok');
       setTimeout(()=>loadRanking(),2000);
     }
-  } catch(e){showAlert('alert-save','⚠️ Error saving. Check console.','err');console.error(e);}
+  } catch(e){showAlert('alert-save','⚠️ Erro ao salvar. Verifique o console.','err');console.error(e);}
 }
 
 // ══════════════════════════════════════════
 // PROGRESSIVE FLOW
 // ══════════════════════════════════════════
 function startSession() {
-  if(activePlayers.length<2){showAlert('alert-session','Select at least 2 players.','warn');return;}
+  if(activePlayers.length<2){showAlert('alert-session','Selecione ao menos 2 jogadores.','warn');return;}
   ['tab-match','tab-scoreboard'].forEach(id=>document.getElementById(id)?.classList.remove('disabled'));
   showTab('match',document.getElementById('tab-match'));
 }
 function closeSession() {
-  if(!matches.length){showAlert('alert-match','Add at least one match first.','warn');return;}
+  if(!matches.length){showAlert('alert-match','Adicione ao menos uma partida primeiro.','warn');return;}
   document.getElementById('tab-save')?.classList.remove('disabled');
   renderScoreboard();
   showTab('save',document.getElementById('tab-save'));
@@ -920,7 +920,7 @@ function generateRandom(type) {
   const preview=document.getElementById('random-preview');
   const label=document.getElementById('random-preview-label');
   const list=document.getElementById('random-preview-list');
-  if(activePlayers.length<4){showAlert('alert-match','Need at least 4 players.','warn');return;}
+  if(activePlayers.length<4){showAlert('alert-match','Mínimo de 4 jogadores necessário.','warn');return;}
   const players=[...activePlayers];
   const generated=[];
   if(type==='americano'){
@@ -934,7 +934,7 @@ function generateRandom(type) {
     }
   }
   window._pendingMatches=generated.slice(0,12);
-  label.textContent=type==='americano'?'Americano Rotation':'Round Robin';
+  label.textContent=type==='americano'?'Rotação Americano':'Round Robin';
   list.innerHTML=window._pendingMatches.map((m,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:#fff;border:1px solid #eaf0f8;border-radius:7px;font-size:11px;"><span style="font-family:'DM Mono';color:#9ab0c8;font-size:9px">${i+1}</span><span style="font-weight:600">${m.a.join(' / ')}</span><span style="color:#c0cdd8">vs</span><span style="font-weight:600">${m.b.join(' / ')}</span></div>`).join('');
   preview.style.display='block';
 }
@@ -943,7 +943,7 @@ function confirmRandom(){
   window._pendingMatches.forEach(m=>matches.push({teamA:m.a,teamB:m.b,sa:null,sb:null,tb:false,tba:null,tbb:null}));
   window._pendingMatches=null;
   document.getElementById('random-preview').style.display='none';
-  renderMatchLog();showAlert('alert-match',`Matches added. Enter scores.`,'ok');
+  renderMatchLog();showAlert('alert-match',`Partidas adicionadas. Insira os placares.`,'ok');
   if(matches.length>0)document.getElementById('btn-close-session').style.display='block';
 }
 function cancelRandom(){window._pendingMatches=null;document.getElementById('random-preview').style.display='none';}
@@ -1462,10 +1462,10 @@ async function histOpen(numero) {
   document.getElementById('hist-list-view').style.display   = 'none';
   document.getElementById('hist-detail-view').style.display = 'block';
   document.getElementById('hist-detail-num').textContent    = numero;
-  document.getElementById('hist-detail-meta').textContent   = 'Loading...';
+  document.getElementById('hist-detail-meta').textContent   = 'Carregando...';
   ['scoreboard','matches','stats'].forEach(t => {
     const el = document.getElementById('hist-tab-'+t);
-    if (el) el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Loading...</div></div>';
+    if (el) el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Carregando...</div></div>';
   });
   histSwitch('matches');
   try {
@@ -1608,14 +1608,14 @@ async function histOpen(numero) {
               <div style="display:flex;align-items:center;justify-content:flex-end"><div ${wrapB}>${pillB}</div></div>
             </div>`;
           }).join('')}
-        </div>` : '<div class="empty-panel"><div class="empty-icon">🎯</div><div>Match details not available for this session.</div></div>';
+        </div>` : '<div class="empty-panel"><div class="empty-icon">🎯</div><div>Detalhes de partidas indisponíveis para esta sessão.</div></div>';
       document.getElementById('hist-tab-matches').innerHTML = matchHtml;
     } catch(e) {
-      document.getElementById('hist-tab-matches').innerHTML = '<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Could not load match details.</div></div>';
+      document.getElementById('hist-tab-matches').innerHTML = '<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Não foi possível carregar as partidas.</div></div>';
     }
   } catch(e) {
     document.getElementById('hist-tab-scoreboard').innerHTML =
-      `<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Error: ${e.message}</div></div>`;
+      `<div class="empty-panel"><div class="empty-icon">⚠️</div><div>Erro: ${e.message}</div></div>`;
   }
 }
 
