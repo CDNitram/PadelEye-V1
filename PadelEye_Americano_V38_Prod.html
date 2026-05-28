@@ -4616,9 +4616,9 @@ async function loadPlayersFromDB() {
         categoria:     p.player_category || p.categoria  || '',
         genero:        p.player_gender   || p.genero     || '',
         cidade:        p.player_city     || p.cidade     || '',
-        nacionalidade: p.nacionalidade || '',
-        email:         p.email       || '',
-        celular:       p.celular     || '',
+        nacionalidade: p.player_nationality || p.nacionalidade || '',
+        email:         p.email             || '',
+        celular:       p.mobile_number     || p.celular || '',
       });
     });
 
