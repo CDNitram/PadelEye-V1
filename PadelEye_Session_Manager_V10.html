@@ -262,6 +262,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Salvar</button>
     <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()">📊 Ranking</button>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()">📋 Histórico</button>
+    <button class="tab" id="tab-cadastro" onclick="showTab('cadastro',this);loadCadastro()">👤 Jogadores</button>
+    <button class="tab" id="tab-testdb" onclick="showTab('testdb',this);renderTestDBTab()">🔧 Test DB</button>
   </div>
 
   <!-- ── SESSION TAB ── -->
@@ -549,6 +551,40 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 </div>
 
+  <!-- ── CADASTRO DE JOGADORES TAB ── -->
+  <div class="panel" id="p-cadastro">
+    <div class="alert" id="alert-cadastro"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px">Jogadores Registados</div>
+      <span class="badge gray" id="cadastro-count-badge">—</span>
+    </div>
+    <div style="margin-bottom:12px">
+      <input class="team-select" id="cadastro-search" placeholder="🔍 Pesquisar jogador..." oninput="filterCadastro(this.value)">
+    </div>
+    <div id="cadastro-grid" style="display:flex;flex-direction:column;gap:8px">
+      <div class="empty"><div class="empty-icon">👤</div>Clique no tab para carregar.</div>
+    </div>
+  </div>
+
+  <!-- ── TEST DB TAB ── -->
+  <div class="panel" id="p-testdb">
+    <div class="alert" id="alert-testdb"></div>
+    <div class="card">
+      <div class="card-title" style="padding:14px 18px 0">🔧 Test Connection to DB</div>
+      <div style="font-size:11px;color:#9ab0c8;padding:4px 18px 14px">Google Sheets · Apps Script Web App · GS V7</div>
+      <div style="padding:0 18px 18px">
+        <div style="background:#f4f7fc;border:1px solid #dde6f0;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;margin-bottom:6px;text-transform:uppercase">Apps Script URL</div>
+          <div id="test-db-url-display" style="font-family:'DM Mono';font-size:10px;color:#0d1e3a;word-break:break-all;cursor:pointer" onclick="editDBUrl()"></div>
+          <button onclick="editDBUrl()" style="margin-top:8px;padding:5px 12px;background:#fff;border:1px solid #dde6f0;border-radius:6px;font-family:'DM Mono';font-size:9px;cursor:pointer;color:#5a8aaa">✏ Editar</button>
+        </div>
+        <button onclick="testDBConnection()" style="width:100%;padding:13px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-bottom:14px">
+          ⚡ TESTAR CONEXÃO COMPLETA
+        </button>
+        <div id="test-db-results" style="display:none"></div>
+      </div>
+    </div>
+  </div>
 <!-- ADD PLAYER MODAL -->
 <div id="add-player-modal" onclick="closeAddPlayer(event)">
   <div class="ap-box" onclick="event.stopPropagation()">
@@ -714,7 +750,7 @@ function renderPlayerGrid() {
     const on = activePlayers.includes(name);
     return `<div class="player-chip ${on?'active':''}" onclick="togglePlayer('${name.replace(/'/g,"\\'")}')">
       <div class="player-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div class="player-chip-av" style="background:${pc(name)}">${init(name)}</div>
+      <div class="player-chip-av" style="background:${flagGrad(getPlayerNat(name))};color:${flagTextCol(getPlayerNat(name))}">${init(name)}</div>
       <div class="player-chip-name">${name}</div>
       <div class="player-chip-pts">${getPlayerStats(name).w}V · ${getPlayerStats(name).m}P</div>
     </div>`;
@@ -1685,6 +1721,38 @@ function initShareMode(){
   }
 }
 
+
+// ══════════════════════════════════════════
+// NATIONALITY COLORS
+// ══════════════════════════════════════════
+// ── OBJETIVO: Cores de bandeira por nacionalidade (sincronizado com V38) ──────
+function flagGrad(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('brasil') || n.includes('brazil'))    return 'linear-gradient(135deg,#009c3b,#ffdf00,#009c3b)';
+  if (n.includes('argentin'))                           return 'linear-gradient(135deg,#74acdf,#fff,#74acdf)';
+  if (n.includes('paraguai') || n.includes('paraguay'))return 'linear-gradient(135deg,#d52b1e,#fff,#0038a8)';
+  if (n.includes('uruguai')  || n.includes('uruguay')) return 'linear-gradient(135deg,#fff,#fff,#5c9bd6)';
+  if (n.includes('chile'))                              return 'linear-gradient(135deg,#d52b1e,#fff,#d52b1e)';
+  if (n.includes('colombia') || n.includes('colômbia'))return 'linear-gradient(135deg,#fcd116,#003893,#ce1126)';
+  if (n.includes('espanha')  || n.includes('spain'))   return 'linear-gradient(135deg,#c60b1e,#f1bf00,#c60b1e)';
+  if (n.includes('bolívia')  || n.includes('bolivia')) return 'linear-gradient(135deg,#d52b1e,#f4e400,#009c3b)';
+  return 'linear-gradient(135deg,#3a7bd5,#1a3052)';
+}
+function flagTextCol(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('argentin') || n.includes('uruguai')) return '#0d1e3a';
+  return '#fff';
+}
+function getPlayerNat(name) {
+  const r = PLAYER_REGISTRY.find(p => {
+    const nick  = p.player_nickname || p.nickname || '';
+    const fname = p.player_name     || p.nome     || '';
+    const lname = p.player_surname  || p.sobrenome|| '';
+    const disp  = nick || (fname + (lname ? ' ' + lname : '')).trim();
+    return disp === name;
+  });
+  return r ? (r.player_nationality || r.nacionalidade || '') : '';
+}
 // ══════════════════════════════════════════
 // DATE HELPERS
 // ══════════════════════════════════════════
@@ -1737,6 +1805,130 @@ async function saveNewPlayer(){
 
 // ── SAVE SESSION — function defined above in SAVE TAB section (correct IDs: cfg-num, cfg-date, cfg-local) ──
 
+
+// ══════════════════════════════════════════
+// CADASTRO DE JOGADORES TAB
+// ══════════════════════════════════════════
+// ── OBJETIVO: Lista de todos os jogadores com cores de bandeira ───────────────
+let _cadastroQuery = '';
+function loadCadastro() {
+  const grid = document.getElementById('cadastro-grid');
+  if (!PLAYER_REGISTRY.length) {
+    if (grid) grid.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div>A carregar...</div>';
+    loadPlayersFromDB().then(() => renderCadastro());
+    return;
+  }
+  renderCadastro();
+}
+function filterCadastro(q) {
+  _cadastroQuery = q.toLowerCase();
+  renderCadastro();
+}
+function renderCadastro() {
+  const grid  = document.getElementById('cadastro-grid');
+  const badge = document.getElementById('cadastro-count-badge');
+  if (!grid) return;
+  const rows = PLAYER_REGISTRY.filter(p => {
+    if (!_cadastroQuery) return true;
+    const nick  = p.player_nickname || p.nickname  || '';
+    const fname = p.player_name     || p.nome      || '';
+    const lname = p.player_surname  || p.sobrenome || '';
+    const nat   = p.player_nationality || p.nacionalidade || '';
+    const city  = p.player_city     || p.cidade    || '';
+    const cat   = p.player_category || p.categoria || '';
+    return [nick,fname,lname,nat,city,cat].some(v => v.toLowerCase().includes(_cadastroQuery));
+  });
+  if (badge) badge.textContent = rows.length + ' / ' + PLAYER_REGISTRY.length + ' jogadores';
+  if (!rows.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div>Nenhum resultado.</div>';
+    return;
+  }
+  grid.innerHTML = rows.map(p => {
+    const nick    = p.player_nickname || p.nickname  || '';
+    const fname   = p.player_name     || p.nome      || '';
+    const lname   = p.player_surname  || p.sobrenome || '';
+    const display = nick || (fname + (lname ? ' ' + lname : '')).trim();
+    const cat     = p.player_category || p.categoria || '';
+    const city    = p.player_city     || p.cidade    || '';
+    const nat     = p.player_nationality || p.nacionalidade || '';
+    const gen     = p.player_gender   || p.genero    || '';
+    const grad    = flagGrad(nat);
+    const txtCol  = flagTextCol(nat);
+    const ini     = rkIni(display);
+    const tags    = [cat, city, nat].filter(Boolean);
+    return `<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+      <div style="width:42px;height:42px;border-radius:50%;background:${grad};color:${txtCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0;text-shadow:0 1px 3px rgba(0,0,0,.3)">${ini}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#0d1e3a">${fname} <span style="font-weight:500;color:#5a7090">${lname}</span>${nick?' <span style="font-size:11px;color:#9ab0c8">"'+nick+'"</span>':''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px">${tags.map(t=>`<span style="background:#f0f5fb;color:#5a7090;border-radius:20px;padding:2px 8px;font-size:10px;font-family:'DM Mono'">${t}</span>`).join('')}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:10px;color:#b0c4d8;font-family:'DM Mono'">${p.player_id||p.id||''}</div>
+        ${nat ? `<div style="width:11px;height:11px;border-radius:50%;background:${grad};margin:4px 0 0 auto;box-shadow:0 1px 3px rgba(0,0,0,.2)"></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// TEST DB TAB
+// ══════════════════════════════════════════
+// ── OBJETIVO: Testar conexão com GS V7 e diagnosticar tabelas ─────────────────
+async function testDBConnection() {
+  const btn = document.querySelector('[onclick="testDBConnection()"]');
+  const res = document.getElementById('test-db-results');
+  if (btn) btn.textContent = '⏳ A testar...';
+  if (res) { res.style.display = 'block'; res.innerHTML = '<div style="text-align:center;padding:20px;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">A conectar ao GS V7...</div>'; }
+
+  const tests = [
+    { label:'Players',            action:'get_players' },
+    { label:'Sessions_Sessions',  action:'get_sessions' },
+    { label:'Matches_Sessions',   action:'get_session_matches' },
+    { label:'Stats_Sessions',     action:'get_session_stats' },
+    { label:'Ranking_Sessions',   action:'get_ranking_sessions' },
+    { label:'Log_Sessions',       action:'ping' },
+  ];
+
+  let pingOk = false;
+  try {
+    const pr = await fetch(SESSION_MANAGER_URL + '?action=ping');
+    const pj = await pr.json();
+    pingOk = pj.ok === true;
+  } catch(e) {}
+
+  if (!pingOk) {
+    if (res) res.innerHTML = `<div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:14px;color:#c0392b;font-family:DM Mono,monospace;font-size:11px">❌ Sem resposta do servidor. Verifique a URL.</div>`;
+    if (btn) btn.textContent = '⚡ TESTAR CONEXÃO COMPLETA';
+    return;
+  }
+
+  const results = [];
+  for (const t of tests) {
+    try {
+      const r = await fetch(SESSION_MANAGER_URL + '?action=' + t.action);
+      const j = await r.json();
+      const rows = j.rows ? j.rows.length : (j.ok ? '✓' : '?');
+      results.push({ label: t.label, rows, ok: j.ok !== false });
+    } catch(e) {
+      results.push({ label: t.label, rows: '—', ok: false });
+    }
+  }
+
+  const okCount = results.filter(r => r.ok).length;
+  if (res) {
+    res.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="width:8px;height:8px;border-radius:50%;background:${okCount===results.length?'#27AE60':'#C9933A'}"></div>
+        <div style="font-family:'DM Mono';font-size:11px;color:#0d1e3a;font-weight:700">${okCount}/${results.length} tabelas acessíveis</div>
+      </div>
+      ${results.map(r => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border:1px solid #dde6f0;border-radius:8px;margin-bottom:5px">
+          <div style="font-size:12px;font-weight:600">${r.label}</div>
+          <div style="font-family:'DM Mono';font-size:11px;color:${r.ok?'#1a7a44':'#c0392b'}">${r.ok?'✅':' ❌'} ${typeof r.rows === 'number' ? r.rows + ' rows' : r.rows}</div>
+        </div>`).join('')}`;
+  }
+  if (btn) btn.textContent = '⚡ TESTAR CONEXÃO COMPLETA';
+}
 // ══════════════════════════════════════════
 // TEST DB TAB
 // ══════════════════════════════════════════
