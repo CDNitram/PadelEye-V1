@@ -256,7 +256,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
   </div>
   <div class="tabs">
-    <button class="tab on"  onclick="showTab('session',this)">📋 Parameters</button>
+    <button class="tab on" id="tab-session" onclick="showTab('session',this)">📋 Parameters</button>
     <button class="tab disabled" id="tab-match"      onclick="showTab('match',this)">🏸 Matches</button>
     <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Scoreboard &amp; MVP</button>
     <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Save</button>
@@ -645,6 +645,7 @@ function doLogin() {
   });
   updateHero();
   loadPlayersFromDB();
+  showTab('session', document.getElementById('tab-session'));
   PadelEyeDB.logSession(user, 'session_login', '', { name: currentUser.name });
 }
 
@@ -1812,8 +1813,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadPlayersFromDB();
   // Render test DB tab
   renderTestDBTab();
-  // Show config tab initially
-  showTab('config', document.getElementById('tab-config'));
+  // Show session config tab initially
+  showTab('session', document.getElementById('tab-session'));
 });
 </script>
 </body>
