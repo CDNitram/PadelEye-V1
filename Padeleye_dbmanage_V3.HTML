@@ -71,6 +71,28 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
 #toast.wa{background:#1a1400;color:var(--accent);border:1px solid var(--accent);}
 #toast.er{background:#2d0d0d;color:#f97316;border:1px solid #f97316;}
 @keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+
+/* ── LOGIN SCREEN ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;}
+#s-login{align-items:center;justify-content:center;background:#f4f7fc;padding:24px;}
+.login-brand{text-align:center;margin-bottom:28px;}
+.login-logo{font-family:'Bebas Neue';font-size:48px;color:#0a1628;letter-spacing:3px;line-height:1;}
+.login-logo em{color:var(--accent);font-style:normal;}
+.login-sub{font-family:'DM Mono';font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:6px;text-transform:uppercase;}
+.login-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px;max-width:360px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.07);}
+.login-card-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:2px;}
+.login-card-sub{font-size:11px;color:var(--muted);margin-bottom:22px;}
+.lfield{margin-bottom:14px;}
+.lfield label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
+.lfield input{width:100%;background:#f4f7fc;border:1px solid var(--border);border-radius:10px;color:var(--dark);font-family:'DM Sans';font-size:14px;padding:12px 14px;outline:none;transition:all .2s;}
+.lfield input:focus{border-color:var(--accent);background:#fff;}
+.btn-login{width:100%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--dark);font-weight:700;font-size:14px;padding:14px;border:none;border-radius:10px;cursor:pointer;margin-top:4px;transition:all .2s;font-family:'DM Sans';}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,147,58,.3);}
+.login-error{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:12px;display:none;text-align:center;}
+.login-footer{font-family:'DM Mono';font-size:9px;color:#c0cdd8;text-align:center;margin-top:18px;letter-spacing:1px;}
+#s-app{flex:1;overflow:hidden;}
+
 /* ── SPINNER ── */
 .spin{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -146,6 +168,27 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
 </style>
 </head>
 <body>
+<div class="screen active" id="s-login">
+  <div class="login-brand">
+    <div class="login-logo">PADEL<em>EYE</em></div>
+    <div class="login-sub">DB Manager · V3 · Área Restrita</div>
+  </div>
+  <div class="login-card">
+    <div class="login-card-title">Acesso Administrativo</div>
+    <div class="login-card-sub">Introduza as suas credenciais para continuar.</div>
+    <div class="login-error" id="login-err">Credenciais incorretas. Tente novamente.</div>
+    <div class="lfield"><label>Utilizador</label>
+      <input type="text" id="l-user" placeholder="email ou utilizador" value="organizer@padeleye.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="lfield"><label>Palavra-passe</label>
+      <input type="password" id="l-pass" placeholder="••••••" value="654321" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn-login" onclick="doLogin()">Entrar →</button>
+  </div>
+  <div class="login-footer">PADELEYE · DB MANAGER · V3 · BY TECHNIGMA AI LAB</div>
+</div>
+
+<div class="screen" id="s-app">
 <div class="app">
 
 <!-- TOPBAR -->
@@ -159,6 +202,7 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
   </div>
   <button class="t-btn" onclick="editURL()">✏ URL</button>
   <button class="t-btn btn-gold" onclick="loadAll()">⟳ Carregar</button>
+  <button class="t-btn" onclick="doLogout()" style="margin-left:8px">Sair</button>
 </div>
 
 <!-- SIDEBAR -->
@@ -212,6 +256,7 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
 </div>
 
 </div><!-- /app -->
+</div><!-- /s-app -->
 <div id="toast"></div>
 
 <script>
@@ -224,7 +269,6 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
 let URL_BASE = localStorage.getItem('pe_dbm_url') ||
   'https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec';
 
-document.getElementById('url-disp').textContent = URL_BASE;
 
 // ── TABLE DEFINITIONS (EN schema · GS V7 action names) ────────────────────
 const TABLES = {
@@ -409,6 +453,32 @@ let query       = '';
 let _trnMatches = [];
 let _trnScores  = [];
 
+
+// ══════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════
+const USERS_DBM = {
+  'organizer@padeleye.com': { pass:'654321',    name:'Martin Cordoba',  av:'MC' },
+  'martin':                  { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
+  'admin':                   { pass:'admin123',  name:'Admin',           av:'AD' },
+};
+let currentUserDBM = null;
+
+function doLogin() {
+  const user = document.getElementById('l-user').value.trim().toLowerCase();
+  const pass = document.getElementById('l-pass').value;
+  const err  = document.getElementById('login-err');
+  err.style.display = 'none';
+  if (!USERS_DBM[user] || USERS_DBM[user].pass !== pass) {
+    err.style.display = 'block';
+    document.getElementById('l-pass').value = '';
+    return;
+  }
+  currentUserDBM = { ...USERS_DBM[user], key: user };
+  document.getElementById('s-login').classList.remove('active');
+  document.getElementById('s-app').classList.add('active');
+  loadAll();
+}
 // ── NETWORK ──────────────────────────────────────────────────────
 async function post(action, payload) {
   const res = await fetch(URL_BASE, {
@@ -438,26 +508,69 @@ async function ping() {
 
 // ── LOAD ALL ──────────────────────────────────────────────────────
 async function loadAll() {
-  render('<div class="ctr"><div class="spin"></div> A carregar tabelas...</div>');
-  setConn('','A ligar...');
-  const ok = await ping();
-  if (!ok) { render('<div class="ctr">❌ Sem ligação. Verifique a URL.</div>'); return; }
+  const keys   = Object.keys(TABLES).filter(k => !['health','trn_browser'].includes(k));
+  const total  = keys.length;
 
-  const keys = Object.keys(TABLES).filter(k => !['health','trn_browser'].includes(k));
+  function renderProgress(loaded, current, ok) {
+    const pct = Math.round((loaded / total) * 100);
+    render(`
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;max-width:480px;margin:0 auto">
+        <div style="font-family:'Bebas Neue';font-size:22px;color:var(--dark);letter-spacing:1px;margin-bottom:6px">
+          ${ok === false ? '❌ Sem ligação' : 'A carregar base de dados'}
+        </div>
+        <div style="font-family:'DM Mono';font-size:11px;color:var(--muted);margin-bottom:24px">
+          ${ok === false ? 'Verifique a URL do Apps Script.' : (current ? TABLES[current]?.sheet || current : 'A ligar...')}
+        </div>
+        <div style="width:100%;background:#f0f5fb;border-radius:99px;height:8px;overflow:hidden;margin-bottom:10px">
+          <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:${pct}%;transition:width .3s ease"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:20px">
+          <div style="font-family:'DM Mono';font-size:11px;color:var(--muted)">${loaded} / ${total} tabelas</div>
+          <div style="font-family:'Bebas Neue';font-size:16px;color:var(--accent)">${pct}%</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%">
+          ${keys.map((k, i) => {
+            const done  = i < loaded;
+            const doing = k === current && !done;
+            return `<div style="background:${done?'#e8f8ee':doing?'#fff8e0':'#f8fafd'};border:1px solid ${done?'#c8e8d0':doing?'#e8c870':'var(--border)'};border-radius:7px;padding:5px 8px;display:flex;align-items:center;gap:5px;transition:all .2s">
+              <span style="font-size:10px">${done?'✅':doing?'⏳':'○'}</span>
+              <span style="font-family:'DM Mono';font-size:9px;color:${done?'var(--green)':doing?'#865a10':'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${TABLES[k].sheet}</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`);
+  }
+
+  renderProgress(0, null, null);
+  setConn('', 'A ligar...');
+  const ok = await ping();
+  if (!ok) { renderProgress(0, null, false); return; }
+
   let loaded = 0;
   for (const k of keys) {
+    renderProgress(loaded, k, true);
     try {
       const j = await get(TABLES[k].get);
       data[k] = j.rows || [];
       loaded++;
       const nb = document.getElementById('nb-trn');
       if (k === 'tournaments' && nb) nb.textContent = data[k].length;
+      document.getElementById('url-disp').textContent = URL_BASE;
     } catch(e) {
       data[k] = [];
+      loaded++;
     }
+    renderProgress(loaded, k, true);
   }
-  toast(`✅ ${loaded}/${keys.length} tabelas carregadas`, loaded===keys.length?'ok':'wa');
+  toast(`✅ ${loaded}/${total} tabelas carregadas`, loaded===total?'ok':'wa');
   drawActive();
+}
+
+function doLogout() {
+  currentUserDBM = null;
+  document.getElementById('s-app').classList.remove('active');
+  document.getElementById('s-login').classList.add('active');
+  document.getElementById('l-pass').value = '';
 }
 
 // ── NAV ──────────────────────────────────────────────────────────
@@ -974,7 +1087,9 @@ function toast(msg, type='in') {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => loadAll());
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('url-disp').textContent = URL_BASE;
+});
 </script>
 </body>
 </html>
