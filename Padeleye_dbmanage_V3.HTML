@@ -948,47 +948,69 @@ function buildRodadas(tm) {
 
 // ── GRUPOS TAB ─────────────────────────────────────────────────────
 function buildGrupos(tm) {
-  const gm = tm.filter(m => m.phase && m.phase.toLowerCase().includes('fase'));
-  if (!gm.length) return '<div class="ctr">Sem partidas de fase de grupos.</div>';
-  const groups = [...new Set(gm.map(m=>m.group).filter(Boolean))].sort();
+  // Include ALL phases (Fase 1, Fase 2, Final, etc.) — not just 'fase'
+  const withGroup = tm.filter(m => m.phase && m.group);
+  if (!withGroup.length) return '<div class="ctr">Sem partidas de grupos.</div>';
+
+  // Group by phase first, then by group letter
+  const phases = [...new Set(withGroup.map(m=>m.phase))];
+  phases.sort((a,b) => (PHASE_ORDER_CONST.indexOf(a)+99)-(PHASE_ORDER_CONST.indexOf(b)+99));
+
   const MEDAL = ['🥇','🥈','🥉'];
-  return `<div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">` +
-    groups.map(g => {
-      const matches = gm.filter(m=>m.group===g);
-      const sorted  = _calcPlayers(matches);
-      return `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
-        <div style="background:linear-gradient(135deg,var(--dark),var(--mid));padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:2px">GRUPO ${g}</div>
-          <div style="font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.4)">${matches.length} partidas</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse">
-          <thead><tr style="background:#f8fafd">
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">#</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">JOGADOR</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">P</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">V</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">D</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PF</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PA</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 12px;text-align:right;border-bottom:1px solid var(--border)">GD</th>
-          </tr></thead>
-          <tbody>${sorted.map((p,i) => {
-            const gd = p.pf-p.pa;
-            const bg = i===0?'linear-gradient(135deg,#fffbf0,#fff8e8)':i%2?'#fafcff':'#fff';
-            return `<tr style="background:${bg};border-bottom:1px solid #f0f5fb">
-              <td style="padding:9px 12px;font-size:16px">${MEDAL[i]||i+1}</td>
-              <td style="padding:9px 12px;font-size:12px;font-weight:${i===0?700:600};color:var(--dark)">${p.p}</td>
-              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:var(--muted)">${p.m}</td>
-              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:var(--green)">${p.w}</td>
-              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:var(--muted)">${p.l}</td>
-              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pf}</td>
-              <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pa}</td>
-              <td style="padding:9px 12px;text-align:right;font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</td>
-            </tr>`;
-          }).join('')}</tbody>
-        </table>
-      </div>`;
-    }).join('') + '</div>';
+  let html = '';
+
+  phases.forEach(phase => {
+    const pm = withGroup.filter(m=>m.phase===phase);
+    const groups = [...new Set(pm.map(m=>m.group).filter(Boolean))].sort();
+
+    html += `<div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;max-width:900px;margin-left:auto;margin-right:auto">
+        <div style="font-family:'Bebas Neue';font-size:16px;color:var(--dark);letter-spacing:1px">${phase}</div>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-family:'DM Mono';font-size:9px;color:var(--muted)">${pm.length} partidas</span>
+      </div>
+      <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+        ${groups.map(g => {
+          const matches = pm.filter(m=>m.group===g);
+          const sorted  = _calcPlayers(matches);
+          return `<div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+            <div style="background:linear-gradient(135deg,var(--dark),var(--mid));padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:2px">GRUPO ${g}</div>
+              <div style="font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.4)">${matches.length} partidas</div>
+            </div>
+            <table style="width:100%;border-collapse:collapse">
+              <thead><tr style="background:#f8fafd">
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">#</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);letter-spacing:1.5px;padding:7px 12px;text-align:left;border-bottom:1px solid var(--border)">JOGADOR</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">P</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">V</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">D</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PF</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PA</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 12px;text-align:right;border-bottom:1px solid var(--border)">GD</th>
+              </tr></thead>
+              <tbody>${sorted.map((p,i) => {
+                const gd = p.pf-p.pa;
+                const bg = i===0?'linear-gradient(135deg,#fffbf0,#fff8e8)':i%2?'#fafcff':'#fff';
+                return `<tr style="background:${bg};border-bottom:1px solid #f0f5fb">
+                  <td style="padding:9px 12px;font-size:16px">${MEDAL[i]||i+1}</td>
+                  <td style="padding:9px 12px;font-size:12px;font-weight:${i===0?700:600};color:var(--dark)">${p.p}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:var(--muted)">${p.m}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:var(--green)">${p.w}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:var(--muted)">${p.l}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pf}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pa}</td>
+                  <td style="padding:9px 12px;text-align:right;font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'var(--green)':'var(--red)'}">${gd>=0?'+':''}${gd}</td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  return html;
 }
 
 // ── ESTATÍSTICAS TAB ───────────────────────────────────────────────
