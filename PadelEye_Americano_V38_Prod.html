@@ -3377,13 +3377,15 @@ function renderRoster() {
   if (!container) return;
 
   const q = (document.getElementById('roster-search')?.value || '').toLowerCase();
-  const filtered = REGISTRY.filter(p => {
-    if (!q) return true;
-    return displayName(p).toLowerCase().includes(q) ||
-           p.cidade?.toLowerCase().includes(q)       ||
-           p.categoria?.toLowerCase().includes(q)    ||
-           String(p.id).includes(q);
-  });
+  const filtered = [...REGISTRY]
+    .sort((a, b) => displayName(a).localeCompare(displayName(b), 'pt', {sensitivity:'base'}))
+    .filter(p => {
+      if (!q) return true;
+      return displayName(p).toLowerCase().includes(q) ||
+             p.cidade?.toLowerCase().includes(q)       ||
+             p.categoria?.toLowerCase().includes(q)    ||
+             String(p.id).includes(q);
+    });
 
   if (badge) badge.textContent = `${filtered.length} / ${REGISTRY.length} jogadores`;
 
