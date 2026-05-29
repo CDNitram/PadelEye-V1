@@ -223,7 +223,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 }
 
 /* ══ CADASTRO DE JOGADORES — V38 pattern ══ */
-.player-roster{display:flex;flex-direction:column;gap:8px;}
+.player-roster{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .roster-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:12px 16px;transition:box-shadow .2s;}
 .roster-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06);}
 .roster-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0;}
@@ -497,8 +497,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div class="rk-sec">Ranking Completo</div>
     <div class="rk-sort-bar">
-      <button class="rk-sbtn on" onclick="rkSetSort('wins',this)">🏆 Vitórias</button>
-      <button class="rk-sbtn" onclick="rkSetSort('win_rate',this)">📊 Win Rate</button>
+      <button class="rk-sbtn" onclick="rkSetSort('wins',this)">🏆 Vitórias</button>
+      <button class="rk-sbtn on" onclick="rkSetSort('win_rate',this)">📊 Win Rate</button>
       <button class="rk-sbtn" onclick="rkSetSort('matches',this)">🎯 Partidas</button>
       <button class="rk-sbtn" onclick="rkSetSort('points_difference',this)">⚡ Game Diff</button>
       <button class="rk-sbtn" onclick="rkSetSort('mvp_count',this)">🥇 MVP</button>
@@ -1318,19 +1318,65 @@ async function loadRanking() {
   btn.classList.remove('spin'); dot.classList.remove('rk-spin');
 }
 
-// ── rkUpdateKPIs — EN field names ──
+// ── rkUpdateKPIs — EN field names + sort-aware ──
 function rkUpdateKPIs(data) {
-  // Accept both EN (wins) and PT (vitorias)
   const totalM = data.reduce((s,p) => s + (+(p.matches || p.partidas || 0)), 0);
-  const leader = [...data].sort((a,b) =>
-    (+(b.wins||b.vitorias||0)) - (+(a.wins||a.vitorias||0)))[0];
   document.getElementById('rk-k-players').textContent = data.length;
   document.getElementById('rk-k-sess').textContent    = rkTotalSessions;
   document.getElementById('rk-k-span').textContent    = 'Out 2024 → Mai 2026';
   document.getElementById('rk-k-matches').textContent = Math.round(totalM / 2);
-  document.getElementById('rk-k-leader').textContent  = leader?.player || leader?.jogador || '—';
-  const lv = leader ? `${leader.wins||leader.vitorias||0}V · ${leader.win_rate||'—'} WR` : '—';
-  document.getElementById('rk-k-leader-sub').textContent = lv;
+
+  // Leader changes based on current sort criteria
+  const sorted = [...data];
+  let leaderName = '—', leaderSub = '—', leaderLabel = 'Líder';
+  if (rkSort === 'win_rate') {
+    sorted.sort((a,b) => rkWR(b.win_rate) - rkWR(a.win_rate));
+    const l = sorted[0];
+    leaderLabel = 'Líder WR';
+    leaderName  = l?.player || '—';
+    leaderSub   = l ? `${l.win_rate||'—'} · ${l.wins||0}V` : '—';
+  } else if (rkSort === 'mvp_count') {
+    sorted.sort((a,b) => (+(b.mvp_count||0)) - (+(a.mvp_count||0)));
+    const l = sorted[0];
+    leaderLabel = 'Mais MVPs';
+    leaderName  = l?.player || '—';
+    leaderSub   = l ? `🏅 ${l.mvp_count||0} MVPs` : '—';
+  } else if (rkSort === 'wins' || rkSort === 'vitorias') {
+    sorted.sort((a,b) => (+(b.wins||b.vitorias||0)) - (+(a.wins||a.vitorias||0)));
+    const l = sorted[0];
+    leaderLabel = 'Mais Vitórias';
+    leaderName  = l?.player || '—';
+    leaderSub   = l ? `${l.wins||0}V · ${l.win_rate||'—'} WR` : '—';
+  } else if (rkSort === 'matches' || rkSort === 'partidas') {
+    sorted.sort((a,b) => (+(b.matches||b.partidas||0)) - (+(a.matches||a.partidas||0)));
+    const l = sorted[0];
+    leaderLabel = 'Mais Ativo';
+    leaderName  = l?.player || '—';
+    leaderSub   = l ? `${l.matches||0} partidas` : '—';
+  } else if (rkSort === 'sessions' || rkSort === 'sessoes') {
+    sorted.sort((a,b) => (+(b.sessions||b.sessoes||0)) - (+(a.sessions||a.sessoes||0)));
+    const l = sorted[0];
+    leaderLabel = 'Mais Sessões';
+    leaderName  = l?.player || '—';
+    leaderSub   = l ? `${l.sessions||0} sessões` : '—';
+  } else if (rkSort === 'points_difference' || rkSort === 'gd') {
+    sorted.sort((a,b) => (+(b.points_difference||b.gd||0)) - (+(a.points_difference||a.gd||0)));
+    const l = sorted[0];
+    leaderLabel = 'Melhor GD';
+    leaderName  = l?.player || '—';
+    const gd = +(l?.points_difference||l?.gd||0);
+    leaderSub   = l ? `${gd>=0?'+':''}${gd} GD` : '—';
+  } else {
+    sorted.sort((a,b) => (+(b.wins||0)) - (+(a.wins||0)));
+    const l = sorted[0];
+    leaderName = l?.player || '—';
+    leaderSub  = l ? `${l.wins||0}V · ${l.win_rate||'—'} WR` : '—';
+  }
+
+  document.getElementById('rk-k-leader').textContent     = leaderName;
+  document.getElementById('rk-k-leader-sub').textContent = leaderSub;
+  const lbl = document.querySelector('.rk-kpi:last-child .rk-kpi-l');
+  if (lbl) lbl.textContent = leaderLabel;
 }
 
 // ── rkRenderTable — EN field names ──
@@ -1540,8 +1586,13 @@ async function histOpen(numero) {
     const sess  = allSess.find(s =>
       String(s.session_serial_number || s.numero) === String(numero)) || {};
     // Filter stats by session serial number — accept both field names
-    const stats = allStats.filter(s =>
-      String(s.session_serial_number || s.sessao_numero || s.sessao) === String(numero));
+    const numStr2 = String(numero);
+    const numS2   = numStr2.startsWith('S') ? numStr2 : 'S' + numStr2;
+    const numN2   = numStr2.replace(/^S/i,'');
+    const stats = allStats.filter(s => {
+      const sn = String(s.session_serial_number || s.sessao_numero || s.sessao || '');
+      return sn === numStr2 || sn === numS2 || sn === numN2;
+    });
 
     const dateRaw = sess.session_date || sess.data || '';
     const date = formatDateBR(dateRaw, {weekday:'long',day:'2-digit',month:'long',year:'numeric'}).toUpperCase();
@@ -1638,9 +1689,14 @@ async function histOpen(numero) {
     try {
       const pRes = await fetch(SESSION_MANAGER_URL + '?action=get_session_matches');
       const pJson = pRes.ok ? await pRes.json() : {rows:[]};
-      const partidas = (pJson.rows || []).filter(p =>
-        String(p.session || p.session_id || p.sessao) === String(numero) ||
-        String(p.session_serial_number || p.sessao_numero) === String(numero));
+      const numStr3 = String(numero);
+      const numS3   = numStr3.startsWith('S') ? numStr3 : 'S' + numStr3;
+      const numN3   = numStr3.replace(/^S/i,'');
+      const partidas = (pJson.rows || []).filter(p => {
+        const sn = String(p.session || p.session_id || p.sessao || '');
+        const sn2= String(p.session_serial_number || p.sessao_numero || '');
+        return sn===numStr3||sn===numS3||sn===numN3||sn2===numStr3||sn2===numS3||sn2===numN3;
+      });
       const matchHtml = partidas.length ? `
         <div style="border:1px solid #eaf0f8;border-radius:10px;overflow:hidden">
           ${partidas.map((p,i) => {
@@ -1686,13 +1742,14 @@ function rkSetSort(key, el) {
   document.querySelectorAll('.rk-sbtn').forEach(b => b.classList.remove('on'));
   el.classList.add('on');
   rkRenderTable();
+  rkUpdateKPIs(rkData);
 }
 
 // ══════════════════════════════════════════
 // RANKING STATE VARS & HELPERS
 // ══════════════════════════════════════════
 // ── OBJETIVO: Variáveis de estado e helpers visuais do ranking ────────────────
-let rkData = [], rkSort = 'wins', rkPeriod = 3, rkTotalSessions = 0, rkSessData = [];
+let rkData = [], rkSort = 'win_rate', rkPeriod = 3, rkTotalSessions = 0, rkSessData = [];
 function rkWR(s){ return parseFloat(String(s).replace('%',''))||0; }
 function rkWCol(v){ return v>=60?'#27AE60':v<30?'#E74C3C':'#0d1e3a'; }
 function rkCol(n){
@@ -1703,7 +1760,7 @@ function rkCol(n){
 function rkIni(n){ if(!n)return '?'; const p=n.trim().split(' '); return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():n.slice(0,2).toUpperCase(); }
 function rkSetPeriod(m,el){
   rkPeriod=m;
-  document.querySelectorAll('.rk-pbtn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.rk-ptab').forEach(b=>b.classList.remove('on'));
   el.classList.add('on');
   rkRenderConsistency();
 }
