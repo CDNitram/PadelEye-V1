@@ -1228,7 +1228,10 @@ let selectedPlayers = [];  // names of players added to tournament
 let extraPlayers    = [];  // manually added players
 let seedList        = [];  // cabeças de chave, max 4
 
-function allPlayers() { return [...DB.map(p=>p.nome), ...extraPlayers]; }
+function allPlayers() {
+  return [...DB.map(p=>p.nome), ...extraPlayers]
+    .sort((a, b) => a.localeCompare(b, 'pt', {sensitivity:'base'}));
+}
 
 // ══════════════════════════════════
 // AUTH
