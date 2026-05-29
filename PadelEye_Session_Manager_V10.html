@@ -706,8 +706,8 @@ function doLogin() {
     updateHero();
   });
   updateHero();
-  loadPlayersFromDB();
-  showTab('session', document.getElementById('tab-session'));
+  loadPlayersFromDB().then(() => { renderRoster(); });
+  showTab('cadastro', document.getElementById('tab-cadastro'));
   PadelEyeDB.logSession(user, 'session_login', '', { name: currentUser.name });
 }
 
@@ -1751,21 +1751,33 @@ function initShareMode(){
 // NATIONALITY COLORS
 // ══════════════════════════════════════════
 // ── OBJETIVO: Cores de bandeira por nacionalidade (sincronizado com V38) ──────
+// ── Gradiente e cor exactos do V38 Prod ──────────────────────────────────────
+function catColor(cat) {
+  if (!cat) return '#0a1628';
+  const c = cat.toString().replace(/[^0-9]/g,'');
+  if (c === '8') return '#d97706';
+  if (c === '7') return '#b85c38';
+  if (c === '6') return '#276221';
+  if (c === '5') return '#1a5fa8';
+  return '#0a1628';
+}
 function flagGrad(nat) {
   const n = (nat||'').toLowerCase();
-  if (n.includes('brasil') || n.includes('brazil'))    return 'linear-gradient(135deg,#009c3b,#ffdf00,#009c3b)';
-  if (n.includes('argentin'))                           return 'linear-gradient(135deg,#74acdf,#fff,#74acdf)';
-  if (n.includes('paraguai') || n.includes('paraguay'))return 'linear-gradient(135deg,#d52b1e,#fff,#0038a8)';
-  if (n.includes('uruguai')  || n.includes('uruguay')) return 'linear-gradient(135deg,#fff,#fff,#5c9bd6)';
-  if (n.includes('chile'))                              return 'linear-gradient(135deg,#d52b1e,#fff,#d52b1e)';
-  if (n.includes('colombia') || n.includes('colômbia'))return 'linear-gradient(135deg,#fcd116,#003893,#ce1126)';
-  if (n.includes('espanha')  || n.includes('spain'))   return 'linear-gradient(135deg,#c60b1e,#f1bf00,#c60b1e)';
-  if (n.includes('bolívia')  || n.includes('bolivia')) return 'linear-gradient(135deg,#d52b1e,#f4e400,#009c3b)';
-  return 'linear-gradient(135deg,#3a7bd5,#1a3052)';
+  if (n.includes('brasile') || n.includes('brazil'))
+    return 'linear-gradient(135deg,#1a6e30 0%,#3aaa5c 40%,#f5d020 70%,#f5d020 100%)';
+  if (n.includes('argentin'))
+    return 'linear-gradient(135deg,#74acdf 0%,#aed6f1 45%,#fff 60%,#aed6f1 80%,#74acdf 100%)';
+  if (n.includes('paraguai') || n.includes('paraguay'))
+    return 'linear-gradient(160deg,#c8102e 0%,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8 100%)';
+  if (n.includes('uruguai')  || n.includes('uruguay'))
+    return 'linear-gradient(135deg,#75aadb 0%,#fff 50%,#75aadb 100%)';
+  if (n.includes('chile') || n.includes('chilen'))
+    return 'linear-gradient(135deg,#d52b1e 0%,#fff 50%,#d52b1e 100%)';
+  return 'linear-gradient(135deg,#3a5a8a 0%,#5a7aaa 100%)';
 }
 function flagTextCol(nat) {
   const n = (nat||'').toLowerCase();
-  if (n.includes('argentin') || n.includes('uruguai')) return '#0d1e3a';
+  if (n.includes('argentin') || n.includes('uruguai') || n.includes('uruguay')) return '#002D6E';
   return '#fff';
 }
 function getPlayerNat(name) {
@@ -1831,6 +1843,74 @@ async function saveNewPlayer(){
 // ── SAVE SESSION — function defined above in SAVE TAB section (correct IDs: cfg-num, cfg-date, cfg-local) ──
 
 
+
+// ══════════════════════════════════════════
+// VIEW MODAL — perfil do jogador (V38 pattern)
+// ══════════════════════════════════════════
+// ── OBJETIVO: Mostrar card completo do jogador (igual ao V38) ────────────────
+function openViewModalV10(pid) {
+  const p = PLAYER_REGISTRY.find(r =>
+    String(r.player_id||r.id||'') === String(pid)
+  );
+  if (!p) return;
+  const fname  = p.player_name     || p.nome      || '';
+  const lname  = p.player_surname  || p.sobrenome || '';
+  const nick   = p.player_nickname || p.nickname  || '';
+  const cat    = p.player_category || p.categoria || '';
+  const city   = p.player_city     || p.cidade    || '';
+  const nat    = p.player_nationality || p.nacionalidade || '';
+  const gen    = p.player_gender   || p.genero    || '';
+  const email  = p.email           || '';
+  const cel    = p.mobile_number   || p.celular   || '';
+  const dname  = nick || (fname + (lname ? ' ' + lname : '')).trim();
+  const ini    = rkIni(dname);
+  const hdrCol = catColor(cat);
+  const grad   = flagGrad(nat);
+  const txtCol = flagTextCol(nat);
+  const catNum = cat.replace(/[^0-9]/g,'');
+  const extraFields = [
+    gen   ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f7fc;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Género</span><span style="color:#0d1e3a;font-weight:500">${gen}</span></div>` : '',
+    email ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f7fc;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Email</span><span style="color:#3a7bd5;font-weight:500">${email}</span></div>` : '',
+    cel   ? `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">Celular</span><span style="color:#0d1e3a;font-weight:500">${cel}</span></div>` : '',
+  ].filter(Boolean).join('');
+  document.getElementById('vm-body-v10').innerHTML = `
+    <div style="border-radius:14px;overflow:hidden;border:.5px solid #dde6f0;margin-bottom:4px">
+      <div style="background:${hdrCol};padding:14px 16px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:12px;color:#fff;letter-spacing:2px;font-weight:700">PADEL<span style="color:#fde68a">EYE</span></span>
+          <span style="font-size:9px;font-weight:700;color:#fde68a;background:rgba(0,0,0,.2);padding:2px 8px;border-radius:99px">${catNum ? catNum+'ª Categoria' : '—'}</span>
+        </div>
+        <div style="display:flex;justify-content:center;margin-bottom:-26px">
+          <div style="width:56px;height:56px;border-radius:50%;border:3px solid #fff;background:${grad};display:flex;align-items:center;justify-content:center">
+            <span style="font-size:15px;font-weight:700;color:${txtCol};text-shadow:0 1px 4px rgba(0,0,0,.4)">${ini}</span>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff;padding:32px 16px 16px;text-align:center">
+        <div style="font-size:20px;font-weight:700;color:#0a1628;line-height:1.1">
+          ${fname} <span style="font-weight:500;color:#5a7090">${lname}</span>
+        </div>
+        ${nick ? `<div style="font-size:11px;color:#9ab0c8;margin-top:3px">"${nick}"</div>` : ''}
+        <div style="font-size:11px;font-weight:600;color:${hdrCol};margin-top:6px">Atleta de Padel</div>
+        ${city ? `<div style="font-size:10px;color:#9ab0c8;margin-top:3px">${city}</div>` : ''}
+        <div style="margin:12px 0;height:.5px;background:#eef1f5"></div>
+        <div style="border:.5px solid #dde6f0;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="text-align:left">
+            <div style="font-size:9px;color:#9ab0c8;text-transform:uppercase;letter-spacing:.06em">ID do Jogador</div>
+            <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#0a1628;margin-top:1px">#${pid}</div>
+          </div>
+          <span style="font-size:22px;color:#c0cdd8">◻</span>
+        </div>
+        ${extraFields ? `<div style="margin-top:10px;text-align:left">${extraFields}</div>` : ''}
+      </div>
+    </div>`;
+  document.getElementById('view-modal-v10').style.display = 'flex';
+}
+function closeViewModalV10(e) {
+  if (!e || e.target.id === 'view-modal-v10') {
+    document.getElementById('view-modal-v10').style.display = 'none';
+  }
+}
 // ══════════════════════════════════════════
 // CADASTRO DE JOGADORES TAB
 // ══════════════════════════════════════════
@@ -1907,7 +1987,15 @@ function renderRoster() {
         <div class="roster-id">#${pid}</div>
         ${cel ? `<div style="font-size:10px;color:#b0c4d8">${cel}</div>` : ''}
         <div style="display:flex;gap:5px">
-          <button onclick="openAddPlayer()" title="Editar jogador"
+          <button onclick="openViewModalV10('${pid}')" title="Ver jogador"
+            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #2980b9;background:rgba(41,128,185,.07);color:#2980b9;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+            onmouseover="this.style.background='rgba(41,128,185,.18)'"
+            onmouseout="this.style.background='rgba(41,128,185,.07)'">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+          <button onclick="openAddPlayer()" title="Adicionar jogador"
             style="width:28px;height:28px;border-radius:5px;border:1.5px solid #C9933A;background:rgba(201,147,58,.07);color:#C9933A;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
             onmouseover="this.style.background='rgba(201,147,58,.18)'"
             onmouseout="this.style.background='rgba(201,147,58,.07)'">
@@ -2029,5 +2117,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   showTab('session', document.getElementById('tab-session'));
 });
 </script>
+
+<!-- VIEW MODAL — perfil do jogador -->
+<div id="view-modal-v10" onclick="closeViewModalV10(event)"
+  style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:700;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:20px;padding:28px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">Perfil do Jogador</div>
+      </div>
+      <button onclick="closeViewModalV10()"
+        style="width:32px;height:32px;border-radius:50%;border:1px solid #dde6f0;background:#f4f7fc;color:#7090b0;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+    </div>
+    <div id="vm-body-v10"></div>
+    <div style="margin-top:20px">
+      <button onclick="closeViewModalV10()"
+        style="width:100%;padding:12px;border-radius:10px;background:#f0f5fb;border:none;color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans'">Fechar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
