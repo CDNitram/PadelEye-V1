@@ -893,24 +893,31 @@ function matchRow(m, showPhase=false) {
     ? `${m.phase||''}${m.group?' · Grp '+m.group:''} · #${m.match_serial_number||'?'}`
     : `#${m.match_serial_number||'?'}`;
   const tbTag = hasTB
-    ? `<div style="font-size:9px;color:var(--accent);font-family:'DM Mono';letter-spacing:.5px;margin-top:1px">TB ${m.tb_a||''}×${m.tb_b||''}</div>`
+    ? `<div style="font-size:9px;color:var(--accent);font-family:'DM Mono';letter-spacing:.5px;margin-top:2px">TB ${m.tb_a||''}×${m.tb_b||''}</div>`
     : '';
-  const pill = (name, isWin) =>
+
+  // Option A — Sport Score · winner names in green
+  const teamNames = (name, isWin) =>
     (name||'—').split(' / ').map(n =>
-      `<span style="display:inline-block;padding:2px 9px;border-radius:20px;background:${isWin?'#edf3ff':'#f8fafd'};color:${isWin?'#0d1e3a':'#9ab0c8'};font-size:11px;font-weight:${isWin?700:400};white-space:nowrap;margin:1px 2px">${n.trim()}</span>`
+      `<div style="font-size:12px;font-weight:${isWin?'600':'400'};color:${isWin?'var(--green)':'#9ab0c8'};line-height:1.6;white-space:nowrap">${n.trim()}</div>`
     ).join('');
-  return `<div style="max-width:680px;margin:0 auto 6px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;gap:8px">
-    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;justify-content:flex-end">${pill(m.team_a,aWin)}</div>
-    <div style="text-align:center">
-      <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1">
+
+  return `<div style="max-width:680px;margin:0 auto 6px;background:#fff;border:0.5px solid var(--border);border-radius:10px;display:grid;grid-template-columns:1fr 72px 1fr;align-items:stretch">
+    <div style="padding:12px 16px;text-align:right;border-right:0.5px solid var(--border);display:flex;flex-direction:column;justify-content:center">
+      ${teamNames(m.team_a, aWin)}
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1;display:flex;align-items:center;gap:4px">
         <span style="color:${aWin?'var(--green)':'#c0cdd8'}">${sa}</span>
-        <span style="color:#d8e0ea;font-size:15px"> × </span>
+        <span style="color:#d8e0ea;font-size:14px">·</span>
         <span style="color:${!aWin?'var(--green)':'#c0cdd8'}">${sb}</span>
       </div>
       ${tbTag}
-      <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:.5px;margin-top:2px">${meta}</div>
+      <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:.5px;margin-top:3px">${meta}</div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:2px">${pill(m.team_b,!aWin)}</div>
+    <div style="padding:12px 16px;border-left:0.5px solid var(--border);display:flex;flex-direction:column;justify-content:center">
+      ${teamNames(m.team_b, !aWin)}
+    </div>
   </div>`;
 }
 
