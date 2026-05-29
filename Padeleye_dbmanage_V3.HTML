@@ -56,9 +56,9 @@ td.key{font-family:'DM Mono';font-size:9px;color:#b0c4d8;}
 td input,td select{background:#f4f7fc;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:12px;font-family:'DM Sans';color:var(--text);width:100%;outline:none;}
 td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
 .btn-sm{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans';transition:all .15s;}
-.btn-edit{background:#f0f5fb;color:#5a7090;}.btn-edit:hover{background:#e0eaf8;color:var(--blue);}
-.btn-save{background:var(--blue);color:#fff;}.btn-save:hover{background:#2a6bc0;}
-.btn-cancel{background:#f0f5fb;color:#9ab0c8;}
+.btn-edit{background:#f0f5fb;color:#5a7090;border:1px solid #dde6f0;display:inline-flex;align-items:center;gap:4px;}.btn-edit:hover{background:#e8f0fb;color:var(--blue);border-color:#b0c8f0;}
+.btn-save{background:var(--blue);color:#fff;display:inline-flex;align-items:center;gap:4px;}.btn-save:hover{background:#2a6bc0;}
+.btn-cancel{background:#fff;color:#9ab0c8;border:1px solid #dde6f0;display:inline-flex;align-items:center;gap:4px;}.btn-cancel:hover{background:#f0f5fb;color:var(--red);border-color:#f0b0b0;}
 .btn-gold{background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--dark);font-weight:700;}
 .btn-gold:hover{box-shadow:0 3px 12px rgba(201,147,58,.3);}
 /* ── SEARCH ── */
@@ -516,10 +516,10 @@ function drawTab(k) {
     });
     if (!def.readonly) {
       if (isEdit) {
-        html += `<td><button class="btn-sm btn-save" onclick="save('${k}',${ri})">💾</button>
-                     <button class="btn-sm btn-cancel" onclick="editRow=null;drawTab('${k}')">✕</button></td>`;
+        html += `<td style="white-space:nowrap"><button class="btn-sm btn-save" onclick="save('${k}',${ri})">✓ Guardar</button>
+                     <button class="btn-sm btn-cancel" onclick="editRow=null;drawTab('${k}')">✕ Cancelar</button></td>`;
       } else {
-        html += `<td><button class="btn-sm btn-edit" onclick="startEdit('${k}',${ri})">✏</button></td>`;
+        html += `<td><button class="btn-sm btn-edit" onclick="startEdit('${k}',${ri})">✏ Editar</button></td>`;
       }
     }
     html += '</tr>';
