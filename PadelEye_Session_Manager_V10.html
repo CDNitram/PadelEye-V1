@@ -275,7 +275,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
   <div class="tabs">
     <button class="tab" id="tab-cadastro" onclick="showTab('cadastro',this);loadCadastro()">👤 Cadastro de Jogadores</button>
-    <button class="tab on" id="tab-session" onclick="showTab('session',this)">📋 Configuração de Sessão</button>
+    <button class="tab" id="tab-session" onclick="showTab('session',this)">📋 Configuração de Sessão</button>
     <button class="tab disabled" id="tab-match"      onclick="showTab('match',this)">🏸 Partidas</button>
     <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Placar &amp; MVP</button>
     <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Salvar</button>
@@ -285,7 +285,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 
   <!-- ── SESSION TAB ── -->
-  <div class="panel on" id="p-session">
+  <div class="panel" id="p-session">
     <div class="alert" id="alert-session"></div>
     <div class="session-hero">
       <div class="session-hero-left">
@@ -2106,15 +2106,11 @@ function editDBUrl(){
 // ══════════════════════════════════════════
 // ── OBJETIVO: Bootstrap — session number, data default, load players ──────────
 document.addEventListener('DOMContentLoaded', async () => {
-  // Session number preloaded — will be set in doLogin via cfg-num
-  // Date default — will be set in doLogin via cfg-date
-  // Load players
+  // Pre-load players so Cadastro de Jogadores is ready on login
   await loadPlayersFromDB();
   renderRoster();
-  // Render test DB tab
   renderTestDBTab();
-  // Show session config tab initially
-  showTab('session', document.getElementById('tab-session'));
+  // Tab navigation is handled by doLogin — no showTab call here
 });
 </script>
 
