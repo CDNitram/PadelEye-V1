@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Ecotenis MVP · Torneio Americano · V38 Sim</title>
+<title>PadelEye · Ecotenis MVP · Torneio Americano · V38 Prod</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -39,8 +39,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 #s-dashboard{flex-direction:column;background:#f0f5fb;}
 
 /* TOP BAR */
-.topbar{background:#0a1628;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;flex-shrink:0;}
-.topbar-logo{font-family:'Bebas Neue';font-size:22px;color:#fff;letter-spacing:1px;}
+.topbar{background:#fff;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;flex-shrink:0;border-bottom:1px solid #dde6f0;}
+.topbar-logo{font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;}
 .topbar-logo em{color:#C9933A;font-style:normal;}
 .topbar-right{display:flex;align-items:center;gap:12px;}
 .topbar-user{text-align:right;}
@@ -51,14 +51,20 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .btn-out:hover{background:rgba(255,255,255,.2);}
 
 /* TABS */
-.tabs-bar{background:#fff;border-bottom:1px solid #dde6f0;display:flex;overflow-x:auto;scrollbar-width:none;padding:0 20px;}
-.tabs-bar::-webkit-scrollbar{display:none;}
-.tab-btn{padding:14px 18px 12px;font-family:'DM Mono';font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;margin-bottom:-1px;transition:all .2s;flex-shrink:0;}
-.tab-btn.on{color:#0a1628;border-bottom-color:#C9933A;}
+.app-body{display:flex;min-height:calc(100vh - 56px);}
+.sidebar-nav{width:230px;background:#fff;border-right:1px solid #dde6f0;flex-shrink:0;padding:8px 0 20px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.sb-section-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#b0c4d8;padding:14px 16px 5px;display:flex;align-items:center;gap:6px;}
+.sb-section-label::after{content:'';flex:1;height:0.5px;background:#edf2f7;}
+.sb-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:transform .15s;}
+.tab-btn{display:flex;align-items:center;gap:10px;padding:7px 12px 7px 14px;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:#5a7090;background:none;border:none;border-left:3px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;box-sizing:border-box;}
+.tab-btn.on{color:#0a1628;border-left-color:#C9933A;background:linear-gradient(90deg,rgba(201,147,58,.08),transparent);font-weight:700;}
+.tab-btn.on .sb-ic{transform:scale(1.1);}
 .tab-btn:hover:not(.on){color:#0d1e3a;background:#f8fafd;}
+.sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
+.main-content{flex:1;overflow-y:auto;padding:20px;}
 
 /* PANELS */
-.panel{display:none;padding:20px;max-width:760px;margin:0 auto;width:100%;}
+.panel{display:none;max-width:760px;margin:0 auto;width:100%;}
 .panel.on{display:block;}
 
 /* WELCOME */
@@ -323,7 +329,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 /* ══ CADASTRO DE JOGADORES ══ */
 .reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
 .reg-grid.three{grid-template-columns:1fr 1fr 1fr;}
-.player-roster{display:flex;flex-direction:column;gap:8px;}
+.player-roster{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
 .roster-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:12px 16px;transition:box-shadow .2s;}
 .roster-card:hover{box-shadow:0 2px 12px rgba(0,0,0,.06);}
 .roster-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;color:#fff;flex-shrink:0;}
@@ -504,6 +510,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .raffle-btn-start { background:linear-gradient(135deg,#1a7a44,#2a9a54);color:#fff;display:none; }
 .raffle-btn-start.show { display:block; }
 
+
+.ht-dp{display:none;}.ht-dp.ht-dp-on{display:block;}
 </style>
 </head>
 <body>
@@ -566,7 +574,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
       <button class="btn-login" onclick="doLogin()">Entrar no PadelEye →</button>
     </div>
-    <div class="login-footer">Tournament Manager V38 Sim - BY TECHNIGMA AI LAB</div>
+    <div class="login-footer">Tournament Manager V38 Prod - BY TECHNIGMA AI LAB</div>
   </div>
 </div>
 
@@ -609,16 +617,26 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
   </div>
 
-  <div class="tabs-bar">
-    <button class="tab-btn on" onclick="showTab('cadastro',this)">👤 Cadastro de Jogadores</button>
-    <button class="tab-btn" onclick="showTab('setup',this)">⚙ Setup do Torneio</button>
-    <button class="tab-btn" onclick="showTab('rodadas',this)">🏸 Rodadas</button>
-    <button class="tab-btn" onclick="showTab('grupos',this)">🗂 Grupos</button>
-    <button class="tab-btn" onclick="showTab('ranking',this)">📊 Estatísticas do Torneio</button>
-    <button class="tab-btn" onclick="showTab('historico',this)">📋 Histórico do Torneio</button>
-    <button class="tab-btn" onclick="showTab('scorecard',this)">🏅 Scorecard do Torneio</button>
-    <button class="tab-btn" onclick="showTab('simdb',this)" style="color:#2D9E5A">🗄 SimDB</button>
+  <div class="app-body">
+  <div class="sidebar-nav">
+    <div class="sb-section-label">Jogadores</div>
+    <button class="tab-btn on" onclick="showTab('cadastro',this)"><span class="sb-ic" style="background:#dbeafe">👤</span> Cadastro de Jogadores</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Torneio Atual</div>
+    <button class="tab-btn" onclick="showTab('setup',this)"><span class="sb-ic" style="background:#fef3c7">⚙️</span> Configuração</button>
+    <button class="tab-btn" onclick="showTab('rodadas',this)"><span class="sb-ic" style="background:#dcfce7">🏸</span> Rodadas</button>
+    <button class="tab-btn" onclick="showTab('grupos',this)"><span class="sb-ic" style="background:#ccfbf1">🗂</span> Grupos</button>
+    <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
+    <button class="tab-btn" onclick="showTab('historico',this)"><span class="sb-ic" style="background:#ffedd5">📋</span> Histórico</button>
+    <button class="tab-btn" onclick="showTab('scorecard',this)"><span class="sb-ic" style="background:#fef9c3">🏅</span> Scorecard</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Histórico</div>
+    <button class="tab-btn" onclick="showTab('hist-torneios',this);loadHistTorneios()"><span class="sb-ic" style="background:#e0e7ff">🏆</span> Todos os Torneios</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Sistema</div>
+    <button class="tab-btn" onclick="showTab('dbtest',this)"><span class="sb-ic" style="background:#f1f5f9">🔌</span> Test DB</button>
   </div>
+  <div class="main-content">
 
   <!-- ── SETUP ── -->
   <div class="panel" id="p-setup">
@@ -845,19 +863,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="btn btn-gold btn-full" onclick="launch()">▶ Iniciar Torneio</button>
     </div>
 
-    <!-- SIM BUTTONS — V38_Sim only -->
-    <div id="sim-buttons" style="display:none;padding:16px 0 8px;border-top:1px solid #eaf0f8;margin-top:16px">
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin-bottom:10px">Simulação</div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <button onclick="simCurrentPhase()" style="width:100%;padding:12px;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#0a1628;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#0a1628'">
-          ⚡ Simular fase atual (placares aleatórios)
-        </button>
-        <button onclick="simAllRemaining()" style="width:100%;padding:12px;background:#0a1628;border:1.5px solid #0a1628;border-radius:10px;font-family:'DM Sans';font-size:13px;font-weight:700;color:#C9933A;cursor:pointer;text-align:left;transition:all .2s" onmouseover="this.style.background='#132240'" onmouseout="this.style.background='#0a1628'">
-          🏁 Simular todas as fases restantes
-        </button>
-      </div>
-    </div>
-
   </div><!-- /p-setup -->
 
   <!-- ── GRUPOS (phase 1 draw) ── -->
@@ -905,9 +910,193 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
 
 
-  <!-- ── SIMDB INSPECTOR ── -->
-  <div class="panel" id="p-simdb">
-    <div id="simdb-content"></div>
+  <!-- ── TEST CONNECTION TO DB ── -->
+  <!-- OBJETIVO: Painel de diagnóstico de conexão com o Google Sheets.
+       HTML completamente estático — sem depender de renderDBTest().
+       Os botões chamam funções JS simples definidas no script. -->
+  <!-- ── HISTÓRICO DE TORNEIOS ── -->
+  <div class="panel" id="p-hist-torneios">
+    <div id="ht-list-view">
+      <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Histórico de Torneios</div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:20px;font-family:'DM Mono'">Todos os torneios registados no banco de dados</div>
+      <div id="ht-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+        <div style="text-align:center;padding:40px;color:#9ab0c8;font-family:'DM Mono';font-size:11px;grid-column:1/-1">
+          Clique no tab para carregar os torneios.
+        </div>
+      </div>
+    </div>
+    <div id="ht-detail-view" style="display:none">
+      <div id="ht-detail-content"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p-dbtest">
+
+    <div style="margin-bottom:20px">
+      <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px">Test Connection to DB</div>
+      <div style="font-size:11px;color:#9ab0c8;margin-top:4px;font-family:'DM Mono'">Google Sheets · Apps Script Web App</div>
+    </div>
+
+    <!-- Card: Web App URL ─────────────────────────────────────────── -->
+    <div class="card" style="margin-bottom:16px;border:1.5px solid #e8eef5">
+
+      <div class="card-hd" style="margin-bottom:10px">
+        <div class="card-title" style="display:flex;align-items:center;gap:6px">
+          🔗 Apps Script URL
+        </div>
+        <div class="card-badge" id="dbt-url-badge" style="background:#e8f4fd;color:#1a5276;font-size:9px">V6</div>
+      </div>
+
+      <!-- Display mode -->
+      <div id="dbt-url-display" style="display:flex;align-items:center;gap:10px">
+        <div style="flex:1;background:#f4f7fb;border-radius:8px;padding:10px 12px;
+                    font-family:'DM Mono';font-size:9px;color:#3a5a7a;word-break:break-all;
+                    line-height:1.5;border:1px solid #dce6f0"
+             id="dbt-url-text">—</div>
+        <button onclick="dbtEditUrl()"
+          style="flex-shrink:0;padding:8px 14px;border-radius:8px;
+                 border:1.5px solid #C9933A;background:#fff;
+                 font-family:'DM Mono';font-size:9px;letter-spacing:1px;
+                 color:#C9933A;cursor:pointer;white-space:nowrap">
+          ✏️ EDITAR
+        </button>
+      </div>
+
+      <!-- Edit mode (hidden) -->
+      <div id="dbt-url-edit" style="display:none">
+        <textarea id="dbt-url-input"
+          style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;
+                 border:1.5px solid #3a7bd5;font-family:'DM Mono';font-size:9px;
+                 color:#0d1e3a;line-height:1.6;resize:vertical;min-height:64px;
+                 background:#f8fbff;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="dbtSaveUrl()"
+            style="flex:1;padding:9px;border-radius:8px;border:none;
+                   background:#0a1628;color:#C9933A;font-family:'Bebas Neue';
+                   font-size:14px;letter-spacing:1px;cursor:pointer">
+            ✅ GUARDAR
+          </button>
+          <button onclick="dbtCancelUrl()"
+            style="padding:9px 18px;border-radius:8px;border:1.5px solid #ccc;
+                   background:#fff;color:#888;font-family:'DM Mono';
+                   font-size:9px;cursor:pointer">
+            CANCELAR
+          </button>
+        </div>
+        <div style="font-size:9px;color:#b0c4d8;margin-top:6px;font-family:'DM Mono'">
+          ⚠️ URL gravada localmente no browser. Atualizar após cada novo deployment do Apps Script.
+        </div>
+      </div>
+
+    </div>
+    <!-- ─────────────────────────────────────────────────────────────── -->
+
+    <!-- Card: Teste Global -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-hd">
+        <div class="card-title">Conexão Global</div>
+        <div class="card-badge" id="dbt-badge-all">Aguardando</div>
+      </div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px">
+        Testa o ping ao Apps Script e todas as 6 tabelas em sequência.
+      </div>
+      <button onclick="dbtTestAll()"
+        style="width:100%;padding:14px;background:linear-gradient(135deg,#0a1628,#1a3052);
+               color:#C9933A;font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;
+               border:none;border-radius:10px;cursor:pointer">
+        🔌 TESTAR CONEXÃO COMPLETA
+      </button>
+      <div id="dbt-result-all" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Card: Teste por Tabela -->
+    <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Teste por Tabela</div>
+        <div class="card-badge">6 tabelas</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+
+        <!-- Jogadores -->
+        <div class="card" id="dbt-row-jogadores" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">👤</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Jogadores</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_jogadores</div>
+          </div>
+          <div id="dbt-status-jogadores" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_players','jogadores',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Torneios -->
+        <div class="card" id="dbt-row-torneios" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">🏆</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_torneios</div>
+          </div>
+          <div id="dbt-status-torneios" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_tournaments','torneios',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Partidas_Torneios -->
+        <div class="card" id="dbt-row-partidas" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">🏸</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Partidas_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_partidas_torneios</div>
+          </div>
+          <div id="dbt-status-partidas" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_partidas_torneios','partidas',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Scorecard_Torneios -->
+        <div class="card" id="dbt-row-scorecard" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">🏅</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Scorecard_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_scorecard_torneios</div>
+          </div>
+          <div id="dbt-status-scorecard" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_scorecard_torneios','scorecard',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Ranking_Torneios -->
+        <div class="card" id="dbt-row-ranking" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">📊</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Ranking_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_ranking_torneios</div>
+          </div>
+          <div id="dbt-status-ranking" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('get_ranking_torneios','ranking',false)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Log_Torneios -->
+        <div class="card" id="dbt-row-log" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+          <div style="font-size:20px">📋</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Log_Torneios</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ping (health check)</div>
+          </div>
+          <div id="dbt-status-log" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="dbtTestOne('ping','log',true)"
+            style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                   font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+      </div>
+    </div>
   </div>
 
   <!-- ── CADASTRO DE JOGADORES ── -->
@@ -1073,7 +1262,10 @@ let selectedPlayers = [];  // names of players added to tournament
 let extraPlayers    = [];  // manually added players
 let seedList        = [];  // cabeças de chave, max 4
 
-function allPlayers() { return [...DB.map(p=>p.nome), ...extraPlayers]; }
+function allPlayers() {
+  return [...DB.map(p=>p.nome), ...extraPlayers]
+    .sort((a, b) => a.localeCompare(b, 'pt', {sensitivity:'base'}));
+}
 
 // ══════════════════════════════════
 // AUTH
@@ -1114,7 +1306,6 @@ function doLogin() {
   document.getElementById('tb-av').textContent   = currentUser.name[0];
   document.getElementById('w-hi').textContent    = `Bem-vindo, ${currentUser.name.split(' ')[0]}!`;
   loadPlayersFromDB();
-  simDBInit(); // V38 Sim — seed SIM_STORE.Players from REGISTRY
   PadelEyeDB.logSession(user, 'login', 'auth', { name: currentUser.name, club: currentUser.club });
 }
 
@@ -1153,7 +1344,7 @@ function showTab(id, el) {
   if (id === 'grupos')    renderGrupos();
   if (id === 'scorecard') renderScorecard();
   if (id === 'cadastro')  renderRoster();
-  if (id === 'simdb')     renderSimDB(); // SimDB Inspector — Sim only
+  if (id === 'dbtest')    renderDBTest(); // Aba de teste de conexão
 }
 
 // ══════════════════════════════════
@@ -2296,7 +2487,7 @@ function renderRanking() {
         <th class="r">Games Jogados</th>
         <th class="r" style="color:#C9933A">Games Vencidos</th>
         <th class="r" style="color:#9ab0c8">Games Perdidos</th>
-        <th class="r">Saldo Games</th>
+        <th class="r">SP</th>
         <th class="r">Win Rate</th>
       </tr></thead>
       <tbody id="estat-tbody">`;
@@ -2693,7 +2884,7 @@ function renderGrupos() {
             ${playerCardCompact(s.name, isSeed)}
             <div style="position:absolute;right:36px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;gap:1px;pointer-events:none">
               <span style="line-height:1.3">${badge}</span>
-              <span style="font-size:8px;color:${gdCol};font-family:'DM Mono',monospace">${s.m>0?`${s.w}V · GD${gdStr}`:'—'}</span>
+              <span style="font-size:8px;color:${gdCol};font-family:'DM Mono',monospace">${s.m>0?`${s.w}V · SP${gdStr}`:'—'}</span>
             </div>
           </div>`;
         }
@@ -3223,13 +3414,15 @@ function renderRoster() {
   if (!container) return;
 
   const q = (document.getElementById('roster-search')?.value || '').toLowerCase();
-  const filtered = REGISTRY.filter(p => {
-    if (!q) return true;
-    return displayName(p).toLowerCase().includes(q) ||
-           p.cidade?.toLowerCase().includes(q)       ||
-           p.categoria?.toLowerCase().includes(q)    ||
-           String(p.id).includes(q);
-  });
+  const filtered = [...REGISTRY]
+    .sort((a, b) => displayName(a).localeCompare(displayName(b), 'pt', {sensitivity:'base'}))
+    .filter(p => {
+      if (!q) return true;
+      return displayName(p).toLowerCase().includes(q) ||
+             p.cidade?.toLowerCase().includes(q)       ||
+             p.categoria?.toLowerCase().includes(q)    ||
+             String(p.id).includes(q);
+    });
 
   if (badge) badge.textContent = `${filtered.length} / ${REGISTRY.length} jogadores`;
 
@@ -3302,7 +3495,7 @@ async function finalizeTournament() {
 }
 
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url') ||
-  "https://script.google.com/macros/s/AKfycbwk5qJwL-_tLGMNfcCri0qFAYu3AX82DRNdQLfih54O-nV2Eag2WUKOliNSsFUtYj0r3g/exec";
+  "https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec";
 
 // ══════════════════════════════════════════════════════════
 // PadelEye · DB Integration Module · V38
@@ -3326,265 +3519,97 @@ let WEB_APP_URL = localStorage.getItem('pe_web_app_url') ||
 //   - send() exposed in public API
 
 // ── PT labels dictionary — DB key → UI label ─────────────
-// ── PT labels dictionary — same as Prod ──────────────────────────
 const LABELS = {
-  player_id:'ID', player_name:'Nome', player_surname:'Sobrenome',
-  player_nickname:'Apelido', player_category:'Categoria', player_gender:'Gênero',
-  player_city:'Cidade', player_nationality:'Nacionalidade', player_club:'Clube',
-  active:'Ativo', mobile_number:'Celular',
-  tournament_id:'ID Torneio', tournament_name:'Torneio', tournament_qty:'Torneios',
-  tournament_titles:'Títulos', tournament_runner_up:'Vices',
-  tournament_category:'Categoria', tournament_format:'Formato',
-  phase:'Fase', group:'Grupo', team_a:'Equipa A', team_b:'Equipa B',
-  score_a:'Placar A', score_b:'Placar B', winner_team:'Vencedor',
-  match_serial_number:'Partida', tie_break:'Tie-Break', tb_a:'TB A', tb_b:'TB B',
-  saved_at:'Guardado em', rank:'Posição', pts_base:'Pts Base', pts_bonus:'Pts Bônus',
-  pts_total:'Pts Total', phase_achieved:'Fase Atingida', best_phase_achieved:'Melhor Fase',
-  matches:'Partidas', wins:'Vitórias', losses:'Derrotas',
-  points_for:'Pts a Favor', points_against:'Pts Contra', points_difference:'Saldo',
-  win_rate:'% Vitórias', last_tournament_date:'Último Torneio',
-  date:'Data', venue:'Local', status:'Status', created_at:'Criado em', updated_at:'Atualizado em',
+  // Players
+  player_id:             'ID',
+  player_name:           'Nome',
+  player_surname:        'Sobrenome',
+  player_nickname:       'Apelido',
+  player_category:       'Categoria',
+  player_gender:         'Gênero',
+  player_city:           'Cidade',
+  player_nationality:    'Nacionalidade',
+  player_club:           'Clube',
+  active:                'Ativo',
+  mobile_number:         'Celular',
+  // Tournament
+  tournament_id:         'ID Torneio',
+  tournament_name:       'Torneio',
+  tournament_qty:        'Torneios',
+  tournament_titles:     'Títulos',
+  tournament_runner_up:  'Vices',
+  tournament_category:   'Categoria',
+  tournament_format:     'Formato',
+  // Match
+  phase:                 'Fase',
+  group:                 'Grupo',
+  team_a:                'Equipa A',
+  team_b:                'Equipa B',
+  score_a:               'Placar A',
+  score_b:               'Placar B',
+  winner_team:           'Vencedor',
+  match_serial_number:   'Partida',
+  tie_break:             'Tie-Break',
+  tb_a:                  'TB A',
+  tb_b:                  'TB B',
+  saved_at:              'Guardado em',
+  // Scorecard
+  rank:                  'Posição',
+  pts_base:              'Pts Base',
+  pts_bonus:             'Pts Bônus',
+  pts_total:             'Pts Total',
+  phase_achieved:        'Fase Atingida',
+  // Ranking
+  best_phase_achieved:   'Melhor Fase',
+  matches:               'Partidas',
+  wins:                  'Vitórias',
+  losses:                'Derrotas',
+  points_for:            'Pts a Favor',
+  points_against:        'Pts Contra',
+  points_difference:     'SP',
+  win_rate:              '% Vitórias',
+  last_tournament_date:  'Último Torneio',
+  // Common
+  date:                  'Data',
+  venue:                 'Local',
+  status:                'Status',
+  created_at:            'Criado em',
+  updated_at:            'Atualizado em',
 };
 
-// ══════════════════════════════════════════════════════════════════
-// PadelEye · SimDB — Banco de Dados Local para Simulação · V38
-// Espelha a estrutura do Google Sheets (EN schema)
-// Dados persistem durante a sessão (in-memory)
-// ══════════════════════════════════════════════════════════════════
-
-const SIM_STORE = {
-  Players:               [],
-  Tournaments:           [],
-  Matches_Tournaments:   [],
-  Scorecard_Tournaments: [],
-  Ranking_Tournaments:   [],
-  Log_Tournaments:       [],
-};
-
-function simDBInit() {
-  SIM_STORE.Players = REGISTRY.map(p => ({
-    player_id:          p.id,
-    player_name:        p.nome          || '',
-    player_surname:     p.sobrenome     || '',
-    player_nickname:    p.nickname      || '',
-    player_category:    p.categoria     || '',
-    player_gender:      p.genero        || '',
-    player_city:        p.cidade        || '',
-    player_nationality: p.nacionalidade || '',
-    player_club:        p.clube         || '',
-    email:              p.email         || '',
-    mobile_number:      p.celular       || '',
-    created_at:         new Date().toISOString(),
-    active:             true,
-  }));
-  console.log('[SimDB V38] Inicializado com ' + SIM_STORE.Players.length + ' jogadores');
-}
-
-function simDBAction(action, data) {
-  const now = new Date().toISOString();
-  const uid = () => 'sim_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
-
-  if (action === 'ping')
-    return { ok:true, status:'SimDB V38 online', mode:'simulation', timestamp:now };
-
-  // ── GET ──────────────────────────────────────────────────────────
-  if (action === 'get_players' || action === 'get_jogadores')
-    return { ok:true, rows: SIM_STORE.Players };
-
-  if (action === 'get_tournaments' || action === 'get_torneios')
-    return { ok:true, rows: SIM_STORE.Tournaments };
-
-  if (action === 'get_matches_tournaments' || action === 'get_partidas_torneios') {
-    const tid = data?.tournament_id || data?.torneio_id;
-    return { ok:true, rows: tid
-      ? SIM_STORE.Matches_Tournaments.filter(r => r.tournament_id === tid)
-      : SIM_STORE.Matches_Tournaments };
-  }
-
-  if (action === 'get_scorecard_tournaments' || action === 'get_scorecard_torneios') {
-    const tid = data?.tournament_id || data?.torneio_id;
-    return { ok:true, rows: tid
-      ? SIM_STORE.Scorecard_Tournaments.filter(r => r.tournament_id === tid)
-      : SIM_STORE.Scorecard_Tournaments };
-  }
-
-  if (action === 'get_ranking_tournaments' || action === 'get_ranking_torneios')
-    return { ok:true, rows: SIM_STORE.Ranking_Tournaments };
-
-  // ── INSERT / UPSERT ───────────────────────────────────────────────
-  if (action === 'insert_player' || action === 'insert_jogador') {
-    const row = data?.row || data;
-    if (row) SIM_STORE.Players.push({...row, created_at:now});
-    simDBRefreshUI();
-    return { ok:true, inserted:1 };
-  }
-
-  if (action === 'upsert_player' || action === 'upsert_jogador') {
-    const row = data?.row || data;
-    if (row) {
-      const idx = SIM_STORE.Players.findIndex(p =>
-        p.player_id === row.player_id || p.id === row.player_id);
-      if (idx >= 0) SIM_STORE.Players[idx] = {...SIM_STORE.Players[idx], ...row};
-      else SIM_STORE.Players.push({...row, created_at:now});
-    }
-    return { ok:true, status:'upserted' };
-  }
-
-  if (action === 'create_tournament' || action === 'upsert_tournament' ||
-      action === 'create_torneio'    || action === 'upsert_torneio') {
-    const row = data?.row || data;
-    if (row) {
-      // Normalise: accept PT field names too
-      const norm = {
-        tournament_id:       row.tournament_id   || row.torneio_id,
-        tournament_name:     row.tournament_name || row.nome,
-        date:                row.date            || row.data,
-        venue:               row.venue           || row.local || '',
-        tournament_format:   row.tournament_format || row.formato || '',
-        group_number:        row.group_number    || row.num_grupos,
-        players_per_group:   row.players_per_group || row.jogadores_por_grupo,
-        num_phases:          row.num_phases      || row.num_fases,
-        tournament_category: row.tournament_category || row.categoria || '',
-        status:              row.status          || 'em_curso',
-        created_at:          row.created_at      || now,
-      };
-      const idx = SIM_STORE.Tournaments.findIndex(t => t.tournament_id === norm.tournament_id);
-      if (idx >= 0) SIM_STORE.Tournaments[idx] = {...SIM_STORE.Tournaments[idx], ...norm};
-      else SIM_STORE.Tournaments.push(norm);
-    }
-    simDBRefreshUI();
-    return { ok:true, status:'upserted' };
-  }
-
-  if (action === 'update_tournament_status' || action === 'update_torneio_status') {
-    const tid = data?.tournament_id || data?.torneio_id;
-    const st  = data?.status;
-    if (tid && st) {
-      const t = SIM_STORE.Tournaments.find(t => t.tournament_id === tid);
-      if (t) t.status = st;
-    }
-    return { ok:true };
-  }
-
-  if (action === 'insert_matches' || action === 'insert_partidas') {
-    const rows = data?.rows || (data ? [data] : []);
-    rows.forEach(r => SIM_STORE.Matches_Tournaments.push({...r, created_at: r.created_at || now}));
-    simDBRefreshUI();
-    return { ok:true, inserted:rows.length };
-  }
-
-  if (action === 'upsert_match' || action === 'upsert_partida') {
-    const row = data?.row || data;
-    if (row) {
-      const idx = SIM_STORE.Matches_Tournaments.findIndex(m =>
-        m.tournament_id === (row.tournament_id || row.torneio_id) &&
-        m.phase         === (row.phase || row.fase) &&
-        m.group         === (row.group || row.grupo) &&
-        String(m.match_serial_number) === String(row.match_serial_number || row.partida));
-      const norm = {
-        match_id:            row.match_id || row.id || '',
-        tournament_id:       row.tournament_id || row.torneio_id,
-        phase:               row.phase || row.fase,
-        group:               row.group || row.grupo,
-        team_a:              (row.team_a || row.equipa_a || '').replace(/\+/g,' / '),
-        team_b:              (row.team_b || row.equipa_b || '').replace(/\+/g,' / '),
-        winner_team:         (row.winner_team || row.vencedor || '').replace(/\+/g,' / '),
-        score_a:             row.score_a,
-        score_b:             row.score_b,
-        match_serial_number: row.match_serial_number || row.partida,
-        tie_break:           row.tie_break === 1 || row.tie_break === '1' ? 'Sim' : (row.tie_break || 'Não'),
-        tb_a:                row.tb_a || '',
-        tb_b:                row.tb_b || '',
-        saved_at:            row.saved_at || now,
-        created_at:          row.created_at || now,
-      };
-      if (idx >= 0) SIM_STORE.Matches_Tournaments[idx] = norm;
-      else SIM_STORE.Matches_Tournaments.push(norm);
-    }
-    return { ok:true, status: 'upserted' };
-  }
-
-  if (action === 'insert_scorecard') {
-    const rows = data?.rows || (data ? [data] : []);
-    rows.forEach(r => {
-      // Normalise field names
-      const player = r.player || r.jogador || '';
-      const rank   = r.rank   || r.posicao || '—';
-      const pts    = parseFloat(r.pts_total) || 0;
-      const phase  = r.phase_achieved || r.fase_atingida || '';
-      const date   = r.date || r.data || now.slice(0,10);
-
-      SIM_STORE.Scorecard_Tournaments.push({
-        scorecard_id:    r.scorecard_id || r.id || '',
-        tournament_id:   r.tournament_id || r.torneio_id,
-        player,
-        rank,
-        tournament_name: r.tournament_name || r.torneio_nome || '',
-        date,
-        pts_base:        r.pts_base  || 0,
-        pts_bonus:       r.pts_bonus || 0,
-        pts_total:       pts,
-        phase_achieved:  phase,
-        created_at:      r.created_at || now,
-      });
-
-      // Update Ranking
-      const existing = SIM_STORE.Ranking_Tournaments.find(x => x.player === player);
-      if (existing) {
-        existing.pts_total            = (parseFloat(existing.pts_total) || 0) + pts;
-        existing.tournament_qty       = (parseInt(existing.tournament_qty) || 0) + 1;
-        existing.tournament_titles    = (parseInt(existing.tournament_titles) || 0) + (rank === '🥇' ? 1 : 0);
-        existing.tournament_runner_up = (parseInt(existing.tournament_runner_up) || 0) + (rank === '🥈' ? 1 : 0);
-        existing.best_phase_achieved  = existing.best_phase_achieved || phase;
-        existing.last_tournament_date = date;
-        existing.updated_at           = now;
-      } else {
-        SIM_STORE.Ranking_Tournaments.push({
-          player,
-          tournament_qty:       1,
-          tournament_titles:    rank === '🥇' ? 1 : 0,
-          tournament_runner_up: rank === '🥈' ? 1 : 0,
-          best_phase_achieved:  phase,
-          pts_total:            pts,
-          last_tournament_date: date,
-          updated_at:           now,
-        });
-      }
-    });
-    SIM_STORE.Ranking_Tournaments.sort((a,b) => b.pts_total - a.pts_total);
-    simDBRefreshUI();
-    return { ok:true, inserted:rows.length };
-  }
-
-  if (action === 'log_action') {
-    const row = data?.row || data;
-    if (row) SIM_STORE.Log_Tournaments.push({...row, timestamp: row.timestamp || now});
-    return { ok:true };
-  }
-
-  return { ok:false, error:'Unknown action: ' + action };
-}
-
-function simDBRefreshUI() {
-  const panel = document.getElementById('simdb-content');
-  if (panel && panel.offsetParent !== null) renderSimDB();
-}
-
-// ── SimPadelEyeDB — drop-in replacement for PadelEyeDB ──────────
-// API identical to Prod. Uses simDBAction() instead of fetch().
-// WEB_APP_URL is NOT used here.
 const PadelEyeDB = (() => {
-  const now = () => new Date().toISOString();
-  const uid = () => 'sim_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
-  function fakeAsync(result) {
-    return new Promise(resolve => setTimeout(() => resolve(result), 50));
+  const now  = () => new Date().toISOString();
+  const uid  = () => 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+
+  // ── OBJETIVO: Enviar um pedido POST ao Apps Script Web App ─────────────────
+  // CONTEXTO: Usado internamente por todos os métodos do módulo.
+  //   Content-Type: text/plain para contornar CORS preflight do Apps Script.
+  //   Faz parse do JSON da resposta; em caso de erro de rede, devolve status:'error'.
+  async function send(action, data) {
+    try {
+      const res = await fetch(WEB_APP_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({ action, data, timestamp: now() })
+      });
+      const text = await res.text();
+      let result;
+      try { result = JSON.parse(text); } catch { result = { status:'ok', raw:text }; }
+      console.log(`[PadelEyeDB] ${action}:`, result);
+      return result;
+    } catch(err) {
+      console.warn(`[PadelEyeDB] ${action} failed (offline?):`, err.message);
+      return { status:'error', message:err.message };
+    }
   }
 
-  function send(action, data) {
-    return fakeAsync(simDBAction(action, data));
-  }
-
+  // ── OBJETIVO: Mapear os dados do jogador para as colunas exactas do Google Sheet ─
+  // COLUNAS DO SHEET: jogador_id | nome | sobrenome | apelido | categoria | genero
+  //                   cidade | nacionalidade | clube | foto | criado_em | ativo
+  // ATENÇÃO: Os nomes das chaves DEVEM corresponder exactamente aos headers do Sheet.
+  //   email e celular são enviados extra — o Apps Script (ensureHeaders) cria
+  //   automaticamente essas colunas se não existirem.
   function mapJogador(p) {
     return {
       player_id:          p.id,
@@ -3596,6 +3621,7 @@ const PadelEyeDB = (() => {
       player_city:        p.cidade        || '',
       player_nationality: p.nacionalidade || '',
       player_club:        p.clube         || '',
+      player_image:       p.foto          || '',
       email:              p.email         || '',
       mobile_number:      p.celular       || '',
       created_at:         now(),
@@ -3604,8 +3630,8 @@ const PadelEyeDB = (() => {
   }
 
   function mapTorneio(T, organizador) {
-    const numGrupos   = T_groups?.length || 0;
-    const jogPorGrupo = numGrupos > 0 ? Math.ceil((T.players?.length || 0) / numGrupos) : 4;
+    const numGrupos     = T_groups?.length || 0;
+    const jogPorGrupo   = numGrupos > 0 ? Math.ceil((T.players?.length || 0) / numGrupos) : 4;
     return {
       tournament_id:       T.id || uid(),
       tournament_name:     T.name || 'Torneio Americano EcoTenis',
@@ -3622,6 +3648,7 @@ const PadelEyeDB = (() => {
   }
 
   function mapPartidas(T, torneioId) {
+  // V38: all field names updated to English schema
     const rows = [];
     const LETTERS = ['A','B','C','D','E','F','G','H'];
     T.phases.forEach((ph, phIdx) => {
@@ -3633,7 +3660,7 @@ const PadelEyeDB = (() => {
           { a:[group[0],group[3]], b:[group[1],group[2]] },
         ];
         matches.forEach((m, mi) => {
-          const key = phIdx+'-'+gi+'-'+mi;
+          const key = `${phIdx}-${gi}-${mi}`;
           const res = ph.results?.[key] || {};
           rows.push({
             match_id:            uid(),
@@ -3675,66 +3702,80 @@ const PadelEyeDB = (() => {
   }
 
   async function registerPlayer(playerData) {
-    showStatus('[SimDB] A registar jogador...', 'loading');
+    showStatus('A registar jogador...', 'loading');
     const result = await send('insert_player', { row: mapJogador(playerData) });
     showStatus(
-      result.ok ? '✅ [SimDB] ' + playerData.nome + ' registado (ID #' + playerData.id + ')'
-                : '⚠️ [SimDB] Erro ao registar.',
-      result.ok ? 'success' : 'error'
+      result.status !== 'error'
+        ? `✅ ${playerData.nome} registado (ID #${playerData.id})`
+        : '⚠️ Erro ao registar — dados guardados localmente.',
+      result.status !== 'error' ? 'success' : 'error'
     );
     return result;
   }
 
+  // ── OBJETIVO: Actualizar um jogador existente no Google Sheets ───────────────
+  // CONTEXTO: Chamado por savePlayer() em modo de edição.
+  //   Usa upsert_jogador (actualiza se jogador_id existe, insere se não).
   async function upsertPartida(row) {
-    return send('upsert_match', { row });
+    return send('upsert_partida', { row });
   }
 
   async function updatePlayer(playerData) {
-    showStatus('[SimDB] A actualizar jogador...', 'loading');
-    const result = await send('upsert_player', { row: mapJogador(playerData) });
+    showStatus('A actualizar jogador...', 'loading');
+    const row    = mapJogador(playerData);
+    const result = await send('upsert_player', { row });
     showStatus(
-      result.ok ? '✅ [SimDB] ' + playerData.nome + ' actualizado'
-                : '⚠️ [SimDB] Erro ao actualizar.',
-      result.ok ? 'success' : 'error'
+      result.status !== 'error'
+        ? `✅ ${playerData.nome} actualizado (ID #${playerData.id})`
+        : '⚠️ Erro ao actualizar — verifique a ligação.',
+      result.status !== 'error' ? 'success' : 'error'
     );
     return result;
   }
 
   async function saveTournament(T, organizador, scoreData) {
-    showStatus('[SimDB] A guardar torneio...', 'loading');
-    const torneioRow   = mapTorneio(T, organizador);
-    const torneioId    = T.id || torneioRow.tournament_id;
+    showStatus('A guardar torneio...', 'loading');
+    const torneioRow   = mapTorneio(T, organizador);  // status:'finalizado' included
+    const torneioId    = T.id || torneioRow.torneio_id;
     const partidasRows = mapPartidas(T, torneioId);
     const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
 
-    await send('update_tournament_status', { tournament_id: torneioId, status: 'finalizado' });
-    await send('upsert_tournament',        { row: torneioRow });
-    await send('insert_matches',           { rows: partidasRows });
-    if (scRows.length) await send('insert_scorecard', { rows: scRows });
+    // ── Run all writes + status update concurrently ───────────────────────────
+    const [r1, r2, r3, r4] = await Promise.all([
+      send('upsert_tournament',        { row: torneioRow }),
+      send('update_tournament_status', { tournament_id: torneioId, status: 'finalizado' }),
+      send('insert_matches',           { rows: partidasRows }),
+      scRows.length ? send('insert_scorecard', { rows: scRows }) : Promise.resolve({ status:'skipped' }),
+    ]);
 
+    const ok = r1?.ok || r1?.status !== 'error';
     showStatus(
-      '✅ [SimDB] Torneio "' + T.name + '" finalizado (' + partidasRows.length + ' partidas · ' + scRows.length + ' scorecard)',
-      'success'
+      ok ? `✅ Torneio "${T.name}" guardado e finalizado (${partidasRows.length} partidas)`
+         : '⚠️ Erro ao guardar torneio.',
+      ok ? 'success' : 'error'
     );
-    return { torneioId, ok:true };
+    return { torneioId, results:{ torneio:r1, status:r2, partidas:r3, scorecard:r4 } };
   }
 
-  async function logSession(user, action, entity, metadata) {
+  async function logSession(user, action, entity='', metadata={}) {
     return send('log_action', {
       row: {
         log_id:       uid(),
         tournament_id: entity || '',
         action:       action,
-        log_payload:  JSON.stringify({ user: user||'anonymous', entity, metadata: metadata||{} }),
+        log_payload:  JSON.stringify({ user: user||'anonymous', entity, metadata }),
         timestamp:    now()
       }
     });
   }
 
   async function ping() {
-    const result = await fakeAsync(simDBAction('ping'));
-    console.log('[SimDB] Ping:', result);
-    return result;
+    try {
+      const res  = await fetch(WEB_APP_URL + '?action=ping');
+      const data = await res.json();
+      console.log('[PadelEyeDB] Ping:', data);
+      return data;
+    } catch(e) { return { status:'error', message:e.message }; }
   }
 
   function showStatus(message, type='loading') {
@@ -3742,7 +3783,7 @@ const PadelEyeDB = (() => {
     if (!el) {
       el = document.createElement('div');
       el.id = 'pe-db-status';
-      el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-family:\'DM Sans\',sans-serif;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:all .3s;max-width:320px;';
+      el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-family:\'DM Sans\',sans-serif;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:all .3s;';
       document.body.appendChild(el);
     }
     const styles = {
@@ -3924,152 +3965,6 @@ async function dbtTestAll() {
       (allOk ? '🟢 Todas as tabelas acessíveis' : '🟡 ' + okCount + ' de 6 tabelas responderam') + '</div>' +
       lines + '</div>';
   }
-}
-
-// ══════════════════════════════════════════════════════════════
-// SIMDB INSPECTOR
-// ══════════════════════════════════════════════════════════════
-
-function renderSimDB() {
-  const el = document.getElementById('simdb-content');
-  if (!el) return;
-
-  const tables = [
-    { key:'Players',               icon:'👤', cols:['player_id','player_name','player_surname','player_category'] },
-    { key:'Tournaments',           icon:'🏆', cols:['tournament_id','tournament_name','date','tournament_category','status'] },
-    { key:'Matches_Tournaments',   icon:'🏸', cols:['tournament_id','phase','group','match_serial_number','team_a','score_a','score_b','winner_team','tie_break'] },
-    { key:'Scorecard_Tournaments', icon:'🏅', cols:['tournament_name','date','player','pts_base','pts_bonus','pts_total','rank'] },
-    { key:'Ranking_Tournaments',   icon:'📊', cols:['player','pts_total','tournament_qty','tournament_titles','tournament_runner_up','best_phase_achieved'] },
-    { key:'Log_Tournaments',       icon:'📋', cols:['tournament_id','action','timestamp'] },
-  ];
-
-  let html = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-      <div>
-        <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">SimDB Inspector</div>
-        <div style="font-size:12px;color:#2D9E5A;font-family:'DM Mono'">● Banco de dados local · in-memory · V38 EN schema</div>
-      </div>
-      <button onclick="simDBReset()" style="padding:7px 14px;background:#fff;border:1.5px solid #E74C3C;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#E74C3C;cursor:pointer">🗑 Reset SimDB</button>
-    </div>`;
-
-  tables.forEach(t => {
-    const rows = SIM_STORE[t.key] || [];
-    html += `<div class="card" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-family:'DM Mono';font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#7090b0">${t.icon} ${t.key.replace(/_/g,' ')}</div>
-        <div style="background:#f0f5fb;border:1px solid #dde6f0;border-radius:6px;padding:2px 8px;font-family:'DM Mono';font-size:10px;color:#5a7090">${rows.length} rows</div>
-      </div>`;
-    if (!rows.length) {
-      html += `<div style="font-size:12px;color:#b0c4d8;font-style:italic;padding:8px 0">Sem dados</div>`;
-    } else {
-      html += `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr>`;
-      t.cols.forEach(col => {
-        html += `<th style="text-align:left;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#9ab0c8;padding:4px 8px;border-bottom:1px solid #eaf0f8;white-space:nowrap">${col}</th>`;
-      });
-      html += `</tr></thead><tbody>`;
-      rows.slice(-10).forEach((row, i) => {
-        html += `<tr style="${i%2===0?'background:#fafbfd':''}">`;
-        t.cols.forEach(col => {
-          const val = row[col] ?? '—';
-          const display = typeof val === 'string' && val.length > 30 ? val.slice(0,28)+'…' : val;
-          html += `<td style="padding:5px 8px;border-bottom:1px solid #f4f7fc;color:#0d1e3a;white-space:nowrap">${display}</td>`;
-        });
-        html += `</tr>`;
-      });
-      if (rows.length > 10) {
-        html += `<tr><td colspan="${t.cols.length}" style="padding:5px 8px;color:#9ab0c8;font-style:italic;font-size:10px">... +${rows.length-10} rows anteriores</td></tr>`;
-      }
-      html += `</tbody></table></div>`;
-    }
-    html += `</div>`;
-  });
-
-  el.innerHTML = html;
-}
-
-function simDBReset() {
-  if (!confirm('Resetar SimDB? Todos os torneios e partidas simuladas serão apagados. Os jogadores do REGISTRY serão restaurados.')) return;
-  SIM_STORE.Tournaments           = [];
-  SIM_STORE.Matches_Tournaments   = [];
-  SIM_STORE.Scorecard_Tournaments = [];
-  SIM_STORE.Ranking_Tournaments   = [];
-  SIM_STORE.Log_Tournaments       = [];
-  simDBInit();
-  renderSimDB();
-  safeAlert('✅ SimDB resetado.', 'ok');
-}
-
-// ── Simulation engine ─────────────────────────────────────────────
-function simScore(phaseIdx) {
-  const cfg = getPhaseConfig(phaseIdx);
-  const max = cfg.maxScore || 7;
-  const tb  = cfg.tbAt    || 6;
-  const r   = Math.random();
-  const flip = () => Math.random() > 0.5;
-  let sa, sb, hasTB = false, tba = null, tbb = null;
-  if (r < 0.15) {
-    hasTB = true;
-    const tbW = 7 + Math.floor(Math.random() * 4);
-    const tbL = Math.floor(Math.random() * (tbW - 1));
-    if (flip()) { tba = tbW; tbb = tbL; sa = max; sb = tb; }
-    else        { tba = tbL; tbb = tbW; sa = tb;  sb = max; }
-  } else if (max === 7 && r < 0.30) {
-    if (flip()) { sa = 7; sb = 5; } else { sa = 5; sb = 7; }
-  } else {
-    const loser = Math.floor(Math.random() * 5);
-    if (flip()) { sa = 6; sb = loser; } else { sa = loser; sb = 6; }
-  }
-  return { sa, sb, tb: hasTB, tba, tbb };
-}
-
-function simPhaseMatches(phaseIdx) {
-  const ph = T.phases[phaseIdx];
-  if (!ph) return 0;
-  let count = 0;
-  ph.groups.forEach((group, gi) => {
-    const americano = [];
-    if (group.length === 4) {
-      const [a,b,c,d] = group;
-      americano.push([[a,b],[c,d]], [[a,c],[b,d]], [[a,d],[b,c]]);
-    } else {
-      for (let i=0; i<group.length-1; i+=2)
-        if (i+3 <= group.length)
-          americano.push([[group[i],group[i+1]],[group[i+2],group[i+3]]]);
-    }
-    americano.forEach((_,mi) => {
-      const key = phaseIdx+'-'+gi+'-'+mi;
-      if (T.phases[phaseIdx].results[key]?.saved) return;
-      T.phases[phaseIdx].results[key] = {...simScore(phaseIdx), saved:true};
-      count++;
-    });
-  });
-  return count;
-}
-
-function simCurrentPhase() {
-  if (!T.started) { safeAlert('Inicie o torneio primeiro.','warn'); return; }
-  const pi = T.currentPhase;
-  if (!T.phases[pi]) { safeAlert('Fase não encontrada.','warn'); return; }
-  const count = simPhaseMatches(pi);
-  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
-  safeAlert('✅ '+count+' partidas simuladas na fase '+(pi+1)+'. Avance a fase para continuar.','ok');
-}
-
-async function simAllRemaining() {
-  if (!T.started) { safeAlert('Inicie o torneio primeiro.','warn'); return; }
-  const _simMax = (T.numFases || 3);
-  for (let i = T.currentPhase; i < _simMax; i++) {
-    if (!T.phases[i]) break;
-    simPhaseMatches(i);
-    renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
-    try { if (i < _simMax - 1) advancePhase(); } catch(e) {}
-    await new Promise(r => setTimeout(r, 150));
-  }
-  renderRounds(); renderRanking(); renderHistorico();
-  const scTab = document.querySelector('[onclick*="scorecard"]');
-  if (scTab) showTab('scorecard', scTab);
-  safeAlert('🏆 Simulação completa! Ver Scorecard.','ok');
 }
 
 // ══════════════════════════════════════════
@@ -4760,9 +4655,9 @@ async function loadPlayersFromDB() {
         categoria:     p.player_category || p.categoria  || '',
         genero:        p.player_gender   || p.genero     || '',
         cidade:        p.player_city     || p.cidade     || '',
-        nacionalidade: p.nacionalidade || '',
-        email:         p.email       || '',
-        celular:       p.celular     || '',
+        nacionalidade: p.player_nationality || p.nacionalidade || '',
+        email:         p.email             || '',
+        celular:       p.mobile_number     || p.celular || '',
       });
     });
 
@@ -5031,6 +4926,331 @@ function launchManualGroups() {
   } catch(e) { console.warn('[launchManualGroups] DB log failed:', e.message); }
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// HISTÓRICO DE TORNEIOS — leitura do GS V7
+// ══════════════════════════════════════════════════════════════════
+let _htData = { tournaments:[], matches:[], scorecard:[] };
+let _htLoaded = false;
+
+async function loadHistTorneios() {
+  if (_htLoaded) return;
+  const grid = document.getElementById('ht-grid');
+  if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;font-family:'DM Mono';font-size:11px;color:#9ab0c8">⏳ A carregar torneios...</div>`;
+  try {
+    const [r1, r2, r3] = await Promise.all([
+      fetch(WEB_APP_URL + '?action=get_tournaments').then(r=>r.json()),
+      fetch(WEB_APP_URL + '?action=get_matches_tournaments').then(r=>r.json()),
+      fetch(WEB_APP_URL + '?action=get_scorecard_tournaments').then(r=>r.json()),
+    ]);
+    _htData.tournaments = r1.rows || [];
+    _htData.matches     = r2.rows || [];
+    _htData.scorecard   = r3.rows || [];
+    _htLoaded = true;
+    _htRenderGrid();
+  } catch(e) {
+    if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#c0392b;font-family:'DM Mono';font-size:11px">❌ Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
+function _htRenderGrid() {
+  const grid = document.getElementById('ht-grid');
+  const trns = _htData.tournaments;
+  if (!trns.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Nenhum torneio encontrado.</div>';
+    return;
+  }
+  const STATUS = {finalizado:'#E8F8EE:#1a7a44', em_curso:'#FFF8E0:#865a10', cancelado:'rgba(231,76,60,.1):#c0392b'};
+  grid.innerHTML = trns.map(t => {
+    const tid = t.tournament_id || '';
+    const tm  = _htData.matches.filter(m => m.tournament_id === tid);
+    const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
+    const players = new Set();
+    tm.forEach(m => {
+      (m.team_a||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
+      (m.team_b||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
+    });
+    const winner = sc.find(s => s.rank==='🥇');
+    const [stBg, stCol] = (STATUS[t.status]||'#f0f5fb:#7090b0').split(':');
+    return `<div onclick="_htOpenTorneio('${tid.replace(/'/g,"\'")}')"
+      style="background:#fff;border:1px solid #dde6f0;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s"
+      onmouseover="this.style.borderColor='#C9933A';this.style.boxShadow='0 4px 20px rgba(201,147,58,.15)';this.style.transform='translateY(-2px)'"
+      onmouseout="this.style.borderColor='#dde6f0';this.style.boxShadow='none';this.style.transform='none'">
+      <div style="background:linear-gradient(135deg,#0a1628,#1a3052);padding:16px 18px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:1px;line-height:1.2">${t.tournament_name||'—'}</div>
+          <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;background:${stBg};color:${stCol};flex-shrink:0">${t.status||'—'}</span>
+        </div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#93C5FD;margin-top:6px">📅 ${(t.date||'').slice(0,10)} · 📍 ${t.venue||'—'}</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#5a8aaa;margin-top:2px">🎯 ${t.tournament_format||'—'} · ${t.tournament_category||'—'}</div>
+      </div>
+      <div style="padding:12px 18px;display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;gap:16px">
+          <div><div style="font-family:'Bebas Neue';font-size:18px;color:#C9933A;line-height:1">${players.size}</div><div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase">Jogadores</div></div>
+          <div><div style="font-family:'Bebas Neue';font-size:18px;color:#C9933A;line-height:1">${tm.length}</div><div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase">Partidas</div></div>
+          <div><div style="font-family:'Bebas Neue';font-size:18px;color:#C9933A;line-height:1">${t.group_number||'—'}</div><div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase">Grupos</div></div>
+        </div>
+        ${winner ? `<div style="text-align:right"><div style="font-size:18px">🥇</div><div style="font-size:11px;font-weight:700;color:#0d1e3a">${(winner.player||'—').split(' ')[0]}</div></div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _htOpenTorneio(tid) {
+  const t   = _htData.tournaments.find(x => x.tournament_id === tid);
+  if (!t) return;
+  const tm  = _htData.matches.filter(m => m.tournament_id === tid);
+  const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
+  const players = new Set();
+  tm.forEach(m => {
+    (m.team_a||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
+    (m.team_b||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
+  });
+  const phases = [...new Set(tm.map(m=>m.phase).filter(Boolean))];
+  document.getElementById('ht-list-view').style.display   = 'none';
+  document.getElementById('ht-detail-view').style.display = 'block';
+  document.getElementById('ht-detail-content').innerHTML = `
+    <div onclick="_htBack()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;color:#5a8aaa;cursor:pointer;margin-bottom:16px;transition:all .2s"
+      onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'"
+      onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">← Voltar aos Torneios</div>
+
+    <div style="background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:14px;padding:20px 22px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-family:'Bebas Neue';font-size:26px;color:#fff;letter-spacing:2px">${t.tournament_name||'—'}</div>
+          <div style="font-family:'DM Mono';font-size:10px;color:#93C5FD;margin-top:4px">📅 ${t.date||'—'} · 📍 ${t.venue||'—'} · 🎯 ${t.tournament_format||'—'} · ${t.tournament_category||'—'}</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:99px;background:${t.status==='finalizado'?'#E8F8EE':'#FFF8E0'};color:${t.status==='finalizado'?'#1a7a44':'#865a10'}">${t.status||'—'}</span>
+      </div>
+      <div style="display:flex;gap:20px;margin-top:14px">
+        ${[['Jogadores',players.size],['Partidas',tm.length],['Grupos',t.group_number||'—'],['Jog/Grupo',t.players_per_group||'—'],['Fases',phases.length]].map(([l,v])=>`
+          <div style="text-align:center">
+            <div style="font-family:'Bebas Neue';font-size:20px;color:#C9933A;line-height:1">${v}</div>
+            <div style="font-family:'DM Mono';font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0;border-bottom:2px solid #dde6f0;margin-bottom:16px;overflow-x:auto">
+      ${[['ht-setup','⚙️ Setup'],['ht-rodadas','🎯 Rodadas'],['ht-grupos','👥 Grupos'],['ht-stats','📊 Estatísticas'],['ht-historico','📋 Histórico'],['ht-scorecard','🏅 Scorecard']].map(([id,label],i)=>`
+        <button id="htab-${id}" onclick="_htDswitch('${id}',this)"
+          style="padding:10px 16px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:${i===0?'#0a1628':'#9ab0c8'};background:none;border:none;border-bottom:${i===0?'2px solid #C9933A':'2px solid transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;transition:all .15s"
+          onmouseover="if(!this.classList.contains('ht-on'))this.style.color='#0d1e3a'"
+          onmouseout="if(!this.classList.contains('ht-on'))this.style.color='#9ab0c8'"
+          class="${i===0?'ht-on':''}">${label}</button>`).join('')}
+    </div>
+
+    <div id="ht-dp-ht-setup"    class="ht-dp ht-dp-on">${_htBuildSetup(t)}</div>
+    <div id="ht-dp-ht-rodadas"  class="ht-dp"            >${_htBuildRodadas(tm)}</div>
+    <div id="ht-dp-ht-grupos"   class="ht-dp"            >${_htBuildGrupos(tm)}</div>
+    <div id="ht-dp-ht-stats"    class="ht-dp"            >${_htBuildStats(tm)}</div>
+    <div id="ht-dp-ht-historico" class="ht-dp"           >${_htBuildHistorico(tm,sc)}</div>
+    <div id="ht-dp-ht-scorecard" class="ht-dp"           >${_htBuildScorecard(sc)}</div>`;
+}
+
+function _htBack() {
+  document.getElementById('ht-list-view').style.display   = 'block';
+  document.getElementById('ht-detail-view').style.display = 'none';
+}
+
+function _htDswitch(id, el) {
+  document.querySelectorAll('.ht-dp').forEach(p=>p.classList.remove('ht-dp-on'));
+  document.querySelectorAll('[id^="htab-"]').forEach(b=>{
+    b.classList.remove('ht-on');
+    b.style.color='#9ab0c8';
+    b.style.borderBottom='2px solid transparent';
+  });
+  document.getElementById('ht-dp-'+id)?.classList.add('ht-dp-on');
+  el.classList.add('ht-on'); el.style.color='#0a1628'; el.style.borderBottom='2px solid #C9933A';
+}
+
+// ── Setup ──
+function _htBuildSetup(t) {
+  const rows = [['ID',t.tournament_id],['Nome',t.tournament_name],['Data',t.date],['Local',t.venue],['Formato',t.tournament_format],['Categoria',t.tournament_category],['Grupos',t.group_number],['Jog/Grupo',t.players_per_group],['Fases',t.num_phases],['Status',t.status],['Criado',t.created_at]];
+  return `<div class="card"><div style="padding:14px 18px"><table style="width:100%;border-collapse:collapse">${rows.map(([l,v])=>`<tr><td style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;padding:7px 10px;width:140px;border-bottom:1px solid #f4f7fc">${l}</td><td style="font-size:12px;font-weight:600;color:#0d1e3a;padding:7px 10px;border-bottom:1px solid #f4f7fc">${v||'—'}</td></tr>`).join('')}</table></div></div>`;
+}
+
+// ── Shared helpers ──
+const _HT_PHASE_ORDER = ['Fase 1','Fase 2','Fase 3','Semi-final','Final'];
+function _htCalcPlayers(matches) {
+  const p={};
+  matches.forEach(m=>{
+    const ta=(m.team_a||'').split(' / ').filter(Boolean), tb=(m.team_b||'').split(' / ').filter(Boolean);
+    const sa=+(m.score_a||0), sb=+(m.score_b||0), aWin=sa>sb;
+    [...ta,...tb].forEach(n=>{if(!p[n])p[n]={p:n,m:0,w:0,l:0,pf:0,pa:0};});
+    ta.forEach(n=>{p[n].m++;p[n].pf+=sa;p[n].pa+=sb;if(aWin)p[n].w++;else p[n].l++;});
+    tb.forEach(n=>{p[n].m++;p[n].pf+=sb;p[n].pa+=sa;if(!aWin)p[n].w++;else p[n].l++;});
+  });
+  return Object.values(p).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
+}
+function _htMatchRow(m, showPhase=false) {
+  const sa=+(m.score_a||0), sb=+(m.score_b||0), aWin=sa>sb;
+  const hasTB=m.tie_break==='Sim'||m.tie_break==='Yes';
+  const meta=showPhase?`${m.phase||''}${m.group?' · Grp '+m.group:''} · #${m.match_serial_number||'?'}`:`#${m.match_serial_number||'?'}`;
+  const tbTag=hasTB?`<div style="font-size:9px;color:#C9933A;font-family:'DM Mono';margin-top:2px">TB ${m.tb_a||''}×${m.tb_b||''}</div>`:'';
+  const names=(name,isWin)=>(name||'—').split(' / ').map(n=>`<div style="font-size:12px;font-weight:${isWin?600:400};color:${isWin?'#1a7a44':'#9ab0c8'};line-height:1.6">${n.trim()}</div>`).join('');
+  return `<div style="max-width:680px;margin:0 auto 6px;background:#fff;border:0.5px solid #dde6f0;border-radius:10px;display:grid;grid-template-columns:1fr 72px 1fr;align-items:stretch">
+    <div style="padding:12px 16px;text-align:right;border-right:0.5px solid #dde6f0;display:flex;flex-direction:column;justify-content:center">${names(m.team_a,aWin)}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;text-align:center">
+      <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1;display:flex;align-items:center;gap:4px">
+        <span style="color:${aWin?'#1a7a44':'#c0cdd8'}">${sa}</span><span style="color:#d8e0ea;font-size:14px">·</span><span style="color:${!aWin?'#1a7a44':'#c0cdd8'}">${sb}</span>
+      </div>${tbTag}
+      <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:.5px;margin-top:3px">${meta}</div>
+    </div>
+    <div style="padding:12px 16px;border-left:0.5px solid #dde6f0;display:flex;flex-direction:column;justify-content:center">${names(m.team_b,!aWin)}</div>
+  </div>`;
+}
+
+// ── Rodadas ──
+function _htBuildRodadas(tm) {
+  const phases=[...new Set(tm.map(m=>m.phase).filter(Boolean))].sort((a,b)=>(_HT_PHASE_ORDER.indexOf(a)+99)-(_HT_PHASE_ORDER.indexOf(b)+99));
+  if(!phases.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas.</div>';
+  return `<div style="max-width:680px;margin:0 auto">${phases.map(phase=>{
+    const pm=tm.filter(m=>m.phase===phase);
+    const groups=[...new Set(pm.map(m=>m.group).filter(Boolean))].sort();
+    return `<div style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-family:'Bebas Neue';font-size:18px;color:#0a1628;letter-spacing:1px">${phase}</div>
+        <div style="flex:1;height:1px;background:#dde6f0"></div>
+        <span style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">${pm.length} partidas</span>
+      </div>
+      ${groups.map(g=>{
+        const gm=pm.filter(m=>m.group===g);
+        return `<div style="margin-bottom:14px"><div style="font-family:'DM Mono';font-size:8px;letter-spacing:2.5px;color:#9ab0c8;text-transform:uppercase;margin-bottom:7px;text-align:center">— GRUPO ${g} —</div>${gm.map(m=>_htMatchRow(m)).join('')}</div>`;
+      }).join('')}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+// ── Grupos ──
+function _htBuildGrupos(tm) {
+  const withGroup=tm.filter(m=>m.phase&&m.group);
+  if(!withGroup.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas de grupos.</div>';
+  const phases=[...new Set(withGroup.map(m=>m.phase))].sort((a,b)=>(_HT_PHASE_ORDER.indexOf(a)+99)-(_HT_PHASE_ORDER.indexOf(b)+99));
+  const MEDAL=['🥇','🥈','🥉'];
+  let html='';
+  phases.forEach(phase=>{
+    const pm=withGroup.filter(m=>m.phase===phase);
+    const groups=[...new Set(pm.map(m=>m.group).filter(Boolean))].sort();
+    html+=`<div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="font-family:'Bebas Neue';font-size:16px;color:#0a1628;letter-spacing:1px">${phase}</div>
+        <div style="flex:1;height:1px;background:#dde6f0"></div>
+        <span style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">${pm.length} partidas</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+        ${groups.map(g=>{
+          const matches=pm.filter(m=>m.group===g);
+          const sorted=_htCalcPlayers(matches);
+          return `<div style="background:#fff;border:1px solid #dde6f0;border-radius:14px;overflow:hidden">
+            <div style="background:linear-gradient(135deg,#0a1628,#1a3052);padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+              <div style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:2px">GRUPO ${g}</div>
+              <div style="font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.4)">${matches.length} partidas</div>
+            </div>
+            <table style="width:100%;border-collapse:collapse">
+              <thead><tr style="background:#f8fafd">
+                ${['#','JOGADOR','P','V','D','PF','PC','SP'].map((h,i)=>`<th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:7px ${i===0||i===1?'12':'8'}px;text-align:${i<=1?'left':'center'};border-bottom:1px solid #dde6f0${i===7?';text-align:right':''}">${h}</th>`).join('')}
+              </tr></thead>
+              <tbody>${sorted.map((p,i)=>{
+                const gd=p.pf-p.pa, bg=i===0?'linear-gradient(135deg,#fffbf0,#fff8e8)':i%2?'#fafcff':'#fff';
+                return `<tr style="background:${bg};border-bottom:1px solid #f0f5fb">
+                  <td style="padding:9px 12px;font-size:16px">${MEDAL[i]||i+1}</td>
+                  <td style="padding:9px 12px;font-size:12px;font-weight:${i===0?700:600};color:#0d1e3a">${p.p}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${p.m}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44">${p.w}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${p.l}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pf}</td>
+                  <td style="padding:9px 8px;text-align:center;font-family:'DM Mono';font-size:11px">${p.pa}</td>
+                  <td style="padding:9px 12px;text-align:right;font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'#1a7a44':'#c0392b'}">${gd>=0?'+':''}${gd}</td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+// ── Estatísticas ──
+function _htBuildStats(tm) {
+  if(!tm.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas.</div>';
+  const sorted=_htCalcPlayers(tm);
+  return `<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f4f7fc">${['#','Jogador','Partidas','Vitórias','Derrotas','Win%','PF','PC','SP'].map(h=>`<th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:8px 10px;text-align:left;border-bottom:1px solid #dde6f0">${h}</th>`).join('')}</tr></thead>
+    <tbody>${sorted.map((p,i)=>{
+      const gd=p.pf-p.pa, wr=p.m>0?Math.round(p.w/p.m*100):0;
+      return `<tr style="border-bottom:1px solid #f4f7fc">
+        <td style="font-family:'Bebas Neue';font-size:18px;color:#9ab0c8;padding:8px 10px">${i+1}</td>
+        <td style="font-weight:700;padding:8px 10px">${p.p}</td>
+        <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${p.m}</td>
+        <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44;padding:8px 10px">${p.w}</td>
+        <td style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;padding:8px 10px">${p.l}</td>
+        <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'};padding:8px 10px">${wr}%</td>
+        <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${p.pf}</td>
+        <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${p.pa}</td>
+        <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'#1a7a44':'#c0392b'};padding:8px 10px">${gd>=0?'+':''}${gd}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+}
+
+// ── Histórico + Pódio ──
+function _htBuildHistorico(tm, sc) {
+  if(!tm.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas.</div>';
+  const sorted=[...tm].sort((a,b)=>{
+    const pi=x=>_HT_PHASE_ORDER.indexOf(x.phase);
+    if(pi(a)!==pi(b)) return pi(a)-pi(b);
+    return (+(a.match_serial_number||0))-(+(b.match_serial_number||0));
+  });
+  let lastPhase=null;
+  const rows=sorted.map(m=>{
+    let hdr='';
+    if(m.phase!==lastPhase){lastPhase=m.phase;hdr=`<div style="display:flex;align-items:center;gap:10px;margin:16px auto 10px;max-width:680px"><div style="font-family:'Bebas Neue';font-size:15px;color:#0a1628;letter-spacing:1px">${m.phase||''}</div><div style="flex:1;height:1px;background:#dde6f0"></div></div>`;}
+    return hdr+_htMatchRow(m,true);
+  });
+  let html=`<div style="max-width:680px;margin:0 auto">${rows.join('')}</div>`;
+  if(!sc||!sc.length) return html;
+  const RO=['🥇','🥈','🥉','4º'];
+  const scS=[...sc].sort((a,b)=>{const ai=RO.indexOf(a.rank),bi=RO.indexOf(b.rank);if(ai>=0&&bi>=0)return ai-bi;return(+(b.pts_total||0))-(+(a.pts_total||0));});
+  const p1=scS.find(s=>s.rank==='🥇'),p2=scS.find(s=>s.rank==='🥈'),p3=scS.find(s=>s.rank==='🥉');
+  if(!p1) return html;
+  const pStats=name=>{let w=0,mt=0,pf=0,pa=0;tm.forEach(m=>{const ta=(m.team_a||'').split(' / '),tb=(m.team_b||'').split(' / '),sa=+(m.score_a||0),sb=+(m.score_b||0),aWin=sa>sb;if(ta.includes(name)){mt++;pf+=sa;pa+=sb;if(aWin)w++;}else if(tb.includes(name)){mt++;pf+=sb;pa+=sa;if(!aWin)w++;}});return{w,gd:pf-pa};};
+  const pGrad=name=>flagGrad(getPlayerReg(name).nacionalidade);
+  const pTxt=name=>flagTextCol(getPlayerReg(name).nacionalidade);
+  const pIni=name=>_init(name);
+  const pod=(p,sz,bCol,barH)=>{if(!p)return'<div></div>';const s=pStats(p.player);return`<div style="display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${pGrad(p.player)};border:3px solid ${bCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:${Math.round(sz*.28)}px;color:${pTxt(p.player)};box-shadow:0 3px 14px rgba(0,0,0,.3);text-shadow:0 1px 4px rgba(0,0,0,.4)">${pIni(p.player)}</div><div style="font-size:11px;font-weight:700;color:#fff;max-width:${sz+20}px;line-height:1.3;text-align:center">${p.player||'—'}</div><div style="font-family:'DM Mono';font-size:9px;color:#93C5FD">${s.w}V · SP${s.gd>=0?'+':''}${s.gd}</div></div>`;};
+  html+=`<div style="max-width:680px;margin:24px auto 0;padding:28px 20px 20px;background:linear-gradient(160deg,#0a1628,#1a3052);border-radius:16px;text-align:center">
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:3px;color:#93C5FD;text-transform:uppercase;margin-bottom:22px">🏆 Pódio Final</div>
+    <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:16px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">${pod(p2,52,'#94a3b8')}<div style="background:#475569;border-radius:8px 8px 0 0;width:76px;height:50px;display:flex;align-items:center;justify-content:center;font-size:24px">🥈</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">${pod(p1,64,'#C9933A')}<div style="background:linear-gradient(160deg,#b7791f,#C9933A);border-radius:8px 8px 0 0;width:92px;height:72px;display:flex;align-items:center;justify-content:center;font-size:30px">🥇</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">${pod(p3,46,'#92400e')}<div style="background:#78350f;border-radius:8px 8px 0 0;width:66px;height:36px;display:flex;align-items:center;justify-content:center;font-size:20px">🥉</div></div>
+    </div>
+    <div style="height:3px;background:linear-gradient(90deg,#1e3a5f,#C9933A,#1e3a5f);border-radius:2px;margin:0 8px 14px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+      ${[p1,p2,p3].map((p,i)=>{if(!p)return'<div></div>';const medals=['🥇','🥈','🥉'];return`<div style="background:rgba(255,255,255,.06);border-radius:8px;padding:9px 8px"><div style="font-size:10px;color:#93C5FD;font-family:'DM Mono';margin-bottom:4px">${medals[i]}</div><div style="font-size:11px;font-weight:700;color:#f1f5f9;margin-bottom:3px">${p.player||'—'}</div><div style="font-size:9px;color:#94a3b8;font-family:'DM Mono'">${p.pts_total||0} pts · ${p.phase_achieved||'—'}</div></div>`;}).join('')}
+    </div>
+  </div>`;
+  return html;
+}
+
+// ── Scorecard ──
+function _htBuildScorecard(sc) {
+  if(!sc.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem scorecard.</div>';
+  const sorted=[...sc].sort((a,b)=>{const ro=['🥇','🥈','🥉','4º'],ai=ro.indexOf(a.rank),bi=ro.indexOf(b.rank);if(ai>=0&&bi>=0)return ai-bi;if(ai>=0)return-1;if(bi>=0)return 1;return(+(b.pts_total||0))-(+(a.pts_total||0));});
+  return `<div style="max-width:600px;margin:0 auto">${sorted.map(s=>{
+    const cls=s.rank==='🥇'?'gold':s.rank==='🥈'?'silver':'';
+    const grad=flagGrad(getPlayerReg(s.player).nacionalidade), txtCol=flagTextCol(getPlayerReg(s.player).nacionalidade);
+    return `<div class="sc-row ${cls}"><div class="sc-rank">${s.rank||'—'}</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:${grad};color:${txtCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;flex-shrink:0;text-shadow:0 1px 3px rgba(0,0,0,.4)">${_init(s.player)}</div>
+      <div class="sc-info"><div class="sc-name">${s.player||'—'}</div><div class="sc-phase">${s.phase_achieved||'—'} · Base: ${s.pts_base||0} + Bónus: ${s.pts_bonus||0}</div></div>
+      <div class="sc-pts">${s.pts_total||0}<span style="font-size:11px;color:#9ab0c8;font-family:'DM Sans'"> pts</span></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
 </script>
 
 <!-- ═══════════════════════════════ VIEW PLAYER MODAL ═══ -->
@@ -5131,6 +5351,8 @@ function launchManualGroups() {
       ▶ Iniciar Torneio
     </button>
   </div>
-</div>
+  </div><!-- /main-content -->
+  </div><!-- /app-body -->
+</div><!-- /s-dashboard -->
 </body>
 </html>
