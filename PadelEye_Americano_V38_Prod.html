@@ -512,6 +512,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
 
 .ht-dp{display:none;}.ht-dp.ht-dp-on{display:block;}
+
+.trk-cat{padding:5px 14px;border-radius:99px;border:1px solid #dde6f0;background:#f8fafd;color:#7090b0;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans';transition:all .15s;}
+.trk-cat.on{background:#0a1628;color:#fff;border-color:#0a1628;}
+.trk-sort{padding:6px 14px;border-radius:8px;border:1px solid #dde6f0;background:#f8fafd;color:#7090b0;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans';transition:all .15s;}
+.trk-sort.on{background:#0a1628;color:#C9933A;border-color:#0a1628;font-weight:700;}
+.trk-row-me{background:linear-gradient(90deg,rgba(201,147,58,.07),transparent)!important;}
 </style>
 </head>
 <body>
@@ -630,6 +636,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
     <button class="tab-btn" onclick="showTab('historico',this)"><span class="sb-ic" style="background:#ffedd5">📋</span> Histórico</button>
     <button class="tab-btn" onclick="showTab('scorecard',this)"><span class="sb-ic" style="background:#fef9c3">🏅</span> Scorecard</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Ranking</div>
+    <button class="tab-btn" onclick="showTab('trn-ranking',this);loadTrnRanking()"><span class="sb-ic" style="background:#fef9c3">🥇</span> Ranking de Torneios</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Histórico</div>
     <button class="tab-btn" onclick="showTab('hist-torneios',this);loadHistTorneios()"><span class="sb-ic" style="background:#e0e7ff">🏆</span> Todos os Torneios</button>
@@ -915,6 +924,75 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <!-- OBJETIVO: Painel de diagnóstico de conexão com o Google Sheets.
        HTML completamente estático — sem depender de renderDBTest().
        Os botões chamam funções JS simples definidas no script. -->
+  <!-- ── RANKING DE TORNEIOS ── -->
+  <div class="panel" id="p-trn-ranking">
+
+    <!-- Status bar -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <div id="trk-dot" style="width:7px;height:7px;border-radius:50%;background:#c0cdd8;flex-shrink:0"></div>
+      <div id="trk-stxt" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;flex:1">—</div>
+      <button id="trk-ref-btn" onclick="loadTrnRanking()" title="Atualizar"
+        style="width:28px;height:28px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:7px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center">↺</button>
+    </div>
+
+    <!-- KPI strip -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+      <div style="background:#f8fafd;border:1px solid #dde6f0;border-radius:12px;padding:14px 10px;text-align:center">
+        <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;line-height:1" id="trk-k-players">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase;letter-spacing:1px;margin-top:3px">Jogadores</div>
+      </div>
+      <div style="background:#f8fafd;border:1px solid #dde6f0;border-radius:12px;padding:14px 10px;text-align:center">
+        <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;line-height:1" id="trk-k-trns">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase;letter-spacing:1px;margin-top:3px">Torneios</div>
+      </div>
+      <div style="background:#f8fafd;border:1px solid #dde6f0;border-radius:12px;padding:14px 10px;text-align:center">
+        <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;line-height:1" id="trk-k-matches">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase;letter-spacing:1px;margin-top:3px">Partidas</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#fffbf0,#fff8e0);border:1px solid #e8c870;border-radius:12px;padding:14px 10px;text-align:center">
+        <div style="font-family:'Bebas Neue';font-size:16px;color:#C9933A;line-height:1.2" id="trk-k-leader">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase;letter-spacing:1px;margin-top:3px" id="trk-k-leader-lbl">Líder</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#b08030;margin-top:2px" id="trk-k-leader-sub">—</div>
+      </div>
+    </div>
+
+    <!-- Category filter -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="trk-cat-tabs">
+      <button class="trk-cat on" onclick="trkSetCat('all',this)">Todos</button>
+    </div>
+
+    <!-- Sort buttons -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+      <button class="trk-sort on" id="trk-s-wins"      onclick="trkSetSort('wins',this)">🏆 Vitórias</button>
+      <button class="trk-sort"    id="trk-s-win_rate"   onclick="trkSetSort('win_rate',this)">📊 Win Rate</button>
+      <button class="trk-sort"    id="trk-s-matches"    onclick="trkSetSort('matches',this)">🎯 Partidas</button>
+      <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ SP</button>
+      <button class="trk-sort"    id="trk-s-champion"   onclick="trkSetSort('champion',this)">🥇 Champion</button>
+    </div>
+
+    <!-- Ranking table -->
+    <div style="background:#fff;border:1px solid #dde6f0;border-radius:14px;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f8fafd;border-bottom:1px solid #dde6f0">
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">#</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">JOGADOR</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">T</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">V</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">D</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">WR%</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SP</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:center;letter-spacing:1px">🥇</th>
+          </tr>
+        </thead>
+        <tbody id="trk-body">
+          <tr><td colspan="8" style="padding:30px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">Clique no tab para carregar o ranking.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="trk-upd" style="font-size:10px;color:#b0c4d8;text-align:right;margin-top:8px;font-family:'DM Mono'"></div>
+  </div>
+
   <!-- ── HISTÓRICO DE TORNEIOS ── -->
   <div class="panel" id="p-hist-torneios">
     <div id="ht-list-view">
@@ -5250,6 +5328,168 @@ function _htBuildScorecard(sc) {
       <div class="sc-pts">${s.pts_total||0}<span style="font-size:11px;color:#9ab0c8;font-family:'DM Sans'"> pts</span></div>
     </div>`;
   }).join('')}</div>`;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// RANKING DE TORNEIOS
+// ══════════════════════════════════════════════════════════════════
+let trkData = [], trkSort = 'wins', trkCat = 'all', trkTotalTrns = 0;
+
+async function loadTrnRanking() {
+  const btn  = document.getElementById('trk-ref-btn');
+  const dot  = document.getElementById('trk-dot');
+  const stxt = document.getElementById('trk-stxt');
+  if (btn) btn.style.opacity = '.5';
+  if (stxt) stxt.textContent = 'A carregar ranking...';
+
+  try {
+    const [rkRes, trnRes] = await Promise.all([
+      fetch(WEB_APP_URL + '?action=get_ranking_torneios').then(r=>r.json()),
+      fetch(WEB_APP_URL + '?action=get_tournaments').then(r=>r.json()),
+    ]);
+    trkData      = rkRes.rows  || [];
+    trkTotalTrns = (trnRes.rows || []).length;
+
+    if (!trkData.length) throw new Error('empty');
+
+    const ts = trkData[0]?.updated_at
+      ? new Date(trkData[0].updated_at).toLocaleString('pt-BR') : '';
+    if (dot)  dot.style.background  = '#27AE60';
+    if (stxt) stxt.textContent = `${trkData.length} jogadores · ${trkTotalTrns} torneios · ao vivo`;
+    if (document.getElementById('trk-upd')) {
+      document.getElementById('trk-upd').textContent = ts ? `Última atualização: ${ts}` : '';
+    }
+  } catch(e) {
+    if (dot)  dot.style.background  = '#C9933A';
+    if (stxt) stxt.textContent = '⚠️ Sem conexão';
+  }
+
+  trkBuildCatTabs();
+  trkUpdateKPIs();
+  trkRenderTable();
+  if (btn) btn.style.opacity = '1';
+}
+
+function trkBuildCatTabs() {
+  const cats = ['all', ...new Set(
+    trkData.map(p => p.player_category || p.categoria || p.category || '').filter(Boolean)
+  ).values()].sort((a,b) => a==='all'?-1:b==='all'?1:a.localeCompare(b,'pt'));
+  const el = document.getElementById('trk-cat-tabs');
+  if (!el) return;
+  el.innerHTML = cats.map(cat =>
+    `<button class="trk-cat${cat===trkCat?' on':''}" onclick="trkSetCat('${cat}',this)">
+      ${cat==='all'?'Todos':cat}
+    </button>`
+  ).join('');
+}
+
+function trkSetCat(cat, el) {
+  trkCat = cat;
+  document.querySelectorAll('.trk-cat').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  trkUpdateKPIs();
+  trkRenderTable();
+}
+
+function trkSetSort(key, el) {
+  trkSort = key;
+  document.querySelectorAll('.trk-sort').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  trkUpdateKPIs();
+  trkRenderTable();
+}
+
+function _trkFiltered() {
+  if (trkCat === 'all') return trkData;
+  return trkData.filter(p =>
+    (p.player_category || p.categoria || p.category || '') === trkCat
+  );
+}
+
+function _trkSorted(rows) {
+  const r = [...rows];
+  if (trkSort === 'wins')     r.sort((a,b)=>(+(b.wins||b.vitorias||0))-(+(a.wins||a.vitorias||0)));
+  else if (trkSort==='win_rate') r.sort((a,b)=>rkWR(b.win_rate)-rkWR(a.win_rate));
+  else if (trkSort==='matches')  r.sort((a,b)=>(+(b.matches||b.partidas||0))-(+(a.matches||a.partidas||0)));
+  else if (trkSort==='sp')       r.sort((a,b)=>(+(b.points_difference||b.sp||0))-(+(a.points_difference||a.sp||0)));
+  else if (trkSort==='champion') r.sort((a,b)=>(+(b.champion_count||b.campeonatos||0))-(+(a.champion_count||a.campeonatos||0)));
+  return r;
+}
+
+function trkUpdateKPIs() {
+  const rows = _trkFiltered();
+  const totalM = rows.reduce((s,p)=>s+(+(p.matches||p.partidas||0)),0);
+  document.getElementById('trk-k-players').textContent = rows.length;
+  document.getElementById('trk-k-trns').textContent    = trkTotalTrns;
+  document.getElementById('trk-k-matches').textContent = Math.round(totalM/2);
+
+  const sorted = _trkSorted(rows);
+  const l = sorted[0];
+  let leaderName='—', leaderSub='—', leaderLbl='Líder';
+
+  if (l) {
+    leaderName = (l.player||l.nome||'—').split(' ')[0];
+    if (trkSort==='wins')     { leaderLbl='Mais Vitórias'; leaderSub=`${l.wins||0}V`; }
+    else if (trkSort==='win_rate') { leaderLbl='Líder WR';  leaderSub=l.win_rate||'—'; }
+    else if (trkSort==='matches')  { leaderLbl='Mais Ativo'; leaderSub=`${l.matches||0}P`; }
+    else if (trkSort==='sp')       { const sp=+(l.points_difference||0); leaderLbl='Melhor SP'; leaderSub=`${sp>=0?'+':''}${sp} SP`; }
+    else if (trkSort==='champion') { leaderLbl='Champion'; leaderSub=`🥇 ${l.champion_count||0}×`; }
+  }
+  document.getElementById('trk-k-leader').textContent     = leaderName;
+  document.getElementById('trk-k-leader-sub').textContent  = leaderSub;
+  document.getElementById('trk-k-leader-lbl').textContent  = leaderLbl;
+}
+
+function trkRenderTable() {
+  const tbody = document.getElementById('trk-body');
+  if (!tbody) return;
+  const rows = _trkSorted(_trkFiltered());
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:30px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">Nenhum dado disponível.</td></tr>';
+    return;
+  }
+  const myName = currentUser?.name || '';
+  tbody.innerHTML = rows.map((p, i) => {
+    const name   = p.player || p.nome || '—';
+    const cat    = p.player_category || p.categoria || p.category || '';
+    const wins   = +(p.wins  || p.vitorias  || 0);
+    const losses = +(p.losses|| p.derrotas  || 0);
+    const matches= +(p.matches||p.partidas  || 0);
+    const wr     = p.win_rate || (matches>0 ? Math.round(wins/matches*100)+'%' : '0%');
+    const sp     = +(p.points_difference || p.sp || 0);
+    const champ  = +(p.champion_count || p.campeonatos || 0);
+    const trns   = +(p.tournaments_played || p.torneios || 0);
+    const grad   = flagGrad(getPlayerReg(name).nacionalidade);
+    const txtCol = flagTextCol(getPlayerReg(name).nacionalidade);
+    const ini    = _init(name);
+    const isMe   = name === myName;
+    const medalIcon = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    const wrNum  = parseInt(wr);
+    const wrCol  = wrNum>=60?'#1a7a44':wrNum<30?'#c0392b':'#0d1e3a';
+    const spCol  = sp>=0?'#1a7a44':'#c0392b';
+
+    return `<tr style="${isMe?'background:linear-gradient(90deg,rgba(201,147,58,.09),rgba(201,147,58,.03))':''}border-bottom:1px solid #f4f7fc">
+      <td style="padding:10px 12px;font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">${medalIcon||i+1}</td>
+      <td style="padding:10px 12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:${txtCol};text-shadow:0 1px 3px rgba(0,0,0,.35);flex-shrink:0">${ini}</div>
+          <div>
+            <div style="font-size:12px;font-weight:${isMe?'700':'600'};color:#0d1e3a">${name}${isMe?' <span style="font-size:9px;color:#C9933A;font-family:DM Mono,monospace">• você</span>':''}</div>
+            ${cat?`<div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">${cat}</div>`:''}
+          </div>
+        </div>
+      </td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${trns||matches}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44">${wins}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${losses}</td>
+      <td style="padding:10px 8px;text-align:center">
+        <div style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${wrCol}">${wr}</div>
+      </td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:${spCol}">${sp>=0?'+':''}${sp}</td>
+      <td style="padding:10px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#C9933A">${champ>0?'🥇'.repeat(Math.min(champ,3))+(champ>3?'+':''):'—'}</td>
+    </tr>`;
+  }).join('');
 }
 
 </script>
