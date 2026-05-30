@@ -91,6 +91,8 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,147,58,.3);}
 .login-error{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:9px 13px;font-size:12px;color:var(--red);margin-bottom:12px;display:none;text-align:center;}
 .login-footer{font-family:'DM Mono';font-size:9px;color:#c0cdd8;text-align:center;margin-top:18px;letter-spacing:1px;}
+
+#s-loading{align-items:center;justify-content:center;background:#f4f7fc;padding:24px;}
 #s-app{flex:1;overflow:hidden;}
 
 /* ── SPINNER ── */
@@ -188,6 +190,26 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
   <div class="login-footer">PADELEYE · DB MANAGER · V3 · BY TECHNIGMA AI LAB</div>
 </div>
 
+
+<div class="screen" id="s-loading">
+  <div style="display:flex;flex-direction:column;align-items:center;width:100%;max-width:480px">
+    <div style="font-family:'Bebas Neue';font-size:36px;color:#0a1628;letter-spacing:3px;margin-bottom:4px">PADEL<span style="color:#C9933A">EYE</span></div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#b0c4d8;margin-bottom:40px;text-transform:uppercase">DB Manager · V3</div>
+
+    <div id="ld-title" style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:6px">A carregar base de dados</div>
+    <div id="ld-sub" style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;margin-bottom:24px">A ligar...</div>
+
+    <div style="width:100%;background:#e8eef6;border-radius:99px;height:8px;overflow:hidden;margin-bottom:10px">
+      <div id="ld-bar" style="height:100%;border-radius:99px;background:linear-gradient(90deg,#C9933A,#e0a840);width:0%;transition:width .3s ease"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:24px">
+      <div id="ld-count" style="font-family:'DM Mono';font-size:11px;color:#9ab0c8">0 / 9 tabelas</div>
+      <div id="ld-pct" style="font-family:'Bebas Neue';font-size:16px;color:#C9933A">0%</div>
+    </div>
+    <div id="ld-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%"></div>
+  </div>
+</div>
+
 <div class="screen" id="s-app">
 <div class="app">
 
@@ -201,7 +223,7 @@ td input:focus,td select:focus{border-color:var(--blue);background:#fff;}
     <span id="conn-lbl">—</span>
   </div>
   <button class="t-btn" onclick="editURL()">✏ URL</button>
-  <button class="t-btn btn-gold" onclick="loadAll()">⟳ Carregar</button>
+  <button class="t-btn btn-gold" onclick="reloadAll()">⟳ Carregar</button>
   <button class="t-btn" onclick="doLogout()" style="margin-left:8px">Sair</button>
 </div>
 
@@ -476,7 +498,7 @@ function doLogin() {
   }
   currentUserDBM = { ...USERS_DBM[user], key: user };
   document.getElementById('s-login').classList.remove('active');
-  document.getElementById('s-app').classList.add('active');
+  document.getElementById('s-loading').classList.add('active');
   loadAll();
 }
 // ── NETWORK ──────────────────────────────────────────────────────
@@ -508,64 +530,89 @@ async function ping() {
 
 // ── LOAD ALL ──────────────────────────────────────────────────────
 async function loadAll() {
-  const keys   = Object.keys(TABLES).filter(k => !['health','trn_browser'].includes(k));
-  const total  = keys.length;
+  const keys  = Object.keys(TABLES).filter(k => !['health','trn_browser'].includes(k));
+  const total = keys.length;
 
-  function renderProgress(loaded, current, ok) {
+  // Ensure loading screen is showing
+  const sLoad = document.getElementById('s-loading');
+  const sApp  = document.getElementById('s-app');
+
+  function updProgress(loaded, current, ok) {
     const pct = Math.round((loaded / total) * 100);
-    render(`
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;max-width:480px;margin:0 auto">
-        <div style="font-family:'Bebas Neue';font-size:22px;color:var(--dark);letter-spacing:1px;margin-bottom:6px">
-          ${ok === false ? '❌ Sem ligação' : 'A carregar base de dados'}
-        </div>
-        <div style="font-family:'DM Mono';font-size:11px;color:var(--muted);margin-bottom:24px">
-          ${ok === false ? 'Verifique a URL do Apps Script.' : (current ? TABLES[current]?.sheet || current : 'A ligar...')}
-        </div>
-        <div style="width:100%;background:#f0f5fb;border-radius:99px;height:8px;overflow:hidden;margin-bottom:10px">
-          <div style="height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:${pct}%;transition:width .3s ease"></div>
-        </div>
-        <div style="display:flex;justify-content:space-between;width:100%;margin-bottom:20px">
-          <div style="font-family:'DM Mono';font-size:11px;color:var(--muted)">${loaded} / ${total} tabelas</div>
-          <div style="font-family:'Bebas Neue';font-size:16px;color:var(--accent)">${pct}%</div>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%">
-          ${keys.map((k, i) => {
-            const done  = i < loaded;
-            const doing = k === current && !done;
-            return `<div style="background:${done?'#e8f8ee':doing?'#fff8e0':'#f8fafd'};border:1px solid ${done?'#c8e8d0':doing?'#e8c870':'var(--border)'};border-radius:7px;padding:5px 8px;display:flex;align-items:center;gap:5px;transition:all .2s">
-              <span style="font-size:10px">${done?'✅':doing?'⏳':'○'}</span>
-              <span style="font-family:'DM Mono';font-size:9px;color:${done?'var(--green)':doing?'#865a10':'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${TABLES[k].sheet}</span>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`);
+    const title = document.getElementById('ld-title');
+    const sub   = document.getElementById('ld-sub');
+    const bar   = document.getElementById('ld-bar');
+    const cnt   = document.getElementById('ld-count');
+    const pctEl = document.getElementById('ld-pct');
+    const grid  = document.getElementById('ld-grid');
+    if (!bar) return;
+
+    if (ok === false) {
+      if (title) title.textContent = '❌ Sem ligação';
+      if (sub)   sub.textContent   = 'Verifique a URL do Apps Script.';
+      return;
+    }
+
+    if (title) title.textContent = 'A carregar base de dados';
+    if (sub)   sub.textContent   = current ? (TABLES[current]?.sheet || current) : 'A ligar...';
+    bar.style.width  = pct + '%';
+    if (cnt)  cnt.textContent  = `${loaded} / ${total} tabelas`;
+    if (pctEl) pctEl.textContent = pct + '%';
+
+    if (grid) grid.innerHTML = keys.map((k, i) => {
+      const done  = i < loaded;
+      const doing = k === current && !done;
+      return `<div style="background:${done?'#e8f8ee':doing?'#fff8e0':'#f8fafd'};border:1px solid ${done?'#c8e8d0':doing?'#e8c870':'#dde6f0'};border-radius:7px;padding:5px 8px;display:flex;align-items:center;gap:5px;transition:all .2s">
+        <span style="font-size:10px">${done?'✅':doing?'⏳':'○'}</span>
+        <span style="font-family:'DM Mono';font-size:9px;color:${done?'#27ae60':doing?'#865a10':'#b0c4d8'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${TABLES[k].sheet}</span>
+      </div>`;
+    }).join('');
   }
 
-  renderProgress(0, null, null);
+  updProgress(0, null, null);
   setConn('', 'A ligar...');
   const ok = await ping();
-  if (!ok) { renderProgress(0, null, false); return; }
+  if (!ok) { updProgress(0, null, false); return; }
 
   let loaded = 0;
   for (const k of keys) {
-    renderProgress(loaded, k, true);
+    updProgress(loaded, k, true);
     try {
       const j = await get(TABLES[k].get);
       data[k] = j.rows || [];
       loaded++;
       const nb = document.getElementById('nb-trn');
       if (k === 'tournaments' && nb) nb.textContent = data[k].length;
-      document.getElementById('url-disp').textContent = URL_BASE;
     } catch(e) {
       data[k] = [];
       loaded++;
     }
-    renderProgress(loaded, k, true);
+    updProgress(loaded, k, true);
+    await new Promise(r => setTimeout(r, 60)); // small pause for visual feedback
   }
+
+  // Done — transition to app
+  await new Promise(r => setTimeout(r, 400));
+  if (sLoad) sLoad.classList.remove('active');
+  if (sApp)  sApp.classList.add('active');
+  document.getElementById('url-disp').textContent = URL_BASE;
   toast(`✅ ${loaded}/${total} tabelas carregadas`, loaded===total?'ok':'wa');
   drawActive();
 }
 
+
+function reloadAll() {
+  const sLoad = document.getElementById('s-loading');
+  const sApp  = document.getElementById('s-app');
+  if (sApp)  sApp.classList.remove('active');
+  if (sLoad) { sLoad.classList.add('active'); }
+  // Reset progress UI
+  const bar = document.getElementById('ld-bar');
+  if (bar) bar.style.width = '0%';
+  const cnt = document.getElementById('ld-count'); if (cnt) cnt.textContent = '0 / 9 tabelas';
+  const pct = document.getElementById('ld-pct');   if (pct) pct.textContent = '0%';
+  loadAll();
+}
 function doLogout() {
   currentUserDBM = null;
   document.getElementById('s-app').classList.remove('active');
