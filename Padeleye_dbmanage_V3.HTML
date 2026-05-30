@@ -359,8 +359,8 @@ const TABLES = {
       { k:'wins',                   l:'V' },
       { k:'losses',                 l:'D' },
       { k:'points_for',             l:'PF' },
-      { k:'points_against',         l:'PA' },
-      { k:'points_difference',      l:'GD' },
+      { k:'points_against',         l:'PC' },
+      { k:'points_difference',      l:'SP' },
       { k:'win_rate',               l:'Win%' },
       { k:'last_tournament_date',   l:'Último' },
       { k:'updated_at',             l:'Updated', ro:true },
@@ -417,8 +417,8 @@ const TABLES = {
       { k:'wins',                 l:'V' },
       { k:'losses',               l:'D' },
       { k:'points_for',           l:'PF' },
-      { k:'points_against',       l:'PA' },
-      { k:'points_difference',    l:'GD' },
+      { k:'points_against',       l:'PC' },
+      { k:'points_difference',    l:'SP' },
       { k:'player_mvp',           l:'MVP' },
       { k:'created_at',           l:'Criado', ro:true },
     ],
@@ -433,8 +433,8 @@ const TABLES = {
       { k:'wins',                l:'V' },
       { k:'losses',              l:'D' },
       { k:'points_for',          l:'PF' },
-      { k:'points_against',      l:'PA' },
-      { k:'points_difference',   l:'GD' },
+      { k:'points_against',      l:'PC' },
+      { k:'points_difference',   l:'SP' },
       { k:'win_rate',            l:'Win%' },
       { k:'mvp_count',           l:'MVP' },
       { k:'updated_at',          l:'Updated', ro:true },
@@ -986,8 +986,8 @@ function buildGrupos(tm) {
                 <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">V</th>
                 <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">D</th>
                 <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PF</th>
-                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PA</th>
-                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 12px;text-align:right;border-bottom:1px solid var(--border)">GD</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 8px;text-align:center;border-bottom:1px solid var(--border)">PC</th>
+                <th style="font-family:'DM Mono';font-size:8px;color:var(--muted);padding:7px 12px;text-align:right;border-bottom:1px solid var(--border)">SP</th>
               </tr></thead>
               <tbody>${sorted.map((p,i) => {
                 const gd = p.pf-p.pa;
@@ -1020,7 +1020,7 @@ function buildStats(tm) {
   return `<div style="max-width:680px;margin:0 auto"><div class="card"><div class="tbl-wrap"><table class="stats-tbl">
     <thead><tr>
       <th>#</th><th>Jogador</th><th>Partidas</th><th>Vitórias</th><th>Derrotas</th>
-      <th>Win%</th><th>PF</th><th>PA</th><th>GD</th>
+      <th>Win%</th><th>PF</th><th>PC</th><th>SP</th>
     </tr></thead>
     <tbody>${sorted.map((p,i)=>{
       const gd=p.pf-p.pa, wr=p.m>0?Math.round(p.w/p.m*100):0;
@@ -1088,11 +1088,13 @@ function buildHistorico(tm, sc) {
 
   const podCard = (p, size, borderCol, barH) => {
     if(!p) return '<div></div>';
-    const s=pStats(p.player), col=pCol(p.player);
+    const s=pStats(p.player);
+    const nat=_getNat(p.player);
+    const grad=flagGrad(nat), txtCol=flagTextCol(nat);
     return `<div style="display:flex;flex-direction:column;align-items:center;gap:7px">
-      <div style="width:${size}px;height:${size}px;border-radius:50%;background:${col};border:3px solid ${borderCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:${Math.round(size*.28)}px;color:#fff;box-shadow:0 3px 14px rgba(0,0,0,.35)">${pIni(p.player)}</div>
+      <div style="width:${size}px;height:${size}px;border-radius:50%;background:${grad};border:3px solid ${borderCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:${Math.round(size*.28)}px;color:${txtCol};text-shadow:0 1px 4px rgba(0,0,0,.4);box-shadow:0 3px 14px rgba(0,0,0,.35)">${pIni(p.player)}</div>
       <div style="font-size:11px;font-weight:700;color:#fff;max-width:${size+20}px;line-height:1.3;text-align:center">${p.player||'—'}</div>
-      <div style="font-family:'DM Mono';font-size:9px;color:#93C5FD">${s.w}V · GD${s.gd>=0?'+':''}${s.gd}</div>
+      <div style="font-family:'DM Mono';font-size:9px;color:#93C5FD">${s.w}V · SP${s.gd>=0?'+':''}${s.gd}</div>
     </div>`;
   };
 
@@ -1154,6 +1156,39 @@ function buildScorecard(sc) {
     </div>`).join('')}</div>`;
 }
 
+
+// ── Nationality gradients (synced with V38/V10) ───────────────────────────
+function flagGrad(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('brasile') || n.includes('brazil'))
+    return 'linear-gradient(135deg,#1a6e30 0%,#3aaa5c 40%,#f5d020 70%,#f5d020 100%)';
+  if (n.includes('argentin'))
+    return 'linear-gradient(135deg,#74acdf 0%,#aed6f1 45%,#fff 60%,#aed6f1 80%,#74acdf 100%)';
+  if (n.includes('paraguai') || n.includes('paraguay'))
+    return 'linear-gradient(160deg,#c8102e 0%,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8 100%)';
+  if (n.includes('uruguai')  || n.includes('uruguay'))
+    return 'linear-gradient(135deg,#75aadb 0%,#fff 50%,#75aadb 100%)';
+  if (n.includes('chile'))
+    return 'linear-gradient(135deg,#d52b1e 0%,#fff 50%,#d52b1e 100%)';
+  return 'linear-gradient(135deg,#3a5a8a 0%,#5a7aaa 100%)';
+}
+function flagTextCol(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('argentin') || n.includes('uruguai') || n.includes('uruguay')) return '#002D6E';
+  return '#fff';
+}
+
+function _getNat(name) {
+  const p = (data['players'] || []).find(r => {
+    const nick  = r.player_nickname || r.nickname  || '';
+    const fname = r.player_name     || r.nome       || '';
+    const lname = r.player_surname  || r.sobrenome  || '';
+    const disp  = nick || (fname + (lname ? ' ' + lname : '')).trim();
+    return disp === name || fname === name ||
+           (fname + ' ' + lname).trim() === name;
+  });
+  return p ? (p.player_nationality || p.nacionalidade || '') : '';
+}
 // ── UTILS ─────────────────────────────────────────────────────────
 function render(html) { document.getElementById('main').innerHTML = html; }
 
