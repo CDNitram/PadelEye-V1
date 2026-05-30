@@ -500,7 +500,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="rk-sbtn" onclick="rkSetSort('wins',this)">🏆 Vitórias</button>
       <button class="rk-sbtn on" onclick="rkSetSort('win_rate',this)">📊 Win Rate</button>
       <button class="rk-sbtn" onclick="rkSetSort('matches',this)">🎯 Partidas</button>
-      <button class="rk-sbtn" onclick="rkSetSort('points_difference',this)">⚡ Game Diff</button>
+      <button class="rk-sbtn" onclick="rkSetSort('points_difference',this)">⚡ Saldo de Pontos</button>
       <button class="rk-sbtn" onclick="rkSetSort('mvp_count',this)">🥇 MVP</button>
       <button class="rk-sbtn" onclick="rkSetSort('sessions',this)">📅 Sessões</button>
     </div>
@@ -513,7 +513,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="rk-th r rk-hide" id="rk-th-v">V</div>
         <div class="rk-th r rk-hide">D</div>
         <div class="rk-th r" id="rk-th-wr">WR%</div>
-        <div class="rk-th r" id="rk-th-gd">GD</div>
+        <div class="rk-th r" id="rk-th-gd">SP</div>
         <div class="rk-th r" id="rk-th-mvp">MVP</div>
       </div>
       <div id="rk-body"></div>
@@ -900,7 +900,7 @@ function renderScoreboard() {
       <div class="sb-av" style="background:${pc(p.name)}">${init(p.name)}</div>
       <div class="sb-info">
         <div class="sb-name">${p.name}</div>
-        <div class="sb-stats">${p.m}P · ${p.w}V · ${p.l}D · GD <span style="${gdClass}">${p.gd>0?'+':''}${p.gd}</span></div>
+        <div class="sb-stats">${p.m}P · ${p.w}V · ${p.l}D · SP <span style="${gdClass}">${p.gd>0?'+':''}${p.gd}</span></div>
         <div class="sb-bar"><div class="sb-bar-fill" style="width:${p.w/maxW*100}%;background:${pc(p.name)}"></div></div>
       </div>
       <div class="sb-pts ${i===0&&p.w>0?'leader':''}">${p.gw}</div>
@@ -923,7 +923,7 @@ function updateSaveTab() {
   document.getElementById('sv-mvp').textContent=mvp?.name?.split(' ')[0]||'—';
   const mvpWR=mvp?Math.round(mvp.w/(mvp.m||1)*100):0;
   document.getElementById('mvp-display-save').textContent=mvp?.name||'—';
-  document.getElementById('mvp-stat-save').textContent=mvp?`${mvp.w}W · ${mvpWR}% WR · GD ${mvp.gd>=0?'+':''}${mvp.gd}`:'Sem partidas ainda';
+  document.getElementById('mvp-stat-save').textContent=mvp?`${mvp.w}W · ${mvpWR}% WR · SP ${mvp.gd>=0?'+':''}${mvp.gd}`:'Sem partidas ainda';
 }
 async function saveSession() {
   if(sessionSaved){showAlert('alert-save','Esta sessão já foi salva.','warn');return;}
@@ -1362,10 +1362,10 @@ function rkUpdateKPIs(data) {
   } else if (rkSort === 'points_difference' || rkSort === 'gd') {
     sorted.sort((a,b) => (+(b.points_difference||b.gd||0)) - (+(a.points_difference||a.gd||0)));
     const l = sorted[0];
-    leaderLabel = 'Melhor GD';
+    leaderLabel = 'Melhor SP';
     leaderName  = l?.player || '—';
     const gd = +(l?.points_difference||l?.gd||0);
-    leaderSub   = l ? `${gd>=0?'+':''}${gd} GD` : '—';
+    leaderSub   = l ? `${gd>=0?'+':''}${gd} SP` : '—';
   } else {
     sorted.sort((a,b) => (+(b.wins||0)) - (+(a.wins||0)));
     const l = sorted[0];
