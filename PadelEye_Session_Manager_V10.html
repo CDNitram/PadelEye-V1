@@ -28,20 +28,27 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,147,58,.3);}
 .login-error{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:9px 13px;font-size:12px;color:#c0392b;margin-bottom:12px;display:none;text-align:center;}
 .login-footer{font-family:'DM Mono';font-size:9px;color:#c0cdd8;text-align:center;margin-top:18px;letter-spacing:1px;}
-.topbar{background:#0a1628;height:52px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:200;}
-.topbar-logo{font-family:'Bebas Neue';font-size:20px;color:#fff;letter-spacing:1px;}
+.topbar{background:#fff;height:52px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:200;border-bottom:1px solid #dde6f0;}
+.topbar-logo{font-family:'Bebas Neue';font-size:20px;color:#0a1628;letter-spacing:1px;}
 .topbar-logo em{color:#C9933A;font-style:normal;}
-.topbar-center{font-family:'DM Mono';font-size:11px;color:#5a8aaa;letter-spacing:1px;}
+.topbar-center{font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1px;}
 .topbar-right{display:flex;align-items:center;gap:10px;}
-.topbar-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#C9933A,#e0a840);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#0a1628;}
-.btn-out{background:none;border:none;color:#5a8aaa;font-size:11px;cursor:pointer;font-family:'DM Sans';}
-.btn-out:hover{color:#fff;}
-.tabs{background:#fff;border-bottom:1px solid #dde6f0;display:flex;overflow-x:auto;scrollbar-width:none;padding:0 16px;flex-shrink:0;}
-.tabs::-webkit-scrollbar{display:none;}
-.tab{padding:13px 16px 11px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;margin-bottom:-1px;flex-shrink:0;transition:all .2s;}
-.tab.on{color:#0a1628;border-bottom-color:#C9933A;}
-.tab.disabled{opacity:.35;cursor:not-allowed;pointer-events:none;}
-.panel{display:none;flex:1;overflow-y:auto;padding:16px;max-width:700px;margin:0 auto;width:100%;}
+.topbar-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#C9933A,#e0a840);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#0a1628;box-shadow:0 2px 8px rgba(201,147,58,.3);}
+.btn-out{background:none;border:1px solid #dde6f0;border-radius:7px;color:#5a7090;font-size:11px;padding:5px 12px;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
+.btn-out:hover{background:#f4f7fc;color:#0a1628;}
+.app-body{display:flex;min-height:calc(100vh - 52px);}
+.sidebar-nav{width:230px;background:#fff;border-right:1px solid #dde6f0;flex-shrink:0;padding:8px 0 20px;position:sticky;top:52px;height:calc(100vh - 52px);overflow-y:auto;}
+.sb-section-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#b0c4d8;padding:14px 16px 5px;display:flex;align-items:center;gap:6px;}
+.sb-section-label::after{content:'';flex:1;height:0.5px;background:#edf2f7;}
+.sb-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:transform .15s;}
+.tab{display:flex;align-items:center;gap:10px;padding:7px 12px 7px 14px;width:100%;text-align:left;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;color:#5a7090;background:none;border:none;border-left:3px solid transparent;cursor:pointer;white-space:nowrap;transition:all .15s;box-sizing:border-box;}
+.tab.on{color:#0a1628;border-left-color:#C9933A;background:linear-gradient(90deg,rgba(201,147,58,.08),transparent);font-weight:700;}
+.tab.on .sb-ic{transform:scale(1.1);}
+.tab:hover:not(.on):not(.disabled){color:#0d1e3a;background:#f8fafd;}
+.tab.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
+.sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
+.main-content{flex:1;overflow-y:auto;padding:16px;}
+.panel{display:none;max-width:700px;margin:0 auto;width:100%;}
 .panel.on{display:block;}
 .card{background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:16px;margin-bottom:14px;}
 .card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin-bottom:12px;}
@@ -267,22 +274,31 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <div class="screen" id="s-app">
   <div class="topbar">
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div class="topbar-center" id="tb-session-label">SESSION</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V10</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
       <button class="btn-out" onclick="doLogout()">Sair</button>
     </div>
   </div>
-  <div class="tabs">
-    <button class="tab" id="tab-cadastro" onclick="showTab('cadastro',this);loadCadastro()">👤 Cadastro de Jogadores</button>
-    <button class="tab" id="tab-session" onclick="showTab('session',this)">📋 Configuração de Sessão</button>
-    <button class="tab disabled" id="tab-match"      onclick="showTab('match',this)">🏸 Partidas</button>
-    <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)">🏆 Placar &amp; MVP</button>
-    <button class="tab disabled" id="tab-save"       onclick="showTab('save',this)">💾 Salvar</button>
-    <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()">📊 Ranking</button>
-    <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()">📋 Histórico</button>
-    <button class="tab" id="tab-testdb" onclick="showTab('testdb',this);renderTestDBTab()">🔧 Test DB</button>
+  <div class="app-body">
+  <div class="sidebar-nav">
+    <div class="sb-section-label">Jogadores</div>
+    <button class="tab" id="tab-cadastro" onclick="showTab('cadastro',this);loadCadastro()"><span class="sb-ic" style="background:#dbeafe">👤</span> Cadastro de Jogadores</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Sessão Atual</div>
+    <button class="tab" id="tab-session" onclick="showTab('session',this)"><span class="sb-ic" style="background:#fef3c7">📋</span> Configuração</button>
+    <button class="tab disabled" id="tab-match" onclick="showTab('match',this)"><span class="sb-ic" style="background:#dcfce7">🏸</span> Partidas</button>
+    <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)"><span class="sb-ic" style="background:#ede9fe">🏆</span> Placar &amp; MVP</button>
+    <button class="tab disabled" id="tab-save" onclick="showTab('save',this)"><span class="sb-ic" style="background:#ffedd5">💾</span> Salvar</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Análise</div>
+    <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()"><span class="sb-ic" style="background:#ccfbf1">📊</span> Ranking</button>
+    <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico</button>
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Sistema</div>
+    <button class="tab" id="tab-testdb" onclick="showTab('testdb',this);renderTestDBTab()"><span class="sb-ic" style="background:#f1f5f9">🔧</span> Test DB</button>
   </div>
+  <div class="main-content">
 
   <!-- ── SESSION TAB ── -->
   <div class="panel" id="p-session">
@@ -608,8 +624,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
     </div>
   </div>
+  </div><!-- /main-content -->
+  </div><!-- /app-body -->
 
-</div>
+</div><!-- /s-app -->
 <!-- ADD PLAYER MODAL -->
 <div id="add-player-modal" onclick="closeAddPlayer(event)">
   <div class="ap-box" onclick="event.stopPropagation()">
