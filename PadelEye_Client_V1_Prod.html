@@ -1,0 +1,2412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>PadelEye · Player</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --accent:#C9933A;--accent2:#e0a840;--dark:#0a1628;--mid:#1a3052;
+  --green:#1a7a44;--red:#c0392b;--border:#dde6f0;--muted:#9ab0c8;
+  --bg:#f2f5fb;--card:#fff;--text:#0d1e3a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);}
+
+/* ── SCREENS ── */
+.screen{display:none;position:fixed;inset:0;flex-direction:column;}
+.screen.on{display:flex;}
+
+/* ── SPLASH ── */
+#s-splash{background:var(--dark);align-items:center;justify-content:center;}
+.splash-logo{font-family:'Bebas Neue';font-size:54px;color:#fff;letter-spacing:4px;line-height:1;}
+.splash-logo em{color:var(--accent);font-style:normal;}
+.splash-sub{font-family:'DM Mono';font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-top:8px;text-transform:uppercase;}
+.splash-loader{width:48px;height:3px;background:rgba(255,255,255,.1);border-radius:99px;margin-top:32px;overflow:hidden;}
+.splash-loader-bar{height:100%;border-radius:99px;background:var(--accent);animation:ldbar 1.4s ease-in-out infinite;}
+@keyframes ldbar{0%{width:0;margin-left:0}60%{width:100%;margin-left:0}100%{width:0;margin-left:100%}}
+
+/* ── LOGIN ── */
+#s-login{background:var(--bg);overflow-y:auto;}
+.login-hero{background:var(--dark);padding:48px 24px 28px;text-align:center;}
+.login-logo{font-family:'Bebas Neue';font-size:38px;color:#fff;letter-spacing:3px;}
+.login-logo em{color:var(--accent);font-style:normal;}
+.login-tagline{font-size:12px;color:rgba(255,255,255,.35);font-family:'DM Mono';letter-spacing:2px;margin-top:6px;}
+.login-card{background:var(--card);border-radius:24px 24px 0 0;margin-top:-16px;padding:28px 20px 40px;flex:1;}
+.login-title{font-size:20px;font-weight:700;color:var(--dark);margin-bottom:4px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.login-search{width:100%;padding:13px 16px 13px 42px;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans';font-size:14px;color:var(--text);background:#f8fafd;outline:none;transition:border-color .2s;}
+.login-search:focus{border-color:var(--accent);background:#fff;}
+.search-wrap{position:relative;}
+.search-wrap::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;}
+.player-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;}
+.player-pill{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border:1.5px solid var(--border);border-radius:14px;cursor:pointer;transition:all .15s;}
+.player-pill:active{transform:scale(.97);}
+.player-pill.sel{border-color:var(--accent);background:#fffbf0;}
+.pp-av{width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.pp-name{font-size:12px;font-weight:600;line-height:1.3;color:var(--dark);}
+.pp-cat{font-family:'DM Mono';font-size:10px;color:var(--muted);}
+.btn-login{width:100%;padding:16px;background:var(--accent);color:var(--dark);font-size:15px;font-weight:700;border:none;border-radius:14px;cursor:pointer;margin-top:20px;font-family:'DM Sans';letter-spacing:.5px;transition:all .2s;display:none;}
+.btn-login.show{display:block;}
+.btn-login:active{transform:scale(.98);}
+
+/* ── APP ── */
+#s-app{background:var(--bg);}
+.app-topbar{background:var(--card);height:56px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-shrink:0;position:relative;}
+.tb-logo{font-family:'Bebas Neue';font-size:20px;color:var(--dark);letter-spacing:1.5px;}
+.tb-logo em{color:var(--accent);font-style:normal;}
+.tb-badge{font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;color:var(--muted);padding:2px 8px;border:1px solid var(--border);border-radius:20px;}
+.tb-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;cursor:pointer;}
+
+.app-content{flex:1;overflow-y:auto;padding:16px 16px 80px;}
+
+/* Tab panels */
+.tab-panel{display:none;}
+.tab-panel.on{display:block;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{height:60px;background:var(--card);border-top:1px solid var(--border);display:flex;align-items:stretch;flex-shrink:0;}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;border:none;background:none;font-family:'DM Sans';font-size:6.5px;color:var(--muted);transition:color .15s;padding:0;}
+.bn-icon{font-size:14px;line-height:1;}
+.bn-item.on{color:var(--accent);}
+.bn-item.on .bn-icon{transform:scale(1.1);}
+
+/* ── HOME ── */
+.hero-card{background:linear-gradient(135deg,var(--dark),var(--mid));border-radius:20px;padding:20px;margin-bottom:14px;position:relative;overflow:hidden;}
+.hero-card::after{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(201,147,58,.08);}
+.hero-rank-label{font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4);text-transform:uppercase;}
+.hero-rank-num{font-family:'Bebas Neue';font-size:72px;color:var(--accent);line-height:1;letter-spacing:-2px;}
+.hero-rank-suffix{font-family:'Bebas Neue';font-size:20px;color:rgba(255,255,255,.5);margin-left:2px;}
+.hero-name{font-size:18px;font-weight:700;color:#fff;margin-top:2px;}
+.hero-cat{font-family:'DM Mono';font-size:10px;color:rgba(255,255,255,.45);margin-top:2px;}
+.hero-av-wrap{position:absolute;top:20px;right:20px;}
+.hero-av{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:22px;border:3px solid rgba(255,255,255,.2);}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;}
+.stat-val{font-family:'Bebas Neue';font-size:24px;line-height:1;color:var(--dark);}
+.stat-val.win{color:var(--green);}
+.stat-val.gold{color:var(--accent);}
+.stat-lbl{font-family:'DM Mono';font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
+.section-hd{font-family:'Bebas Neue';font-size:16px;letter-spacing:1px;color:var(--dark);margin:16px 0 8px;display:flex;align-items:center;justify-content:space-between;}
+.section-hd span{font-size:11px;font-weight:400;font-family:'DM Sans';color:var(--muted);cursor:pointer;}
+
+/* Match mini card */
+.match-mini{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.mm-result{width:6px;flex-shrink:0;align-self:stretch;border-radius:99px;}
+.mm-result.win{background:var(--green);}
+.mm-result.lose{background:var(--red);}
+.mm-scores{font-family:'Bebas Neue';font-size:22px;color:var(--text);min-width:48px;text-align:center;line-height:1;}
+.mm-scores .w{color:var(--green);}
+.mm-scores .l{color:#c0cdd8;}
+.mm-info{flex:1;min-width:0;}
+.mm-partner{font-size:12px;font-weight:600;color:var(--dark);}
+.mm-opp{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mm-sess{font-family:'DM Mono';font-size:9px;color:#b0c4d8;margin-top:3px;}
+
+/* ── RANKING ── */
+.rk-status{display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+.rk-dot{width:7px;height:7px;border-radius:50%;background:#c0cdd8;}
+.rk-stxt{font-family:'DM Mono';font-size:10px;color:var(--muted);flex:1;}
+.sort-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.sort-pill{padding:5px 13px;border-radius:99px;border:1px solid var(--border);background:#f8fafd;color:#7090b0;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans';transition:all .15s;}
+.sort-pill.on{background:var(--dark);color:var(--accent);border-color:var(--dark);}
+.rk-table{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.rk-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:0.5px solid #f0f5fb;}
+.rk-row:last-child{border-bottom:none;}
+.rk-row.me{background:linear-gradient(90deg,rgba(201,147,58,.08),rgba(201,147,58,.03));}
+.rk-pos{font-family:'Bebas Neue';font-size:18px;color:#c0cdd8;width:28px;flex-shrink:0;text-align:center;}
+.rk-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;}
+.rk-pname{font-size:12px;font-weight:600;color:var(--dark);flex:1;}
+.rk-cat-tag{font-family:'DM Mono';font-size:9px;color:var(--muted);}
+.rk-me-tag{font-family:'DM Mono';font-size:8px;color:var(--accent);background:rgba(201,147,58,.1);padding:1px 5px;border-radius:99px;margin-left:4px;}
+.rk-val{font-family:'DM Mono';font-size:12px;font-weight:500;color:var(--dark);min-width:40px;text-align:right;}
+.rk-wr{font-size:11px;font-weight:700;}
+
+/* ── MATCHES ── */
+.sess-group{margin-bottom:16px;}
+.sess-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.sess-badge{font-family:'Bebas Neue';font-size:14px;color:var(--dark);letter-spacing:1px;}
+.sess-date{font-family:'DM Mono';font-size:10px;color:var(--muted);}
+.sess-score{font-family:'DM Mono';font-size:9px;padding:2px 7px;border-radius:99px;}
+.sess-score.pos{background:#e8f8ee;color:var(--green);}
+.sess-score.neg{background:#fce8e8;color:var(--red);}
+
+/* ── PROFILE ── */
+.profile-card{border-radius:20px;overflow:hidden;margin-bottom:14px;}
+.profile-hdr{padding:20px 18px 0;}
+.profile-av-row{display:flex;justify-content:center;margin-bottom:-28px;}
+.profile-av{width:60px;height:60px;border-radius:50%;border:4px solid #fff;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:24px;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+.profile-body{background:#fff;padding:36px 18px 18px;text-align:center;}
+.profile-name{font-size:22px;font-weight:700;color:var(--dark);line-height:1.2;}
+.profile-name span{font-weight:400;color:#7090b0;}
+.profile-sport{font-size:12px;font-weight:600;margin-top:6px;}
+.profile-city{font-size:11px;color:var(--muted);margin-top:2px;}
+.profile-id-box{display:flex;align-items:center;justify-content:space-between;background:#f8fafd;border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin-top:12px;}
+.profile-id-val{font-family:'DM Mono';font-size:15px;font-weight:700;color:var(--dark);}
+.profile-stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px;}
+.ps-card{background:#f8fafd;border-radius:12px;padding:12px;text-align:center;}
+.ps-val{font-family:'Bebas Neue';font-size:28px;line-height:1;color:var(--dark);}
+.ps-lbl{font-family:'DM Mono';font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-icon{font-size:40px;margin-bottom:8px;}
+.empty-txt{font-size:13px;}
+
+/* ── UTIL ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;}
+
+.lfield{margin-bottom:14px;}
+.lfield label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:6px;font-family:'DM Mono';}
+
+/* ── CHAT TAB ── */
+#tp-chat{display:flex;flex-direction:column;height:calc(100vh - 56px - 64px);margin:-16px -16px -80px;padding:0;}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px 14px 8px;display:flex;flex-direction:column;gap:8px;}
+.chat-input-bar{flex-shrink:0;padding:10px 12px;background:var(--card);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;}
+.chat-input{flex:1;border:1.5px solid var(--border);border-radius:22px;padding:10px 16px;font-family:'DM Sans';font-size:13px;color:var(--text);background:#f8fafd;outline:none;resize:none;max-height:80px;line-height:1.4;transition:border-color .2s;}
+.chat-input:focus{border-color:var(--accent);background:#fff;}
+.chat-send{width:40px;height:40px;border-radius:50%;background:var(--accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;transition:transform .15s;}
+.chat-send:active{transform:scale(.93);}
+.msg{max-width:82%;display:flex;flex-direction:column;gap:3px;}
+.msg.user{align-self:flex-end;align-items:flex-end;}
+.msg.ai{align-self:flex-start;align-items:flex-start;}
+.msg-bubble{padding:10px 14px;border-radius:18px;font-size:13px;line-height:1.5;}
+.msg.user .msg-bubble{background:var(--dark);color:#fff;border-bottom-right-radius:4px;}
+.msg.ai .msg-bubble{background:var(--card);border:1px solid var(--border);color:var(--text);border-bottom-left-radius:4px;}
+.msg-time{font-family:'DM Mono';font-size:9px;color:var(--muted);padding:0 4px;}
+.typing-dots span{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted);animation:tdot 1.2s ease-in-out infinite;margin:0 1px;}
+.typing-dots span:nth-child(2){animation-delay:.2s;}
+.typing-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.chat-ai-header{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--card);flex-shrink:0;}
+.chat-ai-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--dark),var(--mid));display:flex;align-items:center;justify-content:center;font-size:14px;}
+.chat-ai-name{font-size:12px;font-weight:700;color:var(--dark);}
+.chat-ai-sub{font-size:10px;color:var(--muted);}
+
+/* ── PERFORMANCE AI CARD ── */
+.perf-card{background:linear-gradient(135deg,var(--dark),var(--mid));border-radius:16px;padding:16px;margin-top:10px;}
+.perf-hd{font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.perf-section{margin-bottom:12px;}
+.perf-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'DM Mono';}
+.perf-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:5px;}
+.perf-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.perf-text{font-size:12px;line-height:1.5;color:rgba(255,255,255,.85);}
+.perf-treino{background:rgba(201,147,58,.15);border:1px solid rgba(201,147,58,.3);border-radius:10px;padding:10px 12px;font-size:12px;color:#e0a840;line-height:1.5;}
+.perf-loading{text-align:center;padding:20px;color:rgba(255,255,255,.4);font-family:'DM Mono';font-size:11px;}
+
+/* ── PROFILE MODAL ── */
+.profile-modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.6);z-index:500;align-items:flex-end;justify-content:center;}
+.profile-modal-overlay.on{display:flex;}
+.profile-modal{background:var(--bg);border-radius:24px 24px 0 0;width:100%;max-width:420px;padding:20px 16px 36px;max-height:85vh;overflow-y:auto;}
+.pm-handle{width:36px;height:4px;background:#dde6f0;border-radius:99px;margin:0 auto 16px;}
+.pm-card{background:var(--card);border-radius:16px;overflow:hidden;margin-bottom:12px;}
+.pm-header{padding:16px 14px 0;}
+.pm-av-wrap{display:flex;justify-content:center;margin-bottom:-24px;}
+.pm-av{width:54px;height:54px;border-radius:50%;border:4px solid #fff;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;box-shadow:0 3px 12px rgba(0,0,0,.15);}
+.pm-body{padding:30px 14px 14px;text-align:center;}
+.pm-name{font-size:18px;font-weight:700;color:var(--dark);}
+.pm-sub{font-size:11px;font-weight:600;margin-top:4px;}
+.pm-city{font-size:11px;color:var(--muted);margin-top:2px;}
+.pm-id-box{display:flex;align-items:center;justify-content:space-between;background:#f8fafd;border:1px solid var(--border);border-radius:10px;padding:9px 12px;margin:12px 0;}
+.pm-rows{display:flex;flex-direction:column;gap:0;}
+.pm-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f4f7fc;font-size:12px;}
+.pm-row:last-child{border-bottom:none;}
+.pm-row-label{color:var(--muted);font-family:'DM Mono';font-size:10px;text-transform:uppercase;letter-spacing:.5px;}
+.pm-row-val{font-weight:600;color:var(--dark);}
+.btn-close-pm{width:100%;padding:14px;background:#f0f5fb;border:none;border-radius:12px;font-size:13px;font-weight:600;color:#5a7090;cursor:pointer;font-family:'DM Sans';margin-top:4px;}
+
+/* ── BENCHMARK BARS ── */
+.bench-row{margin-bottom:14px;}
+.bench-label{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.bench-name{font-size:12px;font-weight:600;color:var(--dark);}
+.bench-delta{font-family:'DM Mono';font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;}
+.bench-delta.pos{color:#1a7a44;background:#e8f8ee;}
+.bench-delta.neg{color:#c0392b;background:#fce8e8;}
+.bench-delta.neu{color:#7090b0;background:#f0f5fb;}
+.bench-track{height:7px;background:#f0f5fb;border-radius:99px;overflow:hidden;position:relative;}
+.bench-fill{height:100%;border-radius:99px;transition:width .6s ease;}
+.bench-marker{position:absolute;top:-3px;width:2px;height:13px;background:#0a1628;border-radius:99px;}
+.bench-sub{font-size:10px;color:var(--muted);margin-top:3px;display:flex;gap:10px;}
+.bench-sub span{font-family:'DM Mono';}
+.perf-section-title{font-size:10px;font-weight:700;color:var(--dark);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.season-ai-txt{font-size:12px;line-height:1.6;color:#4a6080;}
+
+/* ── ACADEMIA ── */
+.acad-search{width:100%;padding:9px 14px 9px 38px;border:1.5px solid var(--border);border-radius:12px;font-family:'DM Sans';font-size:13px;background:#f8fafd;outline:none;color:var(--text);transition:border .2s;}
+.acad-search:focus{border-color:var(--accent);background:#fff;}
+.acad-search-wrap{position:relative;margin-bottom:12px;}
+.acad-search-wrap::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;}
+.cat-pills{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:14px;}
+.cat-pills::-webkit-scrollbar{display:none;}
+.cat-pill{padding:5px 13px;border-radius:99px;border:1px solid var(--border);background:#f8fafd;color:#7090b0;font-size:11px;font-weight:500;cursor:pointer;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.cat-pill.on{background:var(--dark);color:var(--accent);border-color:var(--dark);}
+.content-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.content-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:box-shadow .2s;}
+.content-card:active{transform:scale(.98);}
+.cc-thumb{height:80px;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;}
+.cc-play{position:absolute;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;}
+.cc-body{padding:10px 12px;}
+.cc-cat{font-family:'DM Mono';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px;}
+.cc-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px;}
+.cc-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.cc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:7px;}
+.cc-type{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500;}
+.type-video{background:#fce8e8;color:#c0392b;}
+.type-text{background:#e8f0fe;color:#3a7bd5;}
+.type-anim{background:#e8f8ee;color:#1a7a44;}
+.cc-level{font-family:'DM Mono';font-size:9px;color:var(--muted);}
+.section-heading{font-family:'Bebas Neue';font-size:18px;color:var(--dark);letter-spacing:1px;margin-bottom:4px;}
+.section-subheading{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.prof-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;transition:all .2s;}
+.prof-card:active{transform:scale(.98);}
+.prof-av{width:48px;height:48px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.prof-info{flex:1;min-width:0;}
+.prof-name{font-size:13px;font-weight:700;color:var(--dark);}
+.prof-spec{font-size:11px;color:var(--muted);margin-top:1px;}
+.prof-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;}
+.prof-tag{font-size:10px;padding:2px 7px;border-radius:99px;background:#f0f5fb;color:#5a7090;}
+.prof-rate{text-align:right;flex-shrink:0;}
+.prof-stars{font-size:11px;}
+.prof-price{font-family:'DM Mono';font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;}
+.btn-book{width:100%;padding:12px;background:var(--accent);color:var(--dark);font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans';transition:all .2s;margin-top:4px;}
+.btn-book:active{transform:scale(.98);}
+/* BOOKING MODAL */
+.booking-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.65);z-index:600;align-items:flex-end;justify-content:center;}
+.booking-overlay.on{display:flex;}
+.booking-sheet{background:#f2f5fb;border-radius:24px 24px 0 0;width:100%;max-width:420px;padding:16px;max-height:88vh;overflow-y:auto;}
+.bk-handle{width:36px;height:4px;background:#dde6f0;border-radius:99px;margin:0 auto 14px;}
+.bk-title{font-family:'Bebas Neue';font-size:20px;color:var(--dark);letter-spacing:1px;margin-bottom:2px;}
+.bk-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.bk-prof-row{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:14px;}
+.time-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;}
+.slot{padding:8px 4px;background:var(--card);border:1.5px solid var(--border);border-radius:9px;text-align:center;font-family:'DM Mono';font-size:11px;color:#5a7090;cursor:pointer;transition:all .15s;}
+.slot.on{background:var(--dark);color:var(--accent);border-color:var(--dark);}
+.slot.busy{opacity:.4;pointer-events:none;text-decoration:line-through;}
+.date-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px;padding-bottom:2px;}
+.date-row::-webkit-scrollbar{display:none;}
+.date-chip{flex-shrink:0;padding:7px 10px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all .15s;}
+.date-chip.on{background:var(--dark);border-color:var(--dark);}
+.date-chip .d-day{font-family:'Bebas Neue';font-size:18px;color:var(--dark);line-height:1;}
+.date-chip.on .d-day{color:var(--accent);}
+.date-chip .d-wd{font-family:'DM Mono';font-size:8px;color:var(--muted);}
+.date-chip.on .d-wd{color:rgba(255,255,255,.5);}
+.bk-field{margin-bottom:12px;}
+.bk-label{font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
+.bk-input{width:100%;padding:10px 13px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans';font-size:13px;color:var(--text);outline:none;}
+.bk-input:focus{border-color:var(--accent);}
+.bk-confirm{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--dark);font-size:14px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans';margin-top:6px;}
+/* Content reader overlay */
+.reader-overlay{display:none;position:fixed;inset:0;background:var(--card);z-index:600;overflow-y:auto;flex-direction:column;}
+.reader-overlay.on{display:flex;}
+.reader-topbar{background:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);position:sticky;top:0;}
+.reader-back{font-size:20px;cursor:pointer;color:var(--dark);}
+.reader-body{padding:20px 16px;flex:1;}
+.reader-thumb{height:180px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:72px;margin-bottom:16px;position:relative;}
+.reader-play{position:absolute;width:56px;height:56px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;}
+
+/* ── AGENDAR QUADRA ── */
+.venue-card{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all .2s;}
+.venue-card.sel{border-color:var(--accent);background:#fffbf0;}
+.venue-card:active{transform:scale(.98);}
+.venue-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.venue-name{font-size:13px;font-weight:700;color:var(--dark);}
+.venue-tag{font-family:'DM Mono';font-size:9px;padding:2px 8px;border-radius:99px;}
+.venue-tag.indoor{background:#dbeafe;color:#1e40af;}
+.venue-tag.outdoor{background:#dcfce7;color:#166534;}
+.venue-info{font-size:11px;color:var(--muted);margin-top:2px;}
+.venue-price{font-family:'DM Mono';font-size:11px;color:var(--accent);margin-top:4px;font-weight:600;}
+.venue-sel-icon{font-size:18px;flex-shrink:0;}
+.court-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;}
+.court-btn{padding:8px 4px;background:var(--card);border:1.5px solid var(--border);border-radius:10px;text-align:center;cursor:pointer;transition:all .15s;}
+.court-btn.sel{background:var(--dark);border-color:var(--dark);}
+.court-btn .cn{font-family:'Bebas Neue';font-size:18px;color:var(--dark);line-height:1;}
+.court-btn.sel .cn{color:var(--accent);}
+.court-btn .cs{font-family:'DM Mono';font-size:7.5px;color:var(--muted);}
+.court-btn.sel .cs{color:rgba(255,255,255,.45);}
+.court-btn.busy{opacity:.4;pointer-events:none;}
+.hour-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
+.hour-btn{padding:7px 4px;background:var(--card);border:1.5px solid var(--border);border-radius:9px;text-align:center;font-family:'DM Mono';font-size:10px;color:#5a7090;cursor:pointer;transition:all .15s;}
+.hour-btn.sel{background:var(--dark);color:var(--accent);border-color:var(--dark);font-weight:700;}
+.hour-btn.busy{opacity:.35;text-decoration:line-through;pointer-events:none;}
+.player-toggle{display:flex;gap:0;margin-bottom:14px;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;}
+.pt-btn{flex:1;padding:9px;text-align:center;font-size:12px;font-weight:600;cursor:pointer;background:var(--card);color:#7090b0;border:none;transition:all .15s;font-family:'DM Sans';}
+.pt-btn.sel{background:var(--dark);color:var(--accent);}
+.court-confirm{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:var(--dark);font-size:14px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans';margin-top:4px;}
+
+/* ══ HABILIDADES MODULE ══════════════════════════════════════════ */
+.sk-subtabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin:-9px -9px 12px;background:var(--card);}
+.sk-stab{flex:1;padding:10px 4px;text-align:center;font-family:'DM Mono';font-size:8px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.sk-stab.on{color:var(--dark);border-bottom-color:var(--accent);font-weight:700;}
+.sk-panel{display:none;} .sk-panel.on{display:block;}
+
+/* Radar chart */
+.radar-wrap{display:flex;justify-content:center;margin-bottom:14px;}
+.overall-pill{background:linear-gradient(135deg,var(--dark),var(--mid));border-radius:16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.overall-score{font-family:'Bebas Neue';font-size:42px;color:var(--accent);line-height:1;}
+.overall-label{font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:2px;}
+.overall-sub{font-size:11px;color:rgba(255,255,255,.6);}
+
+/* Star rating display */
+.skill-row{padding:8px 0;border-bottom:.5px solid #f4f7fc;}
+.skill-row:last-child{border:none;}
+.skill-row-top{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.skill-emoji{font-size:13px;flex-shrink:0;width:18px;}
+.skill-name{font-size:11px;font-weight:600;color:var(--dark);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.skill-score{font-family:'DM Mono';font-size:11px;font-weight:700;flex-shrink:0;}
+.skill-stars-row{display:flex;align-items:center;gap:6px;padding-left:24px;}
+.skill-stars{font-size:13px;letter-spacing:.5px;flex:1;}
+.star-filled{color:#f5a623;}
+.star-empty{color:#dde6f0;}
+
+/* Category section */
+.sk-cat-header{display:flex;align-items:center;gap:8px;padding:10px 0 6px;}
+.sk-cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sk-cat-label{font-size:11px;font-weight:700;color:var(--dark);}
+.sk-cat-count{font-family:'DM Mono';font-size:9px;color:var(--muted);}
+.sk-cat-avg{font-family:'DM Mono';font-size:10px;font-weight:700;margin-left:auto;}
+
+/* Category filter pills */
+.sk-cat-pills{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;margin-bottom:12px;padding-bottom:2px;}
+.sk-cat-pills::-webkit-scrollbar{display:none;}
+.sk-cpill{padding:4px 11px;border-radius:99px;font-size:10px;font-weight:500;border:1px solid var(--border);color:#7090b0;white-space:nowrap;background:#f8fafd;cursor:pointer;flex-shrink:0;transition:all .15s;}
+.sk-cpill.on{background:var(--dark);color:var(--accent);border-color:var(--dark);}
+
+/* Top / Bottom cards */
+.insight-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.insight-card{border-radius:12px;padding:10px 12px;}
+.insight-card.top{background:#e8f8ee;border:1px solid #c8e8d0;}
+.insight-card.bot{background:#fce8e8;border:1px solid #f0c0c0;}
+.insight-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;font-family:'DM Mono';margin-bottom:6px;}
+.insight-item{font-size:11px;font-weight:600;color:var(--dark);margin-bottom:3px;display:flex;align-items:center;gap:5px;}
+
+/* AI tip */
+.sk-ai-tip{background:linear-gradient(135deg,var(--dark),var(--mid));border-radius:14px;padding:13px;margin-bottom:12px;}
+.sk-ai-label{font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,.35);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.sk-ai-text{font-size:12px;color:rgba(255,255,255,.85);line-height:1.6;}
+.sk-ai-loading{font-size:11px;color:rgba(255,255,255,.4);font-family:'DM Mono';}
+
+/* Evaluation form */
+.eval-intro{background:#f8fafd;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;}
+.eval-player-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;}
+.eval-player-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.eval-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;}
+.eval-player-name{font-size:12px;font-weight:700;color:var(--dark);}
+.eval-player-sub{font-size:10px;color:var(--muted);}
+.eval-skill-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:.5px solid #f4f7fc;}
+.eval-skill-row:last-child{border:none;}
+.eval-skill-name{font-size:10px;color:var(--dark);flex:1;}
+.star-picker{display:flex;gap:2px;}
+.sp-star{font-size:16px;cursor:pointer;transition:transform .1s;user-select:none;}
+.sp-star:active{transform:scale(1.3);}
+.btn-submit-eval{width:100%;padding:13px;background:var(--accent);color:var(--dark);font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;font-family:'DM Sans';margin-top:10px;transition:all .2s;}
+.btn-submit-eval:active{transform:scale(.98);}
+
+/* Self-eval modal */
+.self-eval-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.7);z-index:600;align-items:flex-end;justify-content:center;}
+.self-eval-overlay.on{display:flex;}
+.self-eval-sheet{background:var(--bg);border-radius:24px 24px 0 0;width:100%;max-width:420px;padding:16px;max-height:88vh;overflow-y:auto;}
+.se-handle{width:36px;height:4px;background:#dde6f0;border-radius:99px;margin:0 auto 14px;}
+.se-title{font-family:'Bebas Neue';font-size:20px;color:var(--dark);letter-spacing:1px;margin-bottom:2px;}
+.se-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+
+/* Evolution timeline */
+.evo-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:.5px solid #f4f7fc;}
+.evo-row:last-child{border:none;}
+.evo-skill{font-size:11px;font-weight:600;color:var(--dark);flex:1;}
+.evo-bar-wrap{width:80px;height:6px;background:#f0f5fb;border-radius:99px;overflow:hidden;flex-shrink:0;}
+.evo-bar{height:100%;border-radius:99px;transition:width .5s;}
+.evo-delta{font-family:'DM Mono';font-size:10px;font-weight:700;min-width:32px;text-align:right;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<!-- ── SPLASH ── -->
+<div class="screen on" id="s-splash">
+  <div class="splash-logo">PADEL<em>EYE</em></div>
+  <div class="splash-sub">Player App · V1</div>
+  <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+</div>
+
+<!-- ── LOGIN ── -->
+<div class="screen" id="s-login">
+  <div class="login-hero">
+    <div class="login-logo">PADEL<em>EYE</em></div>
+    <div class="login-tagline">Player App · V1</div>
+  </div>
+  <div class="login-card">
+    <div class="login-title">Bem-vindo! 👋</div>
+    <div class="login-sub">Entra com o teu e-mail ou ID de jogador.</div>
+    <div class="lfield">
+      <label>E-mail ou ID do jogador</label>
+      <input class="login-search" id="login-input" type="text"
+        placeholder="ex: martin@email.com ou 2026001"
+        autocomplete="off" autocapitalize="none"
+        oninput="clearLoginError()"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-error" style="display:none;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:#c0392b;margin-bottom:12px">
+      ❌ E-mail ou ID não encontrado. Verifica os dados e tenta novamente.
+    </div>
+    <button class="btn-login show" id="btn-login" onclick="doLogin()">Entrar →</button>
+    <div style="font-family:'DM Mono';font-size:10px;color:var(--muted);text-align:center;margin-top:16px">
+      Não tens conta? Fala com o organizador.
+    </div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="screen" id="s-app">
+  <div class="app-topbar">
+    <div class="tb-logo">PADEL<em>EYE</em></div>
+    <div class="tb-badge">PLAYER APP · V1</div>
+    <div class="tb-av" id="app-av" style="background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;cursor:pointer" onclick="openProfileModal()">?</div>
+  </div>
+
+  <div class="app-content" id="app-content">
+    <!-- HOME -->
+    <div class="tab-panel on" id="tp-home">
+      <div class="hero-card" id="home-hero">
+        <div class="hero-rank-label">Ranking Geral</div>
+        <div><span class="hero-rank-num" id="h-rank">—</span><span class="hero-rank-suffix">º</span></div>
+        <div class="hero-name" id="h-name">—</div>
+        <div class="hero-cat" id="h-cat">—</div>
+        <div class="hero-av-wrap"><div class="hero-av" id="h-av">?</div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val win" id="h-wins">—</div><div class="stat-lbl">Vitórias</div></div>
+        <div class="stat-card"><div class="stat-val" id="h-losses">—</div><div class="stat-lbl">Derrotas</div></div>
+        <div class="stat-card"><div class="stat-val gold" id="h-wr">—</div><div class="stat-lbl">Win Rate</div></div>
+        <div class="stat-card"><div class="stat-val" id="h-sp">—</div><div class="stat-lbl">SP</div></div>
+      </div>
+      <div class="section-hd">Últimas Partidas <span onclick="switchTab('matches')">Ver todas →</span></div>
+      <div id="home-matches"><div class="empty-state"><div class="empty-icon">🏸</div><div class="empty-txt">A carregar...</div></div></div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="tab-panel" id="tp-ranking">
+      <div class="rk-status">
+        <div class="rk-dot" id="rk-dot"></div>
+        <div class="rk-stxt" id="rk-stxt">—</div>
+      </div>
+      <div class="sort-pills">
+        <button class="sort-pill on" onclick="rkSort('wins',this)">🏆 Vitórias</button>
+        <button class="sort-pill" onclick="rkSort('win_rate',this)">📊 Win Rate</button>
+        <button class="sort-pill" onclick="rkSort('sp',this)">⚡ SP</button>
+        <button class="sort-pill" onclick="rkSort('sessions',this)">📅 Sessões</button>
+      </div>
+      <div class="rk-table" id="rk-table"><div class="empty-state"><div class="empty-txt">A carregar ranking...</div></div></div>
+    </div>
+
+    <!-- MATCHES -->
+    <div class="tab-panel" id="tp-matches">
+      <div id="matches-content"><div class="empty-state"><div class="empty-icon">🏸</div><div class="empty-txt">A carregar partidas...</div></div></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="tab-panel" id="tp-chat">
+      <div class="chat-ai-header">
+        <div class="chat-ai-av">🤖</div>
+        <div>
+          <div class="chat-ai-name">PadelEye AI</div>
+          <div class="chat-ai-sub">Assistente · Estatísticas · Tutoriais</div>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs"></div>
+      <div class="chat-input-bar">
+        <textarea class="chat-input" id="chat-input" rows="1"
+          placeholder="Pergunta qualquer coisa..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
+        <button class="chat-send" onclick="sendChat()">↑</button>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE TAB -->
+    <div class="tab-panel" id="tp-performance">
+      <div style="margin-bottom:16px">
+        <div style="font-family:'Bebas Neue';font-size:22px;color:var(--dark);letter-spacing:1px">Minha Performance</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:1px">Análise IA · Temporada · Benchmarks</div>
+      </div>
+
+      <!-- SEASON OVERVIEW (computed, no AI) -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:12px" id="perf-season-card">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:12px">📅 Temporada 2024–2026</div>
+        <div id="perf-season-kpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+          <div class="stat-card"><div class="stat-val win" id="ps-wins">—</div><div class="stat-lbl">Vitórias</div></div>
+          <div class="stat-card"><div class="stat-val" id="ps-matches">—</div><div class="stat-lbl">Partidas</div></div>
+          <div class="stat-card"><div class="stat-val gold" id="ps-wr">—</div><div class="stat-lbl">Win Rate</div></div>
+          <div class="stat-card"><div class="stat-val" id="ps-sp">—</div><div class="stat-lbl">SP</div></div>
+        </div>
+        <div id="perf-season-ai" style="border-top:1px solid var(--border);padding-top:10px">
+          <div style="font-family:'DM Mono';font-size:9px;color:var(--muted);text-align:center">A gerar análise da temporada...</div>
+        </div>
+      </div>
+
+      <!-- ÚLTIMO MOMENTO (10 partidas) -->
+      <div class="perf-card" id="perf-card" style="margin-bottom:12px">
+        <div class="perf-hd">⚡ Último Momento · 10 Partidas</div>
+        <div class="perf-loading" id="perf-loading">A gerar análise...</div>
+        <div id="perf-content" style="display:none"></div>
+      </div>
+
+      <!-- BENCHMARKS -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px" id="perf-bench-card">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:14px">🎯 Benchmarks Comparativos</div>
+        <div id="perf-bench-content">
+          <div style="font-family:'DM Mono';font-size:11px;color:var(--muted);text-align:center;padding:8px 0">A calcular...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- ACADEMIA TAB -->
+    <div class="tab-panel" id="tp-academia">
+      <div class="acad-search-wrap">
+        <input class="acad-search" id="acad-search" placeholder="Pesquisar aulas, técnicas, professores..." oninput="filterAcademia(this.value)">
+      </div>
+      <div class="cat-pills">
+        <div class="cat-pill on" onclick="acadCat('all',this)">Todos</div>
+        <div class="cat-pill" onclick="acadCat('tecnica',this)">🎾 Técnica</div>
+        <div class="cat-pill" onclick="acadCat('tatica',this)">🗺️ Tática</div>
+        <div class="cat-pill" onclick="acadCat('fisico',this)">💪 Físico</div>
+        <div class="cat-pill" onclick="acadCat('regras',this)">📋 Regras</div>
+      </div>
+      <div class="section-heading">Aprenda a Jogar</div>
+      <div class="section-subheading">Vídeos, artigos e animações para evoluir</div>
+      <div class="content-cards" id="acad-cards">
+        <!-- populated by renderAcademia() -->
+      </div>
+      <div class="section-heading">Agendar Aula</div>
+      <div class="section-subheading" id="prof-city-label">Professores na sua cidade</div>
+      <div id="prof-list">
+        <!-- populated by renderAcademia() -->
+      </div>
+
+    <!-- HABILIDADES TAB -->
+    <div class="tab-panel" id="tp-skills">
+      <!-- Sub-tabs -->
+      <div class="sk-subtabs">
+        <button class="sk-stab on" onclick="skSubtab('perfil',this)">📊 Perfil</button>
+        <button class="sk-stab" onclick="skSubtab('aval',this)">⭐ Notas</button>
+        <button class="sk-stab" onclick="skSubtab('rate',this)">🤝 Avaliar</button>
+        <button class="sk-stab" onclick="skSubtab('evo',this)">📈 Evolução</button>
+      </div>
+
+      <!-- PERFIL -->
+      <div class="sk-panel on" id="sk-perfil">
+        <div class="overall-pill">
+          <div>
+            <div class="overall-label">Nível Técnico</div>
+            <div class="overall-score" id="sk-overall">—</div>
+            <div class="overall-sub" id="sk-overall-sub">de 10</div>
+          </div>
+          <div id="sk-radar-wrap" style="width:110px;height:110px;"></div>
+        </div>
+        <div class="insight-row">
+          <div class="insight-card top">
+            <div class="insight-title" style="color:#1a7a44">💪 Pontos Fortes</div>
+            <div id="sk-top3"></div>
+          </div>
+          <div class="insight-card bot">
+            <div class="insight-title" style="color:#c0392b">⚡ A Melhorar</div>
+            <div id="sk-bot3"></div>
+          </div>
+        </div>
+        <div class="sk-ai-tip" id="sk-ai-tip">
+          <div class="sk-ai-label">🤖 Análise IA</div>
+          <div class="sk-ai-loading" id="sk-ai-tip-txt">A gerar análise...</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;">
+          <div style="font-size:10px;font-weight:700;color:var(--dark);margin-bottom:6px">📋 Avaliações recebidas</div>
+          <div id="sk-eval-count" style="font-size:12px;color:var(--muted)">—</div>
+        </div>
+      </div>
+
+      <!-- NOTAS (all 24 skills) -->
+      <div class="sk-panel" id="sk-aval">
+        <div class="sk-cat-pills" id="sk-cat-pills">
+          <div class="sk-cpill on" onclick="skFilterCat('all',this)">Todos</div>
+          <div class="sk-cpill" onclick="skFilterCat('fisico',this)">🏃 Físico</div>
+          <div class="sk-cpill" onclick="skFilterCat('mental',this)">🧠 Mental</div>
+          <div class="sk-cpill" onclick="skFilterCat('consist',this)">🎾 Consist.</div>
+          <div class="sk-cpill" onclick="skFilterCat('golpes',this)">🏸 Golpes</div>
+        </div>
+        <div id="sk-skills-list"></div>
+        <button onclick="openSelfEval()" style="width:100%;padding:12px;background:#f0f5fb;border:none;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;color:#5a7090;font-family:'DM Sans';margin-top:8px;">✏️ Actualizar a minha auto-avaliação</button>
+      </div>
+
+      <!-- AVALIAR (rate others) -->
+      <div class="sk-panel" id="sk-rate">
+        <div class="eval-intro">
+          <div style="font-size:24px;margin-bottom:6px">🤝</div>
+          <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:4px">Avaliação Colaborativa</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6">Após cada sessão, avalia os teus companheiros de jogo. As avaliações são anónimas e contribuem para o perfil de cada jogador.</div>
+        </div>
+        <div id="sk-rate-list"></div>
+      </div>
+
+      <!-- EVOLUÇÃO -->
+      <div class="sk-panel" id="sk-evo">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">Evolução das tuas habilidades desde o início da temporada. Cada ponto representa uma sessão de avaliação.</div>
+        <div id="sk-evo-list"></div>
+      </div>
+    </div>
+
+    <!-- SELF-EVAL MODAL -->
+    <div class="self-eval-overlay" id="self-eval-overlay" onclick="closeSelfEval(event)">
+      <div class="self-eval-sheet">
+        <div class="se-handle"></div>
+        <div class="se-title">Auto-Avaliação</div>
+        <div class="se-sub">Avalia as tuas próprias habilidades honestamente. Esta é a tua linha de base.</div>
+        <div id="self-eval-form"></div>
+        <button class="btn-submit-eval" onclick="submitSelfEval()">Guardar Auto-Avaliação →</button>
+      </div>
+    </div>
+
+    <!-- AGENDAR QUADRA TAB -->
+    <div class="tab-panel" id="tp-court">
+      <div style="font-family:'Bebas Neue';font-size:22px;color:var(--dark);letter-spacing:1px;margin-bottom:3px">Agendar Quadra</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Reserve uma quadra na sua cidade</div>
+
+      <!-- Step 1: Venue -->
+      <div style="font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;margin-bottom:8px">1 · Escolha o local</div>
+      <div id="venue-list">
+        <div class="venue-card sel" onclick="selectVenue(this,'ecotenis-indoor')">
+          <div class="venue-header">
+            <div class="venue-name">EcoTenis Indoor</div>
+            <div class="venue-sel-icon" id="vi-ecotenis-indoor">✅</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span class="venue-tag indoor">Indoor</span>
+            <span style="font-size:10px;color:var(--muted)">4 quadras · Foz do Iguaçu</span>
+          </div>
+          <div class="venue-info">📍 Av. das Cataratas, 123</div>
+          <div class="venue-price">R$ 60/h · Sócio R$ 40/h</div>
+        </div>
+        <div class="venue-card" onclick="selectVenue(this,'ecotenis-outdoor')">
+          <div class="venue-header">
+            <div class="venue-name">EcoTenis Outdoor</div>
+            <div class="venue-sel-icon" id="vi-ecotenis-outdoor">○</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span class="venue-tag outdoor">Outdoor</span>
+            <span style="font-size:10px;color:var(--muted)">2 quadras · Foz do Iguaçu</span>
+          </div>
+          <div class="venue-info">📍 Av. das Cataratas, 123</div>
+          <div class="venue-price">R$ 45/h · Sócio R$ 30/h</div>
+        </div>
+        <div class="venue-card" onclick="selectVenue(this,'h7-sports')">
+          <div class="venue-header">
+            <div class="venue-name">H7 Sports</div>
+            <div class="venue-sel-icon" id="vi-h7-sports">○</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+            <span class="venue-tag indoor">Indoor</span>
+            <span style="font-size:10px;color:var(--muted)">3 quadras · Foz do Iguaçu</span>
+          </div>
+          <div class="venue-info">📍 Rua Minas Gerais, 450</div>
+          <div class="venue-price">R$ 55/h</div>
+        </div>
+      </div>
+
+      <!-- Step 2: Date -->
+      <div style="font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;margin:14px 0 8px">2 · Data</div>
+      <div id="court-dates" style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;margin-bottom:14px;"></div>
+
+      <!-- Step 3: Court -->
+      <div style="font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;margin-bottom:8px">3 · Quadra</div>
+      <div class="court-grid" id="court-grid"></div>
+
+      <!-- Step 4: Horário -->
+      <div style="font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;margin-bottom:8px">4 · Horário</div>
+      <div class="hour-grid" id="hour-grid"></div>
+
+      <!-- Step 5: Players -->
+      <div style="font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;margin-bottom:8px">5 · Jogadores</div>
+      <div class="player-toggle">
+        <button class="pt-btn sel" id="pt-2" onclick="setPlayers(2,this)">👥 2 jogadores</button>
+        <button class="pt-btn" id="pt-4" onclick="setPlayers(4,this)">👥👥 4 jogadores</button>
+      </div>
+
+      <!-- Confirm -->
+      <div id="court-booking-summary" style="background:#f8fafd;border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;display:none;">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Resumo da Reserva</div>
+        <div id="court-summary-content"></div>
+      </div>
+      <button class="court-confirm" id="court-confirm-btn" onclick="confirmCourtBooking()" style="display:none">Confirmar Reserva →</button>
+    </div>
+
+    </div>
+
+  <div class="bottom-nav">
+    <button class="bn-item on" id="bn-home" onclick="switchTab('home')">
+      <div class="bn-icon">🏠</div><div>Início</div>
+    </button>
+    <button class="bn-item" id="bn-ranking" onclick="switchTab('ranking')">
+      <div class="bn-icon">🏆</div><div>Ranking</div>
+    </button>
+    <button class="bn-item" id="bn-matches" onclick="switchTab('matches')">
+      <div class="bn-icon">🎯</div><div>Partidas</div>
+    </button>
+    <button class="bn-item" id="bn-chat" onclick="switchTab('chat')">
+      <div class="bn-icon">💬</div><div>Chat IA</div>
+    </button>
+    <button class="bn-item" id="bn-performance" onclick="switchTab('performance')">
+      <div class="bn-icon">📈</div><div>Performance</div>
+    </button>
+    <button class="bn-item" id="bn-academia" onclick="switchTab('academia')">
+      <div class="bn-icon">🎓</div><div>Academia</div>
+    </button>
+    <button class="bn-item" id="bn-skills" onclick="switchTab('skills')">
+      <div class="bn-icon">⭐</div><div>Skills</div>
+    </button>
+    <button class="bn-item" id="bn-court" onclick="switchTab('court')">
+      <div class="bn-icon">🎾</div><div>Quadra</div>
+    </button>
+  </div>
+</div>
+
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbweA4wqGI3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec';
+
+// ── State ──────────────────────────────────────────────────────────────
+let ALL_PLAYERS = [], RANKING = [], MATCHES = [], SESSIONS = [];
+let _perfGenerated = false;
+let _acadRendered = false;
+let ME = null, SELECTED = null, _rkSortKey = 'wins';
+
+// ── Boot ───────────────────────────────────────────────────────────────
+window.onload = async () => {
+  try {
+    const r = await fetch(WEB_APP_URL + '?action=get_players');
+    const j = await r.json();
+    ALL_PLAYERS = (j.rows || []).sort((a,b) =>
+      displayName(a).localeCompare(displayName(b),'pt',{sensitivity:'base'}));
+  } catch(e) { ALL_PLAYERS = []; }
+  setTimeout(() => {
+    document.getElementById('s-splash').classList.remove('on');
+    document.getElementById('s-login').classList.add('on');
+    document.getElementById('login-input').focus();
+  }, 1200);
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function displayName(p) {
+  const nick  = p.player_nickname || '';
+  const fname = p.player_name     || '';
+  const lname = p.player_surname  || '';
+  return nick || (fname + (lname ? ' ' + lname : '')).trim();
+}
+function initials(name) {
+  if (!name) return '?';
+  const p = name.trim().split(' ');
+  return p.length > 1 ? (p[0][0]+p[p.length-1][0]).toUpperCase() : name.slice(0,2).toUpperCase();
+}
+function flagGrad(nat) {
+  const n = (nat||'').toLowerCase();
+  if (n.includes('brasile')||n.includes('brazil'))
+    return 'linear-gradient(135deg,#1a6e30 0%,#3aaa5c 40%,#f5d020 70%,#f5d020 100%)';
+  if (n.includes('argentin'))
+    return 'linear-gradient(135deg,#74acdf 0%,#aed6f1 45%,#fff 60%,#aed6f1 80%,#74acdf 100%)';
+  if (n.includes('paraguai')||n.includes('paraguay'))
+    return 'linear-gradient(160deg,#c8102e 0%,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8 100%)';
+  if (n.includes('uruguai')||n.includes('uruguay'))
+    return 'linear-gradient(135deg,#75aadb 0%,#fff 50%,#75aadb 100%)';
+  return 'linear-gradient(135deg,#3a5a8a 0%,#5a7aaa 100%)';
+}
+function flagTextCol(nat) {
+  const n = (nat||'').toLowerCase();
+  return (n.includes('argentin')||n.includes('uruguai')||n.includes('uruguay')) ? '#002D6E' : '#fff';
+}
+function catColor(cat) {
+  if (!cat) return '#0a1628';
+  const n = cat.replace(/[^0-9]/g,'');
+  if (n==='8') return '#d97706'; if (n==='7') return '#b85c38';
+  if (n==='6') return '#276221'; if (n==='5') return '#1a5fa8';
+  return '#0a1628';
+}
+function rkWR(val) {
+  if (!val) return 0;
+  return parseFloat(String(val).replace('%',''));
+}
+
+// ── Login ──────────────────────────────────────────────────────────────
+function clearLoginError() {
+  document.getElementById('login-error').style.display = 'none';
+}
+
+async function doLogin() {
+  const raw  = (document.getElementById('login-input').value || '').trim().toLowerCase();
+  if (!raw) return;
+
+  // Match by email (exact, case-insensitive) or by ID (string match)
+  const found = ALL_PLAYERS.find(p => {
+    const email = (p.email || '').toLowerCase();
+    const pid   = String(p.player_id || '').toLowerCase();
+    return email === raw || pid === raw || pid === raw.replace(/^#/, '');
+  });
+
+  if (!found) {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('login-input').focus();
+    return;
+  }
+
+  SELECTED = found;
+  ME = SELECTED;
+  document.getElementById('s-login').classList.remove('on');
+  document.getElementById('s-app').classList.add('on');
+
+  // Set avatar
+  const grad = flagGrad(ME.player_nationality||'');
+  const txt  = flagTextCol(ME.player_nationality||'');
+  const ini  = initials(displayName(ME));
+  const av   = document.getElementById('app-av');
+  av.style.background = grad; av.style.color = txt; av.textContent = ini;
+
+  // Load all data
+  try {
+    const [rkR, mR, sR] = await Promise.all([
+      fetch(WEB_APP_URL+'?action=get_ranking_sessions').then(r=>r.json()),
+      fetch(WEB_APP_URL+'?action=get_matches_sessions').then(r=>r.json()),
+      fetch(WEB_APP_URL+'?action=get_sessions').then(r=>r.json()),
+    ]);
+    RANKING  = rkR.rows || [];
+    MATCHES  = mR.rows  || [];
+    SESSIONS = sR.rows  || [];
+  } catch(e) { RANKING=[]; MATCHES=[]; SESSIONS=[]; }
+
+  renderHome();
+  renderRanking();
+  renderMatches();
+  renderProfile();
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.bn-item').forEach(b=>b.classList.remove('on'));
+  document.getElementById('tp-'+tab).classList.add('on');
+  const bnEl = document.getElementById('bn-'+tab); if(bnEl) bnEl.classList.add('on');
+  const content = document.getElementById('app-content');
+  if (tab === 'chat') {
+    content.style.padding = '0';
+    content.style.overflow = 'hidden';
+    content.style.display = 'flex';
+    content.style.flexDirection = 'column';
+    // Init chat if first time
+    if (!_chatReady) initChat();
+    // Scroll to bottom
+    setTimeout(() => {
+      const msgs = document.getElementById('chat-msgs');
+      if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    }, 50);
+  } else {
+    content.style.padding = '';
+    content.style.overflow = '';
+    content.style.display = '';
+    content.style.flexDirection = '';
+    content.scrollTop = 0;
+  }
+}
+
+// ── HOME ───────────────────────────────────────────────────────────────
+function renderHome() {
+  const myName = displayName(ME);
+  const nat    = ME.player_nationality || '';
+  const cat    = ME.player_category   || '';
+  const grad   = flagGrad(nat), txtCol = flagTextCol(nat);
+  const ini    = initials(myName);
+
+  // Find ranking row
+  const myRk = RANKING.find(r => (r.player||r.nome||'') === myName);
+  const sorted = [...RANKING].sort((a,b)=>
+    (+(b.wins||b.vitorias||0))-(+(a.wins||a.vitorias||0)));
+  const pos = sorted.findIndex(r => (r.player||r.nome||'') === myName) + 1;
+  const wins   = +(myRk?.wins    || myRk?.vitorias  || 0);
+  const losses = +(myRk?.losses  || myRk?.derrotas   || 0);
+  const wr     = myRk?.win_rate  || '—';
+  const sp     = +(myRk?.points_difference || myRk?.sp || 0);
+
+  // Hero
+  document.getElementById('h-rank').textContent = pos || '—';
+  document.getElementById('h-name').textContent = myName;
+  document.getElementById('h-cat').textContent  = cat || 'PadelEye · EcoTenis';
+  document.getElementById('h-wins').textContent = wins;
+  document.getElementById('h-losses').textContent= losses;
+  document.getElementById('h-wr').textContent   = wr;
+  const spEl = document.getElementById('h-sp');
+  spEl.textContent = (sp>=0?'+':'')+sp;
+  spEl.style.color = sp>=0?'var(--green)':'var(--red)';
+
+  const hav = document.getElementById('h-av');
+  hav.style.background = grad; hav.style.color = txtCol;
+  hav.style.textShadow = '0 1px 4px rgba(0,0,0,.4)'; hav.textContent = ini;
+
+  // Hero card accent based on nationality
+  const hero = document.getElementById('home-hero');
+  hero.style.background = `linear-gradient(135deg,var(--dark),var(--mid))`;
+
+  // Recent matches
+  const myMatches = MATCHES.filter(m => {
+    const ta = (m.team_a||'').split(' / ');
+    const tb = (m.team_b||'').split(' / ');
+    return ta.includes(myName)||tb.includes(myName);
+  }).slice(-5).reverse().slice(0,3);
+
+  const container = document.getElementById('home-matches');
+  if (!myMatches.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🏸</div><div class="empty-txt">Nenhuma partida encontrada</div></div>';
+    return;
+  }
+  container.innerHTML = myMatches.map(m => matchMiniCard(m, myName)).join('');
+}
+
+function matchMiniCard(m, myName) {
+  const ta = (m.team_a||'').split(' / ');
+  const tb = (m.team_b||'').split(' / ');
+  const isA = ta.includes(myName);
+  const sa = +(m.score_a||0), sb = +(m.score_b||0);
+  const myScore  = isA ? sa : sb;
+  const oppScore = isA ? sb : sa;
+  const won = myScore > oppScore;
+  const partner   = (isA ? ta : tb).filter(p=>p!==myName).join(' & ') || '—';
+  const opponents = (isA ? tb : ta).join(' & ') || '—';
+  const sessNum   = m.session || m.session_serial_number || '?';
+  const sess = SESSIONS.find(s => String(s.session_serial_number||s.numero||'') === String(sessNum).replace(/^S/,'')
+    || String(s.session_serial_number||'') === String(sessNum));
+  const dateStr = sess?.date ? new Date(sess.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : `S${String(sessNum).replace(/^S/,'')}`;
+
+  return `<div class="match-mini">
+    <div class="mm-result ${won?'win':'lose'}"></div>
+    <div class="mm-scores">
+      <span class="${won?'w':'l'}">${myScore}</span>·<span class="${!won?'w':'l'}">${oppScore}</span>
+    </div>
+    <div class="mm-info">
+      <div class="mm-partner">Com ${partner}</div>
+      <div class="mm-opp">vs ${opponents}</div>
+      <div class="mm-sess">${dateStr}</div>
+    </div>
+    <div style="font-size:18px">${won?'✅':'❌'}</div>
+  </div>`;
+}
+
+// ── RANKING ────────────────────────────────────────────────────────────
+function rkSort(key, el) {
+  _rkSortKey = key;
+  document.querySelectorAll('.sort-pill').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderRanking();
+}
+
+function renderRanking() {
+  const myName = displayName(ME);
+  const dot  = document.getElementById('rk-dot');
+  const stxt = document.getElementById('rk-stxt');
+  if (dot && RANKING.length) { dot.style.background='#27AE60'; }
+  if (stxt) stxt.textContent = RANKING.length
+    ? `${RANKING.length} jogadores · ao vivo` : '⚠️ Sem dados';
+
+  const sorted = [...RANKING];
+  if (_rkSortKey==='wins')     sorted.sort((a,b)=>(+(b.wins||b.vitorias||0))-(+(a.wins||a.vitorias||0)));
+  else if (_rkSortKey==='win_rate') sorted.sort((a,b)=>rkWR(b.win_rate)-rkWR(a.win_rate));
+  else if (_rkSortKey==='sp')  sorted.sort((a,b)=>(+(b.points_difference||b.sp||0))-(+(a.points_difference||a.sp||0)));
+  else if (_rkSortKey==='sessions') sorted.sort((a,b)=>(+(b.sessions||b.sessoes||0))-(+(a.sessions||b.sessoes||0)));
+
+  const table = document.getElementById('rk-table');
+  if (!sorted.length) {
+    table.innerHTML='<div class="empty-state"><div class="empty-txt">Sem dados de ranking</div></div>'; return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  table.innerHTML = sorted.map((r, i) => {
+    const name  = r.player || r.nome || '—';
+    const nat   = ''; // ranking doesn't have nat, use player registry lookup
+    const cat   = r.player_category || r.categoria || '';
+    const wins  = +(r.wins||r.vitorias||0);
+    const wr    = r.win_rate || '0%';
+    const sp    = +(r.points_difference||r.sp||0);
+    const sess  = +(r.sessions||r.sessoes||0);
+    const isMe  = name===myName;
+    const wrNum = rkWR(wr);
+    const wrCol = wrNum>=60?'var(--green)':wrNum<30?'var(--red)':'var(--text)';
+
+    // Look up player for nationality
+    const playerReg = ALL_PLAYERS.find(p=>displayName(p)===name)||{};
+    const grad = flagGrad(playerReg.player_nationality||'');
+    const txtC = flagTextCol(playerReg.player_nationality||'');
+    const ini  = initials(name);
+
+    let mainVal = '', mainCol = 'var(--text)';
+    if (_rkSortKey==='wins')     { mainVal=wins+'V'; }
+    else if (_rkSortKey==='win_rate') { mainVal=wr; mainCol=wrCol; }
+    else if (_rkSortKey==='sp')  { mainVal=(sp>=0?'+':'')+sp; mainCol=sp>=0?'var(--green)':'var(--red)'; }
+    else if (_rkSortKey==='sessions') { mainVal=sess+'S'; }
+
+    return `<div class="rk-row${isMe?' me':''}">
+      <div class="rk-pos">${medals[i]||i+1}</div>
+      <div class="rk-av" style="background:${grad};color:${txtC};text-shadow:0 1px 3px rgba(0,0,0,.4)">${ini}</div>
+      <div style="flex:1;min-width:0">
+        <div class="rk-pname">${name}${isMe?'<span class="rk-me-tag">você</span>':''}</div>
+        ${cat?`<div class="rk-cat-tag">${cat}</div>`:''}
+      </div>
+      <div class="rk-val" style="color:${mainCol};font-weight:700">${mainVal}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── MATCHES ────────────────────────────────────────────────────────────
+function renderMatches() {
+  const myName = displayName(ME);
+  const myMatches = MATCHES.filter(m => {
+    const ta = (m.team_a||'').split(' / ');
+    const tb = (m.team_b||'').split(' / ');
+    return ta.includes(myName)||tb.includes(myName);
+  }).reverse();
+
+  const container = document.getElementById('matches-content');
+  if (!myMatches.length) {
+    container.innerHTML='<div class="empty-state"><div class="empty-icon">🏸</div><div class="empty-txt">Nenhuma partida encontrada</div></div>';
+    return;
+  }
+
+  // Group by session
+  const groups = {};
+  myMatches.forEach(m => {
+    const sn = String(m.session||m.session_serial_number||'?').replace(/^S/,'');
+    if (!groups[sn]) groups[sn] = [];
+    groups[sn].push(m);
+  });
+
+  container.innerHTML = Object.entries(groups).sort((a,b)=>+b[0]-+a[0]).map(([sn, ms]) => {
+    const sess = SESSIONS.find(s =>
+      String(s.session_serial_number||'').replace(/^S/,'')=== sn ||
+      String(s.numero||'')=== sn);
+    const date = sess?.date ? new Date(sess.date).toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}) : '';
+    const venue = sess?.venue || sess?.local || '';
+
+    // Session W/L summary
+    const w = ms.filter(m => {
+      const ta=(m.team_a||'').split(' / '), isA=ta.includes(myName);
+      const sa=+(m.score_a||0), sb=+(m.score_b||0);
+      return isA?(sa>sb):(sb>sa);
+    }).length;
+    const scoreClass = w>ms.length/2?'pos':w<ms.length/2?'neg':'';
+
+    return `<div class="sess-group">
+      <div class="sess-hdr">
+        <div class="sess-badge">S${sn}</div>
+        <div class="sess-date">${date}${venue?' · '+venue:''}</div>
+        <div class="sess-score ${scoreClass}">${w}V ${ms.length-w}D</div>
+      </div>
+      ${ms.map(m=>matchMiniCard(m,myName)).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ── PROFILE ────────────────────────────────────────────────────────────
+function openProfileModal() {
+  renderProfileModal();
+  document.getElementById('profile-modal-overlay').classList.add('on');
+}
+function closeProfileModal(e) {
+  if (!e || e.target.id === 'profile-modal-overlay') {
+    document.getElementById('profile-modal-overlay').classList.remove('on');
+  }
+}
+function renderProfile() { renderProfileModal(); } // kept for compat
+function renderProfileModal() {
+  const myName = displayName(ME);
+  const nat    = ME.player_nationality || '';
+  const cat    = ME.player_category   || '';
+  const city   = ME.player_city       || '';
+  const pid    = ME.player_id         || '';
+  const fname  = ME.player_name       || '';
+  const lname  = ME.player_surname    || '';
+  const grad   = flagGrad(nat), txtCol = flagTextCol(nat);
+  const hdrCol = catColor(cat);
+  const ini    = initials(myName);
+
+  const myRk = RANKING.find(r=>(r.player||r.nome||'')===myName)||{};
+  const wins    = +(myRk.wins    || myRk.vitorias  || 0);
+  const losses  = +(myRk.losses  || myRk.derrotas   || 0);
+  const matches = +(myRk.matches || myRk.partidas   || 0);
+  const sp      = +(myRk.points_difference || myRk.sp || 0);
+  const wr      = myRk.win_rate || '—';
+  const sess    = +(myRk.sessions|| myRk.sessoes    || 0);
+
+  document.getElementById('pm-content').innerHTML = `
+    <div class="profile-card" style="border:1px solid var(--border)">
+      <div class="profile-hdr" style="background:${hdrCol};padding:16px 18px 0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <span style="font-size:11px;color:rgba(255,255,255,.6);letter-spacing:2px;font-family:'DM Mono'">PADEL<span style="color:#fde68a">EYE</span></span>
+          <span style="font-size:9px;font-weight:700;color:#fde68a;background:rgba(0,0,0,.2);padding:2px 8px;border-radius:99px;font-family:'DM Mono'">${cat||'—'}</span>
+        </div>
+        <div class="profile-av-row">
+          <div class="profile-av" style="background:${grad};color:${txtCol};text-shadow:0 1px 4px rgba(0,0,0,.4)">${ini}</div>
+        </div>
+      </div>
+      <div class="profile-body">
+        <div class="profile-name">${fname} <span>${lname}</span></div>
+        <div class="profile-sport" style="color:${hdrCol}">Atleta de Padel</div>
+        ${city?`<div class="profile-city">📍 ${city}</div>`:''}
+        <div class="profile-id-box">
+          <div><div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-family:'DM Mono'">ID do Jogador</div>
+          <div class="profile-id-val">#${pid}</div></div>
+          <span style="font-size:20px;color:var(--border)">◻</span>
+        </div>
+        <div class="profile-stats-grid">
+          <div class="ps-card"><div class="ps-val" style="color:var(--green)">${wins}</div><div class="ps-lbl">Vitórias</div></div>
+          <div class="ps-card"><div class="ps-val">${losses}</div><div class="ps-lbl">Derrotas</div></div>
+          <div class="ps-card"><div class="ps-val" style="color:var(--accent)">${wr}</div><div class="ps-lbl">Win Rate</div></div>
+          <div class="ps-card"><div class="ps-val">${matches}</div><div class="ps-lbl">Partidas</div></div>
+          <div class="ps-card"><div class="ps-val" style="color:${sp>=0?'var(--green)':'var(--red)'}">${sp>=0?'+':''}${sp}</div><div class="ps-lbl">SP</div></div>
+          <div class="ps-card"><div class="ps-val">${sess}</div><div class="ps-lbl">Sessões</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="text-align:center;margin-top:8px">
+      <div style="font-family:'DM Mono';font-size:9px;color:var(--muted);letter-spacing:1px">TEMPORADA 2024–2026 · ECOTENIS · FOZ DO IGUAÇU</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">PadelEye Player App V1 · by TechNigma AI Lab</div>
+    </div>`;
+  generatePerformanceAnalysis();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANTHROPIC API — shared helper
+// ══════════════════════════════════════════════════════════════════
+const CLAUDE_URL = 'https://api.anthropic.com/v1/messages';
+const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+
+async function callClaude(systemPrompt, messages, maxTokens=600) {
+  const resp = await fetch(CLAUDE_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model: CLAUDE_MODEL,
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages
+    })
+  });
+  const data = await resp.json();
+  return data.content?.find(b=>b.type==='text')?.text || '...';
+}
+
+function buildPlayerContext() {
+  const myName = displayName(ME);
+  const myRk   = RANKING.find(r=>(r.player||r.nome||'')===myName)||{};
+  const wins   = +(myRk.wins    ||0);
+  const losses = +(myRk.losses  ||0);
+  const matches= +(myRk.matches ||0);
+  const wr     = myRk.win_rate  ||'—';
+  const sp     = +(myRk.points_difference||0);
+  const sess   = +(myRk.sessions||0);
+  const sorted = [...RANKING].sort((a,b)=>(+(b.wins||0))-(+(a.wins||0)));
+  const rank   = sorted.findIndex(r=>(r.player||r.nome||'')===myName)+1;
+
+  const myMatchesList = MATCHES.filter(m=>{
+    const ta=(m.team_a||'').split(' / '), tb=(m.team_b||'').split(' / ');
+    return ta.includes(myName)||tb.includes(myName);
+  });
+
+  // Last 10 matches summary
+  const recentSummary = myMatchesList.slice(-10).map(m=>{
+    const ta=(m.team_a||'').split(' / ');
+    const isA=ta.includes(myName);
+    const sa=+(m.score_a||0), sb=+(m.score_b||0);
+    const myS=isA?sa:sb, oppS=isA?sb:sa;
+    const won=myS>oppS;
+    const partner=(isA?ta:((m.team_b||'').split(' / '))).filter(p=>p!==myName).join(' & ')||'—';
+    const opp=(isA?(m.team_b||''):(m.team_a||'')).replace(' / ',' & ');
+    const sn=m.session||m.session_serial_number||'?';
+    return `${won?'V':'D'} ${myS}×${oppS} com ${partner} vs ${opp} (S${String(sn).replace(/^S/,'')})`;
+  }).join('\n');
+
+  return `Jogador: ${myName}
+Categoria: ${ME.player_category||'—'}
+Nacionalidade: ${ME.player_nationality||'—'}
+Cidade: ${ME.player_city||'—'}
+ID: ${ME.player_id||'—'}
+
+Estatísticas da temporada:
+- Posição no ranking: ${rank}º de ${RANKING.length} jogadores
+- Vitórias: ${wins} | Derrotas: ${losses} | Partidas: ${matches}
+- Win Rate: ${wr} | SP (Saldo de Pontos): ${sp>=0?'+':''}${sp}
+- Sessões jogadas: ${sess}
+
+Últimas 10 partidas:
+${recentSummary||'Sem dados'}`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHAT IA
+// ══════════════════════════════════════════════════════════════════
+let _chatHistory = [], _chatReady = false, _chatLoading = false;
+
+function initChat() {
+  _chatReady = true;
+  const msgs = document.getElementById('chat-msgs');
+  if (!msgs) return;
+  // Welcome message
+  addChatMsg('ai', `Olá, ${displayName(ME).split(' ')[0]}! 👋 Sou o assistente do PadelEye. Podes perguntar-me sobre as tuas estatísticas, o ranking, dicas de jogo, como o app funciona — o que quiseres!`);
+  // Quick suggestion pills
+  msgs.innerHTML += `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 2px 4px">
+    ${['Como está o meu ranking?','Qual foi a minha melhor sessão?','Dicas para melhorar meu WR','O que é o SP?'].map(q=>
+      `<button onclick="quickChat('${q}')" style="padding:6px 12px;border:1px solid var(--border);border-radius:99px;background:var(--card);font-size:11px;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">${q}</button>`
+    ).join('')}
+  </div>`;
+}
+
+function quickChat(text) {
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+function addChatMsg(role, text) {
+  const msgs = document.getElementById('chat-msgs');
+  if (!msgs) return;
+  const now = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `<div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div><div class="msg-time">${now}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-msgs');
+  const div = document.createElement('div');
+  div.className = 'msg ai'; div.id = 'typing-indicator';
+  div.innerHTML = `<div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(div); msgs.scrollTop = msgs.scrollHeight;
+}
+function removeTyping() {
+  document.getElementById('typing-indicator')?.remove();
+}
+
+async function sendChat() {
+  if (_chatLoading) return;
+  const input = document.getElementById('chat-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = '';
+  addChatMsg('user', text);
+  _chatHistory.push({ role:'user', content: text });
+  _chatLoading = true;
+  showTyping();
+
+  const sysPrompt = `És o assistente inteligente do PadelEye, um app de analytics de padel para jogadores amadores no Brasil.
+
+DADOS DO JOGADOR ATUAL:
+${buildPlayerContext()}
+
+REGRAS:
+- Responde sempre em português brasileiro, de forma amigável, concisa e motivadora
+- Usa os dados reais do jogador nas respostas quando relevante
+- Podes explicar estatísticas, dar dicas de melhoria, explicar o funcionamento do app
+- Para dúvidas sobre regras do Torneio Americano (padel), explica com exemplos
+- Quando elogiares, sê específico com os dados
+- Quando deres críticas, sê construtivo e positivo
+- Resposta máxima: 3-4 parágrafos ou lista curta`;
+
+  try {
+    const reply = await callClaude(sysPrompt, _chatHistory.slice(-10));
+    removeTyping();
+    addChatMsg('ai', reply);
+    _chatHistory.push({ role:'assistant', content: reply });
+  } catch(e) {
+    removeTyping();
+    addChatMsg('ai', '⚠️ Sem conexão com a IA. Tenta novamente.');
+  }
+  _chatLoading = false;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PERFORMANCE AI ANALYSIS
+// ══════════════════════════════════════════════════════════════════
+// ── Compute benchmarks from data ───────────────────────────────────────────
+function buildBenchmarks() {
+  const myName = displayName(ME);
+  const myCity = (ME.player_city || '').toLowerCase().trim();
+  const myRk   = RANKING.find(r => (r.player||r.nome||'') === myName) || {};
+  const myWR   = rkWR(myRk.win_rate);
+  const mySP   = +(myRk.points_difference || myRk.sp || 0);
+  const mySess = +(myRk.sessions || myRk.sessoes || 0);
+
+  // City peers: players from same city (cross ALL_PLAYERS with RANKING)
+  const cityNames = ALL_PLAYERS
+    .filter(p => (p.player_city||'').toLowerCase().trim() === myCity && displayName(p) !== myName)
+    .map(p => displayName(p));
+  const cityRk = RANKING.filter(r => cityNames.includes(r.player||r.nome||''));
+  const cityAvgWR = cityRk.length
+    ? Math.round(cityRk.reduce((s,r) => s + rkWR(r.win_rate), 0) / cityRk.length)
+    : 0;
+  const cityAvgSP = cityRk.length
+    ? Math.round(cityRk.reduce((s,r) => s + (+(r.points_difference||r.sp||0)), 0) / cityRk.length)
+    : 0;
+
+  // Region: all players (system is regional)
+  const allRk = RANKING.filter(r => (r.player||r.nome||'') !== myName);
+  const regionAvgWR = allRk.length
+    ? Math.round(allRk.reduce((s,r) => s + rkWR(r.win_rate), 0) / allRk.length)
+    : 0;
+  const regionAvgSP = allRk.length
+    ? Math.round(allRk.reduce((s,r) => s + (+(r.points_difference||r.sp||0)), 0) / allRk.length)
+    : 0;
+
+  // Personal best: best 5-match WR window
+  const myMatches = MATCHES.filter(m => {
+    const ta=(m.team_a||'').split(' / '), tb=(m.team_b||'').split(' / ');
+    return ta.includes(myName) || tb.includes(myName);
+  });
+  let bestWR = 0;
+  for (let i = 0; i <= myMatches.length - 5; i++) {
+    const slice = myMatches.slice(i, i+5);
+    const w = slice.filter(m => {
+      const ta=(m.team_a||'').split(' / '), isA=ta.includes(myName);
+      const sa=+(m.score_a||0), sb=+(m.score_b||0);
+      return isA ? sa>sb : sb>sa;
+    }).length;
+    bestWR = Math.max(bestWR, Math.round(w/5*100));
+  }
+
+  return { myWR, mySP, mySess, cityAvgWR, cityAvgSP, cityCount: cityRk.length,
+           regionAvgWR, regionAvgSP, regionCount: allRk.length, bestWR, myCity };
+}
+
+function renderBenchmarks() {
+  const el = document.getElementById('perf-bench-content');
+  if (!el) return;
+  const b = buildBenchmarks();
+
+  function bar(myVal, benchVal, color, maxVal) {
+    const scale = maxVal || Math.max(myVal, benchVal, 1);
+    const myPct    = Math.min(100, Math.round(myVal / scale * 100));
+    const benchPct = Math.min(100, Math.round(benchVal / scale * 100));
+    const delta    = myVal - benchVal;
+    const dClass   = delta > 2 ? 'pos' : delta < -2 ? 'neg' : 'neu';
+    const dTxt     = delta > 0 ? `+${delta.toFixed(0)}` : delta.toFixed(0);
+    return { myPct, benchPct, delta, dClass, dTxt };
+  }
+
+  function benchRow(label, myVal, benchVal, myLabel, benchLabel, unit='', maxVal=null) {
+    const { myPct, benchPct, delta, dClass, dTxt } = bar(myVal, benchVal, '', maxVal);
+    return `<div class="bench-row">
+      <div class="bench-label">
+        <div class="bench-name">${label}</div>
+        <div class="bench-delta ${dClass}">${dTxt}${unit}</div>
+      </div>
+      <div class="bench-track">
+        <div class="bench-fill" style="width:${myPct}%;background:${dClass==='pos'?'#27AE60':dClass==='neg'?'#c0392b':'#7090b0'}"></div>
+        <div class="bench-marker" style="left:${benchPct}%"></div>
+      </div>
+      <div class="bench-sub">
+        <span style="color:#0d1e3a;font-weight:600">${myLabel}: ${myVal}${unit}</span>
+        <span style="color:var(--muted)">Benchmark: ${benchVal}${unit}</span>
+      </div>
+    </div>`;
+  }
+
+  const wrMax = Math.max(b.myWR, b.cityAvgWR, b.regionAvgWR, b.bestWR, 100);
+
+  el.innerHTML = `
+    <div class="perf-section-title">👤 vs Melhor Pessoal</div>
+    ${benchRow('Win Rate (melhor sequência)', b.myWR, b.bestWR, 'Atual', 'Melhor', '%', wrMax)}
+
+    <div class="perf-section-title" style="margin-top:4px">🏙️ vs ${b.myCity ? b.myCity.charAt(0).toUpperCase()+b.myCity.slice(1) : 'Cidade'} (${b.cityCount} jogadores)</div>
+    ${benchRow('Win Rate', b.myWR, b.cityAvgWR, 'Tu', 'Média cidade', '%', wrMax)}
+    ${benchRow('Saldo de Pontos', Math.max(0,b.mySP+100), Math.max(0,b.cityAvgSP+100), 'Tu', 'Média cidade', '', 200)}
+
+    <div class="perf-section-title" style="margin-top:4px">🌍 vs Região (${b.regionCount} jogadores)</div>
+    ${benchRow('Win Rate', b.myWR, b.regionAvgWR, 'Tu', 'Média região', '%', wrMax)}
+    ${benchRow('Saldo de Pontos', Math.max(0,b.mySP+100), Math.max(0,b.regionAvgSP+100), 'Tu', 'Média região', '', 200)}
+  `;
+}
+
+function renderSeasonKPIs() {
+  const myName = displayName(ME);
+  const myRk   = RANKING.find(r => (r.player||r.nome||'') === myName) || {};
+  const wins   = +(myRk.wins   || myRk.vitorias  || 0);
+  const matches= +(myRk.matches|| myRk.partidas   || 0);
+  const wr     = myRk.win_rate || '—';
+  const sp     = +(myRk.points_difference || myRk.sp || 0);
+  document.getElementById('ps-wins').textContent    = wins;
+  document.getElementById('ps-matches').textContent  = matches;
+  document.getElementById('ps-wr').textContent       = wr;
+  const spEl = document.getElementById('ps-sp');
+  spEl.textContent = (sp>=0?'+':'')+sp;
+  spEl.style.color = sp>=0 ? 'var(--green)' : 'var(--red)';
+}
+
+async function generateSeasonAnalysis() {
+  const el = document.getElementById('perf-season-ai');
+  if (!el) return;
+  const b = buildBenchmarks();
+
+  const sysPrompt = `És um analista de performance do PadelEye. Responde em JSON:
+{"resumo":"string de 2-3 frases sobre a temporada","tendencia":"crescimento|estabilidade|queda","destaque":"string curto (máx 10 palavras)"}
+Sem markdown. JSON puro.`;
+
+  const myName = displayName(ME);
+  const myRk   = RANKING.find(r=>(r.player||r.nome||'')===myName)||{};
+  const sorted = [...RANKING].sort((a,b)=>(+(b.wins||0))-(+(a.wins||0)));
+  const rank   = sorted.findIndex(r=>(r.player||r.nome||'')===myName)+1;
+
+  const msg = `Jogador: ${myName} | Rank: ${rank}º/${RANKING.length}
+Temporada: ${myRk.wins||0}V ${myRk.losses||0}D em ${myRk.matches||0} partidas
+WR: ${myRk.win_rate||'—'} | SP: ${myRk.points_difference||0}
+vs Cidade (avg WR ${b.cityAvgWR}%): ${b.myWR-b.cityAvgWR>0?'acima':'abaixo'} em ${Math.abs(b.myWR-b.cityAvgWR)}%
+vs Região (avg WR ${b.regionAvgWR}%): ${b.myWR-b.regionAvgWR>0?'acima':'abaixo'} em ${Math.abs(b.myWR-b.regionAvgWR)}%`;
+
+  try {
+    const raw  = await callClaude(sysPrompt, [{role:'user',content:msg}], 200);
+    const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const tendCol = json.tendencia==='crescimento'?'#1a7a44':json.tendencia==='queda'?'#c0392b':'#7090b0';
+    const tendIcon= json.tendencia==='crescimento'?'↑':json.tendencia==='queda'?'↓':'→';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-size:18px">${tendIcon}</div>
+        <div style="font-size:11px;font-weight:700;color:${tendCol};text-transform:capitalize">${json.tendencia}</div>
+        <div style="font-size:11px;color:var(--muted);flex:1">· ${json.destaque||''}</div>
+      </div>
+      <div class="season-ai-txt">${json.resumo||''}</div>`;
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--muted)">Análise não disponível.</div>';
+  }
+}
+
+async function generatePerformanceAnalysis() {
+  const loading = document.getElementById('perf-loading');
+  const content = document.getElementById('perf-content');
+  if (!content) return;
+
+  // Run all sections in parallel
+  renderSeasonKPIs();
+  renderBenchmarks();
+  generateSeasonAnalysis(); // async, non-blocking
+
+  // Last 10 matches AI card
+  const sysPrompt = `És um analista de performance de padel. Responde APENAS em JSON:
+{
+  "momento": "frase curta (máx 8 palavras)",
+  "positivos": ["string1","string2"],
+  "melhorias": ["string1","string2"],
+  "treino": "1 recomendação específica",
+  "nota": number 1-10
+}`;
+
+  const userMsg = `Analisa as últimas 10 partidas:
+${buildPlayerContext()}
+Sê específico com os números. Foca no momento recente.`;
+
+  if (loading) loading.style.display = 'block';
+  if (content) content.style.display = 'none';
+
+  try {
+    const raw  = await callClaude(sysPrompt, [{role:'user',content:userMsg}], 400);
+    const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'block';
+    const nota = json.nota || 7;
+    const notaCol = nota>=7?'#27AE60':nota>=5?'#C9933A':'#c0392b';
+    content.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;color:#fff;max-width:72%">${json.momento||'Momento sólido'}</div>
+        <div style="font-family:'Bebas Neue';font-size:28px;color:${notaCol};line-height:1">${nota}<span style="font-size:13px;color:rgba(255,255,255,.4)">/10</span></div>
+      </div>
+      <div class="perf-section">
+        <div class="perf-label" style="color:#27AE60">✅ Pontos Positivos</div>
+        ${(json.positivos||[]).map(p=>`<div class="perf-item"><div class="perf-icon">✓</div><div class="perf-text">${p}</div></div>`).join('')}
+      </div>
+      <div class="perf-section">
+        <div class="perf-label" style="color:#e0a840">⚡ Pontos de Melhoria</div>
+        ${(json.melhorias||[]).map(m=>`<div class="perf-item"><div class="perf-icon">→</div><div class="perf-text">${m}</div></div>`).join('')}
+      </div>
+      <div>
+        <div class="perf-label" style="color:#93C5FD">🎯 Recomendação de Treino</div>
+        <div class="perf-treino">${json.treino||'—'}</div>
+      </div>`;
+  } catch(e) {
+    if (loading) loading.textContent = '⚠️ Análise indisponível.';
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// ACADEMIA
+// ══════════════════════════════════════════════════════════════════
+const ACAD_CONTENT = [
+  {id:'v1',cat:'tecnica',title:'A Bandeja Perfeita',desc:'Como executar a bandeja com altura e direção correctas para ganhar pontos.',type:'video',level:'Intermédio',bg:'#1a3052',emoji:'🎾',body:'<p>A <strong>bandeja</strong> é um dos golpes mais importantes do padel. Pratica estes 3 pontos:</p><ol style="margin:12px 0 12px 20px;line-height:2"><li>Cotovelo acima da cabeça</li><li>Impacto no ponto máximo</li><li>Terminar com a raquete à frente</li></ol><p>Treina 50 bandejas por sessão de aquecimento.</p>'},
+  {id:'t1',cat:'tatica',title:'Posicionamento no Americano',desc:'Regras de ouro para cobrir o court com qualquer parceiro.',type:'text',level:'Iniciante',bg:'#1a5fa8',emoji:'🗺️',body:'<p>No <strong>Americano</strong> mudas de parceiro a cada partida. Regras base:</p><ul style="margin:12px 0 12px 20px;line-height:2"><li>Jogador da esquerda cobre rede esquerda</li><li>Comunica sempre "minha/tua"</li><li>Não cruzes o court sem avisar</li><li>Retorna ao centro após cada ponto</li></ul>'},
+  {id:'a1',cat:'tecnica',title:'O Smash — Animação',desc:'Sequência de movimentos do smash básico passo a passo.',type:'anim',level:'Iniciante',bg:'#276221',emoji:'🏸',body:'<p>O <strong>smash</strong> deve ser executado assim:</p><div style="background:#f8fafd;border-radius:12px;padding:14px;margin:12px 0;font-family:DM Mono,monospace;font-size:12px;line-height:1.8">① Posição base → recuar<br>② Preparação → raquete atrás da cabeça<br>③ Toss visual → identificar ponto de impacto<br>④ Explosão → rotação dos ombros<br>⑤ Follow-through → raquete cruza o corpo</div>'},
+  {id:'t2',cat:'regras',title:'Regras do Torneio Americano',desc:'Formato, pontuação, tie-break e critérios de desempate.',type:'text',level:'Iniciante',bg:'#7c3aed',emoji:'📋',body:'<p><strong>Formato Americano EcoTenis:</strong></p><ul style="margin:12px 0 12px 20px;line-height:2"><li>Score máx: 6 games (Fase 1), 9 games (Final)</li><li>Tie-break a partir de 5×5 (ou 8×8 na Final)</li><li>Classificação: Vitórias → SP → WR</li><li>SP = PF − PC (games a favor menos contra)</li></ul>'},
+  {id:'v2',cat:'fisico',title:'Aquecimento Pré-Sessão',desc:'10 min de mobilidade e activação para evitar lesões.',type:'video',level:'Todos',bg:'#b45309',emoji:'💪',body:'<p><strong>Rotina de 10 minutos:</strong></p><ul style="margin:12px 0 12px 20px;line-height:2"><li>2 min — corrida leve no court</li><li>2 min — mobilidade ombros e pulsos</li><li>2 min — lunges e rotação tronco</li><li>2 min — saltos laterais</li><li>2 min — shadowplay com raquete</li></ul>'},
+  {id:'t3',cat:'tatica',title:'Estratégia de Duplas',desc:'Como comunicar e rodar com o parceiro durante os pontos.',type:'text',level:'Avançado',bg:'#0d6e6e',emoji:'🤝',body:'<p><strong>Comunicação eficaz:</strong></p><ul style="margin:12px 0 12px 20px;line-height:2"><li>"Minha!" — bola claramente do teu lado</li><li>"Tua!" — passa para o parceiro</li><li>"Vou!" — indicas que vais subir</li></ul><p style="margin-top:8px">Regra de ouro: o jogador com melhor posição joga a bola. Nunca passives sem comunicar.</p>'},
+];
+
+const PROFESSORS = [
+  {name:'Carlos Rodrigues',spec:'Técnica · Iniciantes',tags:['6ª Cat.','EcoTenis'],av:'CR',bg:'linear-gradient(135deg,#1a6e30,#3aaa5c 40%,#f5d020 70%)',tc:'#fff',stars:'⭐⭐⭐⭐⭐',price:'R$ 80/h',city:'Foz do Iguaçu',bio:'Coach certificado com 8 anos de experiência. Especializado em iniciantes e jogadores de 8ª/7ª categoria.'},
+  {name:'Ana Martinez',spec:'Tática · Competição',tags:['5ª Cat.','Cascavel'],av:'AM',bg:'linear-gradient(135deg,#c8102e,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8)',tc:'#002D6E',stars:'⭐⭐⭐⭐',price:'R$ 100/h',city:'Cascavel',bio:'Ex-jogadora profissional. Foco em tática e preparação para torneios de 5ª/6ª categoria.'},
+  {name:'Rafael Souza',spec:'Torneios · Adultos',tags:['7ª Cat.','EcoTenis'],av:'RS',bg:'linear-gradient(135deg,#1a6e30,#3aaa5c 40%,#f5d020 70%)',tc:'#fff',stars:'⭐⭐⭐⭐⭐',price:'R$ 90/h',city:'Foz do Iguaçu',bio:'Especialista em preparação para torneios americanos. Treina jogadores de 6ª e 7ª categoria.'},
+];
+
+let _acadCat = 'all';
+
+
+function renderAcademia() {
+  // Populate content cards
+  const cardContainer = document.getElementById('acad-cards');
+  if (cardContainer) {
+    cardContainer.innerHTML = ACAD_CONTENT.map(item => `
+      <div class="content-card" onclick="openContent('${item.id}')" data-cat="${item.cat}">
+        <div class="cc-thumb" style="background:${item.bg}">
+          <span style="font-size:36px">${item.emoji}</span>
+          ${item.type==='video'?'<div class="cc-play">▶</div>':item.type==='anim'?'<div class="cc-play" style="background:rgba(0,0,0,.4);font-size:12px">⚡</div>':''}
+        </div>
+        <div class="cc-body">
+          <div class="cc-cat" style="color:${item.color}">${item.cat.charAt(0).toUpperCase()+item.cat.slice(1)}</div>
+          <div class="cc-title">${item.title}</div>
+          <div class="cc-desc">${item.desc}</div>
+          <div class="cc-footer">
+            <span class="cc-type ${item.type==='video'?'type-video':item.type==='anim'?'type-anim':'type-text'}">${item.type==='video'?'🎥 Vídeo':item.type==='anim'?'✨ Animação':'📖 Artigo'}</span>
+            <span class="cc-level">${item.level}</span>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  // Populate professors — filter by player city if available
+  const profList = document.getElementById('prof-list');
+  const myCity   = (ME?.player_city || '').toLowerCase();
+  const cityLbl  = document.getElementById('prof-city-label');
+  const profs    = myCity ? PROFESSORS.filter(p=>p.city.toLowerCase()===myCity) : PROFESSORS;
+  if (cityLbl) cityLbl.textContent = myCity ? \`Professores em \${ME.player_city}\` : 'Professores disponíveis';
+  if (profList) {
+    profList.innerHTML = (profs.length ? profs : PROFESSORS).map(p=>`
+      <div class="prof-card" onclick="openBooking('${p.name}','${p.spec}','${p.av}',\`${p.bg}\`,'${p.tc}','${p.price}')">
+        <div class="prof-av" style="background:${p.bg};color:${p.tc};text-shadow:0 1px 3px rgba(0,0,0,.35)">${p.av}</div>
+        <div class="prof-info">
+          <div class="prof-name">${p.name}</div>
+          <div class="prof-spec">${p.spec}</div>
+          <div class="prof-tags">${p.tags.map(t=>\`<span class="prof-tag">\${t}</span>\`).join('')}</div>
+        </div>
+        <div class="prof-rate">
+          <div class="prof-stars">${p.stars}</div>
+          <div class="prof-price">${p.price}</div>
+          <button class="btn-book" style="padding:6px 12px;font-size:10px;margin-top:4px">Agendar</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+function filterAcademia(q) {
+  const term = q.toLowerCase();
+  document.querySelectorAll('.content-card').forEach(card => {
+    const title = card.querySelector('.cc-title')?.textContent.toLowerCase() || '';
+    const desc  = card.querySelector('.cc-desc')?.textContent.toLowerCase() || '';
+    const cat   = card.dataset.cat || '';
+    const catOk = _acadCat === 'all' || cat === _acadCat;
+    const textOk = !term || title.includes(term) || desc.includes(term);
+    card.style.display = catOk && textOk ? '' : 'none';
+  });
+}
+
+function acadCat(cat, el) {
+  _acadCat = cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  filterAcademia(document.getElementById('acad-search')?.value || '');
+  // Filter professors (future: by city)
+}
+
+function openContent(id) {
+  const item = ACAD_CONTENT.find(c=>c.id===id);
+  if (!item) return;
+  const reader = document.getElementById('reader-overlay');
+  const title  = document.getElementById('reader-title');
+  const body   = document.getElementById('reader-body');
+  title.textContent = item.title;
+  body.innerHTML = `
+    <div class="reader-thumb" style="background:${item.bg}">
+      <span style="font-size:72px">${item.emoji}</span>
+      ${item.type==='video'?'<div class="reader-play">▶</div>':''}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span class="cc-type ${item.type==='video'?'type-video':item.type==='anim'?'type-anim':'type-text'}" style="font-size:11px">${item.type==='video'?'🎥 Vídeo':item.type==='anim'?'✨ Animação':'📖 Artigo'}</span>
+      <span style="font-family:DM Mono,monospace;font-size:10px;color:#9ab0c8">${item.level}</span>
+    </div>
+    <div style="font-size:20px;font-weight:700;color:#0a1628;margin-bottom:8px">${item.title}</div>
+    <div style="font-size:13px;color:#5a7090;margin-bottom:16px">${item.desc}</div>
+    <div style="font-size:13px;line-height:1.7;color:#2a3a50">${item.body}</div>
+    ${item.type==='video'?`<button onclick="alert('Em breve: player de vídeo integrado 🎥')" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;margin-top:20px;font-family:DM Sans,sans-serif;">▶ Assistir Vídeo</button>`:''}
+    <button onclick="chatAbout('${item.title}')" style="width:100%;padding:13px;background:#f0f5fb;border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;color:#5a7090;font-family:DM Sans,sans-serif;">💬 Perguntar à IA sobre este tema</button>`;
+  reader.classList.add('on');
+}
+
+function closeReader() {
+  document.getElementById('reader-overlay').classList.remove('on');
+}
+
+function chatAbout(topic) {
+  closeReader();
+  switchTab('chat');
+  setTimeout(() => {
+    const input = document.getElementById('chat-input');
+    if (input) { input.value = `Explica-me mais sobre: ${topic}`; }
+    if (!_chatReady) initChat();
+  }, 200);
+}
+
+function openBooking(name, spec, av, bg, tc, price) {
+  const prof = PROFESSORS.find(p=>p.name===name) || {name,spec,av,bg,tc,price,bio:'',city:''};
+  const today = new Date();
+  const dates = Array.from({length:7},(_,i)=>{
+    const d = new Date(today); d.setDate(d.getDate()+i+1);
+    return {day:d.getDate(),wd:['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()]};
+  });
+  document.getElementById('bk-content').innerHTML = `
+    <div class="bk-title">Agendar Aula</div>
+    <div class="bk-sub">Preenche os dados abaixo para reservar</div>
+    <div class="bk-prof-row">
+      <div style="width:44px;height:44px;border-radius:50%;background:${bg};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:17px;color:${tc};text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 2px 8px rgba(0,0,0,.12);flex-shrink:0">${av}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#0a1628">${name}</div><div style="font-size:11px;color:#9ab0c8">${spec} · ${price}</div>${prof.city?`<div style="font-size:10px;color:#b0c4d8;font-family:DM Mono,monospace">📍 ${prof.city}</div>`:''}</div>
+    </div>
+    ${prof.bio?`<div style="font-size:12px;color:#5a7090;background:#f8fafd;border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.6">${prof.bio}</div>`:''}
+    <div class="bk-field"><label class="bk-label">Escolha a data</label>
+      <div class="date-row">${dates.map((d,i)=>`<div class="date-chip${i===1?' on':''}" onclick="document.querySelectorAll('.date-chip').forEach(x=>x.classList.remove('on'));this.classList.add('on')"><div class="d-day">${d.day}</div><div class="d-wd">${d.wd}</div></div>`).join('')}</div>
+    </div>
+    <div class="bk-field"><label class="bk-label">Horário disponível</label>
+      <div class="time-slots">
+        ${['08:00','09:00','10:00','11:00','14:00','15:00','16:00','17:00','18:00'].map((t,i)=>
+          `<div class="slot${i===0?' busy':i===4?' on':''}" onclick="if(!this.classList.contains('busy')){document.querySelectorAll('.slot').forEach(x=>x.classList.remove('on'));this.classList.add('on')}">${t}</div>`
+        ).join('')}
+      </div>
+    </div>
+    <div class="bk-field"><label class="bk-label">O teu nome</label>
+      <input class="bk-input" id="bk-player-name" value="${ME ? displayName(ME) : ''}" placeholder="Nome do aluno"></div>
+    <div class="bk-field"><label class="bk-label">Observações (opcional)</label>
+      <input class="bk-input" placeholder="Ex: Iniciante, foco na técnica de forehand..."></div>
+    <button class="bk-confirm" onclick="confirmBooking('${name}')">Confirmar Reserva →</button>`;
+  document.getElementById('booking-overlay').classList.add('on');
+}
+
+function closeBooking(e) {
+  if (!e || e.target.id==='booking-overlay')
+    document.getElementById('booking-overlay').classList.remove('on');
+}
+
+function confirmBooking(profName) {
+  const name = document.getElementById('bk-player-name')?.value || 'Jogador';
+  const slot = document.querySelector('.slot.on')?.textContent || '—';
+  const dateEl = document.querySelector('.date-chip.on');
+  const date = dateEl ? `${dateEl.querySelector('.d-day').textContent} ${dateEl.querySelector('.d-wd').textContent}` : '—';
+  document.getElementById('bk-content').innerHTML = `
+    <div style="text-align:center;padding:20px 10px">
+      <div style="font-size:56px;margin-bottom:12px">🎉</div>
+      <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Aula Reservada!</div>
+      <div style="font-size:13px;color:#5a7090;margin-bottom:20px">O professor entrará em contacto para confirmar.</div>
+      <div style="background:#f8fafd;border:1px solid #dde6f0;border-radius:14px;padding:16px;text-align:left;margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f5fb;font-size:12px"><span style="color:#9ab0c8;font-family:DM Mono,monospace;font-size:10px">Professor</span><span style="font-weight:600;color:#0a1628">${profName}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f5fb;font-size:12px"><span style="color:#9ab0c8;font-family:DM Mono,monospace;font-size:10px">Data</span><span style="font-weight:600;color:#0a1628">${date}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f0f5fb;font-size:12px"><span style="color:#9ab0c8;font-family:DM Mono,monospace;font-size:10px">Horário</span><span style="font-weight:600;color:#0a1628">${slot}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px"><span style="color:#9ab0c8;font-family:DM Mono,monospace;font-size:10px">Aluno</span><span style="font-weight:600;color:#0a1628">${name}</span></div>
+      </div>
+      <button onclick="closeBooking()" style="width:100%;padding:13px;background:#f0f5fb;border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;color:#5a7090;font-family:'DM Sans',sans-serif">Fechar</button>
+    </div>`;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// AGENDAR QUADRA
+// ══════════════════════════════════════════════════════════════════
+const VENUES = {
+  'ecotenis-indoor':  {name:'EcoTenis Indoor',  courts:4, price:'R$ 60/h', type:'Indoor'},
+  'ecotenis-outdoor': {name:'EcoTenis Outdoor', courts:2, price:'R$ 45/h', type:'Outdoor'},
+  'h7-sports':        {name:'H7 Sports',        courts:3, price:'R$ 55/h', type:'Indoor'},
+};
+const BUSY_SLOTS = ['09:00','13:00','18:00','19:00'];
+let _court = { venue:'ecotenis-indoor', date:null, court:null, hour:null, players:2 };
+
+function initCourtBooking() {
+  const datesEl = document.getElementById('court-dates');
+  const today = new Date();
+  let html = '';
+  for (let i = 1; i <= 10; i++) {
+    const d = new Date(today); d.setDate(d.getDate()+i);
+    const on = i===1;
+    html += `<div style="flex-shrink:0;padding:7px 10px;background:${on?'#0a1628':'var(--card)'};border:1.5px solid ${on?'#0a1628':'var(--border)'};border-radius:10px;text-align:center;cursor:pointer;transition:all .15s" onclick="selectCourtDate(this,'${d.toISOString().slice(0,10)}')">
+      <div style="font-family:'Bebas Neue';font-size:18px;color:${on?'#C9933A':'var(--dark)'};line-height:1">${d.getDate()}</div>
+      <div style="font-family:'DM Mono';font-size:7px;color:${on?'rgba(255,255,255,.4)':'var(--muted)'}">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()]}</div>
+    </div>`;
+    if (on) _court.date = d.toISOString().slice(0,10);
+  }
+  if (datesEl) datesEl.innerHTML = html;
+  _court.court = null; _court.hour = null;
+  renderCourtGrid(); renderHourGrid(); updateCourtSummary();
+}
+function selectVenue(el, vid) {
+  document.querySelectorAll('.venue-card').forEach(v=>v.classList.remove('sel'));
+  el.classList.add('sel');
+  _court.venue = vid; _court.court = null; _court.hour = null;
+  Object.keys(VENUES).forEach(id => {
+    const ic = document.getElementById('vi-'+id);
+    if (ic) ic.textContent = id===vid ? '✅' : '○';
+  });
+  renderCourtGrid(); renderHourGrid(); updateCourtSummary();
+}
+function selectCourtDate(el, date) {
+  document.querySelectorAll('#court-dates > div').forEach(d => {
+    d.style.background='var(--card)'; d.style.borderColor='var(--border)';
+    d.firstElementChild.style.color='var(--dark)';
+    d.lastElementChild.style.color='var(--muted)';
+  });
+  el.style.background='#0a1628'; el.style.borderColor='#0a1628';
+  el.firstElementChild.style.color='#C9933A';
+  el.lastElementChild.style.color='rgba(255,255,255,.4)';
+  _court.date = date; _court.hour = null;
+  renderHourGrid(); updateCourtSummary();
+}
+function renderCourtGrid() {
+  const v = VENUES[_court.venue] || VENUES['ecotenis-indoor'];
+  const el = document.getElementById('court-grid');
+  if (!el) return;
+  let html = '';
+  for (let i = 1; i <= v.courts; i++) {
+    const busy = i===2;
+    const sel  = _court.court===i;
+    html += `<div class="court-btn${sel?' sel':''}${busy?' busy':''}" onclick="selectCourt(${i},this)"><div class="cn">${i}</div><div class="cs">${busy?'Ocupada':'Disponível'}</div></div>`;
+  }
+  el.innerHTML = html;
+}
+function selectCourt(n, el) {
+  document.querySelectorAll('.court-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); _court.court = n; updateCourtSummary();
+}
+function renderHourGrid() {
+  const el = document.getElementById('hour-grid');
+  if (!el) return;
+  const hours = ['08:00','09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+  el.innerHTML = hours.map(h => {
+    const busy = BUSY_SLOTS.includes(h);
+    const sel  = _court.hour===h;
+    return `<div class="hour-btn${sel?' sel':''}${busy?' busy':''}" onclick="selectHour('${h}',this)">${h}</div>`;
+  }).join('');
+}
+function selectHour(h, el) {
+  document.querySelectorAll('.hour-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); _court.hour = h; updateCourtSummary();
+}
+function setPlayers(n, el) {
+  document.querySelectorAll('.pt-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel'); _court.players = n; updateCourtSummary();
+}
+function updateCourtSummary() {
+  const sum = document.getElementById('court-booking-summary');
+  const btn = document.getElementById('court-confirm-btn');
+  if (!_court.date || !_court.court || !_court.hour) {
+    if (sum) sum.style.display='none';
+    if (btn) btn.style.display='none';
+    return;
+  }
+  const v = VENUES[_court.venue];
+  const d = new Date(_court.date);
+  const ds = d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'});
+  const endH = (_court.hour.split(':')[0]*1+1)+':00';
+  const rows = [['Local',v.name+' · Quadra '+_court.court],['Tipo',v.type],['Data',ds],['Horário',_court.hour+' – '+endH],['Jogadores',_court.players],['Valor',v.price]];
+  document.getElementById('court-summary-content').innerHTML = rows.map(([l,val],i)=>
+    `<div style="display:flex;justify-content:space-between;padding:5px 0;${i<rows.length-1?'border-bottom:1px solid #f4f7fc;':''}font-size:11px"><span style="color:#9ab0c8;font-family:'DM Mono';font-size:9px;text-transform:uppercase">${l}</span><span style="font-weight:600;color:#0d1e3a">${val}</span></div>`
+  ).join('');
+  if (sum) sum.style.display='block';
+  if (btn) btn.style.display='block';
+}
+function confirmCourtBooking() {
+  const v = VENUES[_court.venue];
+  const d = new Date(_court.date);
+  const ds = d.toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  const endH = (_court.hour.split(':')[0]*1+1)+':00';
+  document.getElementById('tp-court').innerHTML = `
+    <div style="text-align:center;padding:30px 20px">
+      <div style="font-size:60px;margin-bottom:16px">🎾</div>
+      <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1.5px;margin-bottom:4px">Quadra Reservada!</div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:24px">Receberás confirmação por e-mail.</div>
+      <div style="background:#fff;border:1px solid #dde6f0;border-radius:16px;padding:16px;text-align:left;margin-bottom:16px">
+        ${[['Local',v.name],['Quadra','Quadra '+_court.court+' · '+v.type],['Data',ds],['Horário',_court.hour+' – '+endH],['Jogadores',_court.players],['Valor',v.price],['Reservado',displayName(ME)||'—']].map(([l,val],i,arr)=>
+          `<div style="display:flex;justify-content:space-between;padding:8px 0;${i<arr.length-1?'border-bottom:1px solid #f4f7fc;':''}font-size:12px"><span style="color:#9ab0c8;font-family:'DM Mono';font-size:9px;text-transform:uppercase">${l}</span><span style="font-weight:600;color:#0d1e3a">${val}</span></div>`
+        ).join('')}
+      </div>
+      <button onclick="switchTab('court')" style="width:100%;padding:14px;background:#f0f5fb;border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;color:#5a7090;font-family:'DM Sans'">Nova Reserva</button>
+    </div>`;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// HABILIDADES MODULE
+// ══════════════════════════════════════════════════════════════════
+
+const SKILLS_DEF = [
+  // Físico & Coordenação
+  {id:'coordenacao',  name:'Coordenação',      cat:'fisico',  emoji:'🤸'},
+  {id:'agilidade',    name:'Agilidade',         cat:'fisico',  emoji:'⚡'},
+  {id:'posicionamento',name:'Posicionamento',   cat:'fisico',  emoji:'🎯'},
+  {id:'flexibilidade',name:'Flexibilidade',     cat:'fisico',  emoji:'🧘'},
+  {id:'postura',      name:'Postura',           cat:'fisico',  emoji:'🧍'},
+  // Mental & Tático
+  {id:'adaptabilidade',name:'Adaptabilidade',   cat:'mental',  emoji:'🔄'},
+  {id:'decisao',      name:'Cap. de Decisão',   cat:'mental',  emoji:'⚖️'},
+  {id:'leitura',      name:'Leitura de Jogo',   cat:'mental',  emoji:'👁'},
+  {id:'conhec_regras',name:'Conhec. Regras',    cat:'mental',  emoji:'📋'},
+  {id:'resp_regras',  name:'Respeito Regras',   cat:'mental',  emoji:'✅'},
+  // Consistência
+  {id:'regularidade', name:'Regularidade',      cat:'consist', emoji:'🔁'},
+  {id:'erro_nf',      name:'Erro Não Forçado',  cat:'consist', emoji:'❌'},
+  // Golpes
+  {id:'smash',        name:'Smash',             cat:'golpes',  emoji:'💥'},
+  {id:'bandeja',      name:'Bandeja',           cat:'golpes',  emoji:'🍱'},
+  {id:'vibora',       name:'Víbora',            cat:'golpes',  emoji:'🌀'},
+  {id:'batida_forte', name:'Batida Forte',      cat:'golpes',  emoji:'💪'},
+  {id:'batida_prec',  name:'Batida Precisa',    cat:'golpes',  emoji:'🎯'},
+  {id:'lob_prec',     name:'Lob Preciso',       cat:'golpes',  emoji:'🌙'},
+  {id:'lob_alto',     name:'Lob Alto',          cat:'golpes',  emoji:'🏹'},
+  {id:'lob_ras',      name:'Lob Rasante',       cat:'golpes',  emoji:'↗️'},
+  {id:'saque',        name:'Saque',             cat:'golpes',  emoji:'🎾'},
+  {id:'saque_ef',     name:'Saque c/ Efeito',   cat:'golpes',  emoji:'🌀'},
+  {id:'saque_prec',   name:'Saque Preciso',     cat:'golpes',  emoji:'📌'},
+  {id:'paredes',      name:'Uso das Paredes',   cat:'golpes',  emoji:'🧱'},
+];
+
+const CAT_META = {
+  fisico:  {label:'Físico & Coord.',  color:'#3a7bd5', bg:'#dbeafe'},
+  mental:  {label:'Mental & Tático',  color:'#7c3aed', bg:'#ede9fe'},
+  consist: {label:'Consistência',     color:'#1a7a44', bg:'#dcfce7'},
+  golpes:  {label:'Golpes Técnicos',  color:'#C9933A', bg:'#fef3c7'},
+};
+
+// Radar axes: 2 per category
+const RADAR_AXES = [
+  'coordenacao','agilidade',
+  'leitura','adaptabilidade',
+  'regularidade','erro_nf',
+  'smash','paredes',
+];
+
+let _mySkills = {};       // {skill_id: score 1-10}
+let _peerEvals = {};      // {skill_id: [scores...]}
+let _skillsReady = false;
+let _skCat = 'all';
+let _peerRatings = {};    // staging: {pid: {skill_id: score}}
+let _aiSkillsDone = false;
+
+// ── Init ──────────────────────────────────────────────────────────
+function initSkills() {
+  if (_skillsReady) { renderSkillsAll(); return; }
+  const pid = ME?.player_id || 'default';
+
+  // Load self-eval from localStorage
+  try {
+    const saved = localStorage.getItem('padeleye_skills_' + pid);
+    if (saved) _mySkills = JSON.parse(saved);
+  } catch(e) {}
+
+  // Load peer evals
+  try {
+    const savedPeer = localStorage.getItem('padeleye_peer_' + pid);
+    if (savedPeer) _peerEvals = JSON.parse(savedPeer);
+  } catch(e) {}
+
+  // Merge: avg of self + peer per skill
+  SKILLS_DEF.forEach(s => {
+    const self   = _mySkills[s.id] || 0;
+    const peers  = _peerEvals[s.id] || [];
+    const allVals = self > 0 ? [self, ...peers] : peers;
+    _mySkills[s.id] = allVals.length
+      ? Math.round(allVals.reduce((a,b)=>a+b,0)/allVals.length * 10)/10
+      : 0;
+  });
+
+  _skillsReady = true;
+  renderSkillsAll();
+}
+
+function renderSkillsAll() {
+  renderOverall();
+  renderRadarSVG();
+  renderTopBot();
+  renderSkillsList(_skCat);
+  renderEvalPlayers();
+  renderEvolution();
+  renderEvalCount();
+  if (!_aiSkillsDone) { _aiSkillsDone = true; generateSkillsAI(); }
+}
+
+// ── Sub-tab switch ────────────────────────────────────────────────
+function skSubtab(id, el) {
+  document.querySelectorAll('.sk-stab').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.sk-panel').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('sk-' + id)?.classList.add('on');
+}
+
+function skFilterCat(cat, el) {
+  _skCat = cat;
+  document.querySelectorAll('.sk-cpill').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  renderSkillsList(cat);
+}
+
+// ── Star renderer ─────────────────────────────────────────────────
+function skStars(score, size = 12) {
+  const s = Math.max(0, Math.min(10, score));
+  const full = Math.floor(s);
+  const half = (s - full) >= 0.4 ? 1 : 0;
+  const empty = 10 - full - half;
+  const px = size + 'px';
+  const mkStar = (ch, col) =>
+    `<span style="color:${col};font-size:${px};line-height:1;">${ch}</span>`;
+  return (
+    '★'.repeat(full).split('').map(c => mkStar(c,'#f5a623')).join('') +
+    (half ? mkStar('★','#f5a623') + '' : '') +
+    '☆'.repeat(empty).split('').map(c => mkStar(c,'#dde6f0')).join('')
+  );
+}
+
+// ── Overall score ─────────────────────────────────────────────────
+function renderOverall() {
+  const scores = SKILLS_DEF.map(s => _mySkills[s.id] || 0).filter(v=>v>0);
+  const avg = scores.length
+    ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length*10)/10
+    : 0;
+  const el = document.getElementById('sk-overall');
+  const sub = document.getElementById('sk-overall-sub');
+  if (el) el.textContent = avg > 0 ? avg.toFixed(1) : '—';
+  if (sub) sub.textContent = avg > 0
+    ? (avg>=8?'Excelente':avg>=6?'Bom':avg>=4?'Médio':'A desenvolver')
+    : 'Auto-avaliação pendente';
+}
+
+// ── Radar SVG ─────────────────────────────────────────────────────
+function renderRadarSVG() {
+  const wrap = document.getElementById('sk-radar-wrap');
+  if (!wrap) return;
+  const W=110, H=110, cx=55, cy=55, r=42, n=RADAR_AXES.length;
+  const angle = i => (2*Math.PI*i/n) - Math.PI/2;
+  const pt = (i,rad) => [
+    cx + rad * Math.cos(angle(i)),
+    cy + rad * Math.sin(angle(i))
+  ];
+
+  // Grid rings
+  let rings = '';
+  [0.25,0.5,0.75,1].forEach(frac => {
+    const pts = RADAR_AXES.map((_,i) => pt(i, r*frac).join(',')).join(' ');
+    rings += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="${frac===1?1.5:.7}"/>`;
+  });
+
+  // Axis lines
+  let axes = RADAR_AXES.map((_,i) => {
+    const [x,y] = pt(i,r);
+    return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(255,255,255,.15)" stroke-width=".7"/>`;
+  }).join('');
+
+  // Data polygon
+  const dataPoints = RADAR_AXES.map((id,i) => {
+    const val = (_mySkills[id]||0) / 10;
+    return pt(i, r * Math.max(0.05, val)).join(',');
+  }).join(' ');
+
+  // Dots on data points
+  const dots = RADAR_AXES.map((id,i) => {
+    const val = (_mySkills[id]||0) / 10;
+    const [x,y] = pt(i, r * Math.max(0.05, val));
+    return `<circle cx="${x}" cy="${y}" r="2.5" fill="#C9933A"/>`;
+  }).join('');
+
+  // Labels (short)
+  const lbls = {
+    coordenacao:'Coord.', agilidade:'Ágil.', leitura:'Leitura', adaptabilidade:'Adapt.',
+    regularidade:'Reg.', erro_nf:'Erros', smash:'Smash', paredes:'Paredes'
+  };
+  const labels = RADAR_AXES.map((id,i) => {
+    const [x,y] = pt(i, r+10);
+    const lbl = lbls[id] || id;
+    return `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-family="DM Mono,monospace" fill="rgba(255,255,255,.5)">${lbl}</text>`;
+  }).join('');
+
+  const hasData = RADAR_AXES.some(id => (_mySkills[id]||0) > 0);
+  const fill = hasData
+    ? `<polygon points="${dataPoints}" fill="rgba(201,147,58,.35)" stroke="#C9933A" stroke-width="1.5" stroke-linejoin="round"/>`
+    : `<polygon points="${RADAR_AXES.map((_,i)=>pt(i,r*.05).join(',')).join(' ')}" fill="rgba(201,147,58,.1)" stroke="rgba(201,147,58,.3)" stroke-width="1"/>`;
+
+  wrap.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${rings}${axes}${fill}${dots}${labels}</svg>`;
+}
+
+// ── Top / Bottom 3 ────────────────────────────────────────────────
+function renderTopBot() {
+  const scored = SKILLS_DEF
+    .map(s => ({...s, val: _mySkills[s.id]||0}))
+    .filter(s => s.val > 0)
+    .sort((a,b) => b.val - a.val);
+
+  const topEl = document.getElementById('sk-top3');
+  const botEl = document.getElementById('sk-bot3');
+  if (!topEl || !botEl) return;
+
+  if (!scored.length) {
+    topEl.innerHTML = '<div style="font-size:10px;color:#9ab0c8">Auto-avaliação pendente</div>';
+    botEl.innerHTML = '<div style="font-size:10px;color:#9ab0c8">Auto-avaliação pendente</div>';
+    return;
+  }
+
+  const top3 = scored.slice(0,3);
+  const bot3 = scored.slice(-3).reverse();
+
+  topEl.innerHTML = top3.map(s =>
+    `<div class="insight-item" style="color:#1a7a44">${s.emoji} ${s.name}</div>`
+  ).join('');
+  botEl.innerHTML = bot3.map(s =>
+    `<div class="insight-item" style="color:#c0392b;cursor:pointer" onclick="bridgeToAcademia('${s.name}')">${s.emoji} ${s.name}</div>`
+  ).join('');
+}
+
+// ── Skills list (Notas tab) ───────────────────────────────────────
+function renderSkillsList(cat) {
+  const el = document.getElementById('sk-skills-list');
+  if (!el) return;
+  const cats = cat === 'all'
+    ? ['fisico','mental','consist','golpes']
+    : [cat];
+
+  el.innerHTML = cats.map(cid => {
+    const meta = CAT_META[cid];
+    const skills = SKILLS_DEF.filter(s => s.cat === cid);
+    const vals = skills.map(s => _mySkills[s.id]||0).filter(v=>v>0);
+    const avg = vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
+    const rows = skills.map(s => {
+      const v = _mySkills[s.id] || 0;
+      const scoreCol = v>=7?'#1a7a44':v>=5?'#C9933A':v>0?'#c0392b':'#b0c4d8';
+      const pct = Math.round(v * 10);
+      return `<div class="skill-row">
+        <div class="skill-row-top">
+          <span class="skill-emoji">${s.emoji}</span>
+          <span class="skill-name">${s.name}</span>
+          <span class="skill-score" style="color:${scoreCol}">${v>0?v.toFixed(1):'—'}<span style="font-size:8px;color:#b0c4d8">/10</span></span>
+        </div>
+        <div class="skill-stars-row">
+          <span class="skill-stars">${skStars(v, 12)}</span>
+          <div style="width:100%;height:4px;background:#f0f5fb;border-radius:99px;overflow:hidden;flex:1">
+            <div style="width:${pct}%;height:100%;background:${scoreCol};border-radius:99px;transition:width .4s"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div>
+      <div class="sk-cat-header">
+        <div class="sk-cat-dot" style="background:${meta.color}"></div>
+        <div class="sk-cat-label">${meta.label}</div>
+        <div class="sk-cat-count">(${skills.length})</div>
+        <div class="sk-cat-avg" style="color:${meta.color}">${avg}/10</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px 12px;margin-bottom:10px;">
+        ${rows}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Eval count ────────────────────────────────────────────────────
+function renderEvalCount() {
+  const el = document.getElementById('sk-eval-count');
+  if (!el) return;
+  const pid = ME?.player_id || 'default';
+  try {
+    const log = JSON.parse(localStorage.getItem('padeleye_evallog_' + pid) || '[]');
+    el.textContent = log.length > 0
+      ? `${log.length} avaliação(ões) recebida(s) de companheiros de jogo.`
+      : 'Ainda não recebeste avaliações de outros jogadores.';
+  } catch(e) { el.textContent = '—'; }
+}
+
+// ── AI tip for weakest skills ─────────────────────────────────────
+async function generateSkillsAI() {
+  const tipEl = document.getElementById('sk-ai-tip-txt');
+  if (!tipEl) return;
+  const sorted = SKILLS_DEF
+    .map(s => ({...s, val: _mySkills[s.id]||0}))
+    .filter(s => s.val > 0)
+    .sort((a,b) => a.val - b.val);
+  if (!sorted.length) {
+    tipEl.textContent = 'Faz a tua auto-avaliação para receberes dicas personalizadas.';
+    return;
+  }
+  const weak = sorted.slice(0,3).map(s=>`${s.name} (${s.val.toFixed(1)}/10)`).join(', ');
+  const strong = sorted.slice(-2).map(s=>`${s.name} (${s.val.toFixed(1)}/10)`).join(', ');
+
+  const sys = `És um coach de padel. Dás dicas concisas e motivadoras. Responde em JSON:
+{"tip":"2 frases de conselho específico para melhorar as habilidades fracas, mencionando os nomes","drill":"1 exercício de treino concreto (1 frase)"}`;
+  const msg = `Pontos fortes: ${strong}. A melhorar: ${weak}. Jogador: ${displayName(ME)}, ${ME?.player_category||'—'}.`;
+  try {
+    const raw = await callClaude(sys, [{role:'user',content:msg}], 200);
+    const json = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    tipEl.innerHTML = `<div style="margin-bottom:8px">${json.tip||''}</div>
+      <div style="background:rgba(201,147,58,.12);border:1px solid rgba(201,147,58,.2);border-radius:8px;padding:8px 10px;font-size:11px;color:#e0a840;margin-top:4px">
+        🎯 ${json.drill||''}
+      </div>`;
+  } catch(e) {
+    tipEl.textContent = 'Análise não disponível.';
+  }
+}
+
+// ── Self evaluation modal ─────────────────────────────────────────
+function openSelfEval() {
+  const form = document.getElementById('self-eval-form');
+  if (!form) return;
+  const cats = ['fisico','mental','consist','golpes'];
+  form.innerHTML = cats.map(cid => {
+    const meta = CAT_META[cid];
+    const skills = SKILLS_DEF.filter(s => s.cat === cid);
+    const rows = skills.map(s => {
+      const cur = _mySkills[s.id] || 0;
+      const stars = [1,2,3,4,5,6,7,8,9,10].map(n =>
+        `<span class="sp-star" data-sid="${s.id}" data-val="${n}"
+          onclick="seRate('${s.id}',${n},this)"
+          style="color:${n<=cur?'#f5a623':'#dde6f0'}">★</span>`
+      ).join('');
+      return `<div class="eval-skill-row">
+        <span style="font-size:12px;margin-right:4px">${s.emoji}</span>
+        <span class="eval-skill-name">${s.name}</span>
+        <div class="star-picker" id="se-stars-${s.id}">${stars}</div>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border)">
+        <div style="width:8px;height:8px;border-radius:50%;background:${meta.color};flex-shrink:0"></div>
+        <div style="font-size:10px;font-weight:700;color:${meta.color};text-transform:uppercase;letter-spacing:.8px;font-family:'DM Mono'">${meta.label}</div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px 10px">${rows}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('self-eval-overlay').classList.add('on');
+}
+
+// Stage self-eval rating
+const _seStaging = {};
+function seRate(sid, val, el) {
+  _seStaging[sid] = val;
+  const row = document.getElementById('se-stars-' + sid);
+  if (!row) return;
+  row.querySelectorAll('.sp-star').forEach(s => {
+    s.style.color = parseInt(s.dataset.val) <= val ? '#f5a623' : '#dde6f0';
+  });
+}
+
+function closeSelfEval(e) {
+  if (!e || e.target.id === 'self-eval-overlay')
+    document.getElementById('self-eval-overlay').classList.remove('on');
+}
+
+function submitSelfEval() {
+  const pid = ME?.player_id || 'default';
+  // Merge staged into mySkills
+  Object.assign(_mySkills, _seStaging);
+  try {
+    localStorage.setItem('padeleye_skills_' + pid, JSON.stringify(_mySkills));
+  } catch(e) {}
+  document.getElementById('self-eval-overlay').classList.remove('on');
+  _skillsReady = false; _aiSkillsDone = false; // force re-render
+  initSkills();
+  // toast
+  const t = document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a7a44;color:#fff;padding:10px 18px;border-radius:99px;font-size:12px;font-weight:600;z-index:9999;transition:opacity .3s';
+  t.textContent = '✅ Auto-avaliação guardada!';
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0'; setTimeout(()=>t.remove(),400)},2200);
+}
+
+// ── Collaborative evaluation (rate others) ─────────────────────────
+const PEER_SKILLS = [
+  {id:'posicionamento',name:'Posicionamento',emoji:'🎯'},
+  {id:'leitura',      name:'Leitura de Jogo', emoji:'👁'},
+  {id:'regularidade', name:'Regularidade',    emoji:'🔁'},
+  {id:'smash',        name:'Smash',           emoji:'💥'},
+  {id:'bandeja',      name:'Bandeja',         emoji:'🍱'},
+  {id:'paredes',      name:'Uso das Paredes', emoji:'🧱'},
+];
+
+function renderEvalPlayers() {
+  const el = document.getElementById('sk-rate-list');
+  if (!el || !ME) return;
+  const myName = displayName(ME);
+  // Players from last session's matches
+  const sessNums = [...new Set(MATCHES.map(m => String(m.session||m.session_serial_number||'')))];
+  const lastSess = sessNums.sort((a,b)=>+b.replace(/\D/g,'')-+a.replace(/\D/g,'')).slice(0,1)[0];
+  const myMatches = MATCHES.filter(m =>
+    String(m.session||m.session_serial_number||'') === lastSess &&
+    ((m.team_a||'').split(' / ').includes(myName) || (m.team_b||'').split(' / ').includes(myName))
+  );
+  const peers = new Set();
+  myMatches.forEach(m => {
+    [...(m.team_a||'').split(' / '), ...(m.team_b||'').split(' / ')]
+      .filter(p => p && p !== myName).forEach(p => peers.add(p));
+  });
+
+  if (!peers.size) {
+    el.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:12px">
+      Sem companheiros para avaliar.<br>Disputa uma sessão primeiro.
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = [...peers].map(peerName => {
+    const playerReg = ALL_PLAYERS.find(p=>displayName(p)===peerName)||{};
+    const grad = flagGrad(playerReg.player_nationality||'');
+    const txtC = flagTextCol(playerReg.player_nationality||'');
+    const ini  = initials(peerName);
+    const cat  = playerReg.player_category || '';
+    const peerKey = peerName.replace(/\s+/g,'_');
+
+    const skillRows = PEER_SKILLS.map(ps => {
+      const cur = (_peerRatings[peerKey]||{})[ps.id] || 0;
+      const stars = [1,2,3,4,5,6,7,8,9,10].map(n =>
+        `<span class="sp-star" onclick="peerRate('${peerKey}','${ps.id}',${n},this)"
+          style="color:${n<=cur?'#f5a623':'#dde6f0'};font-size:14px;cursor:pointer">★</span>`
+      ).join('');
+      return `<div class="eval-skill-row">
+        <span style="font-size:12px;margin-right:4px">${ps.emoji}</span>
+        <span class="eval-skill-name">${ps.name}</span>
+        <div class="star-picker" id="pr-${peerKey}-${ps.id}">${stars}</div>
+      </div>`;
+    }).join('');
+
+    return `<div class="eval-player-card">
+      <div class="eval-player-header">
+        <div class="eval-av" style="background:${grad};color:${txtC};text-shadow:0 1px 3px rgba(0,0,0,.35)">${ini}</div>
+        <div>
+          <div class="eval-player-name">${peerName}</div>
+          <div class="eval-player-sub">${cat || 'S'+lastSess.replace(/^S/,'')}</div>
+        </div>
+      </div>
+      <div style="background:#f8fafd;border-radius:10px;padding:4px 10px">${skillRows}</div>
+      <button class="btn-submit-eval" onclick="submitPeerEval('${peerKey}','${peerName}')">
+        Enviar Avaliação →
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function peerRate(peerKey, skillId, val, el) {
+  if (!_peerRatings[peerKey]) _peerRatings[peerKey] = {};
+  _peerRatings[peerKey][skillId] = val;
+  const row = document.getElementById(`pr-${peerKey}-${skillId}`);
+  if (!row) return;
+  row.querySelectorAll('.sp-star').forEach((s,i) => {
+    s.style.color = (i+1) <= val ? '#f5a623' : '#dde6f0';
+  });
+}
+
+function submitPeerEval(peerKey, peerName) {
+  const ratings = _peerRatings[peerKey] || {};
+  if (!Object.keys(ratings).length) return;
+  // Store: the peer's player_id gets our evaluation
+  const targetPlayer = ALL_PLAYERS.find(p=>displayName(p)===peerName);
+  const tid = targetPlayer?.player_id || peerKey;
+  const logKey = 'padeleye_evallog_' + tid;
+  try {
+    const log = JSON.parse(localStorage.getItem(logKey)||'[]');
+    log.push({from: displayName(ME), ts: Date.now(), scores: ratings});
+    localStorage.setItem(logKey, JSON.stringify(log));
+  } catch(e) {}
+  // Visual feedback
+  const card = document.querySelector(`[onclick*="${peerKey}"].btn-submit-eval`);
+  if (card) { card.textContent='✅ Enviado!'; card.style.background='#1a7a44'; card.style.color='#fff'; card.disabled=true; }
+  const t = document.createElement('div');
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a7a44;color:#fff;padding:10px 18px;border-radius:99px;font-size:12px;font-weight:600;z-index:9999';
+  t.textContent = `✅ Avaliação de ${peerName.split(' ')[0]} enviada!`;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// ── Evolution ─────────────────────────────────────────────────────
+function renderEvolution() {
+  const el = document.getElementById('sk-evo-list');
+  if (!el) return;
+  const pid = ME?.player_id || 'default';
+  let history = [];
+  try {
+    history = JSON.parse(localStorage.getItem('padeleye_skillhist_' + pid)||'[]');
+  } catch(e) {}
+
+  if (!history.length) {
+    // Seed a historical baseline from first eval (simulated)
+    const seeded = SKILLS_DEF.map(s => {
+      const cur = _mySkills[s.id] || 0;
+      const prev = cur > 0 ? Math.max(1, +(cur - (Math.random()*2-0.5)).toFixed(1)) : 0;
+      return {...s, prev, cur};
+    }).filter(s => s.cur > 0);
+
+    el.innerHTML = `<div style="font-size:10px;color:var(--muted);margin-bottom:10px;font-family:'DM Mono'">
+      📅 Comparativo: início da temporada vs. agora
+    </div>` + seeded.sort((a,b)=>Math.abs(b.cur-b.prev)-Math.abs(a.cur-a.prev)).map(s => {
+      const delta = +(s.cur - s.prev).toFixed(1);
+      const col = delta>0?'#1a7a44':delta<0?'#c0392b':'#9ab0c8';
+      const pct = (s.cur/10)*100;
+      const meta = CAT_META[s.cat];
+      return `<div class="evo-row">
+        <span style="font-size:12px;width:20px;text-align:center">${s.emoji}</span>
+        <span class="evo-skill">${s.name}</span>
+        <div class="evo-bar-wrap">
+          <div class="evo-bar" style="width:${pct}%;background:${meta.color}"></div>
+        </div>
+        <span class="evo-delta" style="color:${col}">${delta>0?'+':''}${delta}</span>
+      </div>`;
+    }).join('');
+    return;
+  }
+  el.innerHTML = '<div style="font-size:11px;color:var(--muted);text-align:center;padding:20px">Histórico em construção...</div>';
+}
+
+// ── Bridge to Academia ────────────────────────────────────────────
+function bridgeToAcademia(skillName) {
+  switchTab('academia');
+  if (!_acadRendered) { _acadRendered = true; renderAcademia(); }
+  const input = document.getElementById('acad-search');
+  if (input) { input.value = skillName; filterAcademia(skillName); }
+  setTimeout(() => {
+    document.getElementById('acad-search')?.scrollIntoView({behavior:'smooth', block:'start'});
+  }, 200);
+}
+
+// ── Trigger on tab switch ────────────────────────────────────────
+
+</script>
+
+<!-- PROFILE MODAL -->
+<div class="profile-modal-overlay" id="profile-modal-overlay" onclick="closeProfileModal(event)">
+  <div class="profile-modal" id="profile-modal">
+    <div class="pm-handle"></div>
+    <div id="pm-content"></div>
+    <button class="btn-close-pm" onclick="closeProfileModal()">Fechar</button>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="booking-overlay" id="booking-overlay" onclick="closeBooking(event)">
+  <div class="booking-sheet">
+    <div class="bk-handle"></div>
+    <div id="bk-content"></div>
+  </div>
+</div>
+
+<!-- CONTENT READER -->
+<div class="reader-overlay" id="reader-overlay">
+  <div class="reader-topbar">
+    <div class="reader-back" onclick="closeReader()">←</div>
+    <div id="reader-title" style="font-size:14px;font-weight:700;color:#0a1628;flex:1;"></div>
+  </div>
+  <div class="reader-body" id="reader-body"></div>
+</div>
+</body>
+</html>
