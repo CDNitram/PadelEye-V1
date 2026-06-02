@@ -246,9 +246,45 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .db-search{width:100%;padding:9px 12px 9px 36px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:9px;font-size:13px;font-family:'DM Sans';color:#0d1e3a;outline:none;transition:border-color .2s;}
 .db-search:focus{border-color:#3a7bd5;background:#fff;}
 .card-badge{font-family:'DM Mono';font-size:10px;color:#7090b0;background:#f0f5fb;padding:4px 10px;border-radius:20px;border:1px solid #dde6f0;}
+
+/* ── MOBILE RESPONSIVE ───────────────────────────────────────── */
+.hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px;flex-direction:column;gap:5px;}
+.hamburger span{display:block;width:22px;height:2px;background:#0a1628;border-radius:99px;transition:all .3s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(10,22,40,.5);z-index:150;}
+.sidebar-overlay.on{display:block;}
+
+@media (max-width: 768px) {
+  .hamburger{display:flex;}
+  .sidebar-nav{
+    position:fixed;left:-240px;top:52px;height:calc(100vh - 52px);
+    z-index:200;transition:left .3s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 20px rgba(10,22,40,.15);
+  }
+  .sidebar-nav.open{left:0;}
+  .main-content{margin-left:0 !important;width:100%;}
+  body > .screen:not(#s-login){flex-direction:column;}
+  .topbar-center{display:none;}
+  .card{border-radius:10px;padding:14px;}
+  .match-item{flex-direction:column;gap:8px;padding:12px;}
+  .match-team{justify-content:center;text-align:center;}
+  .match-score{order:-1;}
+  .random-preview-item{flex-wrap:wrap;}
+}
+
+@media (max-width: 480px) {
+  .topbar{padding:0 10px;}
+  .topbar-logo{font-size:16px;}
+  body .card-grid, body .match-selectors{grid-template-columns:1fr;}
+  .player-chip{font-size:11px;}
+}
+
 </style>
 </head>
 <body>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMobileMenu()"></div>
 <!-- ═══════════ LOGIN ═══════════ -->
 <div class="screen active" id="s-login">
   <div class="login-brand">
@@ -273,6 +309,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <!-- ═══════════ SESSION APP ═══════════ -->
 <div class="screen" id="s-app">
   <div class="topbar">
+    <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
     <div class="topbar-logo">PADEL<em>EYE</em></div>
     <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V10</div>
     <div class="topbar-right">
@@ -445,7 +484,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
     </div>
     <div style="margin-top:8px">
-      <button id="btn-close-session" onclick="closeSession()" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;display:none">🏁 Fechar Sessão &amp; Calcular Resultados</button>
+      <button id="btn-close-session" onclick="closeSession()" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;display:none;position:sticky;bottom:12px;z-index:50">🏁 Fechar Sessão &amp; Calcular Resultados</button>
     </div>
   </div>
 
@@ -766,7 +805,7 @@ function updateHero() {
   const local = document.getElementById('cfg-local')?.value || '';
   document.getElementById('hero-num').textContent   = num;
   document.getElementById('sb-session-label').textContent = num;
-  document.getElementById('tb-session-label').textContent = num;
+  const _tsl=document.getElementById('tb-session-label'); if(_tsl){_tsl.textContent=num;_tsl.style.display='block';}
   document.getElementById('hero-local').textContent = local;
   if (date) {
     const d = new Date(date + 'T12:00:00');
@@ -795,7 +834,7 @@ function renderPlayerGrid() {
       <div class="player-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="player-chip-av" style="background:${flagGrad(getPlayerNat(name))};color:${flagTextCol(getPlayerNat(name))}">${init(name)}</div>
       <div class="player-chip-name">${name}</div>
-      <div class="player-chip-pts">${getPlayerStats(name).w}V · ${getPlayerStats(name).m}P</div>
+      <div class="player-chip-pts">${getHistoricalStats(name).w}V · ${getHistoricalStats(name).m}P</div>
     </div>`;
   }).join('');
   document.getElementById('player-count-badge').textContent = activePlayers.length+' selecionados';
@@ -875,11 +914,31 @@ function addMatch() {
 }
 function deleteMatch(idx){matches.splice(idx,1);renderMatchLog();renderScoreboard();updateHero();}
 function renderMatchLog() {
-  const c=document.getElementById('match-log');
+  const el=document.getElementById('match-log');
   document.getElementById('match-count').textContent=matches.length+' partida'+(matches.length!==1?'s':'');
-  if(!matches.length){c.innerHTML='<div class="empty"><div class="empty-icon">🏸</div>Sem partidas ainda.</div>';return;}
-  c.innerHTML=matches.map((m,i)=>{
-    const aWin=m.sa>m.sb, tbTag=m.tb?`<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>`:'';
+  if(!matches.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏸</div>Sem partidas ainda.</div>';return;}
+  const maxSc=parseInt(document.getElementById('cfg-max-score')?.value||4);
+  el.innerHTML=matches.map((m,i)=>{
+    const hasScore = m.sa!==null && m.sb!==null;
+    if(!hasScore){
+      // Unscored match (from rotation/round robin) — show inline score picker
+      const opts=Array.from({length:maxSc+1},(_,v)=>`<option value="${v}">${v}</option>`).join('');
+      return `<div class="match-item" style="background:#fffbf0;border:1.5px solid #f5d020;border-radius:12px;padding:12px;gap:8px">
+        <div class="match-team" style="flex:1"><span class="match-num">Team A</span>${m.teamA.join('<br>')}</div>
+        <div class="match-score" style="flex-shrink:0;text-align:center">
+          <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:6px">
+            <select id="rml-sa-${i}" style="width:48px;padding:6px 4px;border:1.5px solid #dde6f0;border-radius:8px;font-size:16px;font-weight:700;text-align:center;background:#fff">${opts}</select>
+            <span style="color:#c0cdd8;font-weight:700">×</span>
+            <select id="rml-sb-${i}" style="width:48px;padding:6px 4px;border:1.5px solid #dde6f0;border-radius:8px;font-size:16px;font-weight:700;text-align:center;background:#fff">${opts}</select>
+          </div>
+          <button onclick="scoreInlineMatch(${i})" style="width:100%;padding:5px 10px;background:#C9933A;color:#0a1628;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans'">✓ Confirmar</button>
+          <div style="margin-top:4px"><button class="btn-del" onclick="deleteMatch(${i})">✕ Remover</button></div>
+        </div>
+        <div class="match-team right" style="flex:1;text-align:right"><span class="match-num">Team B</span>${m.teamB.join('<br>')}</div>
+      </div>`;
+    }
+    const aWin=m.sa>m.sb;
+    const tbTag=m.tb?`<div class="match-score-tb">TB ${m.tba}×${m.tbb}</div>`:'';
     return `<div class="match-item saved">
       <div class="match-team ${aWin?'win':'lose'}"><span class="match-num">Team A</span>${m.teamA.join('<br>')}</div>
       <div class="match-score">
@@ -889,6 +948,20 @@ function renderMatchLog() {
       <div class="match-team right ${aWin?'lose':'win'}"><span class="match-num">Team B</span>${m.teamB.join('<br>')}</div>
     </div>`;
   }).join('');
+  // Always show close button when there are matches
+  const btn=document.getElementById('btn-close-session');
+  if(btn) btn.style.display = matches.length>0?'block':'none';
+}
+
+function scoreInlineMatch(idx) {
+  const sa=parseInt(document.getElementById('rml-sa-'+idx)?.value);
+  const sb=parseInt(document.getElementById('rml-sb-'+idx)?.value);
+  const maxSc=parseInt(document.getElementById('cfg-max-score')?.value||4);
+  if(sa===sb){showAlert('alert-match','Empates não são permitidos.','warn');return;}
+  if(sa>maxSc||sb>maxSc){showAlert('alert-match','Placar acima do máximo permitido.','warn');return;}
+  matches[idx].sa=sa; matches[idx].sb=sb;
+  renderMatchLog(); renderScoreboard(); updateHero(); renderPlayerGrid();
+  showAlert('alert-match','✅ Placar registado!','ok');
 }
 
 // ══════════════════════════════════════════
@@ -904,6 +977,19 @@ function getPlayerStats(name) {
   });
   return {...s,gd:s.gw-s.gl};
 }
+function getHistoricalStats(name) {
+  // Use rkData (cumulative from GS) + current session stats
+  const hist = rkData.find(r => {
+    const n = String(r.player || r.nome || r.player_name || '');
+    return n.toLowerCase() === name.toLowerCase();
+  });
+  const cur = getPlayerStats(name);
+  return {
+    w: (parseInt(hist?.wins||hist?.vitorias||0) + cur.w),
+    m: (parseInt(hist?.matches||hist?.partidas||0) + cur.m),
+  };
+}
+
 function renderScoreboard() {
   const c=document.getElementById('scoreboard');
   const played=activePlayers.filter(p=>getPlayerStats(p).m>0);
@@ -1022,8 +1108,11 @@ function confirmRandom(){
   window._pendingMatches.forEach(m=>matches.push({teamA:m.a,teamB:m.b,sa:null,sb:null,tb:false,tba:null,tbb:null}));
   window._pendingMatches=null;
   document.getElementById('random-preview').style.display='none';
-  renderMatchLog();showAlert('alert-match',`Partidas adicionadas. Insira os placares.`,'ok');
+  renderMatchLog();
+  showAlert('alert-match','Partidas geradas! Registe os placares abaixo.','ok');
+  showTab('matches', document.getElementById('tab-match'));
   if(matches.length>0)document.getElementById('btn-close-session').style.display='block';
+  setTimeout(()=>{document.getElementById('match-log')?.scrollIntoView({behavior:'smooth',block:'start'})},300);
 }
 function cancelRandom(){window._pendingMatches=null;document.getElementById('random-preview').style.display='none';}
 
@@ -1795,9 +1884,9 @@ function histSwitch(t){ document.querySelectorAll('.hist-tab-panel').forEach(p=>
 // ══════════════════════════════════════════
 // ── OBJETIVO: Partilhar resumo de sessão via navigator.share ou clipboard ─────
 function shareSession(){
-  const num   = document.getElementById('session-label')?.textContent||'Session';
-  const date  = document.getElementById('session-date')?.value||'';
-  const local = document.getElementById('session-venue')?.value||'';
+  const num   = document.getElementById('hero-num')?.textContent || document.getElementById('cfg-num')?.textContent || 'Session';
+  const date  = document.getElementById('cfg-date')?.value||'';
+  const local = document.getElementById('cfg-local')?.value||'';
   const mvp   = scoreboard.length ? [...scoreboard].sort((a,b)=>b.wins-a.wins)[0]?.name||'—' : '—';
   const text  = `🏓 PadelEye · ${num}\n📅 ${date}${local?' · '+local:''}\n🏆 MVP: ${mvp}\n👥 ${activePlayers.length} jogadores · ${matches.length} partidas\nApp: cdnitram.github.io/PadelEye`;
   if(navigator.share){navigator.share({title:'PadelEye',text}).catch(()=>{});}
@@ -2187,6 +2276,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTestDBTab();
   // Tab navigation is handled by doLogin — no showTab call here
 });
+
+// ── MOBILE MENU ───────────────────────────────────────────────────────
+function toggleMobileMenu() {
+  const sidebar  = document.querySelector('.sidebar-nav');
+  const overlay  = document.getElementById('sidebar-overlay');
+  const hamburger = document.getElementById('hamburger-btn');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay?.classList.remove('on');
+    hamburger?.classList.remove('open');
+  } else {
+    sidebar.classList.add('open');
+    overlay?.classList.add('on');
+    hamburger?.classList.add('open');
+  }
+}
+
+function closeMobileMenu() {
+  document.querySelector('.sidebar-nav')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('on');
+  document.getElementById('hamburger-btn')?.classList.remove('open');
+}
+
+// Close mobile menu when a tab is selected
+document.addEventListener('click', function(e) {
+  const tab = e.target.closest('.tab');
+  if (tab && window.innerWidth <= 768) closeMobileMenu();
+});
+
 </script>
 
 <!-- VIEW MODAL — perfil do jogador -->
