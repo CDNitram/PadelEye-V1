@@ -199,7 +199,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rk-rank{font-family:'Bebas Neue';font-size:18px;color:#9ab0c8;}
 .rk-rank.g{color:#d4a017;}.rk-rank.s{color:#8a9ab0;}.rk-rank.b{color:#b07040;}
 .rk-player{display:flex;align-items:center;gap:8px;}
-.rk-av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:#fff;flex-shrink:0;}
+.rk-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:#fff;flex-shrink:0;}
 .rk-pname{font-size:12px;font-weight:700;color:#0d1e3a;}
 .rk-psess{font-family:'DM Mono';font-size:9px;color:#9ab0c8;}
 .rk-tn{font-family:'DM Mono';font-size:11px;color:#0d1e3a;text-align:right;}
@@ -332,7 +332,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="sb-divider"></div>
     <div class="sb-section-label">Análise</div>
     <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()"><span class="sb-ic" style="background:#ccfbf1">📊</span> Ranking</button>
-    <button class="tab" id="tab-consistency" onclick="showTab('consistency',this);loadConsistency()"><span class="sb-ic" style="background:#dcfce7">📈</span> Consistência</button>
+    <button class="tab" id="tab-consistency" onclick="showTab('consistency',this);loadConsistency()"><span class="sb-ic" style="background:#dcfce7">📈</span> Score de Consistência</button>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Sistema</div>
@@ -1577,7 +1577,7 @@ function rkRenderTable() {
     return `<div class="rk-prow" style="animation-delay:${i*20}ms">
       <div class="rk-rank ${rk}">${rl}</div>
       <div class="rk-player">
-        <div class="rk-av" style="background:${rkCol(p.player)}">${rkIni(p.player)}</div>
+        <div class="rk-av" style="background:${flagGrad(getPlayerNat(p.player))};color:${flagTextCol(getPlayerNat(p.player))};text-shadow:0 1px 3px rgba(0,0,0,.35)">${rkIni(p.player)}</div>
         <div><div class="rk-pname">${p.player}</div><div class="rk-psess">${p.sessions}S</div></div>
       </div>
       <div class="rk-tn dim rk-hide ${sh('sessions')||sh('sessoes')}">${p.sessions}</div>
@@ -1715,8 +1715,7 @@ function rkRenderConsistency() {
       <div class="rk-cname" style="display:flex;align-items:center;gap:7px;min-width:0">
         <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;
           width:20px;text-align:right;flex-shrink:0">${medal}</span>
-        <div class="rk-av" style="background:${rkCol(r.n)};width:22px;height:22px;
-          font-size:10px;flex-shrink:0">${rkIni(r.n)}</div>
+        <div class="rk-av" style="background:background:${flagGrad(getPlayerNat(r.n))};color:${flagTextCol(getPlayerNat(r.n))};text-shadow:0 1px 3px rgba(0,0,0,.35);width:22px;height:22px;font-size:10px;flex-shrink:0">${rkIni(r.n)}</div>
         <span style="font-size:12px;font-weight:600;color:#0d1e3a;
           white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.n}</span>
       </div>
@@ -2682,20 +2681,22 @@ function applyRkFilter() {
 
 
 // ── loadConsistency — called when tab is clicked ──
-function loadConsistency() {
-  // Data is already loaded with ranking — just re-render
+async function loadConsistency() {
   const dot  = document.getElementById('cons-dot');
   const stxt = document.getElementById('cons-stxt');
-  if (rkSessData.length) {
-    if (dot)  dot.style.background  = '#27AE60';
-    if (stxt) stxt.textContent = `${rkSessData.length} linhas de stats · ${rkAllSessions.length} sessões`;
-    rkRenderConsistency();
-  } else {
+
+  // Always ensure ranking data is loaded first
+  if (!rkData.length || !rkSessData.length) {
     if (dot)  dot.style.background = '#C9933A';
-    if (stxt) stxt.textContent = 'A carregar dados... abre Ranking primeiro.';
-    // Trigger ranking load if not yet loaded
-    if (!rkData.length) loadRanking().then(() => rkRenderConsistency());
+    if (stxt) stxt.textContent = 'A carregar dados...';
+    await loadRanking();
   }
+
+  if (dot)  dot.style.background = '#27AE60';
+  if (stxt) stxt.textContent =
+    `${rkSessData.length} linhas de stats · ${rkAllSessions.length} sessões`;
+
+  rkRenderConsistency();
 }
 
 </script>
