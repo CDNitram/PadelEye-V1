@@ -543,7 +543,21 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="rk-stxt" id="rk-stxt">—</div>
       <button class="rk-ref-btn" id="rk-ref-btn" onclick="loadRanking()" title="Refresh" style="margin-left:auto">↻</button>
     </div>
-    <div class="rk-sec">Temporada 2024–2026</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div class="rk-sec" style="margin-bottom:0" id="rk-season-label">Temporada 2024–2026</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap" id="rk-filter-bar">
+        <button class="rk-sbtn on" id="rk-f-year"   onclick="rkSetFilter('year',this)">📅 Ano Atual</button>
+        <button class="rk-sbtn"    id="rk-f-all"    onclick="rkSetFilter('all',this)">🌐 Todas</button>
+        <button class="rk-sbtn"    id="rk-f-custom" onclick="rkSetFilter('custom',this)">🔍 Período</button>
+      </div>
+    </div>
+    <div id="rk-date-range" style="display:none;background:#f8fafd;border:1px solid #dde6f0;border-radius:10px;padding:10px 14px;margin-bottom:10px;align-items:center;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;text-transform:uppercase;letter-spacing:1px">De</span>
+      <input type="date" id="rk-date-from" onchange="applyRkFilter()" style="padding:5px 8px;border:1px solid #dde6f0;border-radius:7px;font-family:'DM Mono';font-size:11px;color:#0a1628;background:#fff;cursor:pointer">
+      <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;text-transform:uppercase;letter-spacing:1px">Até</span>
+      <input type="date" id="rk-date-to" onchange="applyRkFilter()" style="padding:5px 8px;border:1px solid #dde6f0;border-radius:7px;font-family:'DM Mono';font-size:11px;color:#0a1628;background:#fff;cursor:pointer">
+      <span style="font-family:'DM Mono';font-size:9px;color:#9ab0c8" id="rk-filter-count"></span>
+    </div>
     <div class="rk-kpi-grid">
       <div class="rk-kpi"><div class="rk-kpi-v" id="rk-k-players">—</div><div class="rk-kpi-l">Jogadores</div><div class="rk-kpi-sub">na temporada</div></div>
       <div class="rk-kpi"><div class="rk-kpi-v" id="rk-k-sess">—</div><div class="rk-kpi-l">Sessões</div><div class="rk-kpi-sub" id="rk-k-span">—</div></div>
@@ -552,12 +566,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div class="rk-sec">Ranking Completo</div>
     <div class="rk-sort-bar">
-      <button class="rk-sbtn" onclick="rkSetSort('wins',this)">🏆 Vitórias</button>
-      <button class="rk-sbtn on" onclick="rkSetSort('win_rate',this)">📊 Win Rate</button>
-      <button class="rk-sbtn" onclick="rkSetSort('matches',this)">🎯 Partidas</button>
-      <button class="rk-sbtn" onclick="rkSetSort('points_difference',this)">⚡ Saldo de Pontos</button>
-      <button class="rk-sbtn" onclick="rkSetSort('mvp_count',this)">🥇 MVP</button>
-      <button class="rk-sbtn" onclick="rkSetSort('sessions',this)">📅 Sessões</button>
+      <button class="rk-sbtn on" id="rk-sb-wr"  onclick="rkSetSort('win_rate',this)">📊 Win Rate</button>
+      <button class="rk-sbtn"    id="rk-sb-mvp" onclick="rkSetSort('mvp_count',this)">🏅 MVP</button>
+      <button class="rk-sbtn"    id="rk-sb-sp"  onclick="rkSetSort('points_difference',this)">⚡ Saldo</button>
+      <button class="rk-sbtn"    id="rk-sb-p"   onclick="rkSetSort('matches',this)">🎯 Partidas</button>
+      <button class="rk-sbtn"    id="rk-sb-s"   onclick="rkSetSort('sessions',this)">📅 Sessões</button>
+      <button class="rk-sbtn"    id="rk-sb-v"   onclick="rkSetSort('wins',this)">🏆 Vitórias</button>
     </div>
     <div class="rk-tbl">
       <div class="rk-thd">
@@ -1407,8 +1421,10 @@ async function loadRanking() {
     const rows = rankJson.rows || [];
     if (!rows.length) throw new Error('empty');
     rkData = rows;
-    rkTotalSessions = (sessJson.rows || []).length;
-    rkSessData = statsJson.rows || [];
+    rkAllSessions   = sessJson.rows  || [];
+    rkSessData      = statsJson.rows || [];
+    rkTotalSessions = rkAllSessions.length;
+    rkRecomputeMVPs();
     const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR') : '';
     document.getElementById('rk-upd').textContent = ts ? `Última atualização: ${ts}` : '';
     stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
@@ -1419,8 +1435,7 @@ async function loadRanking() {
     dot.style.background = '#C9933A';
     document.getElementById('rk-upd').textContent = 'Usando dados locais';
   }
-  rkUpdateKPIs(rkData);
-  rkRenderTable();
+  applyRkFilter();
   rkRenderConsistency();
   btn.classList.remove('spin'); dot.classList.remove('rk-spin');
 }
@@ -1500,15 +1515,24 @@ function rkRenderTable() {
     mvp_count:          +(p.mvp_count || 0),
   });
 
-  const sorted = rkData.map(norm).filter(p => p.wins >= 3).sort((a,b) => {
-    if (rkSort === 'win_rate')  return rkWR(b.win_rate) - rkWR(a.win_rate);
-    if (rkSort === 'gd' || rkSort === 'points_difference')
-      return b.points_difference - a.points_difference;
-    if (rkSort === 'sessoes' || rkSort === 'sessions') return b.sessions - a.sessions;
-    if (rkSort === 'partidas' || rkSort === 'matches')  return b.matches  - a.matches;
-    if (rkSort === 'vitorias' || rkSort === 'wins')     return b.wins     - a.wins;
-    if (rkSort === 'mvp_count') return b.mvp_count - a.mvp_count;
-    return (+(b[rkSort]||0)) - (+(a[rkSort]||0));
+  const _src = rkDataFiltered || rkData;
+  const sorted = _src.map(norm).filter(p => p.wins >= 1).sort((a,b) => {
+    // Primary criterion
+    let d = 0;
+    if      (rkSort==='win_rate'||rkSort==='wr')          d = rkWR(b.win_rate)       - rkWR(a.win_rate);
+    else if (rkSort==='mvp_count')                         d = b.mvp_count            - a.mvp_count;
+    else if (rkSort==='points_difference'||rkSort==='gd')  d = b.points_difference    - a.points_difference;
+    else if (rkSort==='matches'||rkSort==='partidas')       d = b.matches              - a.matches;
+    else if (rkSort==='sessions'||rkSort==='sessoes')       d = b.sessions             - a.sessions;
+    else if (rkSort==='wins'||rkSort==='vitorias')          d = b.wins                 - a.wins;
+    else                                                    d = (+(b[rkSort]||0))      - (+(a[rkSort]||0));
+    if (d !== 0) return d;
+    // Tiebreakers: WR → MVP → SP → Partidas → Sessões
+    const wr = rkWR(b.win_rate) - rkWR(a.win_rate); if (wr!==0) return wr;
+    const mv = b.mvp_count - a.mvp_count;            if (mv!==0) return mv;
+    const sp = b.points_difference - a.points_difference; if (sp!==0) return sp;
+    const mt = b.matches - a.matches;                if (mt!==0) return mt;
+    return b.sessions - a.sessions;
   });
 
   const hmap = {
@@ -1645,7 +1669,8 @@ async function loadHistory() {
 
     grid.innerHTML = _histSessions.map(s => {
       // Accept both EN and PT field names
-      const num = s.session_serial_number || s.numero || '—';
+      const num    = s.session_serial_number || s.numero || '—';
+      const numDisp = String(num).replace(/^S/i,'');           // strip S prefix → always numeric
       const np  = s.session_total_players || s.total_jogadores || (statsMap[num]||[]).length || '—';
       const nm  = s.session_total_matches || s.total_partidas  || '—';
       const mvp = s.session_mvp           || s.mvp             || '—';
@@ -1654,7 +1679,7 @@ async function loadHistory() {
       return `<div onclick="histOpen('${num}')"
         style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;cursor:pointer;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px"
         onmouseover="this.style.borderColor='#C9933A'" onmouseout="this.style.borderColor='#e2e8f0'">
-        <div style="font-family:serif;font-size:28px;color:#C9933A;letter-spacing:1px;min-width:50px">${num}</div>
+        <div style="font-family:'Bebas Neue';font-size:28px;color:#C9933A;letter-spacing:1px;min-width:50px">${numDisp}</div>
         <div>
           <div style="font-size:13px;font-weight:700;color:#0d1e3a">${dt} · ${loc}</div>
           <div style="font-size:10px;color:#9ab0c8;margin-top:3px">${np} players · ${nm} matches · MVP: ${mvp}</div>
@@ -1675,7 +1700,7 @@ async function loadHistory() {
 async function histOpen(numero) {
   document.getElementById('hist-list-view').style.display   = 'none';
   document.getElementById('hist-detail-view').style.display = 'block';
-  document.getElementById('hist-detail-num').textContent    = numero;
+  document.getElementById('hist-detail-num').textContent    = String(numero).replace(/^S/i,'');
   document.getElementById('hist-detail-meta').textContent   = 'Carregando...';
   ['scoreboard','matches','stats'].forEach(t => {
     const el = document.getElementById('hist-tab-'+t);
@@ -1958,12 +1983,47 @@ function getPlayerNat(name) {
 // DATE HELPERS
 // ══════════════════════════════════════════
 // ── OBJETIVO: Formatar e parsear datas em PT-BR ───────────────────────────────
-function formatDateBR(d, opts){
-  if(!d)return '—';
-  try{
-    const dt = new Date(d+'T12:00:00');
-    return dt.toLocaleDateString('pt-BR', opts||{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
-  }catch{return String(d);}
+function formatDateBR(d, opts) {
+  if (!d || String(d).trim() === '') return '—';
+  const raw = String(d).trim();
+
+  // Try parsing various formats
+  let dt;
+
+  // 1) ISO: YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS
+  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+    const iso = raw.length === 10 ? raw + 'T12:00:00' : raw;
+    dt = new Date(iso);
+  }
+  // 2) Brazilian DD/MM/YYYY or DD-MM-YYYY
+  else if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}/.test(raw)) {
+    const [day, mon, yr] = raw.split(/[\/\-]/);
+    dt = new Date(`${yr}-${mon.padStart(2,'0')}-${day.padStart(2,'0')}T12:00:00`);
+  }
+  // 3) MM/DD/YYYY (US format fallback)
+  else if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(raw)) {
+    dt = new Date(raw + ' 12:00:00');
+  }
+  // 4) Timestamp number (Excel serial or Unix ms)
+  else if (/^\d{5,13}$/.test(raw)) {
+    const n = parseInt(raw);
+    dt = n > 40000 && n < 60000
+      ? new Date((n - 25569) * 86400000)   // Excel serial
+      : new Date(n > 1e10 ? n : n * 1000); // Unix sec or ms
+  }
+  // 5) Last resort — let JS try
+  else {
+    dt = new Date(raw);
+  }
+
+  if (!dt || isNaN(dt.getTime())) {
+    // Return just the raw value cleaned up — never "Invalid Date"
+    return raw.replace(/T.+$/, '').replace(/^S/i, '') || '—';
+  }
+
+  return dt.toLocaleDateString('pt-BR', opts || {
+    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+  });
 }
 function parseSmartDate(s){
   if(!s)return null;
@@ -2306,6 +2366,153 @@ document.addEventListener('click', function(e) {
   const tab = e.target.closest('.tab');
   if (tab && window.innerWidth <= 768) closeMobileMenu();
 });
+
+
+// ══════════════════════════════════════════════════════════════════
+// RANKING — MVP RECOMPUTE + FILTER + NEW SORT
+// ══════════════════════════════════════════════════════════════════
+
+/** Recompute mvp_count for each player from Stats_Sessions rows */
+function rkRecomputeMVPs() {
+  if (!rkSessData.length) return;
+  const mvpMap = {};
+  rkSessData.forEach(r => {
+    const player = r.player || r.jogador || '';
+    if (!player) return;
+    const f = r.mvp || r.is_mvp || '';
+    const isMVP = f === true || f === 'TRUE' || f === '1' || f === 1
+      || (typeof f === 'string' && f.toLowerCase() === 'true')
+      || (typeof f === 'string' && f.trim().length > 1 && f.trim() === player.trim());
+    if (isMVP) mvpMap[player] = (mvpMap[player] || 0) + 1;
+  });
+  rkData.forEach(r => {
+    const player = r.player || r.jogador || '';
+    if (mvpMap[player] !== undefined) r.mvp_count = mvpMap[player];
+  });
+}
+
+/** Set season filter mode */
+function rkSetFilter(mode, el) {
+  rkFilterMode = mode;
+  document.querySelectorAll('#rk-filter-bar .rk-sbtn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  const dr = document.getElementById('rk-date-range');
+  if (dr) dr.style.display = mode === 'custom' ? 'flex' : 'none';
+  if (mode !== 'custom') applyRkFilter();
+}
+
+/** Apply the active filter and re-render */
+function applyRkFilter() {
+  const yr = new Date().getFullYear();
+
+  if (rkFilterMode === 'all') {
+    rkDataFiltered = null;
+    document.getElementById('rk-season-label').textContent = 'Todas as Temporadas';
+    rkRenderTable();
+    rkUpdateKPIs(rkData);
+    return;
+  }
+
+  // Get session date map from rkAllSessions
+  const sessDateMap = {};
+  rkAllSessions.forEach(s => {
+    const num  = String(s.session_serial_number || s.numero || s.number || '');
+    const date = s.date || s.data || s.sessao_data || '';
+    if (num && date) sessDateMap[num] = date;
+  });
+
+  let filterStart, filterEnd;
+  if (rkFilterMode === 'year') {
+    filterStart = new Date(yr, 0, 1);
+    filterEnd   = new Date(yr, 11, 31, 23, 59, 59);
+    document.getElementById('rk-season-label').textContent = `Temporada ${yr}`;
+  } else {
+    // custom
+    const fromVal = document.getElementById('rk-date-from')?.value;
+    const toVal   = document.getElementById('rk-date-to')?.value;
+    if (!fromVal && !toVal) {
+      rkDataFiltered = null;
+      rkRenderTable(); rkUpdateKPIs(rkData); return;
+    }
+    filterStart = fromVal ? new Date(fromVal) : null;
+    filterEnd   = toVal   ? new Date(toVal + 'T23:59:59') : null;
+    const fmt = d => d?.toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) || '—';
+    document.getElementById('rk-season-label').textContent = `${fmt(filterStart)} → ${fmt(filterEnd)}`;
+  }
+
+  // Collect sessions in the date range
+  const validSessNums = new Set();
+  Object.entries(sessDateMap).forEach(([num, dateStr]) => {
+    const d = new Date(dateStr);
+    if (filterStart && d < filterStart) return;
+    if (filterEnd   && d > filterEnd)   return;
+    validSessNums.add(num);
+  });
+
+  // If no date info available, fall back to full data
+  if (!validSessNums.size && rkFilterMode !== 'all') {
+    const fc = document.getElementById('rk-filter-count');
+    if (fc) fc.textContent = '(sem dados de datas — mostrando tudo)';
+    rkDataFiltered = null;
+    rkRenderTable(); rkUpdateKPIs(rkData); return;
+  }
+
+  const fc = document.getElementById('rk-filter-count');
+  if (fc) fc.textContent = `${validSessNums.size} sessões`;
+
+  // Filter Stats_Sessions rows to valid sessions
+  const filteredStats = rkSessData.filter(r => {
+    const sn = String(r.session_serial_number || r.sessao || r.session || '');
+    return validSessNums.has(sn) || validSessNums.has(sn.replace(/^S/i,''));
+  });
+
+  // Aggregate per player
+  const pMap = {};
+  filteredStats.forEach(r => {
+    const player = r.player || r.jogador || '';
+    if (!player) return;
+    if (!pMap[player]) pMap[player] = {
+      player, wins:0, losses:0, matches:0,
+      points_for:0, points_against:0, mvp_count:0, _sessions: new Set()
+    };
+    const p = pMap[player];
+    p.wins          += +(r.wins    || r.vitorias || 0);
+    p.losses        += +(r.losses  || r.derrotas || 0);
+    p.matches       += +(r.matches || r.partidas || 0);
+    p.points_for    += +(r.points_for    || r.pg || 0);
+    p.points_against+= +(r.points_against|| r.pc || 0);
+    const sn = String(r.session_serial_number || r.sessao || '');
+    if (sn) p._sessions.add(sn);
+    const f = r.mvp || r.is_mvp || '';
+    const isMVP = f===true||f==='TRUE'||f==='1'||f===1
+      ||(typeof f==='string'&&f.toLowerCase()==='true')
+      ||(typeof f==='string'&&f.trim().length>1&&f.trim()===player.trim());
+    if (isMVP) p.mvp_count++;
+  });
+
+  // If Stats_Sessions has no filter-able data, fall back to raw rkData with no recompute
+  if (!Object.keys(pMap).length) {
+    rkDataFiltered = null;
+    rkRenderTable(); rkUpdateKPIs(rkData); return;
+  }
+
+  rkDataFiltered = Object.values(pMap).map(p => ({
+    player:            p.player,
+    wins:              p.wins,
+    losses:            p.losses,
+    matches:           p.matches,
+    points_for:        p.points_for,
+    points_against:    p.points_against,
+    points_difference: p.points_for - p.points_against,
+    sessions:          p._sessions.size,
+    mvp_count:         p.mvp_count,
+    win_rate:          p.matches > 0
+      ? (((p.wins / p.matches) * 100).toFixed(0) + '%') : '0%',
+  }));
+
+  rkRenderTable();
+  rkUpdateKPIs(rkDataFiltered);
+}
 
 </script>
 
