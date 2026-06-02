@@ -1585,12 +1585,45 @@ function rkRenderTable() {
 
 // ── rkRenderConsistency — EN field names ──
 function rkRenderConsistency() {
-  const now = new Date();
-  const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth() - rkPeriod);
+  const now    = new Date();
+  const cutoff = new Date(now);
+  cutoff.setMonth(cutoff.getMonth() - rkPeriod);
 
+  // ── Build session date map from rkAllSessions (reliable source) ──
+  // Stats_Sessions rows don't have a date column — we cross-reference
+  // session_serial_number with Sessions_Sessions.session_date
+  const sessDateMap = {};
+  rkAllSessions.forEach(s => {
+    const num  = String(s.session_serial_number || s.numero || s.number || '')
+                   .replace(/^S/i,'').trim();
+    const raw  = s.session_date || s.date || s.data || s.sessao_data || '';
+    if (!num || !raw) return;
+    // Parse date (handles ISO and DD/MM/YYYY)
+    let d;
+    if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+      d = new Date(raw.slice(0,10) + 'T12:00:00');
+    } else if (/^\d{2}[\/\-]\d{2}[\/\-]\d{4}/.test(raw)) {
+      const [day, mon, yr] = raw.split(/[\/\-]/);
+      d = new Date(`${yr}-${mon.padStart(2,'0')}-${day.padStart(2,'0')}T12:00:00`);
+    } else {
+      d = new Date(raw);
+    }
+    if (!isNaN(d.getTime())) sessDateMap[num] = d;
+  });
+
+  // ── Filter Stats_Sessions rows to those within the period ──
   const filtered = rkSessData.filter(r => {
-    const d = r.date || r.sessao_data || r.data || '';
-    return d && new Date(d) >= cutoff;
+    const sn = String(r.session_serial_number || r.sessao || r.session || '')
+                 .replace(/^S/i,'').trim();
+
+    // If we have a date map, use it
+    if (sessDateMap[sn]) return sessDateMap[sn] >= cutoff;
+
+    // Fallback: try any date field on the row itself
+    const raw = r.date || r.sessao_data || r.data || '';
+    if (!raw) return false; // no date info → exclude to avoid false inclusions
+    const d = new Date(raw);
+    return !isNaN(d.getTime()) && d >= cutoff;
   });
 
   const el = document.getElementById('rk-crows');
@@ -1599,7 +1632,7 @@ function rkRenderConsistency() {
     return;
   }
 
-  // Aggregate per player
+  // ── Aggregate per player ──
   const map = {};
   filtered.forEach(r => {
     const p = r.player || r.jogador || '';
@@ -1626,19 +1659,20 @@ function rkRenderConsistency() {
       score: Math.max(0, Math.round(100 - Math.abs(p.wr - avg))),
       diff:  p.wr - avg
     }))
-    // Sort: best WR first (highest on top)
     .sort((a, b) => b.wr - a.wr);
 
-  // Column headers
+  const n = rows.length;
+
+  // ── Column header ──
   const header = `
-    <div style="display:grid;grid-template-columns:180px 1fr 72px 64px 52px;
-      align-items:center;gap:8px;padding:0 4px 8px;
-      border-bottom:1.5px solid #e2e8f0;margin-bottom:6px">
+    <div style="display:grid;grid-template-columns:200px 1fr 72px 64px 52px;
+      align-items:center;gap:8px;padding:0 4px 10px;
+      border-bottom:1.5px solid #e2e8f0;margin-bottom:2px">
       <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
         text-transform:uppercase;color:#9ab0c8">Jogador</div>
       <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
         text-transform:uppercase;color:#9ab0c8;text-align:center">
-        Win Rate  <span style="opacity:.5;font-size:8px">↕ média do grupo</span>
+        Win Rate &nbsp;<span style="opacity:.5;font-size:8px">↕ média do grupo</span>
       </div>
       <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
         text-transform:uppercase;color:#9ab0c8;text-align:right">WR%</div>
@@ -1649,21 +1683,22 @@ function rkRenderConsistency() {
     </div>`;
 
   const rowsHtml = rows.map((r, i) => {
-    const barCol  = r.diff >= 0 ? '#27AE60' : '#E74C3C';
+    const barCol   = r.diff >= 0 ? '#27AE60' : '#E74C3C';
     const diffSign = r.diff >= 0 ? '+' : '';
     const diffCol  = r.diff >= 0 ? '#1a7a44' : '#c0392b';
-    const n    = rows.length;
-    const sCol = i < 3
-      ? 'background:#E8F8EE;color:#1a7a44'            // top 3 → verde
-      : i >= n - 3
-      ? 'background:rgba(231,76,60,.1);color:#c0392b' // bottom 3 → vermelho
-      : 'background:#FFF8E0;color:#865a10';            // meio → amarelo
+    const abAbx    = r.diff >= 0 ? 'acima' : 'abaixo';
 
-    // Medal for top 3
+    // Position-based score colour
+    const sCol = i < 3
+      ? 'background:#E8F8EE;color:#1a7a44'
+      : i >= n - 3
+      ? 'background:rgba(231,76,60,.1);color:#c0392b'
+      : 'background:#FFF8E0;color:#865a10';
+
     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
 
     return `<div class="rk-crow" style="animation:rowIn .2s ease ${i*20}ms both;
-      display:grid;grid-template-columns:180px 1fr 72px 64px 52px;
+      display:grid;grid-template-columns:200px 1fr 72px 64px 52px;
       align-items:center;gap:8px;padding:7px 4px;
       border-bottom:.5px solid #f4f7fc">
       <div class="rk-cname" style="display:flex;align-items:center;gap:7px;min-width:0">
@@ -1689,8 +1724,7 @@ function rkRenderConsistency() {
       <div style="text-align:right">
         <div style="font-family:'DM Mono';font-size:12px;font-weight:700;
           color:${diffCol}">${diffSign}${r.diff.toFixed(1)}%</div>
-        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">
-          ${r.diff >= 0 ? 'acima' : 'abaixo'}</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">${abAbx}</div>
       </div>
       <div style="text-align:center">
         <div style="display:inline-block;padding:3px 8px;border-radius:99px;
@@ -1699,9 +1733,8 @@ function rkRenderConsistency() {
     </div>`;
   }).join('');
 
-  // Footer: avg reference
   const footer = `
-    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
       font-size:10px;color:#9ab0c8;font-family:'DM Mono'">
       <div style="width:18px;height:2px;background:#0d1e3a;flex-shrink:0"></div>
       Linha = média do grupo no período
