@@ -332,6 +332,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="sb-divider"></div>
     <div class="sb-section-label">Análise</div>
     <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()"><span class="sb-ic" style="background:#ccfbf1">📊</span> Ranking</button>
+    <button class="tab" id="tab-consistency" onclick="showTab('consistency',this);loadConsistency()"><span class="sb-ic" style="background:#dcfce7">📈</span> Consistência</button>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Sistema</div>
@@ -590,6 +591,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div id="rk-body"></div>
     </div>
     <div class="rk-upd" id="rk-upd"></div>
+    
+
+
+  <!-- ── CONSISTENCY PANEL ── -->
+  <div class="panel" id="p-consistency">
+    <div class="rk-status-row" style="margin-bottom:16px">
+      <div class="rk-dot" id="cons-dot" style="background:#9ab0c8"></div>
+      <div id="cons-stxt" style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;letter-spacing:.5px">Carrega junto com o ranking</div>
+    </div>
     <div class="rk-sec">Consistência por Período</div>
     <div class="cb-band">
       <div class="cb-band-title">Score de Consistência</div>
@@ -604,6 +614,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="rk-crows" id="rk-crows"></div>
       <div class="rk-avg-ind"><div class="rk-avg-line"></div><span>Linha = média do grupo no período</span></div>
     </div>
+  </div>
   </div>
 
   <!-- ── SESSION HISTORY ── -->
@@ -2667,6 +2678,24 @@ function applyRkFilter() {
   }));
 
   rkRenderTable(); rkUpdateKPIs(rkDataFiltered);
+}
+
+
+// ── loadConsistency — called when tab is clicked ──
+function loadConsistency() {
+  // Data is already loaded with ranking — just re-render
+  const dot  = document.getElementById('cons-dot');
+  const stxt = document.getElementById('cons-stxt');
+  if (rkSessData.length) {
+    if (dot)  dot.style.background  = '#27AE60';
+    if (stxt) stxt.textContent = `${rkSessData.length} linhas de stats · ${rkAllSessions.length} sessões`;
+    rkRenderConsistency();
+  } else {
+    if (dot)  dot.style.background = '#C9933A';
+    if (stxt) stxt.textContent = 'A carregar dados... abre Ranking primeiro.';
+    // Trigger ranking load if not yet loaded
+    if (!rkData.length) loadRanking().then(() => rkRenderConsistency());
+  }
 }
 
 </script>
