@@ -1587,16 +1587,19 @@ function rkRenderTable() {
 function rkRenderConsistency() {
   const now = new Date();
   const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth() - rkPeriod);
-  // rkSessData from Stats_Sessions — accept both EN and PT field names
+
   const filtered = rkSessData.filter(r => {
     const d = r.date || r.sessao_data || r.data || '';
     return d && new Date(d) >= cutoff;
   });
+
   const el = document.getElementById('rk-crows');
   if (!filtered.length) {
     el.innerHTML = '<div style="font-size:11px;color:#9ab0c8;padding:8px 0">Sem dados para este período.</div>';
     return;
   }
+
+  // Aggregate per player
   const map = {};
   filtered.forEach(r => {
     const p = r.player || r.jogador || '';
@@ -1606,33 +1609,107 @@ function rkRenderConsistency() {
     if (!map[p]) map[p] = {m:0, w:0};
     map[p].m += m; map[p].w += w;
   });
+
   const players = Object.entries(map)
-    .filter(([,d]) => d.m >= 3)
+    .filter(([,d]) => d.m >= 4)
     .map(([n,d]) => ({n, wr: d.w / d.m * 100, m: d.m}));
+
   if (!players.length) {
     el.innerHTML = '<div style="font-size:11px;color:#9ab0c8;padding:8px 0">Jogadores insuficientes.</div>';
     return;
   }
+
   const avg  = players.reduce((s,p) => s + p.wr, 0) / players.length;
   const rows = players
-    .map(p => ({...p, score: Math.max(0, Math.round(100 - Math.abs(p.wr - avg))), diff: p.wr - avg}))
-    .sort((a,b) => b.score - a.score);
-  el.innerHTML = rows.map((r,i) => {
-    const barCol = r.diff >= 0 ? '#27AE60' : '#E74C3C';
-    const sCol = r.score>=80
-      ? 'background:#E8F8EE;color:#1a7a44'
-      : r.score>=60 ? 'background:#FFF8E0;color:#865a10'
-      : 'background:rgba(231,76,60,.1);color:#c0392b';
-    return `<div class="rk-crow" style="animation:rowIn .2s ease ${i*20}ms both">
-      <div class="rk-cname"><div class="rk-av" style="background:${rkCol(r.n)};width:22px;height:22px;font-size:10px">${rkIni(r.n)}</div>${r.n}</div>
-      <div class="rk-bar-wrap">
-        <div class="rk-bar-fill" style="width:${Math.min(100,r.wr)}%;background:${barCol};opacity:.7"></div>
-        <div class="rk-bar-avg" style="left:${Math.min(100,avg)}%"></div>
+    .map(p => ({
+      ...p,
+      score: Math.max(0, Math.round(100 - Math.abs(p.wr - avg))),
+      diff:  p.wr - avg
+    }))
+    // Sort: best WR first (highest on top)
+    .sort((a, b) => b.wr - a.wr);
+
+  // Column headers
+  const header = `
+    <div style="display:grid;grid-template-columns:180px 1fr 72px 64px 52px;
+      align-items:center;gap:8px;padding:0 4px 8px;
+      border-bottom:1.5px solid #e2e8f0;margin-bottom:6px">
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
+        text-transform:uppercase;color:#9ab0c8">Jogador</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
+        text-transform:uppercase;color:#9ab0c8;text-align:center">
+        Win Rate  <span style="opacity:.5;font-size:8px">↕ média do grupo</span>
       </div>
-      <div class="rk-cwr" style="color:${rkWCol(r.wr)}">${r.wr.toFixed(0)}%<div style="font-size:9px;color:#9ab0c8">${r.diff>=0?'+':''}${r.diff.toFixed(1)}%</div></div>
-      <div class="rk-cscore" style="${sCol}">${r.score}</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
+        text-transform:uppercase;color:#9ab0c8;text-align:right">WR%</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
+        text-transform:uppercase;color:#9ab0c8;text-align:right">vs Média</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;
+        text-transform:uppercase;color:#9ab0c8;text-align:center">Score</div>
+    </div>`;
+
+  const rowsHtml = rows.map((r, i) => {
+    const barCol  = r.diff >= 0 ? '#27AE60' : '#E74C3C';
+    const diffSign = r.diff >= 0 ? '+' : '';
+    const diffCol  = r.diff >= 0 ? '#1a7a44' : '#c0392b';
+    const n    = rows.length;
+    const sCol = i < 3
+      ? 'background:#E8F8EE;color:#1a7a44'            // top 3 → verde
+      : i >= n - 3
+      ? 'background:rgba(231,76,60,.1);color:#c0392b' // bottom 3 → vermelho
+      : 'background:#FFF8E0;color:#865a10';            // meio → amarelo
+
+    // Medal for top 3
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}.`;
+
+    return `<div class="rk-crow" style="animation:rowIn .2s ease ${i*20}ms both;
+      display:grid;grid-template-columns:180px 1fr 72px 64px 52px;
+      align-items:center;gap:8px;padding:7px 4px;
+      border-bottom:.5px solid #f4f7fc">
+      <div class="rk-cname" style="display:flex;align-items:center;gap:7px;min-width:0">
+        <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;
+          width:20px;text-align:right;flex-shrink:0">${medal}</span>
+        <div class="rk-av" style="background:${rkCol(r.n)};width:22px;height:22px;
+          font-size:10px;flex-shrink:0">${rkIni(r.n)}</div>
+        <span style="font-size:12px;font-weight:600;color:#0d1e3a;
+          white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.n}</span>
+      </div>
+      <div class="rk-bar-wrap" style="position:relative">
+        <div class="rk-bar-fill" style="width:${Math.min(100,r.wr)}%;
+          background:${barCol};opacity:.7"></div>
+        <div class="rk-bar-avg" style="left:${Math.min(100,avg)}%"
+          title="Média: ${avg.toFixed(1)}%"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono';font-size:12px;font-weight:700;
+          color:${rkWCol(r.wr)}">${r.wr.toFixed(0)}%</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">
+          ${r.m} part.</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'DM Mono';font-size:12px;font-weight:700;
+          color:${diffCol}">${diffSign}${r.diff.toFixed(1)}%</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">
+          ${r.diff >= 0 ? 'acima' : 'abaixo'}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="display:inline-block;padding:3px 8px;border-radius:99px;
+          font-family:'DM Mono';font-size:12px;font-weight:700;${sCol}">${r.score}</div>
+      </div>
     </div>`;
   }).join('');
+
+  // Footer: avg reference
+  const footer = `
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;
+      font-size:10px;color:#9ab0c8;font-family:'DM Mono'">
+      <div style="width:18px;height:2px;background:#0d1e3a;flex-shrink:0"></div>
+      Linha = média do grupo no período
+      <span style="margin-left:8px;padding:2px 8px;background:#f4f7fc;
+        border-radius:99px;color:#5a7090">WR médio: ${avg.toFixed(1)}%</span>
+    </div>`;
+
+  el.innerHTML = header + rowsHtml + footer;
 }
 
 // ── loadHistory — reads Sessions_Sessions with EN field names ──
