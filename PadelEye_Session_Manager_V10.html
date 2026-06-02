@@ -545,9 +545,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
       <div class="rk-sec" style="margin-bottom:0" id="rk-season-label">Temporada 2024–2026</div>
-      <div style="display:flex;gap:5px;flex-wrap:wrap" id="rk-filter-bar">
-        <button class="rk-sbtn on" id="rk-f-year"   onclick="rkSetFilter('year',this)">📅 Ano Atual</button>
-        <button class="rk-sbtn"    id="rk-f-all"    onclick="rkSetFilter('all',this)">🌐 Todas</button>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center" id="rk-filter-bar">
+        <button class="rk-sbtn on" id="rk-f-all"    onclick="rkSetFilter('all',this)">🌐 Todas</button>
+        <button class="rk-sbtn"    id="rk-f-2026"   onclick="rkSetFilter('2026',this)">📅 2026</button>
+        <button class="rk-sbtn"    id="rk-f-2025"   onclick="rkSetFilter('2025',this)">📅 2025</button>
+        <button class="rk-sbtn"    id="rk-f-2024"   onclick="rkSetFilter('2024',this)">📅 2024</button>
         <button class="rk-sbtn"    id="rk-f-custom" onclick="rkSetFilter('custom',this)">🔍 Período</button>
       </div>
     </div>
@@ -1443,13 +1445,21 @@ async function loadRanking() {
 // ── rkUpdateKPIs — EN field names + sort-aware ──
 function rkUpdateKPIs(data) {
   const totalM = data.reduce((s,p) => s + (+(p.matches || p.partidas || 0)), 0);
-  document.getElementById('rk-k-players').textContent = data.length;
+  const eligibleCount = data.filter(p => +(p.matches||p.partidas||0) >= 4).length;
+  document.getElementById('rk-k-players').textContent = eligibleCount || data.length;
   document.getElementById('rk-k-sess').textContent    = rkTotalSessions;
-  document.getElementById('rk-k-span').textContent    = 'Out 2024 → Mai 2026';
+  // Dynamic span from actual session dates
+  const sessWithDates = rkAllSessions.filter(s => s.session_date || s.date || s.data);
+  if (sessWithDates.length >= 2) {
+    const dates = sessWithDates.map(s => formatDateBR(s.session_date||s.date||s.data,{month:'short',year:'numeric'}));
+    document.getElementById('rk-k-span').textContent = dates[dates.length-1] + ' → ' + dates[0];
+  } else {
+    document.getElementById('rk-k-span').textContent = rkTotalSessions + ' sessões';
+  }
   document.getElementById('rk-k-matches').textContent = Math.round(totalM / 2);
 
   // Leader changes based on current sort criteria
-  const sorted = [...data];
+  const sorted = data.filter(p => +(p.matches||p.partidas||0) >= 4);
   let leaderName = '—', leaderSub = '—', leaderLabel = 'Líder';
   if (rkSort === 'win_rate') {
     sorted.sort((a,b) => rkWR(b.win_rate) - rkWR(a.win_rate));
@@ -1516,7 +1526,7 @@ function rkRenderTable() {
   });
 
   const _src = rkDataFiltered || rkData;
-  const sorted = _src.map(norm).filter(p => p.wins >= 1).sort((a,b) => {
+  const sorted = _src.map(norm).filter(p => p.matches >= 4).sort((a,b) => {
     // Primary criterion
     let d = 0;
     if      (rkSort==='win_rate'||rkSort==='wr')          d = rkWR(b.win_rate)       - rkWR(a.win_rate);
@@ -1882,6 +1892,11 @@ function rkSetSort(key, el) {
 // ══════════════════════════════════════════
 // ── OBJETIVO: Variáveis de estado e helpers visuais do ranking ────────────────
 let rkData = [], rkSort = 'win_rate', rkPeriod = 3, rkTotalSessions = 0, rkSessData = [];
+let rkAllSessions  = [];    // all Sessions_Sessions rows (with dates + session_mvp)
+let rkDataFiltered = null;  // null = show all; array = filtered result
+let rkFilterMode   = 'all'; // 'all' | 'year' | 'custom' | '2024' | '2025' | '2026'
+let rkFilterStart  = '';
+let rkFilterEnd    = '';
 function rkWR(s){ return parseFloat(String(s).replace('%',''))||0; }
 function rkWCol(v){ return v>=60?'#27AE60':v<30?'#E74C3C':'#0d1e3a'; }
 function rkCol(n){
@@ -2374,20 +2389,34 @@ document.addEventListener('click', function(e) {
 
 /** Recompute mvp_count for each player from Stats_Sessions rows */
 function rkRecomputeMVPs() {
-  if (!rkSessData.length) return;
+  // Primary source: Sessions_Sessions.session_mvp (most reliable)
   const mvpMap = {};
-  rkSessData.forEach(r => {
-    const player = r.player || r.jogador || '';
-    if (!player) return;
-    const f = r.mvp || r.is_mvp || '';
-    const isMVP = f === true || f === 'TRUE' || f === '1' || f === 1
-      || (typeof f === 'string' && f.toLowerCase() === 'true')
-      || (typeof f === 'string' && f.trim().length > 1 && f.trim() === player.trim());
-    if (isMVP) mvpMap[player] = (mvpMap[player] || 0) + 1;
+
+  // From Sessions table
+  rkAllSessions.forEach(s => {
+    const mvpName = String(s.session_mvp || s.mvp || '').trim();
+    if (mvpName && mvpName !== '—' && mvpName !== '') {
+      mvpMap[mvpName] = (mvpMap[mvpName] || 0) + 1;
+    }
   });
+
+  // Supplement from Stats_Sessions if Sessions had no MVP data
+  if (!Object.keys(mvpMap).length && rkSessData.length) {
+    rkSessData.forEach(r => {
+      const player = String(r.player || r.jogador || '').trim();
+      if (!player) return;
+      const f = r.mvp || r.is_mvp || '';
+      const isMVP = f === true || f === 'TRUE' || f === 1 || f === '1'
+        || (typeof f === 'string' && f.toLowerCase() === 'true')
+        || (typeof f === 'string' && f.trim().length > 1 && f.trim() === player);
+      if (isMVP) mvpMap[player] = (mvpMap[player] || 0) + 1;
+    });
+  }
+
+  // Patch rkData with recomputed counts
   rkData.forEach(r => {
-    const player = r.player || r.jogador || '';
-    if (mvpMap[player] !== undefined) r.mvp_count = mvpMap[player];
+    const player = String(r.player || r.jogador || '').trim();
+    r.mvp_count = mvpMap[player] || +(r.mvp_count || 0);
   });
 }
 
@@ -2395,7 +2424,7 @@ function rkRecomputeMVPs() {
 function rkSetFilter(mode, el) {
   rkFilterMode = mode;
   document.querySelectorAll('#rk-filter-bar .rk-sbtn').forEach(b => b.classList.remove('on'));
-  el.classList.add('on');
+  if (el) el.classList.add('on');
   const dr = document.getElementById('rk-date-range');
   if (dr) dr.style.display = mode === 'custom' ? 'flex' : 'none';
   if (mode !== 'custom') applyRkFilter();
@@ -2405,29 +2434,32 @@ function rkSetFilter(mode, el) {
 function applyRkFilter() {
   const yr = new Date().getFullYear();
 
+  // Highlight correct button if needed
   if (rkFilterMode === 'all') {
-    rkDataFiltered = null;
     document.getElementById('rk-season-label').textContent = 'Todas as Temporadas';
-    rkRenderTable();
-    rkUpdateKPIs(rkData);
-    return;
+    rkDataFiltered = null;
+    rkRenderTable(); rkUpdateKPIs(rkData); return;
   }
 
+  // Year filter: '2026', '2025', '2024', or 'year' (current)
+  const isYearFilter = !isNaN(parseInt(rkFilterMode)) || rkFilterMode === 'year';
+  const targetYear   = rkFilterMode === 'year' ? yr : parseInt(rkFilterMode);
+
   // Get session date map from rkAllSessions
-  const sessDateMap = {};
+  const sessDateMap = {}; // serial_number → date string
   rkAllSessions.forEach(s => {
-    const num  = String(s.session_serial_number || s.numero || s.number || '');
-    const date = s.date || s.data || s.sessao_data || '';
+    const num  = String(s.session_serial_number || s.numero || s.number || s.sessao || '').replace(/^S/i,'').trim();
+    const date = s.session_date || s.date || s.data || s.sessao_data || '';
     if (num && date) sessDateMap[num] = date;
   });
 
   let filterStart, filterEnd;
-  if (rkFilterMode === 'year') {
-    filterStart = new Date(yr, 0, 1);
-    filterEnd   = new Date(yr, 11, 31, 23, 59, 59);
-    document.getElementById('rk-season-label').textContent = `Temporada ${yr}`;
+  if (isYearFilter) {
+    filterStart = new Date(targetYear, 0, 1);
+    filterEnd   = new Date(targetYear, 11, 31, 23, 59, 59);
+    document.getElementById('rk-season-label').textContent = `Temporada ${targetYear}`;
   } else {
-    // custom
+    // custom period
     const fromVal = document.getElementById('rk-date-from')?.value;
     const toVal   = document.getElementById('rk-date-to')?.value;
     if (!fromVal && !toVal) {
@@ -2436,44 +2468,61 @@ function applyRkFilter() {
     }
     filterStart = fromVal ? new Date(fromVal) : null;
     filterEnd   = toVal   ? new Date(toVal + 'T23:59:59') : null;
-    const fmt = d => d?.toLocaleDateString('pt-BR', {day:'2-digit',month:'short',year:'numeric'}) || '—';
+    const fmt = d => d?.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) || '—';
     document.getElementById('rk-season-label').textContent = `${fmt(filterStart)} → ${fmt(filterEnd)}`;
   }
 
-  // Collect sessions in the date range
+  // Collect sessions in date range
   const validSessNums = new Set();
   Object.entries(sessDateMap).forEach(([num, dateStr]) => {
-    const d = new Date(dateStr);
+    const d = formatDateBR.__parse ? formatDateBR.__parse(dateStr) : new Date(dateStr.includes('/') ? dateStr.split('/').reverse().join('-') : dateStr);
     if (filterStart && d < filterStart) return;
     if (filterEnd   && d > filterEnd)   return;
     validSessNums.add(num);
   });
 
-  // If no date info available, fall back to full data
-  if (!validSessNums.size && rkFilterMode !== 'all') {
-    const fc = document.getElementById('rk-filter-count');
-    if (fc) fc.textContent = '(sem dados de datas — mostrando tudo)';
+  const fc = document.getElementById('rk-filter-count');
+
+  // No date info — fall back gracefully
+  if (!validSessNums.size) {
+    if (fc) fc.textContent = '(sem dados de datas — a mostrar tudo)';
     rkDataFiltered = null;
     rkRenderTable(); rkUpdateKPIs(rkData); return;
   }
-
-  const fc = document.getElementById('rk-filter-count');
   if (fc) fc.textContent = `${validSessNums.size} sessões`;
 
-  // Filter Stats_Sessions rows to valid sessions
+  // Filter Stats_Sessions to valid sessions
   const filteredStats = rkSessData.filter(r => {
-    const sn = String(r.session_serial_number || r.sessao || r.session || '');
-    return validSessNums.has(sn) || validSessNums.has(sn.replace(/^S/i,''));
+    const sn = String(r.session_serial_number || r.sessao || r.session || '').replace(/^S/i,'').trim();
+    return validSessNums.has(sn);
   });
 
-  // Aggregate per player
+  // If Stats empty, filter rkData directly by recomputing from Sessions
+  if (!filteredStats.length) {
+    // Re-aggregate from rkData using rkAllSessions MVP data
+    const filtSessSet = validSessNums;
+    const mvpMap = {};
+    rkAllSessions.forEach(s => {
+      const sn  = String(s.session_serial_number || s.numero || '').replace(/^S/i,'').trim();
+      if (!filtSessSet.has(sn)) return;
+      const mvpName = s.session_mvp || s.mvp || '';
+      if (mvpName) mvpMap[mvpName] = (mvpMap[mvpName] || 0) + 1;
+    });
+    rkDataFiltered = rkData.map(r => {
+      const p = String(r.player || r.jogador || '');
+      return { ...r, mvp_count: mvpMap[p] || 0 };
+    });
+    rkRenderTable(); rkUpdateKPIs(rkDataFiltered); return;
+  }
+
+  // Aggregate per player from Stats_Sessions
   const pMap = {};
   filteredStats.forEach(r => {
-    const player = r.player || r.jogador || '';
+    const player = String(r.player || r.jogador || '').trim();
     if (!player) return;
     if (!pMap[player]) pMap[player] = {
       player, wins:0, losses:0, matches:0,
-      points_for:0, points_against:0, mvp_count:0, _sessions: new Set()
+      points_for:0, points_against:0, mvp_count:0, _sess: new Set()
     };
     const p = pMap[player];
     p.wins          += +(r.wins    || r.vitorias || 0);
@@ -2481,20 +2530,18 @@ function applyRkFilter() {
     p.matches       += +(r.matches || r.partidas || 0);
     p.points_for    += +(r.points_for    || r.pg || 0);
     p.points_against+= +(r.points_against|| r.pc || 0);
-    const sn = String(r.session_serial_number || r.sessao || '');
-    if (sn) p._sessions.add(sn);
-    const f = r.mvp || r.is_mvp || '';
-    const isMVP = f===true||f==='TRUE'||f==='1'||f===1
-      ||(typeof f==='string'&&f.toLowerCase()==='true')
-      ||(typeof f==='string'&&f.trim().length>1&&f.trim()===player.trim());
-    if (isMVP) p.mvp_count++;
+    const sn = String(r.session_serial_number || r.sessao || '').replace(/^S/i,'').trim();
+    if (sn) p._sess.add(sn);
   });
 
-  // If Stats_Sessions has no filter-able data, fall back to raw rkData with no recompute
-  if (!Object.keys(pMap).length) {
-    rkDataFiltered = null;
-    rkRenderTable(); rkUpdateKPIs(rkData); return;
-  }
+  // MVP from Sessions table (reliable source)
+  const mvpMap = {};
+  rkAllSessions.forEach(s => {
+    const sn = String(s.session_serial_number || s.numero || '').replace(/^S/i,'').trim();
+    if (!validSessNums.has(sn)) return;
+    const mvpName = s.session_mvp || s.mvp || '';
+    if (mvpName) mvpMap[mvpName.trim()] = (mvpMap[mvpName.trim()] || 0) + 1;
+  });
 
   rkDataFiltered = Object.values(pMap).map(p => ({
     player:            p.player,
@@ -2504,14 +2551,12 @@ function applyRkFilter() {
     points_for:        p.points_for,
     points_against:    p.points_against,
     points_difference: p.points_for - p.points_against,
-    sessions:          p._sessions.size,
-    mvp_count:         p.mvp_count,
-    win_rate:          p.matches > 0
-      ? (((p.wins / p.matches) * 100).toFixed(0) + '%') : '0%',
+    sessions:          p._sess.size,
+    mvp_count:         mvpMap[p.player] || 0,
+    win_rate:          p.matches > 0 ? (((p.wins/p.matches)*100).toFixed(0)+'%') : '0%',
   }));
 
-  rkRenderTable();
-  rkUpdateKPIs(rkDataFiltered);
+  rkRenderTable(); rkUpdateKPIs(rkDataFiltered);
 }
 
 </script>
