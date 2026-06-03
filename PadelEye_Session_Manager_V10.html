@@ -592,7 +592,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div class="rk-upd" id="rk-upd"></div>
     
-
+  </div>
 
   <!-- ── CONSISTENCY PANEL ── -->
   <div class="panel" id="p-consistency">
@@ -615,9 +615,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="rk-avg-ind"><div class="rk-avg-line"></div><span>Linha = média do grupo no período</span></div>
     </div>
   </div>
-  </div>
 
-  <!-- ── SESSION HISTORY ── -->
+<!-- ── SESSION HISTORY ── -->
   <div class="panel" id="p-history">
     <div id="hist-debug" style="background:#0a1628;color:#93C5FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-family:'DM Mono';font-size:10px;line-height:1.8;display:none"></div>
     <div id="hist-list-view">
@@ -1417,9 +1416,9 @@ async function loadRanking() {
   const btn  = document.getElementById('rk-ref-btn');
   const dot  = document.getElementById('rk-dot');
   const stxt = document.getElementById('rk-stxt');
-  btn.classList.add('spin'); dot.classList.add('rk-spin');
-  stxt.textContent = 'Atualizando ranking...';
-  document.getElementById('rk-body').innerHTML =
+  btn?.classList.add('spin'); dot?.classList.add('rk-spin');
+  if(stxt) stxt.textContent = 'Atualizando ranking...';
+  const rkBodyEl = document.getElementById('rk-body'); if(rkBodyEl) rkBodyEl.innerHTML =
     '<div style="padding:20px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">⏳ Carregando...</div>';
   try {
     const [rankRes, sessRes, statsRes] = await Promise.all([
@@ -1439,18 +1438,18 @@ async function loadRanking() {
     rkTotalSessions = rkAllSessions.length;
     rkRecomputeMVPs();
     const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR') : '';
-    document.getElementById('rk-upd').textContent = ts ? `Última atualização: ${ts}` : '';
+    document.getElementById('rk-upd')?.textContent && (document.getElementById('rk-upd').textContent = ts) ? `Última atualização: ${ts}` : '';
     stxt.textContent = `${rows.length} jogadores · ${rkTotalSessions} sessões · ao vivo`;
-    dot.style.background = '#27AE60';
+    if(dot) dot.style.background = '#27AE60';
   } catch(e) {
     rkData = []; rkTotalSessions = 0;
-    stxt.textContent = '⚠️ Sem conexão — dados indisponíveis';
-    dot.style.background = '#C9933A';
-    document.getElementById('rk-upd').textContent = 'Usando dados locais';
+    if(stxt) stxt.textContent = '⚠️ Sem conexão — dados indisponíveis';
+    if(dot) dot.style.background = '#C9933A';
+    if(document.getElementById('rk-upd')) document.getElementById('rk-upd').textContent = 'Usando dados locais';
   }
   applyRkFilter();
   rkRenderConsistency();
-  btn.classList.remove('spin'); dot.classList.remove('rk-spin');
+  btn?.classList.remove('spin'); dot?.classList.remove('rk-spin');
 }
 
 // ── rkUpdateKPIs — EN field names + sort-aware ──
