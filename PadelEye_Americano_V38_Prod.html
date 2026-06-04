@@ -518,6 +518,57 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .trk-sort{padding:6px 14px;border-radius:8px;border:1px solid #dde6f0;background:#f8fafd;color:#7090b0;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans';transition:all .15s;}
 .trk-sort.on{background:#0a1628;color:#C9933A;border-color:#0a1628;font-weight:700;}
 .trk-row-me{background:linear-gradient(90deg,rgba(201,147,58,.07),transparent)!important;}
+
+.save-warn-banner {
+  background: #fffbf0;
+  padding: 10px 12px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #5a3a00;
+}
+.save-warn-title {
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: #865a10;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.save-warn-reason {
+  color: #5a3a00;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.save-warn-btns {
+  display: flex;
+  gap: 6px;
+}
+.save-warn-btns button {
+  flex: 1;
+  padding: 7px;
+  border-radius: 6px;
+  font-family: 'DM Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+}
+.btn-warn-fix {
+  background: #f0f5fb;
+  color: #5a7090;
+}
+.btn-warn-fix:hover { background: #dde6f0; }
+.btn-warn-force {
+  background: #C9933A;
+  color: #0a1628;
+}
+.btn-warn-force:hover { background: #e0a840; }
+
 </style>
 </head>
 <body>
@@ -2006,6 +2057,96 @@ function safeAlert(msg, type='ok') {
 //   sem empate fora do threshold. Guarda em T.phases[phaseIdx].results[key].
 // ATENÇÃO: key = "phaseIdx-groupIdx-matchIdx" — formato crítico, usado em todo
 //   o engine para indexar resultados. Não alterar sem atualizar groupStandings().
+
+// ── showSaveWarning — inline banner with "Fix" or "Save Anyway" ──────────────
+function showSaveWarning(key, phIdx, gi, mi, reason) {
+  const el = document.getElementById('warn-' + key);
+  if (!el) {
+    // Fallback: use global alert with confirm
+    if (confirm('⚠️ ' + reason + '\n\nSalvar mesmo assim?')) {
+      saveMatchForce(phIdx, gi, mi);
+    }
+    return;
+  }
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="save-warn-banner">
+      <div class="save-warn-title">⚠️ PLACAR FORA DAS REGRAS</div>
+      <div class="save-warn-reason">${reason}</div>
+      <div class="save-warn-btns">
+        <button class="btn-warn-fix" onclick="hideSaveWarning('${key}')">
+          ✕ Corrigir
+        </button>
+        <button class="btn-warn-force" onclick="saveMatchForce(${phIdx},${gi},${mi})">
+          ✓ Salvar mesmo assim
+        </button>
+      </div>
+    </div>`;
+}
+
+function hideSaveWarning(key) {
+  const el = document.getElementById('warn-' + key);
+  if (el) { el.style.display = 'none'; el.innerHTML = ''; }
+}
+
+// ── saveMatchForce — bypasses all validation, saves as-is ───────────────────
+function saveMatchForce(phaseIdx, groupIdx, matchIdx) {
+  const key = `${phaseIdx}-${groupIdx}-${matchIdx}`;
+  hideSaveWarning(key);
+
+  const inA = document.getElementById(`sc-${key}-a`);
+  const inB = document.getElementById(`sc-${key}-b`);
+  if (!inA || !inB) return;
+  const sa = parseInt(inA.value), sb = parseInt(inB.value);
+  if (isNaN(sa) || isNaN(sb)) return;
+
+  const tbBtn = document.getElementById(`tb-btn-${key}`);
+  const hasTB = tbBtn?.dataset?.active === '1';
+  let tba = null, tbb = null;
+  if (hasTB) {
+    tba = parseInt(document.getElementById(`tb-${key}-a`)?.value || '') || null;
+    tbb = parseInt(document.getElementById(`tb-${key}-b`)?.value || '') || null;
+  }
+
+  // Save with override flag
+  T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb, override:true };
+  persistT();
+
+  // Write to DB if tournament is active
+  if (T.id) {
+    const ph      = T.phases[phaseIdx];
+    const group   = ph.groups[groupIdx];
+    const LETTERS = ['A','B','C','D','E','F','G','H'];
+    const _matches = [
+      { a:[group[0],group[1]], b:[group[2],group[3]] },
+      { a:[group[0],group[2]], b:[group[1],group[3]] },
+      { a:[group[0],group[3]], b:[group[1],group[2]] },
+    ];
+    const m = _matches[matchIdx];
+    PadelEyeDB.upsertPartida({
+      match_id:            `${T.id}-${key}`,
+      tournament_id:       T.id,
+      phase:               ph.name,
+      group:               LETTERS[groupIdx],
+      team_a:              (m?.a || []).join(' / '),
+      team_b:              (m?.b || []).join(' / '),
+      winner_team:         sa > sb ? (m?.a || []).join(' / ') : (m?.b || []).join(' / '),
+      score_a:             sa,
+      score_b:             sb,
+      match_serial_number: matchIdx + 1,
+      tie_break:           hasTB ? 'Sim' : 'Não',
+      tb_a:                tba ?? '',
+      tb_b:                tbb ?? '',
+      override_rule:       'Sim',
+      saved_at:            new Date().toISOString(),
+      created_at:          new Date().toISOString(),
+    }).then(r => { if (!r?.ok) console.warn('[V38] upsertPartida override failed:', r); });
+  }
+
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
+  gameAlert(`✅ ${sa}×${sb} guardado (fora das regras — aprovado pelo organizador).`, 'ok');
+}
+
 function saveMatch(phaseIdx, groupIdx, matchIdx) {
   const key = `${phaseIdx}-${groupIdx}-${matchIdx}`;
   const inA = document.getElementById(`sc-${key}-a`);
@@ -2043,40 +2184,38 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   const l = Math.min(sa, sb);
 
   if (sa === sb) {
-    gameAlert(`Placar ${sa}×${sb} — empate não é um resultado final válido.`, 'warn');
-    return;
+    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${sa}×\${sb} — empate não é um resultado final válido.`);
   }
 
   if (w > maxSc) {
-    gameAlert(`Placar ${w}×${l} inválido — score máximo configurado é ${maxSc}.`, 'warn');
-    return;
+    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${w}×\${l} inválido — score máximo configurado é \${maxSc}.`);
   }
 
   // ── V37 FIX 1: Para maxSc=7, w=7 só é válido com l=5 (7×5) ou l=6+TB (7×6)
   // 7×0 até 7×4 são impossíveis: 7 games só se atinge depois de 5×5.
-  const normal6Win   = (w === 6 && l <= 4);                             // 6×0–6×4 (qualquer formato)
-  const normal7Win   = (maxSc === 7 && w === 7 && l === 5);             // 7×5 (único resultado normal com w=7)
-  const normalWin    = normal6Win || normal7Win;
-  const tbWin        = (w === maxSc && l === tbAt);                      // 6×5+TB ou 7×6+TB
+  // ── V38 FIX: Generalised score validation for all maxSc formats ─────────────
+  // maxSc=7 is "deuce" format: normal play reaches 6 (not 7), TB at 6×6 gives 7×6
+  // All other formats (maxSc=4,6,9): winner reaches maxSc before TB threshold
+  const isDeuce7  = (maxSc === 7 && tbAt === 6);
+  const normalWin = isDeuce7
+    ? (w === 6 && l < tbAt)         // 6×0–6×5 (normal win in maxSc=7 format)
+    : (w === maxSc && l < tbAt);    // 4×0–4×2 / 6×0–6×4 / 9×0–9×8
+  const tbWin     = (w === maxSc && l === tbAt); // 4×3+TB / 6×5+TB / 7×6+TB
 
   if (normalWin) {
     // Vitória normal ✅
 
   } else if (tbWin) {
     if (!hasTB) {
-      gameAlert(`Placar ${w}×${l} requer o Tie-Break activo — o jogo chegou a ${tbAt}×${tbAt}.`, 'warn');
-      return;
+      return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${w}×\${l} — o jogo chegou a \${tbAt}×\${tbAt}. Active o Tie-Break e insira o resultado do mini-jogo.`);
     }
     // Vitória por Tie-Break ✅
 
-  } else if (w === maxSc && l === tbAt - 1 && !normalWin) {
-    // Score como 6×5 (maxSc=6) ou 7×6 (maxSc=7) sem TB activo
-    gameAlert(`Placar ${w}×${l} — active o Tie-Break se o jogo foi a ${tbAt}×${tbAt}.`, 'warn');
-    return;
-
   } else {
-    gameAlert(`Placar ${sa}×${sb} inválido — com maxSc=${maxSc}, w=${w} só é possível com adversário em ${tbAt-1} ou ${tbAt}.`, 'warn');
-    return;
+    const hint = isDeuce7
+      ? `Placares válidos: 6×0 a 6×5 (normal) ou 7×6 com Tie-Break.`
+      : `Placares válidos: ${maxSc}×0 a ${maxSc}×${tbAt-1} (normal) ou ${maxSc}×${tbAt} com Tie-Break.`;
+    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${sa}×\${sb} inválido. \${hint}`);
   }
 
   // ── V37 FIX 2: TB points ──────────────────────────────────────────────────
@@ -2087,19 +2226,17 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   if (needsTBScores) {
     tba = parseInt(document.getElementById(`tb-${key}-a`)?.value || '');
     tbb = parseInt(document.getElementById(`tb-${key}-b`)?.value || '');
-    if (isNaN(tba) || isNaN(tbb)) { gameAlert('Insira o placar do Tie-Break (mini-jogo).','warn'); return; }
-    if (tba === tbb)              { gameAlert('Tie-Break não pode terminar empatado.','warn'); return; }
+    if (isNaN(tba) || isNaN(tbb)) { return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, 'Tie-Break activo mas placar do mini-jogo não preenchido. Insira os pontos do TB ou desactive o Tie-Break.'); }
+    if (tba === tbb)              { return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Tie-Break ${tba}×${tbb} — empate não é um resultado válido de Tie-Break.`); }
     if (maxSc <= 7) {
       // Regras estritas (padel standard)
       const tbW = Math.max(tba, tbb);
       const tbL = Math.min(tba, tbb);
       if (tbW < 7) {
-        gameAlert(`TB ${tba}×${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`, 'warn');
-        return;
+        return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `TB \${tba}×\${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`);
       }
       if (tbW - tbL < 2) {
-        gameAlert(`TB ${tba}×${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`, 'warn');
-        return;
+        return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `TB \${tba}×\${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`);
       }
     }
     // maxSc=8 ou 9: sem validação adicional — admin insere o resultado real
@@ -2387,7 +2524,9 @@ function renderRounds() {
                    color:#5a7090;font-family:'DM Mono';font-size:9px;font-weight:600;letter-spacing:0.05em;cursor:pointer">
             Salvar Partida no DB
           </button>
-        </div>` : `
+        </div>
+        <div id="warn-${key}" style="display:none;margin:0 12px 10px;border-radius:8px;overflow:hidden;border:1.5px solid #e8c870;"></div>
+        ` : `
         <div style="padding:0 12px 10px">
           <button onclick="unsaveMatch('${key}',${phIdx},${gi},${mi})"
             style="width:100%;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;
