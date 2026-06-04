@@ -1463,12 +1463,18 @@ function doLogin() {
   // ── V36: Check for in-progress tournament (crash recovery) ────────────────
   const saved = restoreT();
   if (saved) {
-    const resumeBanner = document.getElementById('resume-banner');
-    if (resumeBanner) {
-      document.getElementById('resume-torneio-name').textContent = saved.name || 'Torneio em curso';
-      document.getElementById('resume-torneio-id').textContent  = saved.id;
-      resumeBanner.style.display = 'flex';
-      window._savedT = saved;
+    // ── Check if tournament is complete — if so, clear and don't prompt ─────
+    const isFinalized = saved.status === 'finalizado' || isTournamentLocallyComplete(saved);
+    if (isFinalized) {
+      clearPersistedT(); // Don't offer resume — go direct to config for new tournament
+    } else {
+      const resumeBanner = document.getElementById('resume-banner');
+      if (resumeBanner) {
+        document.getElementById('resume-torneio-name').textContent = saved.name || 'Torneio em curso';
+        document.getElementById('resume-torneio-id').textContent  = saved.id;
+        resumeBanner.style.display = 'flex';
+        window._savedT = saved;
+      }
     }
   }
 
@@ -1877,6 +1883,23 @@ function persistT() {
 }
 
 // ── Restore T from localStorage ────────────────────────────────────────────
+
+// ── isTournamentLocallyComplete: all matches in all phases saved ──────────────
+function isTournamentLocallyComplete(tData) {
+  if (!tData?.phases?.length) return false;
+  for (const phase of tData.phases) {
+    if (!phase.groups?.length) continue;
+    for (let gi = 0; gi < phase.groups.length; gi++) {
+      const group = phase.groups[gi];
+      const nMatches = 3; // Americano: always 3 matches per group
+      for (let mi = 0; mi < nMatches; mi++) {
+        const key = `${tData.phases.indexOf(phase)}-${gi}-${mi}`;
+        if (!phase.results?.[key]?.saved) return false;
+      }
+    }
+  }
+  return true;
+}
 function restoreT() {
   try {
     const raw = localStorage.getItem('padeleye_T_v36');
@@ -3375,6 +3398,8 @@ function startTournament() {
       players_per_group:   jogPorGrupo,
       num_phases:          T.numFases || 3,
       tournament_category: T.categoria || '',
+      venue:               T.venue || currentUser?.club || '',
+      group_number:        T.numGrupos || 0,
       status:              'em_curso',
       created_at:          new Date().toISOString(),
     };
@@ -5313,6 +5338,12 @@ async function loadHistTorneios() {
   }
 }
 
+
+// ── toTeamStr: safely convert team_a/team_b regardless of DB format ──────────
+function toTeamStr(t) {
+  if (Array.isArray(t)) return t.join(' / ');
+  return String(t || '');
+}
 function _htRenderGrid() {
   const grid = document.getElementById('ht-grid');
   const trns = _htData.tournaments;
@@ -5327,8 +5358,8 @@ function _htRenderGrid() {
     const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
     const players = new Set();
     tm.forEach(m => {
-      (m.team_a||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
-      (m.team_b||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
+      toTeamStr(m.team_a).split(' / ').forEach(p=>p&&players.add(p.trim()));
+      toTeamStr(m.team_b).split(' / ').forEach(p=>p&&players.add(p.trim()));
     });
     const winner = sc.find(s => s.rank==='🥇');
     const [stBg, stCol] = (STATUS[t.status]||'#f0f5fb:#7090b0').split(':');
@@ -5363,8 +5394,8 @@ function _htOpenTorneio(tid) {
   const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
   const players = new Set();
   tm.forEach(m => {
-    (m.team_a||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
-    (m.team_b||'').split(' / ').forEach(p=>p&&players.add(p.trim()));
+    toTeamStr(m.team_a).split(' / ').forEach(p=>p&&players.add(p.trim()));
+    toTeamStr(m.team_b).split(' / ').forEach(p=>p&&players.add(p.trim()));
   });
   const phases = [...new Set(tm.map(m=>m.phase).filter(Boolean))];
   document.getElementById('ht-list-view').style.display   = 'none';
@@ -5435,7 +5466,7 @@ const _HT_PHASE_ORDER = ['Fase 1','Fase 2','Fase 3','Semi-final','Final'];
 function _htCalcPlayers(matches) {
   const p={};
   matches.forEach(m=>{
-    const ta=(m.team_a||'').split(' / ').filter(Boolean), tb=(m.team_b||'').split(' / ').filter(Boolean);
+    const ta=toTeamStr(m.team_a).split(' / ').filter(Boolean), tb=toTeamStr(m.team_b).split(' / ').filter(Boolean);
     const sa=+(m.score_a||0), sb=+(m.score_b||0), aWin=sa>sb;
     [...ta,...tb].forEach(n=>{if(!p[n])p[n]={p:n,m:0,w:0,l:0,pf:0,pa:0};});
     ta.forEach(n=>{p[n].m++;p[n].pf+=sa;p[n].pa+=sb;if(aWin)p[n].w++;else p[n].l++;});
@@ -5576,7 +5607,7 @@ function _htBuildHistorico(tm, sc) {
   const scS=[...sc].sort((a,b)=>{const ai=RO.indexOf(a.rank),bi=RO.indexOf(b.rank);if(ai>=0&&bi>=0)return ai-bi;return(+(b.pts_total||0))-(+(a.pts_total||0));});
   const p1=scS.find(s=>s.rank==='🥇'),p2=scS.find(s=>s.rank==='🥈'),p3=scS.find(s=>s.rank==='🥉');
   if(!p1) return html;
-  const pStats=name=>{let w=0,mt=0,pf=0,pa=0;tm.forEach(m=>{const ta=(m.team_a||'').split(' / '),tb=(m.team_b||'').split(' / '),sa=+(m.score_a||0),sb=+(m.score_b||0),aWin=sa>sb;if(ta.includes(name)){mt++;pf+=sa;pa+=sb;if(aWin)w++;}else if(tb.includes(name)){mt++;pf+=sb;pa+=sa;if(!aWin)w++;}});return{w,gd:pf-pa};};
+  const pStats=name=>{let w=0,mt=0,pf=0,pa=0;tm.forEach(m=>{const ta=toTeamStr(m.team_a).split(' / '),tb=toTeamStr(m.team_b).split(' / '),sa=+(m.score_a||0),sb=+(m.score_b||0),aWin=sa>sb;if(ta.includes(name)){mt++;pf+=sa;pa+=sb;if(aWin)w++;}else if(tb.includes(name)){mt++;pf+=sb;pa+=sa;if(!aWin)w++;}});return{w,gd:pf-pa};};
   const pGrad=name=>flagGrad(getPlayerReg(name).nacionalidade);
   const pTxt=name=>flagTextCol(getPlayerReg(name).nacionalidade);
   const pIni=name=>_init(name);
@@ -5625,25 +5656,78 @@ async function loadTrnRanking() {
   if (stxt) stxt.textContent = 'A carregar ranking...';
 
   try {
-    const [rkRes, trnRes] = await Promise.all([
-      fetch(WEB_APP_URL + '?action=get_ranking_torneios').then(r=>r.json()),
+    const [matchRes, trnRes, playerRes] = await Promise.all([
+      fetch(WEB_APP_URL + '?action=get_matches_tournaments').then(r=>r.json()),
       fetch(WEB_APP_URL + '?action=get_tournaments').then(r=>r.json()),
+      fetch(WEB_APP_URL + '?action=get_players').then(r=>r.json()),
     ]);
-    trkData      = rkRes.rows  || [];
-    trkTotalTrns = (trnRes.rows || []).length;
 
-    if (!trkData.length) throw new Error('empty');
+    const matches      = matchRes.rows  || [];
+    const tournaments  = trnRes.rows    || [];
+    const playerReg    = playerRes.rows || [];
+    trkTotalTrns = tournaments.length;
 
-    const ts = trkData[0]?.updated_at
-      ? new Date(trkData[0].updated_at).toLocaleString('pt-BR') : '';
+    // ── Compute per-player stats from match data ─────────────────────────────
+    const map = {};
+    matches.forEach(m => {
+      const sa = +(m.score_a || 0), sb = +(m.score_b || 0);
+      if (sa === 0 && sb === 0) return; // skip unscored
+      const aWin = sa > sb;
+      const trn  = tournaments.find(t => t.tournament_id === m.tournament_id);
+      const cat  = m.tournament_category || trn?.tournament_category || '';
+
+      const teamA = toTeamStr(m.team_a).split(' / ').filter(Boolean);
+      const teamB = toTeamStr(m.team_b).split(' / ').filter(Boolean);
+
+      const addStat = (name, won, gw, gl) => {
+        if (!name) return;
+        if (!map[name]) {
+          const pr = playerReg.find(p => {
+            const n = ((p.player_name||p.nome||'') + ' ' + (p.player_surname||p.sobrenome||'')).trim();
+            return n === name || (p.player_nickname||p.nickname||'') === name;
+          });
+          map[name] = {
+            player: name,
+            player_category: pr?.player_category || pr?.categoria || cat,
+            player_nationality: pr?.player_nationality || pr?.nacionalidade || '',
+            wins: 0, losses: 0, matches: 0, gw: 0, gl: 0,
+            tournaments: new Set(),
+          };
+        }
+        const r = map[name];
+        r.matches++;
+        r.gw += gw; r.gl += gl;
+        won ? r.wins++ : r.losses++;
+        if (m.tournament_id) r.tournaments.add(m.tournament_id);
+      };
+
+      teamA.forEach(p => addStat(p, aWin,  sa, sb));
+      teamB.forEach(p => addStat(p, !aWin, sb, sa));
+    });
+
+    trkData = Object.values(map).map(r => ({
+      ...r,
+      tournaments_count: r.tournaments.size,
+      points_difference: r.gw - r.gl,
+      win_rate: r.matches > 0 ? (r.wins / r.matches * 100).toFixed(0) + '%' : '0%',
+    })).filter(r => r.matches > 0);
+
+    if (!trkData.length) {
+      if (dot)  dot.style.background  = '#C9933A';
+      if (stxt) stxt.textContent = '⚠️ Sem partidas registadas nesta plataforma ainda.';
+      if (btn)  btn.style.opacity = '1';
+      trkBuildCatTabs(); trkUpdateKPIs(); trkRenderTable();
+      return;
+    }
+
     if (dot)  dot.style.background  = '#27AE60';
     if (stxt) stxt.textContent = `${trkData.length} jogadores · ${trkTotalTrns} torneios · ao vivo`;
     if (document.getElementById('trk-upd')) {
-      document.getElementById('trk-upd').textContent = ts ? `Última atualização: ${ts}` : '';
+      document.getElementById('trk-upd').textContent = `Calculado de ${matches.length} partidas`;
     }
   } catch(e) {
     if (dot)  dot.style.background  = '#C9933A';
-    if (stxt) stxt.textContent = '⚠️ Sem conexão';
+    if (stxt) stxt.textContent = '⚠️ ' + e.message;
   }
 
   trkBuildCatTabs();
