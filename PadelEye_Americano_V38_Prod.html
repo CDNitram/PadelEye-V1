@@ -569,6 +569,49 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 }
 .btn-warn-force:hover { background: #e0a840; }
 
+
+/* ── Tie override banner ── */
+.tie-banner {
+  margin-top: 10px; border-radius: 9px; overflow: hidden;
+  border: 1.5px solid #f5c842; background: #fffbf0;
+}
+.tie-banner-head {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 12px; background: rgba(245,200,66,.15);
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  font-weight: 700; letter-spacing: .5px; color: #865a10;
+}
+.tie-banner-body { padding: 8px 12px 10px; }
+.tie-banner-sub { font-size: 11px; color: #5a3a00; margin-bottom: 10px; line-height: 1.5; }
+.tie-pick-btns { display: flex; gap: 7px; }
+.tie-pick-btn {
+  flex: 1; padding: 8px 10px; border-radius: 8px;
+  background: #fff; border: 1.5px solid #e8d080;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; color: #0a1628;
+  transition: all .15s; display: flex; align-items: center; gap: 6px;
+}
+.tie-pick-btn:hover { background: #0a1628; color: #fff; border-color: #0a1628; }
+.tie-pick-btn .tie-av {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Bebas Neue', sans-serif; font-size: 10px;
+  color: #fff; flex-shrink: 0;
+}
+.tie-override-done {
+  margin-top: 10px; padding: 8px 12px; border-radius: 9px;
+  background: #E8F8EE; border: 1px solid #c8e8d0;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: #1a7a44;
+}
+.tie-override-done strong { font-weight: 700; }
+.tie-reset-btn {
+  background: none; border: 1px solid #c8e8d0; border-radius: 6px;
+  color: #9ab0c8; font-size: 10px; cursor: pointer; padding: 3px 8px;
+  font-family: 'DM Mono', monospace;
+}
+.tie-reset-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+
 </style>
 </head>
 <body>
@@ -1885,53 +1928,73 @@ function groupMatches(g) {
 function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const phase = T.phases[phaseIdx];
   const stats = {};
-  groupPlayers.forEach(p => stats[p] = { name:p, w:0, l:0, gw:0, gl:0, m:0, tbw:0, tbl:0, rand:Math.random() });
+  groupPlayers.forEach(p => stats[p] = { name:p, w:0, l:0, gw:0, gl:0, m:0, tbw:0, tbl:0 });
 
-  // Build match results map for head-to-head lookup
-  const matchResults = {}; // key: "playerA vs playerB" → { sa, sb }
+  const h2h = {};
+  groupPlayers.forEach(p => { h2h[p] = {}; groupPlayers.forEach(q => { if(p!==q) h2h[p][q]={gw:0,gl:0}; }); });
+
   groupMatches(groupPlayers).forEach((match, mi) => {
     const key = `${phaseIdx}-${groupIdx}-${mi}`;
     const res = phase.results[key];
     if (!res || !res.saved) return;
     const { sa, sb } = res;
     const aWin = sa > sb;
-
     match.a.forEach(p => { if(stats[p]){ stats[p].gw+=sa; stats[p].gl+=sb; stats[p].m++; aWin?stats[p].w++:stats[p].l++; }});
     match.b.forEach(p => { if(stats[p]){ stats[p].gw+=sb; stats[p].gl+=sa; stats[p].m++; !aWin?stats[p].w++:stats[p].l++; }});
-
     if (res.tb && res.tba !== null && res.tbb !== null) {
       const tbWinA = res.tba > res.tbb;
       match.a.forEach(p => { if(stats[p]){ tbWinA ? stats[p].tbw++ : stats[p].tbl++; }});
       match.b.forEach(p => { if(stats[p]){ tbWinA ? stats[p].tbl++ : stats[p].tbw++; }});
     }
-
-    // Store head-to-head: for each pair in match (a×b)
-    match.a.forEach(pa => {
-      match.b.forEach(pb => {
-        matchResults[`${pa}|${pb}`] = { sa, sb };  // pa won if sa > sb
-        matchResults[`${pb}|${pa}`] = { sa: sb, sb: sa };  // pb perspective
-      });
-    });
+    match.a.forEach(pa => { match.b.forEach(pb => {
+      if (h2h[pa]?.[pb]) { h2h[pa][pb].gw+=sa; h2h[pa][pb].gl+=sb; }
+      if (h2h[pb]?.[pa]) { h2h[pb][pa].gw+=sb; h2h[pb][pa].gl+=sa; }
+    }); });
   });
 
-  // Head-to-head: between exactly 2 tied players, check their direct match
-  function headToHead(a, b) {
-    // Find if they played against each other (they were on opposite teams)
-    const res = matchResults[`${a}|${b}`];
-    if (!res) return 0;
-    return res.sa > res.sb ? 1 : res.sa < res.sb ? -1 : 0;
-    // 1 = a won, -1 = b won, 0 = no direct match / draw
+  function h2hCmp(a, b) {
+    const ab = h2h[a]?.[b];
+    if (!ab || (ab.gw===0 && ab.gl===0)) return 0;
+    const ba = h2h[b][a];
+    return (ab.gw - ab.gl) - (ba.gw - ba.gl);
   }
 
-  return Object.values(stats)
+  // ── Compare all criteria EXCEPT final fallback ────────────────────────────
+  function cmpCore(a, b) {
+    return b.w - a.w || b.gd - a.gd || h2hCmp(b.name, a.name) || b.gw - a.gw || b.tbsaldo - a.tbsaldo;
+  }
+
+  const sorted = Object.values(stats)
     .map(s => ({ ...s, gd: s.gw - s.gl, tbsaldo: s.tbw - s.tbl }))
-    .sort((a, b) =>
-      b.w         - a.w         ||  // 1. Vitórias
-      b.gd        - a.gd        ||  // 2. Saldo de games
-      headToHead(b.name, a.name)||  // 3. Confronto direto
-      b.tbsaldo   - a.tbsaldo   ||  // 4. Saldo de TB
-      a.rand      - b.rand          // 5. Sorteio (random seed)
-    );
+    .sort((a, b) => cmpCore(a, b) || a.name.localeCompare(b.name));
+
+  // ── Detect tie at cutoff (positions 1 and 2, 0-indexed) ──────────────────
+  const cutoff = 2; // top-2 advance
+  let tieAtCutoff = null;
+  if (sorted.length > cutoff) {
+    const p1 = sorted[cutoff - 1]; // position 2 (0-indexed 1)
+    const p2 = sorted[cutoff];     // position 3 (0-indexed 2)
+    if (cmpCore(p1, p2) === 0) {
+      tieAtCutoff = [p1.name, p2.name];
+    }
+  }
+
+  // ── Apply organizer override ──────────────────────────────────────────────
+  const overrideKey = `${phaseIdx}-${groupIdx}`;
+  const override = (T.tieOverrides || {})[overrideKey];
+  if (override && tieAtCutoff) {
+    // Move override winner to cutoff-1 position, other to cutoff
+    const winnerIdx = sorted.findIndex(s => s.name === override.winner);
+    const loserIdx  = sorted.findIndex(s => s.name === override.loser);
+    if (winnerIdx > loserIdx && winnerIdx !== -1 && loserIdx !== -1) {
+      const [winner] = sorted.splice(winnerIdx, 1);
+      sorted.splice(loserIdx, 0, winner);
+    }
+    tieAtCutoff = null; // resolved by override
+  }
+
+  sorted.tieAtCutoff = tieAtCutoff;
+  return sorted;
 }
 
 // ── PHASE COMPLETE? ──
@@ -2109,6 +2172,7 @@ function saveMatchForce(phaseIdx, groupIdx, matchIdx) {
   }
 
   // Save with override flag
+  if (!T.tieOverrides) T.tieOverrides = {};
   T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb, override:true };
   persistT();
 
@@ -2145,6 +2209,20 @@ function saveMatchForce(phaseIdx, groupIdx, matchIdx) {
 
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
   gameAlert(`✅ ${sa}×${sb} guardado (fora das regras — aprovado pelo organizador).`, 'ok');
+}
+
+
+// ── Tie override — organizer picks who advances ────────────────────────────
+function chooseTieWinner(phaseIdx, groupIdx, winner, loser) {
+  if (!T.tieOverrides) T.tieOverrides = {};
+  T.tieOverrides[`${phaseIdx}-${groupIdx}`] = { winner, loser };
+  persistT();
+  renderRounds(); renderGrupos(); renderRanking();
+}
+function resetTieOverride(phaseIdx, groupIdx) {
+  if (T.tieOverrides) delete T.tieOverrides[`${phaseIdx}-${groupIdx}`];
+  persistT();
+  renderRounds(); renderGrupos(); renderRanking();
 }
 
 function saveMatch(phaseIdx, groupIdx, matchIdx) {
@@ -2184,11 +2262,11 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
   const l = Math.min(sa, sb);
 
   if (sa === sb) {
-    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${sa}×\${sb} — empate não é um resultado final válido.`);
+    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar ${sa}×${sb} — empate não é um resultado final válido.`);
   }
 
   if (w > maxSc) {
-    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${w}×\${l} inválido — score máximo configurado é \${maxSc}.`);
+    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar ${w}×${l} inválido — score máximo configurado é ${maxSc}.`);
   }
 
   // ── V37 FIX 1: Para maxSc=7, w=7 só é válido com l=5 (7×5) ou l=6+TB (7×6)
@@ -2207,7 +2285,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
 
   } else if (tbWin) {
     if (!hasTB) {
-      return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${w}×\${l} — o jogo chegou a \${tbAt}×\${tbAt}. Active o Tie-Break e insira o resultado do mini-jogo.`);
+      return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar ${w}×${l} — o jogo chegou a ${tbAt}×${tbAt}. Active o Tie-Break e insira o resultado do mini-jogo.`);
     }
     // Vitória por Tie-Break ✅
 
@@ -2215,7 +2293,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     const hint = isDeuce7
       ? `Placares válidos: 6×0 a 6×5 (normal) ou 7×6 com Tie-Break.`
       : `Placares válidos: ${maxSc}×0 a ${maxSc}×${tbAt-1} (normal) ou ${maxSc}×${tbAt} com Tie-Break.`;
-    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar \${sa}×\${sb} inválido. \${hint}`);
+    return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `Placar ${sa}×${sb} inválido. ${hint}`);
   }
 
   // ── V37 FIX 2: TB points ──────────────────────────────────────────────────
@@ -2233,10 +2311,10 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
       const tbW = Math.max(tba, tbb);
       const tbL = Math.min(tba, tbb);
       if (tbW < 7) {
-        return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `TB \${tba}×\${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`);
+        return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `TB ${tba}×${tbb} inválido — o vencedor precisa de ≥ 7 pontos (mín: 7×0).`);
       }
       if (tbW - tbL < 2) {
-        return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `TB \${tba}×\${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`);
+        return showSaveWarning(key, phaseIdx, groupIdx, matchIdx, `TB ${tba}×${tbb} inválido — é obrigatória uma margem de 2 pontos (ex: 8×6, não 7×6).`);
       }
     }
     // maxSc=8 ou 9: sem validação adicional — admin insere o resultado real
@@ -2552,7 +2630,39 @@ function renderRounds() {
         <td style="text-align:right;font-family:'Bebas Neue';font-size:14px;color:#C9933A">${s.m>0?s.gw:'—'}</td>
       </tr>`;
     });
-    html += `</table></div></div>`;
+    html += `</table>`;
+    // ── Tie override UI ──────────────────────────────────────────────────────
+    const overrideKey = `${phIdx}-${gi}`;
+    const existingOverride = (T.tieOverrides || {})[overrideKey];
+    if (standings.tieAtCutoff) {
+      const [ta, tb] = standings.tieAtCutoff;
+      html += `<div class="tie-banner">
+        <div class="tie-banner-head">⚠️ EMPATE NA 2ª POSIÇÃO</div>
+        <div class="tie-banner-body">
+          <div class="tie-banner-sub">
+            <strong>${ta}</strong> e <strong>${tb}</strong> estão empatados em todos os critérios
+            (vitórias, saldo, confronto directo, games marcados).<br>
+            Escolha quem avança para a próxima fase.
+          </div>
+          <div class="tie-pick-btns">
+            <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}')">
+              <div class="tie-av" style="background:${_pc(ta)}">${ta.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+              ${ta} avança
+            </button>
+            <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${tb.replace(/'/g,"\'")}','${ta.replace(/'/g,"\'")}')">
+              <div class="tie-av" style="background:${_pc(tb)}">${tb.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+              ${tb} avança
+            </button>
+          </div>
+        </div>
+      </div>`;
+    } else if (existingOverride) {
+      html += `<div class="tie-override-done">
+        ✅ Escolha do organizador: <strong>${existingOverride.winner}</strong> avança
+        <button class="tie-reset-btn" onclick="resetTieOverride(${phIdx},${gi})" title="Desfazer escolha">↩ Refazer</button>
+      </div>`;
+    }
+    html += `</div></div>`;
   });
 
   // Advance button
