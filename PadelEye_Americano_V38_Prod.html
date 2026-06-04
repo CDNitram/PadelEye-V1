@@ -1930,6 +1930,7 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const stats = {};
   groupPlayers.forEach(p => stats[p] = { name:p, w:0, l:0, gw:0, gl:0, m:0, tbw:0, tbl:0 });
 
+  // H2H map: h2h[a][b] = { gw: total a-team scored when a vs b, gl: total a-team conceded }
   const h2h = {};
   groupPlayers.forEach(p => { h2h[p] = {}; groupPlayers.forEach(q => { if(p!==q) h2h[p][q]={gw:0,gl:0}; }); });
 
@@ -1941,17 +1942,20 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     const aWin = sa > sb;
     match.a.forEach(p => { if(stats[p]){ stats[p].gw+=sa; stats[p].gl+=sb; stats[p].m++; aWin?stats[p].w++:stats[p].l++; }});
     match.b.forEach(p => { if(stats[p]){ stats[p].gw+=sb; stats[p].gl+=sa; stats[p].m++; !aWin?stats[p].w++:stats[p].l++; }});
-    if (res.tb && res.tba !== null && res.tbb !== null) {
+    if (res.tb && res.tba!=null && res.tbb!=null) {
       const tbWinA = res.tba > res.tbb;
-      match.a.forEach(p => { if(stats[p]){ tbWinA ? stats[p].tbw++ : stats[p].tbl++; }});
-      match.b.forEach(p => { if(stats[p]){ tbWinA ? stats[p].tbl++ : stats[p].tbw++; }});
+      match.a.forEach(p => { if(stats[p]){ tbWinA?stats[p].tbw++:stats[p].tbl++; }});
+      match.b.forEach(p => { if(stats[p]){ tbWinA?stats[p].tbl++:stats[p].tbw++; }});
     }
+    // Aggregate H2H: only when players are on OPPOSITE teams
     match.a.forEach(pa => { match.b.forEach(pb => {
       if (h2h[pa]?.[pb]) { h2h[pa][pb].gw+=sa; h2h[pa][pb].gl+=sb; }
       if (h2h[pb]?.[pa]) { h2h[pb][pa].gw+=sb; h2h[pb][pa].gl+=sa; }
     }); });
   });
 
+  // H2H tiebreaker: GD in all direct confrontations (as opponents)
+  // Returns >0 if a is better, <0 if b is better, 0 if equal or never faced
   function h2hCmp(a, b) {
     const ab = h2h[a]?.[b];
     if (!ab || (ab.gw===0 && ab.gl===0)) return 0;
@@ -1959,7 +1963,13 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     return (ab.gw - ab.gl) - (ba.gw - ba.gl);
   }
 
-  // ── Compare all criteria EXCEPT final fallback ────────────────────────────
+  // ── Tiebreaker hierarchy ──────────────────────────────────────────────────
+  // 1. Vitórias (wins)
+  // 2. Saldo de games (GD = gw - gl)
+  // 3. Confronto direto (H2H GD, only when 2 players face each other directly)
+  // 4. Total de games marcados (gw)
+  // 5. Saldo de Tie-Breaks
+  // 6. Ordem alfabética (determinístico — seguido de botão do organizador)
   function cmpCore(a, b) {
     return b.w - a.w || b.gd - a.gd || h2hCmp(b.name, a.name) || b.gw - a.gw || b.tbsaldo - a.tbsaldo;
   }
@@ -1968,14 +1978,26 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     .map(s => ({ ...s, gd: s.gw - s.gl, tbsaldo: s.tbw - s.tbl }))
     .sort((a, b) => cmpCore(a, b) || a.name.localeCompare(b.name));
 
-  // ── Detect tie at cutoff (positions 1 and 2, 0-indexed) ──────────────────
-  const cutoff = 2; // top-2 advance
+  // ── Detect ALL adjacent ties (important for final: any position matters) ──
+  // For group phases: only cutoff tie (2nd vs 3rd) triggers organizer choice
+  // For final phase (last phase): any adjacent tie triggers it
+  const isLastPhase = (phaseIdx === (T.phases?.length - 1));
+  const cutoff = 2; // top-2 advance in group phases
+
   let tieAtCutoff = null;
-  if (sorted.length > cutoff) {
-    const p1 = sorted[cutoff - 1]; // position 2 (0-indexed 1)
-    const p2 = sorted[cutoff];     // position 3 (0-indexed 2)
+  if (isLastPhase) {
+    // In the final, check ALL adjacent positions
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (cmpCore(sorted[i], sorted[i+1]) === 0) {
+        tieAtCutoff = [sorted[i].name, sorted[i+1].name, i]; // i = 0-indexed position
+        break;
+      }
+    }
+  } else if (sorted.length > cutoff) {
+    const p1 = sorted[cutoff - 1];
+    const p2 = sorted[cutoff];
     if (cmpCore(p1, p2) === 0) {
-      tieAtCutoff = [p1.name, p2.name];
+      tieAtCutoff = [p1.name, p2.name, cutoff - 1];
     }
   }
 
@@ -1983,17 +2005,17 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const overrideKey = `${phaseIdx}-${groupIdx}`;
   const override = (T.tieOverrides || {})[overrideKey];
   if (override && tieAtCutoff) {
-    // Move override winner to cutoff-1 position, other to cutoff
     const winnerIdx = sorted.findIndex(s => s.name === override.winner);
     const loserIdx  = sorted.findIndex(s => s.name === override.loser);
     if (winnerIdx > loserIdx && winnerIdx !== -1 && loserIdx !== -1) {
       const [winner] = sorted.splice(winnerIdx, 1);
       sorted.splice(loserIdx, 0, winner);
     }
-    tieAtCutoff = null; // resolved by override
+    tieAtCutoff = null;
   }
 
   sorted.tieAtCutoff = tieAtCutoff;
+  sorted.isLastPhase = isLastPhase;
   return sorted;
 }
 
@@ -2635,30 +2657,40 @@ function renderRounds() {
     const overrideKey = `${phIdx}-${gi}`;
     const existingOverride = (T.tieOverrides || {})[overrideKey];
     if (standings.tieAtCutoff) {
-      const [ta, tb] = standings.tieAtCutoff;
+      const [ta, tb, tiePos] = standings.tieAtCutoff;
+      const posLabels = ['1º','2º','3º','4º'];
+      const posLabel  = posLabels[tiePos] || `${tiePos+1}º`;
+      const posNext   = posLabels[tiePos+1] || `${tiePos+2}º`;
+      const isFinal   = standings.isLastPhase;
+      const btnLabel  = isFinal
+        ? (pos, pl) => `${pl} fica em ${pos}`
+        : (pos, pl) => `${pl} avança`;
       html += `<div class="tie-banner">
-        <div class="tie-banner-head">⚠️ EMPATE NA 2ª POSIÇÃO</div>
+        <div class="tie-banner-head">⚠️ EMPATE NA ${posLabel.toUpperCase()} POSIÇÃO</div>
         <div class="tie-banner-body">
           <div class="tie-banner-sub">
-            <strong>${ta}</strong> e <strong>${tb}</strong> estão empatados em todos os critérios
-            (vitórias, saldo, confronto directo, games marcados).<br>
-            Escolha quem avança para a próxima fase.
+            <strong>${ta}</strong> e <strong>${tb}</strong> estão empatados em todos os critérios:
+            vitórias · saldo de games · confronto directo · games marcados · saldo TB.<br>
+            ${isFinal ? `Escolha quem fica em <strong>${posLabel}</strong> lugar.` : `Escolha quem avança para a próxima fase.`}
+          </div>
+          <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-bottom:8px;letter-spacing:.5px">
+            CRITÉRIOS: Vitórias → Saldo GD → Confronto Direto → Games Marcados → Saldo TB
           </div>
           <div class="tie-pick-btns">
             <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}')">
               <div class="tie-av" style="background:${_pc(ta)}">${ta.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
-              ${ta} avança
+              ${btnLabel(posLabel, ta)}
             </button>
             <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${tb.replace(/'/g,"\'")}','${ta.replace(/'/g,"\'")}')">
               <div class="tie-av" style="background:${_pc(tb)}">${tb.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
-              ${tb} avança
+              ${btnLabel(posLabel, tb)}
             </button>
           </div>
         </div>
       </div>`;
     } else if (existingOverride) {
       html += `<div class="tie-override-done">
-        ✅ Escolha do organizador: <strong>${existingOverride.winner}</strong> avança
+        ✅ Escolha do organizador: <strong>${existingOverride.winner}</strong> ${standings.isLastPhase ? 'fica em melhor posição' : 'avança'}
         <button class="tie-reset-btn" onclick="resetTieOverride(${phIdx},${gi})" title="Desfazer escolha">↩ Refazer</button>
       </div>`;
     }
