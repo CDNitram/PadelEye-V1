@@ -1761,16 +1761,21 @@ function getCfgDate() {
 // CONTEXTO: Chamado sempre que selectedPlayers muda ou o input de pesquisa é usado.
 //   Gera cards clicáveis para cada jogador em DB + extraPlayers, com estado
 //   "selected" visível e chips na tira inferior.
+
+// ── Accent-insensitive string normalizer ─────────────────────────────────────
+function normStr(s) {
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
 function renderDB() {
   const grid   = document.getElementById('db-grid');
   const strip  = document.getElementById('sel-strip');
-  const q      = (document.getElementById('db-search')?.value||'').toLowerCase();
+  const q      = normStr(document.getElementById('db-search')?.value||'');
   const all    = allPlayers();
 
   // Grid
   grid.innerHTML = all.map((name, i) => {
     const sel      = selectedPlayers.includes(name);
-    const hidden   = q && !name.toLowerCase().includes(q);
+    const hidden   = q && !normStr(name).includes(q);
     const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
     const dbEntry  = DB.find(p=>p.nome===name);
     const regEntry = REGISTRY.find(r => displayName(r) === name || r.nome === name);
@@ -5567,10 +5572,10 @@ function _htRenderGrid() {
   const STATUS = {finalizado:'#E8F8EE|#1a7a44', em_curso:'#FFF8E0|#865a10', cancelado:'rgba(231,76,60,.1)|#c0392b'};
   const catColor = {'8a':'#d97706','7a':'#b85c38','6a':'#276221','5a':'#1a5fa8'};
 
-  let html = `<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;overflow:hidden">
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
+  let html = `<div style="background:transparent">
+    <table style="width:100%;border-collapse:separate;border-spacing:0 7px;font-size:12px">
       <thead>
-        <tr style="background:#f8fafd;border-bottom:1px solid #dde6f0">
+        <tr style="background:#f0f5fb">
           <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 14px;text-align:left;letter-spacing:1px">#</th>
           <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:left;letter-spacing:1px">TORNEIO</th>
           <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">CAT</th>
@@ -5614,12 +5619,12 @@ function _htRenderGrid() {
     const dateObj = parseTDate(t.date) || parseTDate(t.created_at);
     const dateFmt = dateObj ? dateObj.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 
-    html += `<tr style="border-bottom:2px solid #eef3fa;cursor:pointer;transition:background .12s"
+    html += `<tr style="background:#fff;box-shadow:0 1px 4px rgba(13,30,58,.06);cursor:pointer;transition:all .12s"
       onclick="_htOpenTorneio('${tid.replace(/'/g,"\'")}')"
       onmouseover="this.style.background='#f8fafd'"
       onmouseout="this.style.background=''"
       >
-      <td style="padding:16px 14px;font-family:'DM Mono';font-size:12px;font-weight:600;color:#9ab0c8">${idx + 1}</td>
+      <td style="padding:16px 14px;font-family:'DM Mono';font-size:12px;font-weight:600;color:#9ab0c8;border-radius:10px 0 0 10px">${idx + 1}</td>
       <td style="padding:16px 8px">
         <div style="font-weight:600;font-size:13px;color:#0d1e3a">${t.tournament_name || '—'}</div>
         <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px">📅 ${dateFmt} · 📍 ${t.venue || '—'}</div>
@@ -5633,8 +5638,7 @@ function _htRenderGrid() {
       <td style="padding:16px 14px;text-align:center">
         ${winner ? `<div style="font-size:14px">🥇</div><div style="font-size:11px;font-weight:700;color:#C9933A">${(winner.player||'—').split(' ')[0]}</div>` : '<span style="color:#c0cdd8;font-family:DM Mono,monospace;font-size:10px">—</span>'}
       </td>
-      <td style="padding:16px 8px;text-align:center">
-        <span style="background:${stBg};color:${stCol};border-radius:99px;padding:2px 9px;font-family:'DM Mono';font-size:9px;font-weight:700">${t.status || '—'}</span>
+      <td style="padding:16px 8px;text-align:center;border-radius:0 10px 10px 0"><span style="background:${stBg};color:${stCol};border-radius:99px;padding:2px 9px;font-family:'DM Mono';font-size:9px;font-weight:700">${t.status || '—'}</span>
       </td>
     </tr>`;
   });
