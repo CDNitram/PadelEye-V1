@@ -5829,7 +5829,7 @@ function _htMatchRow(m, showPhase=false) {
   const hasTB=m.tie_break==='Sim'||m.tie_break==='Yes';
   const meta=showPhase?`${m.phase||''}${m.group?' · Grp '+m.group:''} · #${m.match_serial_number||'?'}`:`#${m.match_serial_number||'?'}`;
   const tbTag=hasTB?`<div style="font-size:9px;color:#C9933A;font-family:'DM Mono';margin-top:2px">TB ${m.tb_a||''}×${m.tb_b||''}</div>`:'';
-  const names=(name,isWin)=>(name||'—').split(' / ').map(n=>`<div style="font-size:12px;font-weight:${isWin?600:400};color:${isWin?'#1a7a44':'#9ab0c8'};line-height:1.6">${n.trim()}</div>`).join('');
+  const names=(name,isWin)=>toTeamStr(name||'—').split(' / ').map(n=>`<div style="font-size:12px;font-weight:${isWin?600:400};color:${isWin?'#1a7a44':'#9ab0c8'};line-height:1.6">${n.trim()}</div>`).join('');
   return `<div style="max-width:680px;margin:0 auto 6px;background:#fff;border:0.5px solid #dde6f0;border-radius:10px;display:grid;grid-template-columns:1fr 72px 1fr;align-items:stretch">
     <div style="padding:12px 16px;text-align:right;border-right:0.5px solid #dde6f0;display:flex;flex-direction:column;justify-content:center">${names(m.team_a,aWin)}</div>
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;text-align:center">
@@ -6040,13 +6040,18 @@ function renderScorecardAcum() {
     }
     aggMap[key].total      += +(row.pts_total || row.total || 0);
     aggMap[key].tournaments += 1;
-    // Medal detection: use pts_bonus (canonical) — 300=gold, 200=silver, 100=bronze
-    // Fallback: parse phase_achieved text
-    const ptsBonus = +(row.pts_bonus || 0);
-    const ph       = (row.phase_achieved || row.medal || '').toLowerCase();
-    if      (ptsBonus === 300 || ph.includes('campeão') || ph.includes('champion') || ph==='🥇') aggMap[key].gold++;
-    else if (ptsBonus === 200 || ph.includes('vice')    || ph.includes('runner')   || ph==='🥈') aggMap[key].silver++;
-    else if (ptsBonus === 100 || ph.includes('3º')      || ph.includes('bronze')   || ph==='🥉') aggMap[key].bronze++;
+    // Medals from actual tournament results — rank or phase_achieved field
+    const rank = String(row.rank || row.position || row.colocacao || '').trim();
+    const ph   = (row.phase_achieved || row.medal || '').toLowerCase();
+    const isGold   = rank==='1'||rank==='1º'||rank.includes('🥇')
+                     ||ph.includes('campeão')||ph.includes('champion')||ph==='🥇';
+    const isSilver = !isGold && (rank==='2'||rank==='2º'||rank.includes('🥈')
+                     ||ph.includes('vice')||ph.includes('runner')||ph==='🥈');
+    const isBronze = !isGold && !isSilver && (rank==='3'||rank==='3º'||rank.includes('🥉')
+                     ||ph.includes('3º')||ph.includes('bronze')||ph==='🥉');
+    if      (isGold)   aggMap[key].gold++;
+    else if (isSilver) aggMap[key].silver++;
+    else if (isBronze) aggMap[key].bronze++;
   });
 
   // ── Resolve canonical names + merge duplicates ───────────────────────────
@@ -6282,24 +6287,58 @@ async function loadTrnRanking() {
 
     const medalMap = {};
     scorecard.forEach(sc => {
-      const p = String(sc.player || sc.nome || '').trim();
-      if (!p) return;
+      const rawName = String(sc.player || sc.nome || '').trim();
+      if (!rawName || /^\d+$/.test(rawName)) return; // skip dirty data
+      // Use canonical name from DB as key
+      const reg  = getPlayerReg(rawName);
+      const p    = reg?.nome ? (reg.nickname||((reg.nome+' '+(reg.sobrenome||'')).trim())||rawName) : rawName;
       if (!medalMap[p]) medalMap[p] = {gold:0,silver:0,bronze:0};
-      const rank = String(sc.rank || sc.position || sc.colocacao || '');
-      if (rank.includes('🥇')||rank==='1'||rank==='1º') medalMap[p].gold++;
-      else if (rank.includes('🥈')||rank==='2'||rank==='2º') medalMap[p].silver++;
-      else if (rank.includes('🥉')||rank==='3'||rank==='3º') medalMap[p].bronze++;
+      // Primary: pts_bonus (canonical); fallback: rank text
+      // Medals from actual rank/phase_achieved — not from point calculations
+      const rank = String(sc.rank || sc.position || sc.colocacao || '').trim();
+      const ph   = (sc.phase_achieved || '').toLowerCase();
+      if      (rank==='1'||rank==='1º'||rank.includes('🥇')||ph.includes('campeão')||ph.includes('champion')) medalMap[p].gold++;
+      else if (rank==='2'||rank==='2º'||rank.includes('🥈')||ph.includes('vice')||ph.includes('runner'))       medalMap[p].silver++;
+      else if (rank==='3'||rank==='3º'||rank.includes('🥉')||ph.includes('3º')||ph.includes('bronze'))         medalMap[p].bronze++;
     });
-    trkData = Object.values(map).map(r => ({
-      ...r,
-      tournaments_count: r.tournaments.size,
-      points_difference: r.gw - r.gl,
-      win_rate: r.matches > 0 ? (r.wins / r.matches * 100).toFixed(0) + '%' : '0%',
-      gold:          (medalMap[r.player]||{}).gold  ||0,
-      silver:        (medalMap[r.player]||{}).silver||0,
-      bronze:        (medalMap[r.player]||{}).bronze||0,
-      champion_count:(medalMap[r.player]||{}).gold  ||0,
-    })).filter(r => r.matches > 0);
+    trkData = Object.values(map).map(r => {
+      // Resolve canonical name from DB (source of truth)
+      const regEntry = getPlayerReg(r.player);
+      const canon    = regEntry?.nome
+        ? (regEntry.nickname || ((regEntry.nome+' '+(regEntry.sobrenome||'')).trim()) || r.player)
+        : r.player;
+      // Medal lookup by canonical name
+      const mEntry   = medalMap[canon] || medalMap[r.player] || {};
+      return {
+        ...r,
+        player:            canon,
+        tournaments_count: r.tournaments.size,
+        points_difference: r.gw - r.gl,
+        win_rate: r.matches > 0 ? (r.wins / r.matches * 100).toFixed(0) + '%' : '0%',
+        gold:          mEntry.gold   || 0,
+        silver:        mEntry.silver || 0,
+        bronze:        mEntry.bronze || 0,
+        champion_count:mEntry.gold   || 0,
+      };
+    }).filter(r => r.matches > 0 && !/^\d+$/.test(r.player));
+
+    // Merge trkData entries that resolve to same canonical name
+    const trkMergeMap = {};
+    trkData.forEach(r => {
+      const key = r.player + '||' + (r.player_category||'');
+      if (!trkMergeMap[key]) { trkMergeMap[key] = {...r}; }
+      else {
+        const e = trkMergeMap[key];
+        e.wins   += r.wins;   e.losses += r.losses;
+        e.matches+= r.matches; e.gw += r.gw; e.gl += r.gl;
+        e.points_difference = e.gw - e.gl;
+        e.tournaments_count += r.tournaments_count;
+        e.gold   += r.gold;   e.silver += r.silver;
+        e.bronze += r.bronze; e.champion_count = e.gold;
+        e.win_rate = e.matches>0 ? Math.round(e.wins/e.matches*100)+'%' : '0%';
+      }
+    });
+    trkData = Object.values(trkMergeMap);
 
     if (!trkData.length) {
       if (dot)  dot.style.background  = '#C9933A';
@@ -6355,10 +6394,31 @@ function trkSetSort(key, el) {
 }
 
 function _trkFiltered() {
-  if (trkCat === 'all') return trkData;
-  return trkData.filter(p =>
-    (p.player_category || p.categoria || p.category || '') === trkCat
-  );
+  // Always strip dirty data (numeric-only names)
+  const clean = trkData.filter(p => {
+    const n = String(p.player || p.nome || '').trim();
+    return n.length > 0 && !/^\d+$/.test(n);
+  });
+
+  if (trkCat === 'all') return clean;
+
+  // Per-category stats: players who PLAYED this category via trkStatMap
+  return clean.map(p => {
+    const reg  = getPlayerReg(p.player);
+    const pid  = reg?.id ? String(reg.id) : normStr(p.player);
+    const sk   = trkStatMap[pid + '||' + trkCat]
+              || trkStatMap[normStr(p.player) + '||' + trkCat]
+              || trkStatMap[p.player + '||' + trkCat];
+    if (!sk || sk.matches === 0) return null;
+    const wins    = sk.wins;
+    const losses  = sk.losses;
+    const matches = sk.matches;
+    const sp      = sk.gw - sk.gl;
+    const wr      = matches > 0 ? Math.round(wins/matches*100) + '%' : '0%';
+    return { ...p, wins, losses, matches,
+             points_difference: sp, win_rate: wr,
+             player_category: trkCat };
+  }).filter(Boolean);
 }
 
 function _trkSorted(rows) {
