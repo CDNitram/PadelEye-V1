@@ -1728,6 +1728,15 @@ function doLogin() {
   document.getElementById('w-hi').textContent    = `Bem-vindo, ${currentUser.name.split(' ')[0]}!`;
   loadPlayersFromDB();
   PadelEyeDB.logSession(user, 'login', 'auth', { name: currentUser.name, club: currentUser.club });
+
+  // ── Show open tournaments on login so admin can pick one immediately ──────
+  const _openBtn = document.querySelector('.tab-btn[onclick*="open-trn"]');
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  if (_openBtn) _openBtn.classList.add('on');
+  const _openPanel = document.getElementById('p-open-trn');
+  if (_openPanel) _openPanel.classList.add('on');
+  loadOpenTournaments();
 }
 
 // ── OBJETIVO: Encerrar a sessão e limpar todo o estado da app ────────────────
@@ -6661,7 +6670,7 @@ async function loadOpenTournaments() {
         </div>
         <div style="display:flex;gap:16px;margin-bottom:18px">
           <div style="text-align:center">
-            <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628">${t.players_count||t.total_players||'—'}</div>
+            <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628">${(+(t.group_number||0))*(+(t.players_per_group||4))||'—'}</div>
             <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;letter-spacing:1px">JOGADORES</div>
           </div>
           <div style="text-align:center">
