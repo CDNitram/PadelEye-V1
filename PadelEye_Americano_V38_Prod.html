@@ -3630,14 +3630,12 @@ function startTournament() {
       tournament_id:       T.id,
       tournament_name:     T.name,
       date:                T.date,
-      venue:               T.local || '',
+      venue:               T.local || T.venue || currentUser?.club || '',
       tournament_format:   'Americano · Modelo Brasileiro',
-      group_number:        numGrupos,
+      group_number:        numGrupos || T.numGrupos || 0,
       players_per_group:   jogPorGrupo,
       num_phases:          T.numFases || 3,
       tournament_category: T.categoria || '',
-      venue:               T.venue || currentUser?.club || '',
-      group_number:        T.numGrupos || 0,
       status:              'em_curso',
       created_at:          new Date().toISOString(),
     };
@@ -5661,7 +5659,7 @@ function _htRenderGrid() {
       <td style="padding:16px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${matchCount || t.total_matches || '—'}</td>
       <td style="padding:16px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#0d1e3a">${t.group_number || '—'}</td>
       <td style="padding:16px 14px;text-align:center">
-        ${winner ? `<div style="font-size:14px">🥇</div><div style="font-size:11px;font-weight:700;color:#C9933A">${(winner.player||'—').split(' ')[0]}</div>` : '<span style="color:#c0cdd8;font-family:DM Mono,monospace;font-size:10px">—</span>'}
+        ${winner ? `<div style="font-size:14px">🥇</div><div style="font-size:11px;font-weight:700;color:#C9933A">${(winner.player||'—')}</div>` : '<span style="color:#c0cdd8;font-family:DM Mono,monospace;font-size:10px">—</span>'}
       </td>
       <td style="padding:16px 8px;text-align:center;border-radius:0 10px 10px 0"><span style="background:${stBg};color:${stCol};border-radius:99px;padding:2px 9px;font-family:'DM Mono';font-size:9px;font-weight:700">${t.status || '—'}</span>
       </td>
