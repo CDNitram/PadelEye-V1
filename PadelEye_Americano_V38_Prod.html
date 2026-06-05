@@ -1764,7 +1764,7 @@ function getCfgDate() {
 
 // ── Accent-insensitive string normalizer ─────────────────────────────────────
 function normStr(s) {
-  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 }
 function renderDB() {
   const grid   = document.getElementById('db-grid');
@@ -2206,13 +2206,31 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   // 4. Total de games marcados (gw)
   // 5. Saldo de Tie-Breaks
   // 6. Ordem alfabética (determinístico — seguido de botão do organizador)
+  // ── Criterion 6 (final only): tournament history — more wins = higher seed ──
+  function historyScore(name) {
+    if (!isLastPhase) return 0;
+    const entry = (typeof trkData !== 'undefined' ? trkData : [])
+      .find(p => (p.player||p.nome||'') === name);
+    if (!entry) return 0;
+    // composite: wins + gold×3 + silver×1 — rewards sustained performance
+    return (+(entry.wins||0)) + (+(entry.gold||0))*3 + (+(entry.silver||0));
+  }
+
   function cmpCore(a, b) {
-    return b.w - a.w || b.gd - a.gd || h2hCmp(b.name, a.name) || b.gw - a.gw || b.tbsaldo - a.tbsaldo;
+    return (
+      b.w          - a.w          ||  // 1. Vitórias
+      b.gd         - a.gd         ||  // 2. Saldo de Games
+      h2hCmp(b.name, a.name)      ||  // 3. Confronto Directo
+      b.gw         - a.gw         ||  // 4. Total Games Marcados
+      b.tbsaldo    - a.tbsaldo    ||  // 5. Saldo Tie-Breaks
+      historyScore(b.name) - historyScore(a.name) // 6. Histórico (só na final)
+      // Se ainda empatado → botão do organizador (sem ordem alfabética)
+    );
   }
 
   const sorted = Object.values(stats)
     .map(s => ({ ...s, gd: s.gw - s.gl, tbsaldo: s.tbw - s.tbl }))
-    .sort((a, b) => cmpCore(a, b) || a.name.localeCompare(b.name));
+    .sort((a, b) => cmpCore(a, b)); // no alphabetical fallback
 
   // ── Detect ALL adjacent ties (important for final: any position matters) ──
   // For group phases: only cutoff tie (2nd vs 3rd) triggers organizer choice
@@ -2220,20 +2238,27 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const isLastPhase = (phaseIdx === (T.phases?.length - 1));
   const cutoff = 2; // top-2 advance in group phases
 
+  // ── Only show tie banner when ALL group matches are saved ───────────────────
+  const totalGroupMatches = 3; // Americano: always 3 matches per group of 4
+  const allSaved = Array.from({length: totalGroupMatches}, (_, mi) =>
+    phase.results?.[`${phaseIdx}-${groupIdx}-${mi}`]?.saved === true
+  ).every(Boolean);
+
   let tieAtCutoff = null;
-  if (isLastPhase) {
-    // In the final, check ALL adjacent positions
-    for (let i = 0; i < sorted.length - 1; i++) {
-      if (cmpCore(sorted[i], sorted[i+1]) === 0) {
-        tieAtCutoff = [sorted[i].name, sorted[i+1].name, i]; // i = 0-indexed position
-        break;
+  if (allSaved) {
+    if (isLastPhase) {
+      for (let i = 0; i < sorted.length - 1; i++) {
+        if (cmpCore(sorted[i], sorted[i+1]) === 0) {
+          tieAtCutoff = [sorted[i].name, sorted[i+1].name, i];
+          break;
+        }
       }
-    }
-  } else if (sorted.length > cutoff) {
-    const p1 = sorted[cutoff - 1];
-    const p2 = sorted[cutoff];
-    if (cmpCore(p1, p2) === 0) {
-      tieAtCutoff = [p1.name, p2.name, cutoff - 1];
+    } else if (sorted.length > cutoff) {
+      const p1 = sorted[cutoff - 1];
+      const p2 = sorted[cutoff];
+      if (cmpCore(p1, p2) === 0) {
+        tieAtCutoff = [p1.name, p2.name, cutoff - 1];
+      }
     }
   }
 
