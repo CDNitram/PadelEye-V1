@@ -1061,7 +1061,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="trk-sort"    id="trk-s-win_rate"   onclick="trkSetSort('win_rate',this)">📊 Win Rate</button>
       <button class="trk-sort"    id="trk-s-matches"    onclick="trkSetSort('matches',this)">🎯 Partidas</button>
       <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ SP</button>
-      <button class="trk-sort"    id="trk-s-champion"   onclick="trkSetSort('champion',this)">🥇 Champion</button>
+      <button class="trk-sort"    id="trk-s-champion"   onclick="trkSetSort('champion',this)">🥇 Campeão</button>
+      <button class="trk-sort"    id="trk-s-medals"     onclick="trkSetSort('medals',this)">🏅 Medalhas</button>
+      <button class="trk-sort"    id="trk-s-scorecard"  onclick="trkSetSort('scorecard',this)">📋 Scorecard</button>
     </div>
 
     <!-- Ranking table -->
@@ -1071,12 +1073,14 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <tr style="background:#f8fafd;border-bottom:1px solid #dde6f0">
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">#</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">JOGADOR</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">T</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">V</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">D</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">WR%</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SP</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:center;letter-spacing:1px">🥇</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">TORNEIOS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">VITÓRIAS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">DERROTAS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">WIN RATE</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SALDO PTS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:center;letter-spacing:1px">CAMPEÃO</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">MEDALHAS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SCORE</th>
           </tr>
         </thead>
         <tbody id="trk-body">
@@ -5346,7 +5350,11 @@ function toTeamStr(t) {
 }
 function _htRenderGrid() {
   const grid = document.getElementById('ht-grid');
-  const trns = _htData.tournaments;
+  const trns = [..._htData.tournaments].sort((a, b) => {
+    const da = a.date || a.created_at || '';
+    const db = b.date || b.created_at || '';
+    return db.localeCompare(da); // most recent first
+  });
   if (!trns.length) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Nenhum torneio encontrado.</div>';
     return;
@@ -5656,15 +5664,17 @@ async function loadTrnRanking() {
   if (stxt) stxt.textContent = 'A carregar ranking...';
 
   try {
-    const [matchRes, trnRes, playerRes] = await Promise.all([
+    const [matchRes, trnRes, playerRes, scRes] = await Promise.all([
       fetch(WEB_APP_URL + '?action=get_matches_tournaments').then(r=>r.json()),
       fetch(WEB_APP_URL + '?action=get_tournaments').then(r=>r.json()),
       fetch(WEB_APP_URL + '?action=get_players').then(r=>r.json()),
+      fetch(WEB_APP_URL + '?action=get_scorecard_tournaments').then(r=>r.json()),
     ]);
 
     const matches      = matchRes.rows  || [];
     const tournaments  = trnRes.rows    || [];
     const playerReg    = playerRes.rows || [];
+    const scorecard    = scRes.rows     || [];
     trkTotalTrns = tournaments.length;
 
     // ── Compute per-player stats from match data ─────────────────────────────
@@ -5705,11 +5715,25 @@ async function loadTrnRanking() {
       teamB.forEach(p => addStat(p, !aWin, sb, sa));
     });
 
+    const medalMap = {};
+    scorecard.forEach(sc => {
+      const p = String(sc.player || sc.nome || '').trim();
+      if (!p) return;
+      if (!medalMap[p]) medalMap[p] = {gold:0,silver:0,bronze:0};
+      const rank = String(sc.rank || sc.position || sc.colocacao || '');
+      if (rank.includes('🥇')||rank==='1'||rank==='1º') medalMap[p].gold++;
+      else if (rank.includes('🥈')||rank==='2'||rank==='2º') medalMap[p].silver++;
+      else if (rank.includes('🥉')||rank==='3'||rank==='3º') medalMap[p].bronze++;
+    });
     trkData = Object.values(map).map(r => ({
       ...r,
       tournaments_count: r.tournaments.size,
       points_difference: r.gw - r.gl,
       win_rate: r.matches > 0 ? (r.wins / r.matches * 100).toFixed(0) + '%' : '0%',
+      gold:          (medalMap[r.player]||{}).gold  ||0,
+      silver:        (medalMap[r.player]||{}).silver||0,
+      bronze:        (medalMap[r.player]||{}).bronze||0,
+      champion_count:(medalMap[r.player]||{}).gold  ||0,
     })).filter(r => r.matches > 0);
 
     if (!trkData.length) {
@@ -5778,6 +5802,13 @@ function _trkSorted(rows) {
   else if (trkSort==='win_rate') r.sort((a,b)=>rkWR(b.win_rate)-rkWR(a.win_rate));
   else if (trkSort==='matches')  r.sort((a,b)=>(+(b.matches||b.partidas||0))-(+(a.matches||a.partidas||0)));
   else if (trkSort==='sp')       r.sort((a,b)=>(+(b.points_difference||b.sp||0))-(+(a.points_difference||a.sp||0)));
+  else if (trkSort==='medals')    r.sort((a,b)=>(b.gold-a.gold)||(b.silver-a.silver)||(b.bronze-a.bronze)||(+(b.wins||0))-(+(a.wins||0)));
+  else if (trkSort==='scorecard') r.sort((a,b) => {
+    // Scorecard acumulado: WR%×2 + SP×0.1 + medals bonus
+    const scoreA = rkWR(a.win_rate)*2 + (+(a.points_difference||a.sp||0))*0.1 + (a.gold||0)*5 + (a.silver||0)*3 + (a.bronze||0)*1;
+    const scoreB = rkWR(b.win_rate)*2 + (+(b.points_difference||b.sp||0))*0.1 + (b.gold||0)*5 + (b.silver||0)*3 + (b.bronze||0)*1;
+    return scoreB - scoreA;
+  });
   else if (trkSort==='champion') r.sort((a,b)=>(+(b.champion_count||b.campeonatos||0))-(+(a.champion_count||a.campeonatos||0)));
   return r;
 }
@@ -5853,6 +5884,7 @@ function trkRenderTable() {
       </td>
       <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:${spCol}">${sp>=0?'+':''}${sp}</td>
       <td style="padding:10px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#C9933A">${champ>0?'🥇'.repeat(Math.min(champ,3))+(champ>3?'+':''):'—'}</td>
+ 
     </tr>`;
   }).join('');
 }
