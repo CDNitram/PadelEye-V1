@@ -656,6 +656,157 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="login-wrap">
     <div class="login-brand">
       <div class="login-logo">PADEL<em>EYE</em></div>
+<script>
+(function() {
+  function eplInit() {
+    var svg    = document.getElementById('epl-svg');
+    if (!svg) return;
+    var eyeEl  = document.getElementById('epl-eye');
+    var pEl    = document.getElementById('epl-p');
+    var adelEl = document.getElementById('epl-adel');
+    var fs     = 52;
+    var BY     = fs * 1.05;
+
+    eyeEl.setAttribute('y',  BY);
+    document.getElementById('epl-eye-bloom').setAttribute('y', BY);
+    pEl.setAttribute('y',    BY);
+    adelEl.setAttribute('y', BY);
+
+    var eyeBB = eyeEl.getBBox();
+    var L = eyeBB.x || 4;
+    document.getElementById('epl-eye-bloom').setAttribute('x', L);
+
+    var eW  = eyeBB.width / 3;
+    var ssX = L + eW * 1.55;
+    var ssY = BY - fs * 0.74;
+
+    document.querySelectorAll('#epl-rings circle').forEach(function(el) {
+      el.setAttribute('cx', ssX); el.setAttribute('cy', ssY);
+    });
+    var ssh = document.getElementById('epl-ssh');
+    var ssvEl = document.getElementById('epl-ssv');
+    var hw = fs * 0.14;
+    ssh.setAttribute('x1',ssX-hw); ssh.setAttribute('y1',ssY);
+    ssh.setAttribute('x2',ssX+hw); ssh.setAttribute('y2',ssY);
+    ssvEl.setAttribute('x1',ssX);  ssvEl.setAttribute('y1',ssY-hw);
+    ssvEl.setAttribute('x2',ssX);  ssvEl.setAttribute('y2',ssY+hw);
+
+    pEl.setAttribute('x', eyeBB.x + eyeBB.width + fs*0.07);
+
+    requestAnimationFrame(function() {
+      var pBB = pEl.getBBox();
+      adelEl.setAttribute('x', pBB.x + pBB.width - fs*0.02);
+
+      requestAnimationFrame(function() {
+        var adelBB = adelEl.getBBox();
+        var R = adelBB.x + adelBB.width;
+
+        // Resize SVG to fit content
+        var PAD = fs * 0.25;
+        svg.setAttribute('viewBox', L-PAD+' '+(ssY-PAD)+' '+(R-L+PAD*2)+' '+(BY+PAD-(ssY-PAD)));
+        svg.setAttribute('width',  R - L + PAD*2);
+        svg.setAttribute('height', BY + PAD - (ssY - PAD));
+
+        // Wall flashes
+        var fl = document.getElementById('epl-fl');
+        var fr = document.getElementById('epl-fr');
+        fl.setAttribute('cx', L); fl.setAttribute('cy', ssY);
+        fr.setAttribute('cx', R); fr.setAttribute('cy', ssY);
+
+        // Ball
+        var ball     = document.getElementById('epl-ball');
+        var ballHi   = document.getElementById('epl-ball-hi');
+        var ballHalo = document.getElementById('epl-ball-halo');
+        var ARC_H    = 19;
+        var TRIP_MS  = 1800;
+
+        var PHASES = [
+          { name:'home',     dur:1200 },
+          { name:'go-right', dur:TRIP_MS, from:ssX, to:R },
+          { name:'impact-r', dur:160   },
+          { name:'ret-right',dur:TRIP_MS, from:R,   to:ssX },
+        ];
+
+        var phaseIdx = 0, phaseT = 0, lastTS = null;
+
+        function ease(t) { return 0.5 - Math.cos(t * Math.PI) / 2; }
+
+        function arcPos(t, x1, x2) {
+          var et = ease(t);
+          return {
+            x: x1 + et*(x2-x1),
+            y: ssY - 4*ARC_H*t*(1-t)
+          };
+        }
+
+        function setPos(x, y, sx, sy) {
+          sx = sx||1; sy = sy||1;
+          var tr = 'translate('+x+','+y+') scale('+sx+','+sy+') translate('+(-x)+','+(-y)+')';
+          ball.setAttribute('cx', x);     ball.setAttribute('cy', y);
+          ballHi.setAttribute('cx', x-fs*0.018); ballHi.setAttribute('cy', y-fs*0.022);
+          ballHalo.setAttribute('cx', x); ballHalo.setAttribute('cy', y);
+          ball.setAttribute('transform', tr);
+          ballHi.setAttribute('transform', tr);
+        }
+
+        function triggerFlash(side) {
+          var el = side==='r' ? fr : fl;
+          el.setAttribute('opacity','0.5');
+          setTimeout(function(){ el.setAttribute('opacity','0'); }, 180);
+        }
+
+        function frame(ts) {
+          if (!lastTS) lastTS = ts;
+          var dt = ts - lastTS; lastTS = ts;
+          var ph = PHASES[phaseIdx];
+          phaseT += dt;
+          var t = Math.min(phaseT / ph.dur, 1);
+
+          if (ph.name === 'home') {
+            setPos(ssX, ssY);
+            ball.setAttribute('fill','url(#epl-ballGold)');
+            ballHalo.setAttribute('opacity','0.4');
+
+          } else if (ph.name === 'go-right') {
+            ball.setAttribute('fill','url(#epl-ballGold)');
+            ballHi.setAttribute('fill','rgba(255,255,210,0.8)');
+            var p = arcPos(t, ph.from, ph.to);
+            var v = Math.sin(t*Math.PI);
+            setPos(p.x, p.y, 1+v*0.4, 1-v*0.22);
+            ballHalo.setAttribute('opacity', String(0.3+v*0.3));
+
+          } else if (ph.name === 'impact-r') {
+            var sq = t<0.5 ? 1-t*2*0.5 : 0.5+(t-0.5)*2*0.5;
+            setPos(R, ssY, 1-sq*0.45, 1+sq*0.35);
+            ballHalo.setAttribute('opacity', String(0.6-t*0.3));
+            if (t<0.05) triggerFlash('r');
+
+          } else if (ph.name === 'ret-right') {
+            ball.setAttribute('fill','url(#epl-ballGrad)');
+            ballHi.setAttribute('fill','rgba(255,255,240,0.7)');
+            var p = arcPos(t, ph.from, ph.to);
+            var v = Math.sin(t*Math.PI);
+            setPos(p.x, p.y, 1+v*0.4, 1-v*0.22);
+            ballHalo.setAttribute('opacity', String(0.3+v*0.3));
+          }
+
+          if (t >= 1) { phaseT = 0; phaseIdx = (phaseIdx+1) % PHASES.length; }
+          requestAnimationFrame(frame);
+        }
+
+        setPos(ssX, ssY);
+        requestAnimationFrame(frame);
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', eplInit);
+  } else {
+    setTimeout(eplInit, 50);
+  }
+})();
+</script>
       <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1.5px;margin-top:6px">Gestão inteligente de torneios de padel</div>
       <div style="height:1em"></div>
       <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1.5px">Ecotenis MVP</div>
@@ -5437,6 +5588,8 @@ function _htRenderGrid() {
     const tm  = _htData.matches.filter(m => m.tournament_id === tid);
     const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
 
+    const scoredMatches = tm.filter(m => (+m.score_a||0)+(+m.score_b||0) > 0);
+    const matchCount = scoredMatches.length || tm.length;
     const players = new Set();
     tm.forEach(m => {
       toTeamStr(m.team_a).split(' / ').forEach(p => p && players.add(p.trim()));
@@ -5446,32 +5599,41 @@ function _htRenderGrid() {
     const winner = sc.find(s => s.rank === '🥇');
     const cat    = t.tournament_category || '—';
     const [stBg, stCol] = (STATUS[t.status] || '#f0f5fb|#7090b0').split('|');
-    const dateStr = (t.date || '').slice(0, 10);
-    const dateFmt = dateStr ? (() => {
-      try { return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'}); }
-      catch { return dateStr; }
-    })() : '—';
+    // Robust date parser — ISO, PT-BR "15 de mai. de 2026", fallback
+    const ptMo = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+    function parseTDate(raw) {
+      if (!raw) return null;
+      const s = String(raw).trim();
+      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (iso) return new Date(iso[1]+'-'+iso[2]+'-'+iso[3]+'T12:00:00');
+      const pt = s.match(/^(\d{1,2})\s+de\s+([a-z]+)\.?\s+de\s+(\d{4})/i);
+      if (pt) { const mo = ptMo[pt[2].toLowerCase().slice(0,3)]; if(mo) return new Date(+pt[3],mo-1,+pt[1],12); }
+      const d = new Date(s);
+      return isNaN(d) ? null : d;
+    }
+    const dateObj = parseTDate(t.date) || parseTDate(t.created_at);
+    const dateFmt = dateObj ? dateObj.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 
-    html += `<tr style="border-bottom:1px solid #f4f7fc;cursor:pointer;transition:background .12s"
+    html += `<tr style="border-bottom:2px solid #eef3fa;cursor:pointer;transition:background .12s"
       onclick="_htOpenTorneio('${tid.replace(/'/g,"\'")}')"
       onmouseover="this.style.background='#f8fafd'"
       onmouseout="this.style.background=''"
       >
-      <td style="padding:12px 14px;font-family:'DM Mono';font-size:12px;font-weight:600;color:#9ab0c8">${idx + 1}</td>
-      <td style="padding:12px 8px">
+      <td style="padding:16px 14px;font-family:'DM Mono';font-size:12px;font-weight:600;color:#9ab0c8">${idx + 1}</td>
+      <td style="padding:16px 8px">
         <div style="font-weight:600;font-size:13px;color:#0d1e3a">${t.tournament_name || '—'}</div>
         <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px">📅 ${dateFmt} · 📍 ${t.venue || '—'}</div>
       </td>
-      <td style="padding:12px 8px;text-align:center">
+      <td style="padding:16px 8px;text-align:center">
         <span style="background:${catColor[cat]||'#5a7090'}22;color:${catColor[cat]||'#5a7090'};border-radius:6px;padding:2px 8px;font-family:'DM Mono';font-size:10px;font-weight:700">${cat}</span>
       </td>
-      <td style="padding:12px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${players.size || t.total_players || '—'}</td>
-      <td style="padding:12px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${tm.length || t.total_matches || '—'}</td>
-      <td style="padding:12px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#0d1e3a">${t.group_number || '—'}</td>
-      <td style="padding:12px 14px;text-align:center">
+      <td style="padding:16px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${players.size || t.total_players || '—'}</td>
+      <td style="padding:16px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${matchCount || t.total_matches || '—'}</td>
+      <td style="padding:16px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#0d1e3a">${t.group_number || '—'}</td>
+      <td style="padding:16px 14px;text-align:center">
         ${winner ? `<div style="font-size:14px">🥇</div><div style="font-size:11px;font-weight:700;color:#C9933A">${(winner.player||'—').split(' ')[0]}</div>` : '<span style="color:#c0cdd8;font-family:DM Mono,monospace;font-size:10px">—</span>'}
       </td>
-      <td style="padding:12px 8px;text-align:center">
+      <td style="padding:16px 8px;text-align:center">
         <span style="background:${stBg};color:${stCol};border-radius:99px;padding:2px 9px;font-family:'DM Mono';font-size:9px;font-weight:700">${t.status || '—'}</span>
       </td>
     </tr>`;
