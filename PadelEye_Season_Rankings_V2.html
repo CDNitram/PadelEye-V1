@@ -3231,7 +3231,7 @@ function renderHistorico() {
         <div class="sc-kpi"><div class="sc-kpi-v">${_hF1Elim}</div><div class="sc-kpi-l">Elim. F1 · 10pts</div></div>
         <div class="sc-kpi"><div class="sc-kpi-v">${_hF2Elim}</div><div class="sc-kpi-l">Elim. F2 · 50pts</div></div>
         <div class="sc-kpi"><div class="sc-kpi-v">${_hFinalists}</div><div class="sc-kpi-l">Finalistas · 100+</div></div>
-        <div class="sc-kpi"><div class="sc-kpi-v">${_hChampion ? _hChampion.name.split(' ')[0] : '—'}</div><div class="sc-kpi-l">🥇 Campeão</div></div>
+        <div class="sc-kpi"><div class="sc-kpi-v">${_hChampion ? String(_hChampion.name||'').split(' ')[0] : '—'}</div><div class="sc-kpi-l">🥇 Campeão</div></div>
       </div>
     </div>` : '';
 
@@ -6155,7 +6155,7 @@ function renderScorecardAcum() {
     ].filter(Boolean).join(' ') || '<span style="color:#c0cdd8;font-size:10px">—</span>';
 
     return `<tr style="${isMe?'background:linear-gradient(90deg,rgba(201,147,58,.08),transparent);':''}border-bottom:1px solid #f4f7fc">
-      <td style="padding:10px 12px;font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">${medal||i+1}</td>
+      <td style="padding:10px 12px;font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">${i+1}</td>
       <td style="padding:10px 12px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:30px;height:30px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:${txtCol};flex-shrink:0">${ini}</div>
@@ -6236,11 +6236,12 @@ async function loadTrnRanking() {
 
       const addStat = (name, won, gw, gl) => {
         if (!name) return;
+        if (/^\d+$/.test(String(name).trim())) return; // skip numeric-only names
         // ── trkStatMap: aggregate by player × tournament_category ─────────
         // Use player_id as key if available — more reliable than name
         const _reg  = getPlayerReg(name);
         const _pid  = _reg?.id ? String(_reg.id) : normStr(name);
-        const _catN = (cat||'').toLowerCase().trim();
+        const _catN = (cat||'').toLowerCase().replace(/[ªº°]/g,'a').trim();
         // Store under MULTIPLE keys so render lookup always finds it
         const sKeys = [
           _pid + '||' + cat,
@@ -6394,7 +6395,7 @@ function trkSetSort(key, el) {
 }
 
 function _trkFiltered() {
-  // Always strip dirty data (numeric-only names)
+  // Strip dirty data (numeric-only names) — belt AND suspenders
   const clean = trkData.filter(p => {
     const n = String(p.player || p.nome || '').trim();
     return n.length > 0 && !/^\d+$/.test(n);
@@ -6402,22 +6403,27 @@ function _trkFiltered() {
 
   if (trkCat === 'all') return clean;
 
-  // Per-category stats: players who PLAYED this category via trkStatMap
+  // Normalise category for comparison: "5ª" === "5a"
+  const normCat = trkCat.toLowerCase().replace(/[ªº°]/g,'a').trim();
+
   return clean.map(p => {
     const reg  = getPlayerReg(p.player);
     const pid  = reg?.id ? String(reg.id) : normStr(p.player);
+    // Try all key variants including normalised category
     const sk   = trkStatMap[pid + '||' + trkCat]
+              || trkStatMap[pid + '||' + normCat]
               || trkStatMap[normStr(p.player) + '||' + trkCat]
-              || trkStatMap[p.player + '||' + trkCat];
+              || trkStatMap[normStr(p.player) + '||' + normCat]
+              || trkStatMap[p.player + '||' + trkCat]
+              || trkStatMap[p.player + '||' + normCat];
     if (!sk || sk.matches === 0) return null;
-    const wins    = sk.wins;
-    const losses  = sk.losses;
-    const matches = sk.matches;
-    const sp      = sk.gw - sk.gl;
-    const wr      = matches > 0 ? Math.round(wins/matches*100) + '%' : '0%';
-    return { ...p, wins, losses, matches,
-             points_difference: sp, win_rate: wr,
-             player_category: trkCat };
+    return { ...p,
+      wins:              sk.wins,
+      losses:            sk.losses,
+      matches:           sk.matches,
+      points_difference: sk.gw - sk.gl,
+      win_rate:          sk.matches > 0 ? Math.round(sk.wins/sk.matches*100)+'%' : '0%',
+      player_category:   trkCat };
   }).filter(Boolean);
 }
 
@@ -6480,7 +6486,7 @@ function trkRenderTable() {
     const txtCol = flagTextCol(getPlayerReg(name).nacionalidade);
     const ini    = _init(name);
     const isMe   = name === myName;
-    const medalIcon = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    const medalIcon = ''; // position number only — no medals in ranking
     const wrNum  = parseInt(wr);
     const wrCol  = wrNum>=60?'#1a7a44':wrNum<30?'#c0392b':'#0d1e3a';
     const spCol  = sp>=0?'#1a7a44':'#c0392b';
