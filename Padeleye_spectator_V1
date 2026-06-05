@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PadelEye · Ao Vivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f0f5fb;
+    min-height: 100vh;
+    color: #0d1e3a;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: #0a1628;
+    padding: 0 20px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: #fff;
+    letter-spacing: 2px;
+  }
+  .topbar-logo span { color: #C9933A; }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #22c55e;
+    color: #fff;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-weight: 700;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0.3; }
+  }
+
+  /* ── Tournament header ── */
+  .trn-header {
+    background: #fff;
+    border-bottom: 1px solid #dde6f0;
+    padding: 16px 20px;
+  }
+  .trn-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    color: #0a1628;
+    letter-spacing: 1px;
+  }
+  .trn-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #9ab0c8;
+    margin-top: 3px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+  .cat-pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 99px;
+    color: #fff;
+  }
+  .refresh-info {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #c0cdd8;
+    margin-top: 6px;
+  }
+
+  /* ── Content ── */
+  .content {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px 12px 40px;
+  }
+
+  /* ── Phase label ── */
+  .phase-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #9ab0c8;
+    padding: 20px 0 8px;
+  }
+
+  /* ── Group card ── */
+  .group-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #dde6f0;
+    overflow: hidden;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 4px rgba(13,30,58,.05);
+  }
+  .group-card-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #f0f5fb;
+  }
+  .group-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 17px;
+    color: #0a1628;
+    letter-spacing: 1px;
+  }
+  .matches-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #9ab0c8;
+  }
+
+  /* ── Standings table ── */
+  .standings {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .standings th {
+    padding: 8px 10px;
+    background: #f8fafd;
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    color: #9ab0c8;
+    font-weight: 500;
+    text-align: left;
+  }
+  .standings th:not(:first-child) { text-align: center; }
+  .standings td {
+    padding: 10px;
+    border-bottom: 1px solid #f4f7fc;
+    color: #0d1e3a;
+  }
+  .standings td:not(:first-child) { text-align: center; }
+  .standings tr:last-child td { border-bottom: none; }
+  .standings tr.rank-1 { background: #f0fdf4; }
+  .standings tr.rank-2 { background: #fafcff; }
+  .rank-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 15px;
+    color: #c0cdd8;
+    margin-right: 6px;
+  }
+  .player-name { font-weight: 600; }
+  .win-val  { color: #1a7a44; font-weight: 700; font-family: 'DM Mono', monospace; }
+  .loss-val { color: #9ab0c8; font-family: 'DM Mono', monospace; }
+  .gd-pos   { color: #1a7a44; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .gd-neg   { color: #c0392b; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .gd-zero  { color: #9ab0c8; font-family: 'DM Mono', monospace; }
+
+  /* ── Matches ── */
+  .matches-section {
+    padding: 12px 16px;
+    border-top: 1px solid #f0f5fb;
+  }
+  .matches-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: #c0cdd8;
+    margin-bottom: 8px;
+  }
+  .match-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8fafd;
+  }
+  .match-row:last-child { border-bottom: none; }
+  .match-team {
+    font-size: 12px;
+    color: #0d1e3a;
+    line-height: 1.3;
+  }
+  .match-team.right { text-align: right; }
+  .match-team.winner { font-weight: 700; }
+  .match-score {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    color: #0a1628;
+    letter-spacing: 2px;
+    text-align: center;
+    min-width: 56px;
+  }
+  .match-score.pending {
+    font-size: 13px;
+    color: #c0cdd8;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ── States ── */
+  .loading, .error, .empty {
+    text-align: center;
+    padding: 80px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: #9ab0c8;
+    letter-spacing: 1px;
+  }
+  .error { color: #c0392b; }
+  .loading-spinner {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 16px;
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── No tournament ── */
+  .no-tid {
+    max-width: 400px;
+    margin: 80px auto;
+    text-align: center;
+    padding: 20px;
+  }
+  .no-tid-icon { font-size: 48px; margin-bottom: 16px; }
+  .no-tid-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    color: #0a1628;
+    margin-bottom: 8px;
+  }
+  .no-tid-text {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #9ab0c8;
+    line-height: 1.6;
+  }
+
+  /* ── Mobile adjustments ── */
+  @media (max-width: 480px) {
+    .content { padding: 12px 8px 40px; }
+    .match-team { font-size: 11px; }
+    .match-score { font-size: 17px; min-width: 44px; }
+    .player-name { font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-logo">PADEL<span>EYE</span></div>
+  <div class="live-badge">
+    <div class="live-dot"></div>
+    AO VIVO
+  </div>
+</div>
+
+<!-- Tournament header -->
+<div class="trn-header" id="trn-header" style="display:none">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+    <span class="cat-pill" id="trn-cat-pill"></span>
+    <div class="trn-name" id="trn-name"></div>
+  </div>
+  <div class="trn-meta">
+    <span id="trn-date"></span>
+    <span id="trn-venue"></span>
+  </div>
+  <div class="refresh-info" id="refresh-info">A carregar...</div>
+</div>
+
+<!-- Main content -->
+<div class="content" id="main-content">
+  <div class="loading">
+    <span class="loading-spinner">🎾</span>
+    A carregar torneio...
+  </div>
+</div>
+
+<script>
+const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec';
+
+const CAT_COLORS = {
+  '5a':'#6366f1','5ª':'#6366f1',
+  '6a':'#0ea5e9','6ª':'#0ea5e9',
+  '7a':'#f59e0b','7ª':'#f59e0b',
+  '8a':'#10b981','8ª':'#10b981',
+};
+
+function toTeamStr(t) {
+  if (Array.isArray(t)) return t.filter(Boolean).join(' / ');
+  return String(t || '');
+}
+
+function getParams() {
+  return new URLSearchParams(window.location.search);
+}
+
+function formatDate(raw) {
+  if (!raw) return '';
+  const ptMo = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+  const pt = String(raw).match(/^(\d{1,2})\s+de\s+([a-z]+)\.?\s+de\s+(\d{4})/i);
+  if (pt) {
+    const mo = ptMo[pt[2].toLowerCase().slice(0,3)];
+    if (mo) return `${pt[1].padStart(2,'0')}/${String(mo).padStart(2,'0')}/${pt[3]}`;
+  }
+  const iso = String(raw).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}/${iso[2]}/${iso[1]}`;
+  return raw;
+}
+
+async function loadTournament(tid) {
+  const content = document.getElementById('main-content');
+  const header  = document.getElementById('trn-header');
+
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(WEB_APP_URL + '?action=get_tournaments').then(r => r.json()),
+      fetch(WEB_APP_URL + '?action=get_matches_tournaments').then(r => r.json()),
+    ]);
+
+    const trn = (r1.rows || []).find(t => String(t.tournament_id) === String(tid));
+    if (!trn) {
+      content.innerHTML = '<div class="error">❌ Torneio não encontrado.<br><small style="font-size:9px">' + tid + '</small></div>';
+      return;
+    }
+
+    const allMatches = (r2.rows || []).filter(m => String(m.tournament_id) === String(tid));
+
+    // ── Header ────────────────────────────────────────────────────────────────
+    const catColor = CAT_COLORS[trn.tournament_category] || '#64748b';
+    document.getElementById('trn-name').textContent     = trn.tournament_name || 'Torneio';
+    document.getElementById('trn-cat-pill').textContent = trn.tournament_category || '';
+    document.getElementById('trn-cat-pill').style.background = catColor;
+    document.getElementById('trn-date').textContent     = '📅 ' + (formatDate(trn.date) || '—');
+    document.getElementById('trn-venue').textContent    = '📍 ' + (trn.venue || '—');
+    header.style.display = 'block';
+
+    // ── Group matches by phase + group ────────────────────────────────────────
+    const byGroup = {};
+    allMatches.forEach(m => {
+      const ph  = m.phase !== undefined ? +m.phase : 0;
+      const gr  = m.group !== undefined ? +m.group : 0;
+      const key = ph + '-' + gr;
+      if (!byGroup[key]) byGroup[key] = { phase: ph, group: gr, matches: [] };
+      byGroup[key].matches.push(m);
+    });
+
+    const PHASE_NAMES = ['Fase de Grupos', 'Fase 2 / Semifinal', 'Final'];
+    const groups = Object.values(byGroup)
+      .sort((a, b) => a.phase - b.phase || a.group - b.group);
+
+    if (!groups.length) {
+      content.innerHTML = '<div class="empty">Sem dados disponíveis ainda.<br>Os resultados aparecerão aqui quando forem registados.</div>';
+      updateRefreshInfo();
+      return;
+    }
+
+    // ── Render ─────────────────────────────────────────────────────────────────
+    let html = '';
+    let lastPhase = -1;
+
+    groups.forEach(g => {
+      // Phase section label
+      if (g.phase !== lastPhase) {
+        html += `<div class="phase-label">${PHASE_NAMES[g.phase] || 'Fase ' + (g.phase + 1)}</div>`;
+        lastPhase = g.phase;
+      }
+
+      // Compute standings from scored matches
+      const stats = {};
+      g.matches.forEach(m => {
+        const sa = +(m.score_a || 0), sb = +(m.score_b || 0);
+        if (sa === 0 && sb === 0) return;
+        const teamA = toTeamStr(m.team_a).split(' / ').filter(Boolean);
+        const teamB = toTeamStr(m.team_b).split(' / ').filter(Boolean);
+        const addP  = (names, gw, gl, won) => names.forEach(n => {
+          n = n.trim();
+          if (!n || /^\d+$/.test(n)) return;
+          if (!stats[n]) stats[n] = { w:0, l:0, gw:0, gl:0 };
+          won ? stats[n].w++ : stats[n].l++;
+          stats[n].gw += gw;
+          stats[n].gl += gl;
+        });
+        addP(teamA, sa, sb, sa > sb);
+        addP(teamB, sb, sa, sb > sa);
+      });
+
+      const sorted = Object.entries(stats)
+        .map(([name, s]) => ({ name, ...s, gd: s.gw - s.gl }))
+        .sort((a, b) => b.w - a.w || b.gd - a.gd);
+
+      const savedCount = g.matches.filter(m =>
+        m.saved === true || m.saved === 'true' || m.saved === 1
+      ).length;
+
+      const groupLabel = g.phase === 0
+        ? 'Grupo ' + (g.group + 1)
+        : (PHASE_NAMES[g.phase] || 'Grupo ' + (g.group + 1));
+
+      // Standings HTML
+      const standingsHTML = sorted.length > 0 ? `
+        <table class="standings">
+          <thead>
+            <tr>
+              <th>JOGADOR</th>
+              <th>V</th>
+              <th>D</th>
+              <th>GD</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sorted.map((p, i) => `
+              <tr class="${i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : ''}">
+                <td>
+                  <span class="rank-num">${i + 1}</span>
+                  <span class="player-name">${p.name}</span>
+                </td>
+                <td><span class="win-val">${p.w}</span></td>
+                <td><span class="loss-val">${p.l}</span></td>
+                <td><span class="${p.gd > 0 ? 'gd-pos' : p.gd < 0 ? 'gd-neg' : 'gd-zero'}">${p.gd >= 0 ? '+' : ''}${p.gd}</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>` : '';
+
+      // Matches HTML
+      const matchesHTML = g.matches.map(m => {
+        const sa     = +(m.score_a || 0), sb = +(m.score_b || 0);
+        const saved  = m.saved === true || m.saved === 'true' || m.saved === 1;
+        const teamAStr = toTeamStr(m.team_a).split(' / ').join('\n');
+        const teamBStr = toTeamStr(m.team_b).split(' / ').join('\n');
+        const aWins  = saved && sa > sb;
+        const bWins  = saved && sb > sa;
+        return `
+          <div class="match-row">
+            <div class="match-team right ${aWins ? 'winner' : ''}">${teamAStr}</div>
+            <div class="match-score ${saved ? '' : 'pending'}">${saved ? (sa + ' — ' + sb) : 'vs'}</div>
+            <div class="match-team ${bWins ? 'winner' : ''}">${teamBStr}</div>
+          </div>`;
+      }).join('');
+
+      html += `
+        <div class="group-card">
+          <div class="group-card-header">
+            <div class="group-title">${groupLabel}</div>
+            <div class="matches-badge">${savedCount}/${g.matches.length} partidas</div>
+          </div>
+          ${standingsHTML}
+          <div class="matches-section">
+            <div class="matches-label">RESULTADOS</div>
+            ${matchesHTML}
+          </div>
+        </div>`;
+    });
+
+    content.innerHTML = html;
+    updateRefreshInfo();
+
+  } catch (e) {
+    content.innerHTML = '<div class="error">❌ Erro ao carregar dados.<br><small style="font-size:9px">' + e.message + '</small></div>';
+  }
+}
+
+function updateRefreshInfo() {
+  const el  = document.getElementById('refresh-info');
+  if (!el) return;
+  const now = new Date().toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  el.textContent = 'Actualizado às ' + now + ' · próxima actualização em 30s';
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+const params = getParams();
+const tid    = params.get('tid');
+
+if (!tid) {
+  document.getElementById('main-content').innerHTML = `
+    <div class="no-tid">
+      <div class="no-tid-icon">🎾</div>
+      <div class="no-tid-title">Link Inválido</div>
+      <div class="no-tid-text">
+        Este link não tem um torneio associado.<br><br>
+        Peça ao organizador para partilhar o link correcto através do painel de<br>
+        <strong>Torneios Abertos</strong> no PadelEye.
+      </div>
+    </div>`;
+} else {
+  loadTournament(tid);
+  setInterval(() => loadTournament(tid), 30000);
+}
+</script>
+</body>
+</html>
