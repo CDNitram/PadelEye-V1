@@ -733,6 +733,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="sb-divider"></div>
     <div class="sb-section-label">Ranking</div>
     <button class="tab-btn" onclick="showTab('trn-ranking',this);loadTrnRanking()"><span class="sb-ic" style="background:#fef9c3">🥇</span> Ranking de Torneios</button>
+    <button class="tab-btn" onclick="showTab('scorecard-acum',this);loadScorecardAcum()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Scorecard Acumulado</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Histórico</div>
     <button class="tab-btn" onclick="showTab('hist-torneios',this);loadHistTorneios()"><span class="sb-ic" style="background:#e0e7ff">🏆</span> Histórico de Torneios</button>
@@ -1019,6 +1020,60 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
        HTML completamente estático — sem depender de renderDBTest().
        Os botões chamam funções JS simples definidas no script. -->
   <!-- ── RANKING DE TORNEIOS ── -->
+
+  <!-- ── SCORECARD ACUMULADO ── -->
+  <div class="panel" id="p-scorecard-acum">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:28px;color:#0a1628;letter-spacing:1px;line-height:1">Scorecard Acumulado</div>
+        <div style="font-size:12px;color:#9ab0c8;margin-top:3px">Performance acumulada de cada jogador em todos os torneios</div>
+      </div>
+      <button id="sca-ref-btn" onclick="loadScorecardAcum()" style="background:#fff;border:1px solid #dde6f0;border-radius:7px;color:#9ab0c8;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .2s">↻</button>
+    </div>
+
+    <!-- Category tabs -->
+    <div id="sca-cat-tabs" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+    <!-- KPI strip -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+      <div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px">
+        <div style="font-family:'Bebas Neue';font-size:32px;color:#0a1628;line-height:1" id="sca-k-players">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Jogadores</div>
+      </div>
+      <div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px">
+        <div style="font-family:'Bebas Neue';font-size:32px;color:#0a1628;line-height:1" id="sca-k-trns">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Torneios</div>
+      </div>
+      <div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px">
+        <div style="font-family:'Bebas Neue';font-size:32px;color:#C9933A;line-height:1" id="sca-k-leader">—</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;letter-spacing:1.5px;text-transform:uppercase;margin-top:3px">Líder Score</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f8fafd;border-bottom:1px solid #dde6f0">
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">#</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">JOGADOR</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">TORNEIOS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">VITÓRIAS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">DERROTAS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">WIN RATE</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SALDO PTS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">MEDALHAS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:center;letter-spacing:1px;background:#fffbf0;color:#C9933A">SCORE</th>
+          </tr>
+        </thead>
+        <tbody id="sca-body">
+          <tr><td colspan="9" style="padding:30px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">Clique em Scorecard Acumulado para carregar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-family:'DM Mono';font-size:9px;color:#c0cdd8;text-align:right;margin-top:8px" id="sca-note"></div>
+  </div>
+
   <div class="panel" id="p-trn-ranking">
 
     <!-- Status bar -->
@@ -1063,7 +1118,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ SP</button>
       <button class="trk-sort"    id="trk-s-champion"   onclick="trkSetSort('champion',this)">🥇 Campeão</button>
       <button class="trk-sort"    id="trk-s-medals"     onclick="trkSetSort('medals',this)">🏅 Medalhas</button>
-      <button class="trk-sort"    id="trk-s-scorecard"  onclick="trkSetSort('scorecard',this)">📋 Scorecard</button>
     </div>
 
     <!-- Ranking table -->
@@ -1080,7 +1134,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SALDO PTS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:center;letter-spacing:1px">CAMPEÃO</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">MEDALHAS</th>
-            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">SCORE</th>
           </tr>
         </thead>
         <tbody id="trk-body">
@@ -1096,7 +1149,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div id="ht-list-view">
       <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Histórico de Torneios</div>
       <div style="font-size:12px;color:#9ab0c8;margin-bottom:20px;font-family:'DM Mono'">Histórico de torneios registados no banco de dados</div>
-      <div id="ht-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      <div id="ht-grid">
         <div style="text-align:center;padding:40px;color:#9ab0c8;font-family:'DM Mono';font-size:11px;grid-column:1/-1">
           Clique no tab para carregar os torneios.
         </div>
@@ -5353,46 +5406,79 @@ function _htRenderGrid() {
   const trns = [..._htData.tournaments].sort((a, b) => {
     const da = a.date || a.created_at || '';
     const db = b.date || b.created_at || '';
-    return db.localeCompare(da); // most recent first
+    return da.localeCompare(db); // oldest first
   });
   if (!trns.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Nenhum torneio encontrado.</div>';
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Nenhum torneio encontrado.</div>';
     return;
   }
-  const STATUS = {finalizado:'#E8F8EE:#1a7a44', em_curso:'#FFF8E0:#865a10', cancelado:'rgba(231,76,60,.1):#c0392b'};
-  grid.innerHTML = trns.map(t => {
+
+  const STATUS = {finalizado:'#E8F8EE|#1a7a44', em_curso:'#FFF8E0|#865a10', cancelado:'rgba(231,76,60,.1)|#c0392b'};
+  const catColor = {'8a':'#d97706','7a':'#b85c38','6a':'#276221','5a':'#1a5fa8'};
+
+  let html = `<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;overflow:hidden">
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead>
+        <tr style="background:#f8fafd;border-bottom:1px solid #dde6f0">
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 14px;text-align:left;letter-spacing:1px">#</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:left;letter-spacing:1px">TORNEIO</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">CAT</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">JOGADORES</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">PARTIDAS</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">GRUPOS</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 14px;text-align:center;letter-spacing:1px">CAMPEÃO</th>
+          <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">STATUS</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  trns.forEach((t, idx) => {
     const tid = t.tournament_id || '';
     const tm  = _htData.matches.filter(m => m.tournament_id === tid);
     const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
+
     const players = new Set();
     tm.forEach(m => {
-      toTeamStr(m.team_a).split(' / ').forEach(p=>p&&players.add(p.trim()));
-      toTeamStr(m.team_b).split(' / ').forEach(p=>p&&players.add(p.trim()));
+      toTeamStr(m.team_a).split(' / ').forEach(p => p && players.add(p.trim()));
+      toTeamStr(m.team_b).split(' / ').forEach(p => p && players.add(p.trim()));
     });
-    const winner = sc.find(s => s.rank==='🥇');
-    const [stBg, stCol] = (STATUS[t.status]||'#f0f5fb:#7090b0').split(':');
-    return `<div onclick="_htOpenTorneio('${tid.replace(/'/g,"\'")}')"
-      style="background:#fff;border:1px solid #dde6f0;border-radius:14px;overflow:hidden;cursor:pointer;transition:all .2s"
-      onmouseover="this.style.borderColor='#C9933A';this.style.boxShadow='0 4px 20px rgba(201,147,58,.15)';this.style.transform='translateY(-2px)'"
-      onmouseout="this.style.borderColor='#dde6f0';this.style.boxShadow='none';this.style.transform='none'">
-      <div style="background:linear-gradient(135deg,#0a1628,#1a3052);padding:16px 18px">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div style="font-family:'Bebas Neue';font-size:18px;color:#fff;letter-spacing:1px;line-height:1.2">${t.tournament_name||'—'}</div>
-          <span style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;background:${stBg};color:${stCol};flex-shrink:0">${t.status||'—'}</span>
-        </div>
-        <div style="font-family:'DM Mono';font-size:9px;color:#93C5FD;margin-top:6px">📅 ${(t.date||'').slice(0,10)} · 📍 ${t.venue||'—'}</div>
-        <div style="font-family:'DM Mono';font-size:9px;color:#5a8aaa;margin-top:2px">🎯 ${t.tournament_format||'—'} · ${t.tournament_category||'—'}</div>
-      </div>
-      <div style="padding:12px 18px;display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;gap:16px">
-          <div><div style="font-family:'Bebas Neue';font-size:18px;color:#C9933A;line-height:1">${players.size}</div><div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase">Jogadores</div></div>
-          <div><div style="font-family:'Bebas Neue';font-size:18px;color:#C9933A;line-height:1">${tm.length}</div><div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase">Partidas</div></div>
-          <div><div style="font-family:'Bebas Neue';font-size:18px;color:#C9933A;line-height:1">${t.group_number||'—'}</div><div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;text-transform:uppercase">Grupos</div></div>
-        </div>
-        ${winner ? `<div style="text-align:right"><div style="font-size:18px">🥇</div><div style="font-size:11px;font-weight:700;color:#0d1e3a">${(winner.player||'—').split(' ')[0]}</div></div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
+
+    const winner = sc.find(s => s.rank === '🥇');
+    const cat    = t.tournament_category || '—';
+    const [stBg, stCol] = (STATUS[t.status] || '#f0f5fb|#7090b0').split('|');
+    const dateStr = (t.date || '').slice(0, 10);
+    const dateFmt = dateStr ? (() => {
+      try { return new Date(dateStr + 'T12:00:00').toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'}); }
+      catch { return dateStr; }
+    })() : '—';
+
+    html += `<tr style="border-bottom:1px solid #f4f7fc;cursor:pointer;transition:background .12s"
+      onclick="_htOpenTorneio('${tid.replace(/'/g,"\'")}')"
+      onmouseover="this.style.background='#f8fafd'"
+      onmouseout="this.style.background=''"
+      >
+      <td style="padding:12px 14px;font-family:'DM Mono';font-size:12px;font-weight:600;color:#9ab0c8">${idx + 1}</td>
+      <td style="padding:12px 8px">
+        <div style="font-weight:600;font-size:13px;color:#0d1e3a">${t.tournament_name || '—'}</div>
+        <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px">📅 ${dateFmt} · 📍 ${t.venue || '—'}</div>
+      </td>
+      <td style="padding:12px 8px;text-align:center">
+        <span style="background:${catColor[cat]||'#5a7090'}22;color:${catColor[cat]||'#5a7090'};border-radius:6px;padding:2px 8px;font-family:'DM Mono';font-size:10px;font-weight:700">${cat}</span>
+      </td>
+      <td style="padding:12px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${players.size || t.total_players || '—'}</td>
+      <td style="padding:12px 8px;text-align:center;font-family:'Bebas Neue';font-size:18px;color:#C9933A">${tm.length || t.total_matches || '—'}</td>
+      <td style="padding:12px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#0d1e3a">${t.group_number || '—'}</td>
+      <td style="padding:12px 14px;text-align:center">
+        ${winner ? `<div style="font-size:14px">🥇</div><div style="font-size:11px;font-weight:700;color:#C9933A">${(winner.player||'—').split(' ')[0]}</div>` : '<span style="color:#c0cdd8;font-family:DM Mono,monospace;font-size:10px">—</span>'}
+      </td>
+      <td style="padding:12px 8px;text-align:center">
+        <span style="background:${stBg};color:${stCol};border-radius:99px;padding:2px 9px;font-family:'DM Mono';font-size:9px;font-weight:700">${t.status || '—'}</span>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  grid.innerHTML = html;
 }
 
 function _htOpenTorneio(tid) {
@@ -5656,6 +5742,114 @@ function _htBuildScorecard(sc) {
 // ══════════════════════════════════════════════════════════════════
 let trkData = [], trkSort = 'wins', trkCat = 'all', trkTotalTrns = 0;
 
+
+// ── Scorecard Acumulado ────────────────────────────────────────────────────────
+let _scaCat = 'all';
+
+async function loadScorecardAcum() {
+  // Reuse trkData if already loaded, otherwise load it
+  if (!trkData.length) await loadTrnRanking();
+  renderScorecardAcum();
+}
+
+function renderScorecardAcum() {
+  // Category tabs
+  const cats = ['all', ...[...new Set(trkData.map(p => p.player_category || '').filter(Boolean))].sort()];
+  const tabEl = document.getElementById('sca-cat-tabs');
+  if (tabEl) {
+    tabEl.innerHTML = cats.map(cat => `
+      <button onclick="scaSetCat('${cat}',this)"
+        style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;
+               text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;transition:all .15s;
+               background:${cat===_scaCat?'#0a1628':'#f4f7fc'};color:${cat===_scaCat?'#fff':'#7090b0'}">
+        ${cat === 'all' ? 'Todos' : cat}
+      </button>`).join('');
+  }
+
+  // Filter by category
+  const rows = _scaCat === 'all' ? trkData
+    : trkData.filter(p => (p.player_category||'').toLowerCase() === _scaCat.toLowerCase());
+
+  // Sort by composite score descending
+  const scored = rows.map(p => {
+    const wr  = +(p.win_rate || '0').replace('%','');
+    const sp  = +(p.points_difference || p.sp || 0);
+    const score = Math.round(wr * 2 + sp * 0.1 + (p.gold||0)*5 + (p.silver||0)*3 + (p.bronze||0));
+    return {...p, _score: score};
+  }).sort((a,b) => b._score - a._score);
+
+  // KPIs
+  document.getElementById('sca-k-players').textContent = scored.length;
+  document.getElementById('sca-k-trns').textContent    = trkTotalTrns;
+  document.getElementById('sca-k-leader').textContent  = scored[0] ? scored[0].player.split(' ')[0] : '—';
+
+  // Table rows
+  const tbody = document.getElementById('sca-body');
+  if (!scored.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">Nenhum dado para esta categoria.</td></tr>';
+    return;
+  }
+
+  const myName = currentUser?.name || '';
+  tbody.innerHTML = scored.map((p, i) => {
+    const wins   = +(p.wins || 0);
+    const losses = +(p.losses || 0);
+    const matches= +(p.matches || 0);
+    const wr     = p.win_rate || (matches > 0 ? Math.round(wins/matches*100)+'%' : '0%');
+    const sp     = +(p.points_difference || p.sp || 0);
+    const nat    = getPlayerReg(p.player).nacionalidade || '';
+    const grad   = flagGrad(nat);
+    const txtCol = flagTextCol(nat);
+    const ini    = _init(p.player);
+    const isMe   = p.player === myName;
+    const medal  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    const wrNum  = parseInt(wr);
+    const wrCol  = wrNum>=60?'#1a7a44':wrNum<30?'#c0392b':'#0d1e3a';
+    const spCol  = sp>=0?'#1a7a44':'#c0392b';
+
+    const medalPills = [
+      p.gold   > 0 ? `<span style="background:#FFF8E0;color:#C9933A;border:1px solid #e8c870;border-radius:5px;padding:1px 6px;font-family:'DM Mono';font-size:9px;font-weight:700">🥇${p.gold}</span>` : '',
+      p.silver > 0 ? `<span style="background:#f4f7fc;color:#5a7090;border:1px solid #dde6f0;border-radius:5px;padding:1px 6px;font-family:'DM Mono';font-size:9px;font-weight:700">🥈${p.silver}</span>` : '',
+      p.bronze > 0 ? `<span style="background:#fdf2ec;color:#7a4010;border:1px solid #e8c8a0;border-radius:5px;padding:1px 6px;font-family:'DM Mono';font-size:9px;font-weight:700">🥉${p.bronze}</span>` : '',
+    ].filter(Boolean).join(' ') || '<span style="color:#c0cdd8;font-family:DM Mono,monospace;font-size:10px">—</span>';
+
+    return `<tr style="${isMe?'background:linear-gradient(90deg,rgba(201,147,58,.08),transparent);':''}border-bottom:1px solid #f4f7fc">
+      <td style="padding:10px 12px;font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">${medal||i+1}</td>
+      <td style="padding:10px 12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:30px;height:30px;border-radius:50%;background:${grad};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:${txtCol};text-shadow:0 1px 3px rgba(0,0,0,.35);flex-shrink:0">${ini}</div>
+          <div>
+            <div style="font-size:12px;font-weight:${isMe?'700':'600'};color:#0d1e3a">${p.player}${isMe?' <span style="font-size:9px;color:#C9933A;font-family:DM Mono,monospace">• você</span>':''}</div>
+            ${p.player_category?`<div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">${p.player_category}</div>`:''}
+          </div>
+        </div>
+      </td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${matches}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44">${wins}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${losses}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:${wrCol}">${wr}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:${spCol}">${sp>=0?'+':''}${sp}</td>
+      <td style="padding:8px 12px"><div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center">${medalPills}</div></td>
+      <td style="padding:10px 12px;text-align:center;background:#fffbf5">
+        <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;line-height:1">${p._score}</div>
+        <div style="font-family:'DM Mono';font-size:8px;color:#c0cdd8">pts</div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  if (document.getElementById('sca-note'))
+    document.getElementById('sca-note').textContent = `Score = WR×2 + Saldo×0.1 + Ouro×5 + Prata×3 + Bronze×1 · calculado de ${trkData.reduce((s,p)=>s+(+p.matches||0),0)} partidas`;
+}
+
+function scaSetCat(cat, el) {
+  _scaCat = cat;
+  document.querySelectorAll('#sca-cat-tabs button').forEach(b => {
+    b.style.background = '#f4f7fc'; b.style.color = '#7090b0';
+  });
+  el.style.background = '#0a1628'; el.style.color = '#fff';
+  renderScorecardAcum();
+}
+
 async function loadTrnRanking() {
   const btn  = document.getElementById('trk-ref-btn');
   const dot  = document.getElementById('trk-dot');
@@ -5803,12 +5997,7 @@ function _trkSorted(rows) {
   else if (trkSort==='matches')  r.sort((a,b)=>(+(b.matches||b.partidas||0))-(+(a.matches||a.partidas||0)));
   else if (trkSort==='sp')       r.sort((a,b)=>(+(b.points_difference||b.sp||0))-(+(a.points_difference||a.sp||0)));
   else if (trkSort==='medals')    r.sort((a,b)=>(b.gold-a.gold)||(b.silver-a.silver)||(b.bronze-a.bronze)||(+(b.wins||0))-(+(a.wins||0)));
-  else if (trkSort==='scorecard') r.sort((a,b) => {
-    // Scorecard acumulado: WR%×2 + SP×0.1 + medals bonus
-    const scoreA = rkWR(a.win_rate)*2 + (+(a.points_difference||a.sp||0))*0.1 + (a.gold||0)*5 + (a.silver||0)*3 + (a.bronze||0)*1;
-    const scoreB = rkWR(b.win_rate)*2 + (+(b.points_difference||b.sp||0))*0.1 + (b.gold||0)*5 + (b.silver||0)*3 + (b.bronze||0)*1;
-    return scoreB - scoreA;
-  });
+
   else if (trkSort==='champion') r.sort((a,b)=>(+(b.champion_count||b.campeonatos||0))-(+(a.champion_count||a.campeonatos||0)));
   return r;
 }
@@ -5884,7 +6073,7 @@ function trkRenderTable() {
       </td>
       <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:${spCol}">${sp>=0?'+':''}${sp}</td>
       <td style="padding:10px 12px;text-align:center;font-family:'Bebas Neue';font-size:15px;color:#C9933A">${champ>0?'🥇'.repeat(Math.min(champ,3))+(champ>3?'+':''):'—'}</td>
- 
+      <td style="padding:8px 12px"><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center">${p.gold>0?`<span style="background:#FFF8E0;color:#C9933A;border:1px solid #e8c870;border-radius:5px;padding:1px 6px;font-family:'DM Mono';font-size:9px;font-weight:700">🥇 ${p.gold}</span>`:''}${p.silver>0?`<span style="background:#f4f7fc;color:#5a7090;border:1px solid #dde6f0;border-radius:5px;padding:1px 6px;font-family:'DM Mono';font-size:9px;font-weight:700">🥈 ${p.silver}</span>`:''}${p.bronze>0?`<span style="background:#fdf2ec;color:#7a4010;border:1px solid #e8c8a0;border-radius:5px;padding:1px 6px;font-family:'DM Mono';font-size:9px;font-weight:700">🥉 ${p.bronze}</span>`:''}${(p.gold+p.silver+p.bronze)===0?'<span style="color:#c0cdd8;font-size:10px">—</span>':''}</div></td>
     </tr>`;
   }).join('');
 }
