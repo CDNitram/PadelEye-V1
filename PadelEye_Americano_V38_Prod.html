@@ -888,7 +888,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab-btn" onclick="showTab('scorecard-acum',this);loadScorecardAcum()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Scorecard Acumulado</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Histórico</div>
-    <button class="tab-btn" onclick="showTab('hist-torneios',this);loadHistTorneios()"><span class="sb-ic" style="background:#e0e7ff">🏆</span> Histórico de Torneios</button>
+    <button class="tab-btn" onclick="showTab('hist-torneios',this);_htResetToList();loadHistTorneios()"><span class="sb-ic" style="background:#e0e7ff">🏆</span> Histórico de Torneios</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Sistema</div>
     <button class="tab-btn" onclick="showTab('dbtest',this)"><span class="sb-ic" style="background:#f1f5f9">🔌</span> Test DB</button>
@@ -5556,7 +5556,9 @@ let _htData = { tournaments:[], matches:[], scorecard:[] };
 let _htLoaded = false;
 
 async function loadHistTorneios(autoOpenTid) {
-  if (_htLoaded) return;
+  _htResetToList();
+  if (_htLoaded && !autoOpenTid) { _htRenderGrid(); return; }
+  if (_htLoaded && autoOpenTid) { _htOpenTorneio(autoOpenTid); return; }
   const grid = document.getElementById('ht-grid');
   if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;font-family:'DM Mono';font-size:11px;color:#9ab0c8">⏳ A carregar torneios...</div>`;
   try {
@@ -5698,55 +5700,73 @@ function _htOpenTorneio(tid) {
          ❌ Torneio não encontrado: ${tidStr}</div>`;
     return;
   }
+  // Wrap rendering in try-catch so errors don't leave spinner forever
+  try {
   const tm  = _htData.matches.filter(m => String(m.tournament_id) === tidStr);
-  const sc  = _htData.scorecard.filter(s => String(s.tournament_id) === tidStr);
-  const players = new Set();
-  tm.forEach(m => {
-    toTeamStr(m.team_a).split(' / ').forEach(p=>p&&players.add(p.trim()));
-    toTeamStr(m.team_b).split(' / ').forEach(p=>p&&players.add(p.trim()));
-  });
-  const phases = [...new Set(tm.map(m=>m.phase).filter(Boolean))];
-  document.getElementById('ht-list-view').style.display   = 'none';
-  document.getElementById('ht-detail-view').style.display = 'block';
-  document.getElementById('ht-detail-content').innerHTML = `
-    <div onclick="_htBack()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;color:#5a8aaa;cursor:pointer;margin-bottom:16px;transition:all .2s"
-      onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'"
-      onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">← Voltar aos Torneios</div>
+    const sc  = _htData.scorecard.filter(s => String(s.tournament_id) === tidStr);
+    const players = new Set();
+    tm.forEach(m => {
+      toTeamStr(m.team_a).split(' / ').forEach(p=>p&&players.add(p.trim()));
+      toTeamStr(m.team_b).split(' / ').forEach(p=>p&&players.add(p.trim()));
+    });
+    const phases = [...new Set(tm.map(m=>m.phase).filter(Boolean))];
+    document.getElementById('ht-list-view').style.display   = 'none';
+    document.getElementById('ht-detail-view').style.display = 'block';
+    document.getElementById('ht-detail-content').innerHTML = `
+      <div onclick="_htBack()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;color:#5a8aaa;cursor:pointer;margin-bottom:16px;transition:all .2s"
+        onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'"
+        onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">← Voltar aos Torneios</div>
 
-    <div style="background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:14px;padding:20px 22px;margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div>
-          <div style="font-family:'Bebas Neue';font-size:26px;color:#fff;letter-spacing:2px">${t.tournament_name||'—'}</div>
-          <div style="font-family:'DM Mono';font-size:10px;color:#93C5FD;margin-top:4px">📅 ${t.date||'—'} · 📍 ${t.venue||'—'} · 🎯 ${t.tournament_format||'—'} · ${t.tournament_category||'—'}</div>
+      <div style="background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:14px;padding:20px 22px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-family:'Bebas Neue';font-size:26px;color:#fff;letter-spacing:2px">${t.tournament_name||'—'}</div>
+            <div style="font-family:'DM Mono';font-size:10px;color:#93C5FD;margin-top:4px">📅 ${t.date||'—'} · 📍 ${t.venue||'—'} · 🎯 ${t.tournament_format||'—'} · ${t.tournament_category||'—'}</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:99px;background:${t.status==='finalizado'?'#E8F8EE':'#FFF8E0'};color:${t.status==='finalizado'?'#1a7a44':'#865a10'}">${t.status||'—'}</span>
         </div>
-        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:99px;background:${t.status==='finalizado'?'#E8F8EE':'#FFF8E0'};color:${t.status==='finalizado'?'#1a7a44':'#865a10'}">${t.status||'—'}</span>
+        <div style="display:flex;gap:20px;margin-top:14px">
+          ${[['Jogadores',players.size],['Partidas',tm.length],['Grupos',t.group_number||'—'],['Jog/Grupo',t.players_per_group||'—'],['Fases',phases.length]].map(([l,v])=>`
+            <div style="text-align:center">
+              <div style="font-family:'Bebas Neue';font-size:20px;color:#C9933A;line-height:1">${v}</div>
+              <div style="font-family:'DM Mono';font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">${l}</div>
+            </div>`).join('')}
+        </div>
       </div>
-      <div style="display:flex;gap:20px;margin-top:14px">
-        ${[['Jogadores',players.size],['Partidas',tm.length],['Grupos',t.group_number||'—'],['Jog/Grupo',t.players_per_group||'—'],['Fases',phases.length]].map(([l,v])=>`
-          <div style="text-align:center">
-            <div style="font-family:'Bebas Neue';font-size:20px;color:#C9933A;line-height:1">${v}</div>
-            <div style="font-family:'DM Mono';font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">${l}</div>
-          </div>`).join('')}
+
+      <div style="display:flex;gap:0;border-bottom:2px solid #dde6f0;margin-bottom:16px;overflow-x:auto">
+        ${[['ht-setup','⚙️ Setup'],['ht-rodadas','🎯 Rodadas'],['ht-grupos','👥 Grupos'],['ht-stats','📊 Estatísticas'],['ht-historico','📋 Histórico'],['ht-scorecard','🏅 Scorecard']].map(([id,label],i)=>`
+          <button id="htab-${id}" onclick="_htDswitch('${id}',this)"
+            style="padding:10px 16px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:${i===0?'#0a1628':'#9ab0c8'};background:none;border:none;border-bottom:${i===0?'2px solid #C9933A':'2px solid transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;transition:all .15s"
+            onmouseover="if(!this.classList.contains('ht-on'))this.style.color='#0d1e3a'"
+            onmouseout="if(!this.classList.contains('ht-on'))this.style.color='#9ab0c8'"
+            class="${i===0?'ht-on':''}">${label}</button>`).join('')}
       </div>
-    </div>
 
-    <div style="display:flex;gap:0;border-bottom:2px solid #dde6f0;margin-bottom:16px;overflow-x:auto">
-      ${[['ht-setup','⚙️ Setup'],['ht-rodadas','🎯 Rodadas'],['ht-grupos','👥 Grupos'],['ht-stats','📊 Estatísticas'],['ht-historico','📋 Histórico'],['ht-scorecard','🏅 Scorecard']].map(([id,label],i)=>`
-        <button id="htab-${id}" onclick="_htDswitch('${id}',this)"
-          style="padding:10px 16px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:${i===0?'#0a1628':'#9ab0c8'};background:none;border:none;border-bottom:${i===0?'2px solid #C9933A':'2px solid transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;transition:all .15s"
-          onmouseover="if(!this.classList.contains('ht-on'))this.style.color='#0d1e3a'"
-          onmouseout="if(!this.classList.contains('ht-on'))this.style.color='#9ab0c8'"
-          class="${i===0?'ht-on':''}">${label}</button>`).join('')}
-    </div>
+      <div id="ht-dp-ht-setup"    class="ht-dp ht-dp-on">${_htBuildSetup(t)}</div>
+      <div id="ht-dp-ht-rodadas"  class="ht-dp"            >${_htBuildRodadas(tm)}</div>
+      <div id="ht-dp-ht-grupos"   class="ht-dp"            >${_htBuildGrupos(tm)}</div>
+      <div id="ht-dp-ht-stats"    class="ht-dp"            >${_htBuildStats(tm)}</div>
+      <div id="ht-dp-ht-historico" class="ht-dp"           >${_htBuildHistorico(tm,sc)}</div>
+      <div id="ht-dp-ht-scorecard" class="ht-dp"           >${_htBuildScorecard(sc)}</div>`;
 
-    <div id="ht-dp-ht-setup"    class="ht-dp ht-dp-on">${_htBuildSetup(t)}</div>
-    <div id="ht-dp-ht-rodadas"  class="ht-dp"            >${_htBuildRodadas(tm)}</div>
-    <div id="ht-dp-ht-grupos"   class="ht-dp"            >${_htBuildGrupos(tm)}</div>
-    <div id="ht-dp-ht-stats"    class="ht-dp"            >${_htBuildStats(tm)}</div>
-    <div id="ht-dp-ht-historico" class="ht-dp"           >${_htBuildHistorico(tm,sc)}</div>
-    <div id="ht-dp-ht-scorecard" class="ht-dp"           >${_htBuildScorecard(sc)}</div>`;
+  } catch(err) {
+    document.getElementById('ht-detail-content').innerHTML =
+      `<div style="text-align:center;padding:60px;color:#c0392b;font-family:'DM Mono';font-size:11px">
+         ❌ Erro ao renderizar torneio: ${err.message}<br>
+         <small style="color:#9ab0c8">${tidStr}</small>
+       </div>`;
+  }
 }
 
+
+// ── Always go back to list when navigating to hist-torneios ──────────────────
+function _htResetToList() {
+  const lv = document.getElementById('ht-list-view');
+  const dv = document.getElementById('ht-detail-view');
+  if (lv) lv.style.display = '';
+  if (dv) dv.style.display = 'none';
+}
 function _htBack() {
   document.getElementById('ht-list-view').style.display   = 'block';
   document.getElementById('ht-detail-view').style.display = 'none';
@@ -6126,11 +6146,11 @@ async function loadTrnRanking() {
         if (!map[name]) {
           const pr = playerReg.find(p => {
             const n = ((p.player_name||p.nome||'') + ' ' + (p.player_surname||p.sobrenome||'')).trim();
-            return n === name || (p.player_nickname||p.nickname||'') === name;
+            return normStr(n) === normStr(name) || normStr(p.player_nickname||p.nickname||'') === normStr(name);
           });
           map[name] = {
             player: name,
-            player_category: pr?.player_category || pr?.categoria || cat,
+            player_category: pr?.player_category || pr?.categoria || pr?.category || cat,
             player_nationality: pr?.player_nationality || pr?.nacionalidade || '',
             wins: 0, losses: 0, matches: 0, gw: 0, gl: 0,
             tournaments: new Set(),
