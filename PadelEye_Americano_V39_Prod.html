@@ -1305,9 +1305,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px">TORNEIOS ABERTOS</div>
     <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px">Torneios em andamento — acesso de qualquer dispositivo</div>
   </div>
-  <div id="otrn-cards" style="display:flex;gap:16px;flex-wrap:wrap"></div>
+  <div id="otrn-cards">
+    <div style="padding:60px 20px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8;letter-spacing:1px">⏳ A carregar torneios...</div>
+  </div>
   <div id="otrn-empty" style="display:none;text-align:center;padding:60px 20px;font-family:'DM Mono';font-size:11px;color:#9ab0c8">
-    Nenhum torneio em andamento.
+    Nenhum torneio em andamento de momento.<br>
+    <span style="color:#c0cdd8;font-size:10px">Verifique se existe um torneio com estado "em_curso" na base de dados.</span>
   </div>
 </div>
 
@@ -6609,17 +6612,25 @@ async function loadOpenTournaments() {
   const cards  = document.getElementById('otrn-cards');
   const empty  = document.getElementById('otrn-empty');
   if (!cards) return;
-  cards.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8;padding:40px">A carregar...</div>';
+  cards.innerHTML = '<div style="padding:60px 20px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8;letter-spacing:1px">⏳ A carregar torneios...</div>';
   empty.style.display = 'none';
 
   try {
     const res  = await fetch(WEB_APP_URL + '?action=get_tournaments');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    // Show tournaments that are explicitly 'em_curso' OR have no status yet (not finalizado)
-    const all  = (data.rows || []).filter(t => {
+    // Deduplicate by tournament_id (keep latest created_at), then filter open
+    const dedupMap = {};
+    (data.rows || []).forEach(t => {
+      const tid = t.tournament_id;
+      if (!tid) return;
+      if (!dedupMap[tid] || (t.created_at||'') > (dedupMap[tid].created_at||''))
+        dedupMap[tid] = t;
+    });
+    const all = Object.values(dedupMap).filter(t => {
       const st = (t.status || '').toLowerCase().trim();
       return st === 'em_curso' || st === 'in_progress' || st === 'active' || st === '';
-    }).filter(t => (t.status||'').toLowerCase() !== 'finalizado');
+    });
 
     if (!all.length) {
       cards.innerHTML = '';
@@ -6678,7 +6689,15 @@ async function loadOpenTournaments() {
     }).join('');
 
   } catch(e) {
-    cards.innerHTML = '<div style="font-family:DM Mono,monospace;font-size:11px;color:#c0392b;padding:20px">❌ Erro ao carregar: ' + e.message + '</div>';
+    cards.innerHTML = `<div style="padding:60px 20px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#c0392b;letter-spacing:1px">
+      <div style="font-size:28px;margin-bottom:12px">⚠️</div>
+      <div style="font-weight:700;margin-bottom:8px">Erro ao carregar torneios</div>
+      <div style="color:#9ab0c8;font-size:10px;margin-bottom:16px">${e.message}</div>
+      <button onclick="loadOpenTournaments()"
+        style="background:#0a1628;color:#fff;border:none;border-radius:8px;
+               padding:8px 20px;font-family:DM Mono,monospace;font-size:10px;
+               letter-spacing:1px;cursor:pointer">↻ Tentar novamente</button>
+    </div>`;
   }
 }
 
@@ -6704,8 +6723,8 @@ async function openTournamentFromDB(tid) {
 
   try {
     const [r1, r2] = await Promise.all([
-      fetch(WEB_APP_URL + '?action=get_tournaments').then(r=>r.json()),
-      fetch(WEB_APP_URL + '?action=get_matches_tournaments').then(r=>r.json()),
+      fetch(WEB_APP_URL + '?action=get_tournaments').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }),
+      fetch(WEB_APP_URL + '?action=get_matches_tournaments').then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }),
     ]);
     const trns  = r1.rows || [];
     const matches = r2.rows || [];
