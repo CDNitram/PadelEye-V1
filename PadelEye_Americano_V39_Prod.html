@@ -2243,6 +2243,9 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   // 5. Saldo de Tie-Breaks
   // 6. Ordem alfabética (determinístico — seguido de botão do organizador)
   // ── Criterion 6 (final only): tournament history — more wins = higher seed ──
+  // isLastPhase must be declared BEFORE historyScore is called (avoids TDZ)
+  const isLastPhase = (phaseIdx === (T.phases?.length - 1));
+
   function historyScore(name) {
     if (!isLastPhase) return 0;
     const entry = (typeof trkData !== 'undefined' ? trkData : [])
@@ -2268,10 +2271,9 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     .map(s => ({ ...s, gd: s.gw - s.gl, tbsaldo: s.tbw - s.tbl }))
     .sort((a, b) => cmpCore(a, b)); // no alphabetical fallback
 
-  // ── Detect ALL adjacent ties (important for final: any position matters) ──
+  // ── Detect ALL adjacent ties ──────────────────────────────────────────────
   // For group phases: only cutoff tie (2nd vs 3rd) triggers organizer choice
   // For final phase (last phase): any adjacent tie triggers it
-  const isLastPhase = (phaseIdx === (T.phases?.length - 1));
   const cutoff = 2; // top-2 advance in group phases
 
   // ── Only show tie banner when ALL group matches are saved ───────────────────
