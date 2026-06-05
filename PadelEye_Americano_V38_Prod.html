@@ -6001,7 +6001,8 @@ function renderScorecardAcum() {
     const name = String(row.player || row.nome || '').trim();
     if (!name) return;
     // Use the category the player PLAYED in (tournament_category), not their profile
-    const cat  = String(row.tournament_category || row.categoria || '').trim();
+    const tid_ = String(row.tournament_id || '');
+    const cat  = String(row.tournament_category || row.categoria || trnCatMap[tid_] || '').trim();
     const key  = name + '||' + cat;
 
     if (!aggMap[key]) {
@@ -6128,6 +6129,12 @@ async function loadTrnRanking() {
     const scorecard    = scRes.rows     || [];
     scData = scorecard; // store globally for Scorecard Acumulado
     trkTotalTrns = tournaments.length;
+    // Build tournament_id → category lookup for scData enrichment
+    trnCatMap = {};
+    tournaments.forEach(t => {
+      const tid = String(t.tournament_id || t.id || '');
+      if (tid) trnCatMap[tid] = t.tournament_category || t.categoria || t.category || '';
+    });
 
     // ── Compute per-player stats from match data ─────────────────────────────
     const map = {};
