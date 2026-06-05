@@ -2178,32 +2178,17 @@ function getPhaseConfig(phaseIdx) {
 // ATENÇÃO: Pressupõe sempre grupos de exatamente 4. Grupos incompletos causam
 //   undefined nos slots de jogadores.
 function groupMatches(g) {
-  const n = (g || []).filter(Boolean).length;
-  if (n === 4) {
-    // Standard Americano — 3 rounds, everyone plays everyone
-    return [
-      { a: [g[0], g[1]], b: [g[2], g[3]] },
-      { a: [g[0], g[2]], b: [g[1], g[3]] },
-      { a: [g[0], g[3]], b: [g[1], g[2]] },
-    ];
+  // Groups are always 4 players in Americano format
+  // 3 rounds: every player partners every other player exactly once
+  if (!g[0] || !g[1] || !g[2] || !g[3]) {
+    console.warn('[groupMatches] Group does not have 4 players:', g);
+    return [];
   }
-  if (n === 3) {
-    // 3-player round robin — ghost player as placeholder
-    return [
-      { a: [g[0], g[1]], b: [g[2], g[2]] },  // g[2] vs his partner g[2] is marker
-      { a: [g[0], g[2]], b: [g[1], g[1]] },
-      { a: [g[1], g[2]], b: [g[0], g[0]] },
-    ];
-  }
-  // Fallback for any other size: pair-based round robin
-  const matches = [];
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      const others = g.filter((_,k) => k!==i && k!==j);
-      if (others.length >= 2) matches.push({ a: [g[i], g[j]], b: [others[0], others[1]] });
-    }
-  }
-  return matches;
+  return [
+    { a: [g[0], g[1]], b: [g[2], g[3]] },
+    { a: [g[0], g[2]], b: [g[1], g[3]] },
+    { a: [g[0], g[3]], b: [g[1], g[2]] },
+  ];
 }
 
 // ── STANDINGS within a group ──
@@ -2420,7 +2405,7 @@ function advancePhase() {
     T.phases[1] = { name:'Fase 2', groups: f2Groups.filter(g=>g.length>0), results:{}, complete:false };
 
   } else if (phIdx === 1 && !is2Phase) {
-    // 3-phase mode: F2 → Final
+    // 3-phase mode: F2 → Final — top-2 from each F2 group = 4 players
     const finalists = qualifiers.flat().slice(0, 4);
     T.phases[2] = { name:'Final', groups:[finalists], results:{}, complete:false };
   }
