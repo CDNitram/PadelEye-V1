@@ -612,6 +612,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 }
 .tie-reset-btn:hover { border-color: #e74c3c; color: #e74c3c; }
 
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -5554,7 +5555,7 @@ function launchManualGroups() {
 let _htData = { tournaments:[], matches:[], scorecard:[] };
 let _htLoaded = false;
 
-async function loadHistTorneios() {
+async function loadHistTorneios(autoOpenTid) {
   if (_htLoaded) return;
   const grid = document.getElementById('ht-grid');
   if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;font-family:'DM Mono';font-size:11px;color:#9ab0c8">⏳ A carregar torneios...</div>`;
@@ -5569,6 +5570,7 @@ async function loadHistTorneios() {
     _htData.scorecard   = r3.rows || [];
     _htLoaded = true;
     _htRenderGrid();
+    if (autoOpenTid) _htOpenTorneio(autoOpenTid);
   } catch(e) {
     if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#c0392b;font-family:'DM Mono';font-size:11px">❌ Erro ao carregar: ${e.message}</div>`;
   }
@@ -5671,10 +5673,33 @@ function _htRenderGrid() {
 }
 
 function _htOpenTorneio(tid) {
-  const t   = _htData.tournaments.find(x => x.tournament_id === tid);
-  if (!t) return;
-  const tm  = _htData.matches.filter(m => m.tournament_id === tid);
-  const sc  = _htData.scorecard.filter(s => s.tournament_id === tid);
+  // Show detail immediately with loading skeleton
+  document.getElementById('ht-list-view').style.display   = 'none';
+  document.getElementById('ht-detail-view').style.display = 'block';
+  document.getElementById('ht-detail-content').innerHTML  =
+    `<div style="text-align:center;padding:80px 20px">
+       <div style="font-size:32px;animation:spin 1.2s linear infinite;display:inline-block">🎾</div>
+       <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:2px;margin-top:16px">A CARREGAR TORNEIO...</div>
+       <div style="font-family:'DM Mono';font-size:9px;color:#c0cdd8;margin-top:6px">${tid}</div>
+     </div>`;
+
+  // If data isn't loaded yet, trigger load and come back
+  if (!_htLoaded) {
+    loadHistTorneios(tid);
+    return;
+  }
+
+  // Type-safe lookup — DB may return id as number or string
+  const tidStr = String(tid);
+  const t   = _htData.tournaments.find(x => String(x.tournament_id) === tidStr);
+  if (!t) {
+    document.getElementById('ht-detail-content').innerHTML =
+      `<div style="text-align:center;padding:60px;color:#c0392b;font-family:'DM Mono';font-size:11px">
+         ❌ Torneio não encontrado: ${tidStr}</div>`;
+    return;
+  }
+  const tm  = _htData.matches.filter(m => String(m.tournament_id) === tidStr);
+  const sc  = _htData.scorecard.filter(s => String(s.tournament_id) === tidStr);
   const players = new Set();
   tm.forEach(m => {
     toTeamStr(m.team_a).split(' / ').forEach(p=>p&&players.add(p.trim()));
@@ -5942,37 +5967,60 @@ async function loadScorecardAcum() {
 }
 
 function renderScorecardAcum() {
-  // Category tabs
-  const cats = ['all', ...[...new Set(trkData.map(p => p.player_category || '').filter(Boolean))].sort()];
   const tabEl = document.getElementById('sca-cat-tabs');
+
+  // ── Filter out dirty data: numeric-only "player" names ───────────────────
+  const cleanData = trkData.filter(p => {
+    const name = String(p.player || p.nome || '').trim();
+    return name.length > 0 && !/^\d+$/.test(name);
+  });
+
+  // ── Category tabs — no "Todos", only real categories ─────────────────────
+  const cats = [...new Set(cleanData.map(p => p.player_category || '').filter(Boolean))].sort();
+  // Auto-select first category if current selection invalid
+  if (_scaCat === 'all' || !cats.includes(_scaCat)) {
+    _scaCat = cats[0] || 'all';
+  }
+
   if (tabEl) {
     tabEl.innerHTML = cats.map(cat => `
       <button onclick="scaSetCat('${cat}',this)"
         style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;
                text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;transition:all .15s;
                background:${cat===_scaCat?'#0a1628':'#f4f7fc'};color:${cat===_scaCat?'#fff':'#7090b0'}">
-        ${cat === 'all' ? 'Todos' : cat}
+        ${cat}
       </button>`).join('');
   }
 
-  // Filter by category
-  const rows = _scaCat === 'all' ? trkData
-    : trkData.filter(p => (p.player_category||'').toLowerCase() === _scaCat.toLowerCase());
+  // ── Filter by category ────────────────────────────────────────────────────
+  const rows = _scaCat === 'all' ? cleanData
+    : cleanData.filter(p => (p.player_category||'').toLowerCase() === _scaCat.toLowerCase());
 
-  // Sort by composite score descending
+  // ── Score: base points + phase advancement bonus ──────────────────────────
+  // Base: wins×3 (like football) + losses×1 (participated)
+  // Bonus: champion (gold)×20, finalist (silver)×10, semifinal (bronze)×5
+  // Quality: WR% × 0.5 + saldo × 0.1
   const scored = rows.map(p => {
-    const wr  = +(p.win_rate || '0').replace('%','');
-    const sp  = +(p.points_difference || p.sp || 0);
-    const score = Math.round(wr * 2 + sp * 0.1 + (p.gold||0)*5 + (p.silver||0)*3 + (p.bronze||0));
-    return {...p, _score: score};
+    const wins   = +(p.wins   || 0);
+    const losses = +(p.losses || 0);
+    const wr     = +(p.win_rate || '0').replace('%', '');
+    const sp     = +(p.points_difference || p.sp || 0);
+    const base   = wins * 3 + losses * 1;
+    const bonus  = (p.gold||0)*20 + (p.silver||0)*10 + (p.bronze||0)*5;
+    const quality= Math.round(wr * 0.5 + sp * 0.1);
+    const score  = base + bonus + quality;
+    return {...p, _score: score, _base: base, _bonus: bonus, _quality: quality};
   }).sort((a,b) => b._score - a._score);
 
-  // KPIs
-  document.getElementById('sca-k-players').textContent = scored.length;
+  // ── KPIs ──────────────────────────────────────────────────────────────────
+  const leader = scored[0];
+  document.getElementById('sca-k-players').textContent = rows.length;
   document.getElementById('sca-k-trns').textContent    = trkTotalTrns;
-  document.getElementById('sca-k-leader').textContent  = scored[0] ? scored[0].player.split(' ')[0] : '—';
+  document.getElementById('sca-k-leader').textContent  = leader
+    ? (leader.player || '—').split(' ').slice(0,2).join(' ')  // first + last name
+    : '—';
 
-  // Table rows
+  // ── Table rows ─────────────────────────────────────────────────────────────
   const tbody = document.getElementById('sca-body');
   if (!scored.length) {
     tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">Nenhum dado para esta categoria.</td></tr>';
@@ -6020,14 +6068,15 @@ function renderScorecardAcum() {
       <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:${spCol}">${sp>=0?'+':''}${sp}</td>
       <td style="padding:8px 12px"><div style="display:flex;gap:3px;flex-wrap:wrap;justify-content:center">${medalPills}</div></td>
       <td style="padding:10px 12px;text-align:center;background:#fffbf5">
-        <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;line-height:1">${p._score}</div>
+        <div style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;line-height:1" title="Base:${p._base} + Bónus:${p._bonus} + Qualidade:${p._quality}">${p._score}</div>
         <div style="font-family:'DM Mono';font-size:8px;color:#c0cdd8">pts</div>
       </td>
     </tr>`;
   }).join('');
 
   if (document.getElementById('sca-note'))
-    document.getElementById('sca-note').textContent = `Score = WR×2 + Saldo×0.1 + Ouro×5 + Prata×3 + Bronze×1 · calculado de ${trkData.reduce((s,p)=>s+(+p.matches||0),0)} partidas`;
+    document.getElementById('sca-note').textContent =
+      `Score = (V×3 + D×1) + (🥇×20 + 🥈×10 + 🥉×5) + (WR×0.5 + Saldo×0.1)  ·  ${cleanData.length} jogadores`;
 }
 
 function scaSetCat(cat, el) {
