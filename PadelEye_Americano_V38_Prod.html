@@ -3793,7 +3793,11 @@ function renderScorecard() {
 //   Jogadores dummy/hardcoded só existem no V36_Prod (ambiente de simulação).
 //   Ao cadastrar um novo jogador via modal, ele é adicionado aqui temporariamente
 //   e enviado ao Google Sheets via PadelEyeDB.registerPlayer().
-let REGISTRY = [];
+let REGISTRY    = [];
+let playerNormMap = {}; // normStr(displayName) → registry entry
+let playerIdMap   = {}; // player_id → registry entry
+let trnCatMap     = {}; // tournament_id → category
+let trkStatMap    = {}; // player_id||category → {wins,losses,gw,gl}
 
 // ── OBJETIVO: Calcular o próximo ID no formato Ano+Sequencial (YYYYNNN) ────────
 // CONTEXTO: Formato: ano actual + sequencial de 3 dígitos. Ex: 2026001, 2026025.
@@ -4731,10 +4735,16 @@ function flagTextCol(nat) {
 }
 
 // Lookup player registry data by display name
-function getPlayerReg(name) {
-  return REGISTRY.find(r => displayName(r) === name)
-      || REGISTRY.find(r => r.nome === name)
-      || { nome: name, sobrenome: '', categoria: '', genero: '', cidade: '', nacionalidade: '', id: '' };
+function getPlayerReg(nameOrId) {
+  // 1. Try player_id lookup (most reliable)
+  if (playerIdMap[String(nameOrId)]) return playerIdMap[String(nameOrId)];
+  // 2. Try normalized display name (accent-insensitive)
+  const n = normStr(nameOrId);
+  if (playerNormMap[n]) return playerNormMap[n];
+  // 3. Fallback: live REGISTRY scan for partial matches
+  return REGISTRY.find(r => normStr(displayName(r)) === n)
+      || REGISTRY.find(r => normStr(r.nome||'') === n)
+      || { nome: nameOrId, sobrenome: '', categoria: '', genero: '', cidade: '', nacionalidade: '', id: '' };
 }
 
 // ── Card completo vertical (usado no sorteio) ─────────────────────────────────
@@ -5297,6 +5307,18 @@ async function loadPlayersFromDB() {
       el.style.display = 'block';
     }
   }
+
+  // ── Build fast lookup maps ────────────────────────────────────────────────
+  playerNormMap = {};
+  playerIdMap   = {};
+  REGISTRY.forEach(r => {
+    const dn = (r.nickname || ((r.nome||'') + ' ' + (r.sobrenome||'')).trim());
+    const key = normStr(dn);
+    if (key) playerNormMap[key] = r;
+    // also index first name alone and full name variants
+    if (r.nome) playerNormMap[normStr(r.nome)] = playerNormMap[normStr(r.nome)] || r;
+    if (r.id)   playerIdMap[String(r.id)]      = r;
+  });
 
   renderDB();
   renderRoster();
@@ -6024,21 +6046,24 @@ function renderScorecardAcum() {
     else if (ph.includes('3')       || ph.includes('bronze')   || ph==='🥉') aggMap[key].bronze++;
   });
 
-  // ── Enrich with trkData stats ─────────────────────────────────────────────
+  // ── Enrich with trkStatMap (player × tournament_category from matches) ──────
   const allRows = Object.values(aggMap).map(p => {
-    const tk = trkMap[normStr(p.player)+'||'+(p.player_category||'').toLowerCase()] || {};
-    return {
-      ...p,
-      wins:    +(tk.wins   || 0),
-      losses:  +(tk.losses || 0),
-      matches: +(tk.matches|| 0) || (+(tk.wins||0) + +(tk.losses||0)),
-      win_rate: tk.win_rate || '',
-      sp:      +(tk.points_difference || tk.sp || 0),
-      // medals: prefer scData counts (position-based) over trkData
-      gold:    p.gold   || +(tk.gold  ||0),
-      silver:  p.silver || +(tk.silver||0),
-      bronze:  p.bronze || +(tk.bronze||0),
-    };
+    // exact key: player name as-is + category
+    const _r2  = getPlayerReg(p.player);
+    const _pid2= _r2?.id ? String(_r2.id) : normStr(p.player);
+    const sKey = _pid2 + '||' + p.player_category;
+    const sk   = trkStatMap[sKey] || {};
+    const wins   = +(sk.wins   || 0);
+    const losses = +(sk.losses || 0);
+    const gw     = +(sk.gw     || 0);
+    const gl     = +(sk.gl     || 0);
+    const matches= wins + losses;
+    const wr     = matches > 0 ? Math.round(wins/matches*100) + '%' : '—';
+    const sp     = gw - gl;
+    return { ...p, wins, losses, matches, win_rate: wr, sp,
+             gold:   p.gold,
+             silver: p.silver,
+             bronze: p.bronze };
   }).sort((a,b) => b.total - a.total);
 
   // ── Category tabs ─────────────────────────────────────────────────────────
@@ -6152,7 +6177,7 @@ async function loadTrnRanking() {
     const scorecard    = scRes.rows     || [];
     scData = scorecard; // store globally for Scorecard Acumulado
     trkTotalTrns = tournaments.length;
-    // Build tournament_id → category lookup for scData enrichment
+    // Rebuild tournament_id → category lookup for scData enrichment
     trnCatMap = {};
     tournaments.forEach(t => {
       const tid = String(t.tournament_id || t.id || '');
@@ -6160,6 +6185,7 @@ async function loadTrnRanking() {
     });
 
     // ── Compute per-player stats from match data ─────────────────────────────
+    trkStatMap = {}; // reset per load
     const map = {};
     matches.forEach(m => {
       const sa = +(m.score_a || 0), sb = +(m.score_b || 0);
@@ -6173,6 +6199,20 @@ async function loadTrnRanking() {
 
       const addStat = (name, won, gw, gl) => {
         if (!name) return;
+        // ── trkStatMap: aggregate by player × tournament_category ─────────
+        // Use player_id as key if available — more reliable than name
+        const _reg  = getPlayerReg(name);
+        const _pid  = _reg?.id ? String(_reg.id) : normStr(name);
+        const sKey  = _pid + '||' + cat;
+        // also store canonical name for display lookups
+        if (!trkStatMap[sKey]) trkStatMap[sKey] = {wins:0,losses:0,gw:0,gl:0,matches:0,canonName:_reg?.nickname||(((_reg?.nome||name)+' '+(_reg?.sobrenome||'')).trim())||name};
+        // (initialised above)
+        trkStatMap[sKey].wins    += won ? 1 : 0;
+        trkStatMap[sKey].losses  += won ? 0 : 1;
+        trkStatMap[sKey].gw      += gw;
+        trkStatMap[sKey].gl      += gl;
+        trkStatMap[sKey].matches += 1;
+        // ─────────────────────────────────────────────────────────────────────
         if (!map[name]) {
           const pr = playerReg.find(p => {
             const n = ((p.player_name||p.nome||'') + ' ' + (p.player_surname||p.sobrenome||'')).trim();
