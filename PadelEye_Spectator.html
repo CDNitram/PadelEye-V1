@@ -346,16 +346,17 @@ async function loadHome() {
   try {
     const url = WEB_APP_URL + '?action=get_tournaments';
     const res  = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — ' + url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const raw  = await res.text();
     let data;
     try { data = JSON.parse(raw); }
-    catch(pe) { throw new Error('JSON inválido: ' + raw.slice(0,120)); }
+    catch(pe) { throw new Error('JSON inválido: ' + raw.slice(0,200)); }
 
-    // Accept any array-like response
-    const rows = data.rows || data.data || data.tournaments || (Array.isArray(data) ? data : []);
+    // Accept any array-like response structure from GAS
+    const rows = data.rows || data.data || data.tournaments
+              || (Array.isArray(data) ? data : []);
 
-    // Deduplicate by tournament_id, keep latest
+    // Deduplicate by tournament_id
     const dedupMap = {};
     rows.forEach(t => {
       const tid = String(t.tournament_id || t.id || '').trim();
@@ -365,23 +366,44 @@ async function loadHome() {
     });
     const all = Object.values(dedupMap);
 
-    // Show em_curso first, then anything not finalizado
+    // Show anything NOT explicitly finalizado
     const open = all.filter(t => {
       const st = String(t.status || '').toLowerCase().trim();
       return st !== 'finalizado' && st !== 'completed' && st !== 'done';
     });
 
     if (!open.length) {
-      // Debug: show what we got
-      const statusList = all.map(t => `${t.tournament_id}: "${t.status||'(empty)'}"`).join('<br>');
+      // Show visible debug — no clicking needed
+      const debugRows = all.length
+        ? all.map(t => `<tr>
+            <td style="padding:3px 8px;font-size:10px">${t.tournament_id||'—'}</td>
+            <td style="padding:3px 8px;font-size:10px">${t.status||'(vazio)'}</td>
+            <td style="padding:3px 8px;font-size:10px">${t.tournament_name||'—'}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="3" style="padding:8px;font-size:10px;color:#c0392b">Nenhuma linha retornada pelo GAS</td></tr>';
+
       list.innerHTML = `
         <div class="home-empty">
           <div class="home-empty-icon">🏆</div>
-          Nenhum torneio em andamento de momento.<br><br>
-          <details style="font-family:DM Mono,monospace;font-size:9px;color:#9ab0c8;text-align:left;max-width:400px;margin:0 auto">
-            <summary style="cursor:pointer;color:#c0cdd8">Debug (${all.length} registos)</summary>
-            <div style="margin-top:8px;line-height:2">${statusList || 'Nenhum registo retornado'}</div>
-          </details>
+          <div style="margin-bottom:16px">Nenhum torneio em andamento.</div>
+          <div style="background:#f8fafd;border-radius:10px;padding:12px;max-width:500px;
+                      margin:0 auto;text-align:left">
+            <div style="font-family:DM Mono,monospace;font-size:9px;color:#9ab0c8;
+                        letter-spacing:1px;margin-bottom:8px">
+              DEBUG — ${all.length} torneios recebidos · keys: ${Object.keys(data).join(', ')}
+            </div>
+            <table style="width:100%;border-collapse:collapse">
+              <tr style="background:#eef2f7">
+                <th style="padding:3px 8px;font-size:9px;font-family:DM Mono,monospace;
+                           text-align:left;color:#9ab0c8">ID</th>
+                <th style="padding:3px 8px;font-size:9px;font-family:DM Mono,monospace;
+                           text-align:left;color:#9ab0c8">STATUS</th>
+                <th style="padding:3px 8px;font-size:9px;font-family:DM Mono,monospace;
+                           text-align:left;color:#9ab0c8">NOME</th>
+              </tr>
+              ${debugRows}
+            </table>
+          </div>
         </div>`;
     } else {
       list.innerHTML = open.map(t => {
