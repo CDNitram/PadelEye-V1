@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>PadelEye · Lista de Inscrição</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Court blue — indoor hard court */
+  --court-deep:  #0d7abf;
+  --court-mid:   #1eb3e8;
+  --court-light: #e8f3fc;
+  /* Clay / saibro */
+  --clay:        #a04a18;
+  --clay-light:  #fdf2ec;
+  /* Green — synthetic grass */
+  --grass:       #1a5c2e;
+  --grass-light: #edf7f0;
+  /* Brand */
+  --gold:#C9933A; --gold2:#e0a840;
+  /* Neutrals */
+  --bg:#f4f9ff; --card:#fff; --border:#d8e8f4;
+  --text:#0d2340; --sub:#4a6a8a; --muted:#8aaccb;
+  --green:#1a7a44; --green-bg:#E8F8EE; --green-bdr:#c8e8d0;
+  --red:#c0392b; --red-bg:rgba(231,76,60,.07);
+  --radius:14px; --radius-sm:10px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;}
+body{padding-bottom:80px;}
+
+/* ── Header — court blue gradient ── */
+.header{
+  background:linear-gradient(160deg, #0d7abf 0%, #1eb3e8 100%);
+  padding:16px 16px 0;position:sticky;top:0;z-index:50;
+  box-shadow:0 2px 12px rgba(13,61,110,.25);
+}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.logo{font-family:'Bebas Neue';font-size:22px;color:#fff;letter-spacing:2px;}
+.logo em{color:var(--gold);font-style:normal;}
+.event-tag{font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase;}
+.event-loc{font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.35);letter-spacing:1px;text-align:right;margin-top:2px;}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:0;}
+.tab{flex:1;padding:10px 8px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:rgba(255,255,255,.45);border-bottom:3px solid transparent;transition:all .15s;font-family:'DM Mono';letter-spacing:.5px;}
+.tab.on{color:#fff;border-bottom-color:var(--gold);}
+.tab-badge{display:inline-block;margin-left:5px;background:rgba(201,147,58,.2);color:var(--gold);border-radius:99px;padding:1px 7px;font-size:9px;font-weight:700;}
+.tab.on .tab-badge{background:var(--gold);color:var(--court-deep);}
+
+/* ── League panels ── */
+.panel{display:none;padding:16px;}
+.panel.on{display:block;}
+
+/* ── League info card ── */
+.league-card{
+  border-radius:var(--radius);padding:16px;margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.league-card.cat-8{
+  background:linear-gradient(135deg, #0d7abf 0%, #1eb3e8 100%);
+  border:none;
+}
+.league-card.cat-6{
+  background:linear-gradient(135deg, var(--grass) 0%, #2a8a4a 100%);
+  border:none;
+}
+.lc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;}
+.lc-cat{font-family:'Bebas Neue';font-size:30px;color:#fff;letter-spacing:1px;line-height:1;}
+.lc-cat em{color:var(--gold);font-style:normal;}
+.lc-status{display:inline-flex;align-items:center;gap:5px;font-family:'DM Mono';font-size:9px;padding:3px 10px;border-radius:99px;font-weight:700;letter-spacing:.5px;}
+.lc-status.open{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);}
+.lc-status.full{background:rgba(231,76,60,.2);color:#fca5a5;border:1px solid rgba(231,76,60,.3);}
+.lc-status::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.lc-meta{display:flex;gap:8px;flex-wrap:wrap;}
+.lc-meta-item{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.75);
+  background:rgba(255,255,255,.1);border-radius:99px;padding:3px 10px;}
+.lc-meta-icon{font-size:13px;}
+.progress-wrap{margin-top:14px;}
+.progress-label{display:flex;justify-content:space-between;font-family:'DM Mono';font-size:9px;color:rgba(255,255,255,.5);margin-bottom:5px;letter-spacing:.5px;}
+.progress-bar{height:5px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden;}
+.cat-8 .progress-fill{background:var(--gold);}
+.cat-6 .progress-fill{background:#7fffb0;}
+.progress-fill{height:100%;border-radius:99px;transition:width .4s;}
+
+/* ── Spots list ── */
+.spots-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.spot{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 13px;transition:all .15s;}
+.spot.empty{border-style:dashed;background:transparent;cursor:pointer;opacity:.55;}
+.spot.empty:hover{opacity:1;border-color:var(--court-mid);background:var(--court-light);}
+.spot-num{font-family:'DM Mono';font-size:12px;color:var(--muted);width:20px;text-align:right;flex-shrink:0;}
+.spot-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#fff;flex-shrink:0;}
+.spot-name{flex:1;font-weight:600;font-size:13px;}
+.spot-empty-label{flex:1;font-size:12px;color:var(--muted);font-style:italic;}
+.spot-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:0 2px;transition:color .15s;flex-shrink:0;}
+.spot-remove:hover{color:var(--red);}
+
+/* ── Add player ── */
+.add-bar{display:flex;gap:8px;margin-bottom:8px;}
+.add-input{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;font-family:'DM Sans';font-size:14px;color:var(--text);outline:none;transition:border-color .2s;}
+.add-input:focus{border-color:var(--court-mid);}
+.add-input::placeholder{color:var(--muted);}
+.add-btn-8{background:linear-gradient(135deg,var(--court-deep),var(--court-mid));color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans';transition:all .2s;white-space:nowrap;}
+.add-btn-8:hover{filter:brightness(1.1);}
+.add-btn-6{background:linear-gradient(135deg,var(--grass),#2a8a4a);color:#fff;border:none;border-radius:var(--radius-sm);padding:11px 18px;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans';transition:all .2s;white-space:nowrap;}
+.add-btn-6:hover{filter:brightness(1.1);}
+.add-btn-8:disabled,.add-btn-6:disabled{opacity:.4;cursor:not-allowed;}
+.add-hint{font-size:11px;color:var(--muted);margin-bottom:16px;}
+
+/* ── Action buttons ── */
+.actions{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-action{flex:1;min-width:100px;padding:10px;border-radius:var(--radius-sm);font-size:12px;font-weight:700;cursor:pointer;font-family:'DM Sans';transition:all .2s;text-align:center;border:1.5px solid var(--border);}
+.btn-copy{background:var(--card);color:var(--text);}
+.btn-copy:hover{border-color:var(--court-mid);background:var(--court-light);color:var(--court-deep);}
+.btn-share{background:var(--green-bg);color:var(--green);border-color:var(--green-bdr);}
+.btn-share:hover{background:var(--green);color:#fff;}
+.btn-clear{background:var(--red-bg);color:var(--red);border-color:rgba(231,76,60,.25);}
+.btn-clear:hover{background:var(--red);color:#fff;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--court-deep);color:#fff;padding:10px 20px;border-radius:99px;font-size:12px;font-weight:600;font-family:'DM Mono';letter-spacing:.5px;z-index:1000;transition:opacity .3s;pointer-events:none;}
+.toast.hidden{opacity:0;}
+
+/* ── Note ── */
+.note{background:#fef8ec;border:1px solid #f0d88a;border-radius:var(--radius-sm);padding:12px 14px;font-size:11px;color:#7a5500;line-height:1.7;margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">PADEL<em>EYE</em></div>
+    <div style="text-align:right">
+      <div class="event-tag">EcoTenis · 06 Jun 2026 · PR</div>
+      <div class="event-loc">Foz do Iguaçu, Paraná</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab on" id="tab-8" onclick="switchTab('8')">
+      8ª Classe <span class="tab-badge" id="badge-8">0/16</span>
+    </div>
+    <div class="tab" id="tab-6" onclick="switchTab('6')">
+      6ª Classe <span class="tab-badge" id="badge-6">0/16</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── 8ª CLASSE ── -->
+<div class="panel on" id="panel-8">
+  <div class="league-card cat-8">
+    <div class="lc-header">
+      <div>
+        <div class="lc-cat">Liga <em>8ª</em> Classe</div>
+        <div class="lc-meta" style="margin-top:8px">
+          <div class="lc-meta-item"><span class="lc-meta-icon">📅</span>Sex · 06/06/2026</div>
+          <div class="lc-meta-item"><span class="lc-meta-icon">🕕</span>18h00</div>
+          <div class="lc-meta-item"><span class="lc-meta-icon">📍</span>EcoTenis · Foz do Iguaçu · PR</div>
+        </div>
+      </div>
+      <div class="lc-status open" id="status-8">Vagas abertas</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="prog-label-8">0 inscritos</span>
+        <span>16 vagas</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-8" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="add-bar">
+    <input class="add-input" id="input-8" placeholder="Nome do jogador..." maxlength="30" onkeydown="if(event.key==='Enter')addPlayer('8')">
+    <button class="add-btn-8" id="btn-add-8" onclick="addPlayer('8')">+ Inscrever</button>
+  </div>
+  <div class="add-hint">💡 Pode usar o primeiro nome ou apelido agora. O nome completo será confirmado no torneio.</div>
+
+  <div class="spots-list" id="list-8"></div>
+
+  <div class="actions">
+    <button class="btn-action btn-copy" onclick="copyList('8')">📋 Copiar</button>
+    <button class="btn-action btn-share" onclick="shareList('8')">📲 Partilhar</button>
+    <button class="btn-action btn-clear" onclick="clearList('8')">🗑 Limpar</button>
+  </div>
+  <div class="note">
+    ℹ️ Lista de interesse — no dia do torneio cada jogador confirma o nome completo para verificar cadastro no sistema.
+  </div>
+</div>
+
+<!-- ── 6ª CLASSE ── -->
+<div class="panel" id="panel-6">
+  <div class="league-card cat-6">
+    <div class="lc-header">
+      <div>
+        <div class="lc-cat">Liga <em>6ª</em> Classe</div>
+        <div class="lc-meta" style="margin-top:8px">
+          <div class="lc-meta-item"><span class="lc-meta-icon">📅</span>Sex · 06/06/2026</div>
+          <div class="lc-meta-item"><span class="lc-meta-icon">🕖</span>19h15</div>
+          <div class="lc-meta-item"><span class="lc-meta-icon">📍</span>EcoTenis · Foz do Iguaçu · PR</div>
+        </div>
+      </div>
+      <div class="lc-status open" id="status-6">Vagas abertas</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="prog-label-6">0 inscritos</span>
+        <span>16 vagas</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="prog-6" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <div class="add-bar">
+    <input class="add-input" id="input-6" placeholder="Nome do jogador..." maxlength="30" onkeydown="if(event.key==='Enter')addPlayer('6')">
+    <button class="add-btn-6" id="btn-add-6" onclick="addPlayer('6')">+ Inscrever</button>
+  </div>
+  <div class="add-hint">💡 Pode usar o primeiro nome ou apelido agora. O nome completo será confirmado no torneio.</div>
+
+  <div class="spots-list" id="list-6"></div>
+
+  <div class="actions">
+    <button class="btn-action btn-copy" onclick="copyList('6')">📋 Copiar</button>
+    <button class="btn-action btn-share" onclick="shareList('6')">📲 Partilhar</button>
+    <button class="btn-action btn-clear" onclick="clearList('6')">🗑 Limpar</button>
+  </div>
+  <div class="note">
+    ℹ️ Lista de interesse — no dia do torneio cada jogador confirma o nome completo para verificar cadastro no sistema.
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script>
+const MAX = 16;
+const COLORS = ['#1565a0','#c0392b','#1a7a44','#d4870a','#7b2fa0','#0e7a7a','#b84a10','#1a4a8a','#a02060','#1a6e30','#8a4a00','#2a6a9a','#6a2a8a','#0a5a3a','#8a2000','#2a4a7a'];
+const pc  = n => COLORS[Math.abs((n||'').split('').reduce((h,c)=>h*31+c.charCodeAt(0),0))%COLORS.length];
+const ini = n => { if(!n)return '?'; const p=n.trim().split(' '); return p.length>1?(p[0][0]+p[p.length-1][0]).toUpperCase():n.slice(0,2).toUpperCase(); };
+
+const DEFAULT = {
+  '8': ['Karim','Abdo','Luísa','Premoli','Juranda','Lee','Vitor B','Ricardo B'],
+  '6': ['Marcio','Mahdi','Martin'],
+};
+
+let DATA = { '8': [...DEFAULT['8']], '6': [...DEFAULT['6']] };
+const saved = localStorage.getItem('pe_signup_2506');
+if (saved) { try { Object.assign(DATA, JSON.parse(saved)); } catch {} }
+
+function save() { localStorage.setItem('pe_signup_2506', JSON.stringify(DATA)); }
+
+function render(cat) {
+  const count  = DATA[cat].length;
+  const pct    = Math.round(count / MAX * 100);
+  const isFull = count >= MAX;
+
+  document.getElementById('prog-'+cat).style.width    = pct + '%';
+  document.getElementById('prog-label-'+cat).textContent = count + ' inscrito' + (count !== 1 ? 's' : '');
+  document.getElementById('badge-'+cat).textContent   = count + '/' + MAX;
+  document.getElementById('status-'+cat).textContent  = isFull ? 'Lista completa' : count + ' / ' + MAX + ' vagas';
+  document.getElementById('status-'+cat).className    = 'lc-status ' + (isFull ? 'full' : 'open');
+  document.getElementById('btn-add-'+cat).disabled    = isFull;
+
+  const list = document.getElementById('list-'+cat);
+  let html = '';
+  for (let i = 0; i < MAX; i++) {
+    const name = DATA[cat][i];
+    if (name) {
+      html += `<div class="spot taken">
+        <div class="spot-num">${i + 1}</div>
+        <div class="spot-av" style="background:${pc(name)}">${ini(name)}</div>
+        <div class="spot-name">${name}</div>
+        <button class="spot-remove" onclick="removePlayer('${cat}',${i})" title="Remover">✕</button>
+      </div>`;
+    } else {
+      html += `<div class="spot empty" onclick="focusInput('${cat}')">
+        <div class="spot-num">${i + 1}</div>
+        <div class="spot-av" style="background:var(--border);color:var(--muted)">—</div>
+        <div class="spot-empty-label">Vaga disponível</div>
+      </div>`;
+    }
+  }
+  list.innerHTML = html;
+}
+
+function renderAll() { render('8'); render('6'); }
+
+function addPlayer(cat) {
+  const input = document.getElementById('input-' + cat);
+  const name  = input.value.trim();
+  if (!name) return;
+  if (DATA[cat].length >= MAX) { showToast('Lista completa! (' + MAX + ' vagas)'); return; }
+  if (DATA[cat].some(n => n.toLowerCase() === name.toLowerCase())) {
+    showToast('⚠️ ' + name + ' já está na lista.'); return;
+  }
+  DATA[cat].push(name);
+  save(); render(cat);
+  input.value = '';
+  input.focus();
+  showToast('✅ ' + name + ' adicionado!');
+}
+
+function removePlayer(cat, idx) {
+  const name = DATA[cat][idx];
+  if (!confirm('Remover "' + name + '" da lista?')) return;
+  DATA[cat].splice(idx, 1);
+  save(); render(cat);
+  showToast('Removido: ' + name);
+}
+
+function clearList(cat) {
+  if (!confirm('Limpar toda a lista da ' + cat + 'ª Classe?')) return;
+  DATA[cat] = [];
+  save(); render(cat);
+  showToast('Lista limpa.');
+}
+
+function focusInput(cat) { document.getElementById('input-' + cat).focus(); }
+
+function buildText(cat) {
+  const label = cat === '8' ? '8ª Classe' : '6ª Classe';
+  const time  = cat === '8' ? '18h00' : '19h15';
+  const lines = [
+    `🎾 PadelEye · Liga ${label}`,
+    `📅 Sexta, 06/06/2026 · ${time}`,
+    `📍 EcoTenis · Foz do Iguaçu, PR`,
+    ``,
+    `${DATA[cat].length}/${MAX} inscritos:`,
+  ];
+  for (let i = 0; i < MAX; i++) lines.push((i + 1) + '. ' + (DATA[cat][i] || '_______'));
+  return lines.join('\n');
+}
+
+function copyList(cat) {
+  navigator.clipboard?.writeText(buildText(cat))
+    .then(() => showToast('📋 Lista copiada!'))
+    .catch(() => { alert(buildText(cat)); });
+}
+
+function shareList(cat) {
+  const text = buildText(cat);
+  if (navigator.share) navigator.share({ title: 'PadelEye · Lista de Inscrição', text }).catch(() => {});
+  else copyList(cat);
+}
+
+function switchTab(cat) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  document.getElementById('tab-' + cat).classList.add('on');
+  document.getElementById('panel-' + cat).classList.add('on');
+}
+
+let _toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.add('hidden'), 2400);
+}
+
+renderAll();
+</script>
+</body>
+</html>
