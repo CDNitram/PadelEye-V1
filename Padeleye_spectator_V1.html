@@ -346,7 +346,10 @@ async function loadHome() {
   try {
     const res  = await fetch(WEB_APP_URL + '?action=get_tournaments');
     const data = await res.json();
-    const open = (data.rows || []).filter(t => (t.status||'').toLowerCase() === 'em_curso');
+    const open = (data.rows || []).filter(t => {
+      const st = (t.status || '').toLowerCase().trim();
+      return st === 'em_curso' || st === 'in_progress' || st === 'active' || st === '';
+    }).filter(t => (t.status||'').toLowerCase() !== 'finalizado');
 
     if (!open.length) {
       list.innerHTML = `
