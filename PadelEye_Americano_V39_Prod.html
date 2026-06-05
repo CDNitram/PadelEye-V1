@@ -2178,12 +2178,32 @@ function getPhaseConfig(phaseIdx) {
 // ATENÇÃO: Pressupõe sempre grupos de exatamente 4. Grupos incompletos causam
 //   undefined nos slots de jogadores.
 function groupMatches(g) {
-  // Exactly 3 matches: every pair of players partners once
-  return [
-    { a: [g[0], g[1]], b: [g[2], g[3]] },
-    { a: [g[0], g[2]], b: [g[1], g[3]] },
-    { a: [g[0], g[3]], b: [g[1], g[2]] },
-  ];
+  const n = (g || []).filter(Boolean).length;
+  if (n === 4) {
+    // Standard Americano — 3 rounds, everyone plays everyone
+    return [
+      { a: [g[0], g[1]], b: [g[2], g[3]] },
+      { a: [g[0], g[2]], b: [g[1], g[3]] },
+      { a: [g[0], g[3]], b: [g[1], g[2]] },
+    ];
+  }
+  if (n === 3) {
+    // 3-player round robin — ghost player as placeholder
+    return [
+      { a: [g[0], g[1]], b: [g[2], g[2]] },  // g[2] vs his partner g[2] is marker
+      { a: [g[0], g[2]], b: [g[1], g[1]] },
+      { a: [g[1], g[2]], b: [g[0], g[0]] },
+    ];
+  }
+  // Fallback for any other size: pair-based round robin
+  const matches = [];
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const others = g.filter((_,k) => k!==i && k!==j);
+      if (others.length >= 2) matches.push({ a: [g[i], g[j]], b: [others[0], others[1]] });
+    }
+  }
+  return matches;
 }
 
 // ── STANDINGS within a group ──
@@ -2347,20 +2367,57 @@ function advancePhase() {
     T.phases[1] = { name:'Final', groups:[finalists], results:{}, complete:false };
 
   } else if (phIdx === 0 && !is2Phase) {
-    // 3-phase mode: F1 → F2 cross-pairing
+    // 3-phase mode: F1 → F2
+    // Rule: groups are ALWAYS 4 players
+    //   2 F1 groups → 2 F2 groups of 4 (standard cross-pair)
+    //   3 F1 groups → 2 F2 groups of 4 (top-2 each + 2 best 3rds as wildcards)
+    //   1 F1 group  → 1 F2 group of 4 (top-4)
     const nGroups = qualifiers.length;
-    const grpE = [], grpF = [];
-    for (let i = 0; i < nGroups; i++) {
-      if (i % 2 === 0) { grpE.push(qualifiers[i][0]); grpF.push(qualifiers[i][1]); }
-      else             { grpE.push(qualifiers[i][1]); grpF.push(qualifiers[i][0]); }
+
+    // Collect qualifiers by position tier
+    const winners   = qualifiers.map(q => q[0]).filter(Boolean); // 1st per group
+    const runners   = qualifiers.map(q => q[1]).filter(Boolean); // 2nd per group
+    // 3rd-place per group (for wildcard slots)
+    const thirds    = T.phases[phIdx].groups.map((g, gi) => {
+      const st = groupStandings(g, phIdx, gi);
+      return st[2]?.name || null;
+    }).filter(Boolean);
+
+    let f2Groups;
+    if (nGroups === 1) {
+      // Only 1 F1 group — take top-4 for F2
+      f2Groups = [[...winners, ...runners].slice(0, 4)];
+
+    } else if (nGroups === 2) {
+      // Standard 2-group cross-pairing: each F2 group gets 2 winners + 2 runners
+      // E: 1st-A, 2nd-B, 1st-C(if exists), ...   F: 1st-B, 2nd-A, ...
+      const grpE = [winners[0], runners[1]].filter(Boolean);
+      const grpF = [winners[1], runners[0]].filter(Boolean);
+      // Fill to 4 with remaining
+      const remaining = [...runners.slice(2), ...thirds];
+      while (grpE.length < 4 && remaining.length) grpE.push(remaining.shift());
+      while (grpF.length < 4 && remaining.length) grpF.push(remaining.shift());
+      f2Groups = [grpE, grpF];
+
+    } else {
+      // 3+ F1 groups → 2 F2 groups of 4
+      // Advance: top-2 per group (6 players) + 2 best 3rd-place wildcards = 8
+      // Seed into 2 groups via serpentine draft (winners split across groups)
+      const pool8 = [...winners, ...runners, ...thirds].slice(0, 8);
+      // Serpentine: grpE gets picks 1,4,5,8 — grpF gets picks 2,3,6,7
+      const grpE = [], grpF = [];
+      pool8.forEach((p, i) => {
+        const round = Math.floor(i / 2);
+        if (round % 2 === 0) {
+          (i % 2 === 0 ? grpE : grpF).push(p);
+        } else {
+          (i % 2 === 0 ? grpF : grpE).push(p);
+        }
+      });
+      f2Groups = [grpE.slice(0,4), grpF.slice(0,4)];
     }
-    const allQ = qualifiers.flat();
-    while (grpE.length < 4 && allQ.length > grpE.length + grpF.length) grpE.push(allQ[grpE.length + grpF.length] || '');
-    while (grpF.length < 4 && allQ.length > grpE.length + grpF.length) grpF.push(allQ[grpE.length + grpF.length] || '');
-    const f2Groups = nGroups === 1
-      ? [qualifiers[0]]
-      : [grpE.filter(Boolean), grpF.filter(Boolean)];
-    T.phases[1] = { name:'Fase 2', groups: f2Groups, results:{}, complete:false };
+
+    T.phases[1] = { name:'Fase 2', groups: f2Groups.filter(g=>g.length>0), results:{}, complete:false };
 
   } else if (phIdx === 1 && !is2Phase) {
     // 3-phase mode: F2 → Final
@@ -5095,19 +5152,20 @@ function raffleFinish() {
     });
   }
 
-  // Pre-render all panels (V31 pattern — direct call before navigation)
-  renderGrupos();
-  renderRounds();
-  renderRanking();
-  renderHistorico();
+  // Pre-render + navigate — wrapped so any render error never kills navigation
+  try { renderGrupos(); } catch(e) { console.warn('[raffleFinish] renderGrupos:', e.message); }
+  try { renderRounds(); } catch(e) { console.warn('[raffleFinish] renderRounds:', e.message); }
+  try { renderRanking(); } catch(e) { console.warn('[raffleFinish] renderRanking:', e.message); }
+  try { renderHistorico(); } catch(e) { console.warn('[raffleFinish] renderHistorico:', e.message); }
 
-  // Navigate directly to Rodadas (V31 pattern — no showTab dependency)
+  // Navigate directly to Rodadas (V31 pattern)
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
   const _rfBtn = document.querySelector('.tab-btn[onclick*="rodadas"]') ||
                  document.querySelector('[onclick*="rodadas"]');
   if (_rfBtn) _rfBtn.classList.add('on');
-  document.getElementById('p-rodadas').classList.add('on');
+  const _rfPanel = document.getElementById('p-rodadas');
+  if (_rfPanel) _rfPanel.classList.add('on');
 }
 
 
