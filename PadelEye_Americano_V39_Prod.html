@@ -3715,18 +3715,19 @@ function startTournament() {
     PadelEyeDB.send('create_tournament', { row: torneioRow });
   }
 
-  renderGrupos();
-  renderRounds();
-  renderRanking();
-  renderHistorico();
+  try { renderGrupos();    } catch(e) { console.warn('[startTournament] renderGrupos:',    e.message); }
+  try { renderRounds();    } catch(e) { console.warn('[startTournament] renderRounds:',    e.message); }
+  try { renderRanking();   } catch(e) { console.warn('[startTournament] renderRanking:',   e.message); }
+  try { renderHistorico(); } catch(e) { console.warn('[startTournament] renderHistorico:', e.message); }
 
-  // Go directly to Rodadas — Grupos tab is still accessible to see the draw
-  // Navigate directly (V31 pattern)
+  // Navigate to Rodadas (V31 pattern — ALWAYS runs)
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  const _nav = document.querySelector('.tab-btn[onclick*="rodadas"]') || document.querySelector('[onclick*="rodadas"]');
+  const _nav = document.querySelector('.tab-btn[onclick*="rodadas"]') ||
+               document.querySelector('[onclick*="rodadas"]');
   if (_nav) _nav.classList.add('on');
-  document.getElementById('p-rodadas').classList.add('on');
+  const _panel = document.getElementById('p-rodadas');
+  if (_panel) _panel.classList.add('on');
 }
 
 // [showTab removed — duplicate, canonical definition above]
@@ -5609,16 +5610,22 @@ function launchManualGroups() {
   T.phases = [{ name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }];
   persistT();
 
-  // ── Navigate first — DB call is async and must not block navigation ─────────
-  renderGrupos(); renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
-  _updateSubButtons();
+  // ── Renders — each isolated so a crash never kills navigation ──────────────
+  try { renderGrupos();    } catch(e) { console.warn('[launch] renderGrupos:',    e.message); }
+  try { renderRounds();    } catch(e) { console.warn('[launch] renderRounds:',    e.message); }
+  try { renderRanking();   } catch(e) { console.warn('[launch] renderRanking:',   e.message); }
+  try { renderHistorico(); } catch(e) { console.warn('[launch] renderHistorico:', e.message); }
+  try { renderScorecard(); } catch(e) { console.warn('[launch] renderScorecard:', e.message); }
+  try { _updateSubButtons(); } catch(e) {}
 
-  // Navigate directly (V31 pattern)
+  // ── Navigate to Rodadas (V31 pattern — ALWAYS runs) ─────────────────────────
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  const _nav = document.querySelector('.tab-btn[onclick*="rodadas"]') || document.querySelector('[onclick*="rodadas"]');
+  const _nav = document.querySelector('.tab-btn[onclick*="rodadas"]') ||
+               document.querySelector('[onclick*="rodadas"]');
   if (_nav) _nav.classList.add('on');
-  document.getElementById('p-rodadas').classList.add('on');
+  const _panel = document.getElementById('p-rodadas');
+  if (_panel) _panel.classList.add('on');
 
   safeAlert('✅ Torneio iniciado com grupos manuais!', 'ok');
 
