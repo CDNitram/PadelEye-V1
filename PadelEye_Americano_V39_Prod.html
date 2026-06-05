@@ -6615,7 +6615,11 @@ async function loadOpenTournaments() {
   try {
     const res  = await fetch(WEB_APP_URL + '?action=get_tournaments');
     const data = await res.json();
-    const all  = (data.rows || []).filter(t => (t.status||'').toLowerCase() === 'em_curso');
+    // Show tournaments that are explicitly 'em_curso' OR have no status yet (not finalizado)
+    const all  = (data.rows || []).filter(t => {
+      const st = (t.status || '').toLowerCase().trim();
+      return st === 'em_curso' || st === 'in_progress' || st === 'active' || st === '';
+    }).filter(t => (t.status||'').toLowerCase() !== 'finalizado');
 
     if (!all.length) {
       cards.innerHTML = '';
