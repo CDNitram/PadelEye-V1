@@ -6723,7 +6723,7 @@ function copySpecLink(url, btn) {
 
 async function openTournamentFromDB(tid) {
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,.8);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:DM Mono,monospace;color:#fff;font-size:13px;letter-spacing:2px';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,22,40,.85);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:DM Mono,monospace;color:#fff;font-size:13px;letter-spacing:2px';
   overlay.textContent = 'A CARREGAR TORNEIO...';
   document.body.appendChild(overlay);
 
@@ -6737,81 +6737,93 @@ async function openTournamentFromDB(tid) {
     if (!trn) throw new Error('Torneio não encontrado: ' + tid);
 
     const tMatches = (r2.rows || []).filter(m => String(m.tournament_id) === String(tid));
+    if (!tMatches.length) throw new Error('Sem partidas na DB para este torneio. Pode ter sido iniciado localmente sem guardar.');
 
-    // ── Step 1: Group matches by (phase, group) ─────────────────────────────
-    const pgPlayers = {}; // `${ph}-${gr}` → Set of player names
-    const pgResults = {}; // `${ph}-${gr}-${rd}` → result object
+    // ── Extract phIdx-gi-mi from match_id: "TRN-xxx-0-1-2" ─────────────────
+    // match_id = tournament_id + '-' + key, key = phIdx+'-'+gi+'-'+mi
+    const keyRe = /(\d+)-(\d+)-(\d+)$/;
+
+    const pgResults = {}; // key "phIdx-gi-mi" → result
+    const pgOrder   = {}; // "phIdx-gi-mi" → serial (to sort)
 
     tMatches.forEach(m => {
-      const ph  = +(m.phase ?? 0);
-      const gr  = +(m.group ?? 0);
-      const rd  = +(m.round ?? 0);
-      const pgk = ph + '-' + gr;
-      const rk  = ph + '-' + gr + '-' + rd;
-
-      if (!pgPlayers[pgk]) pgPlayers[pgk] = new Set();
-      toTeamStr(m.team_a).split(' / ').filter(p => p && !/^\d+$/.test(p.trim()))
-        .forEach(p => pgPlayers[pgk].add(p.trim()));
-      toTeamStr(m.team_b).split(' / ').filter(p => p && !/^\d+$/.test(p.trim()))
-        .forEach(p => pgPlayers[pgk].add(p.trim()));
-
-      pgResults[rk] = {
-        team_a: m.team_a,
-        team_b: m.team_b,
-        sa:     +(m.score_a || 0),
-        sb:     +(m.score_b || 0),
-        saved:  m.saved === true || m.saved === 'true' || m.saved === 1 || m.saved === '1',
-      };
+      // Primary: parse key from match_id
+      const km = String(m.match_id || '').match(keyRe);
+      if (km) {
+        const key = km[1] + '-' + km[2] + '-' + km[3];
+        pgResults[key] = {
+          team_a: m.team_a, team_b: m.team_b,
+          sa: +(m.score_a || 0), sb: +(m.score_b || 0),
+          saved: m.saved === true || m.saved === 'true' || m.saved === 1 || m.saved === '1',
+        };
+      }
     });
 
-    // ── Step 2: Rebuild T.phases ─────────────────────────────────────────────
+    // ── Reconstruct phases from keys ─────────────────────────────────────────
+    const phaseSet = new Set(), groupSet = {};
+    Object.keys(pgResults).forEach(k => {
+      const [ph, gi] = k.split('-');
+      phaseSet.add(+ph);
+      if (!groupSet[ph]) groupSet[ph] = new Set();
+      groupSet[ph].add(+gi);
+    });
+
     const PHASE_NAMES = ['Fase 1', 'Fase 2', 'Final'];
-    const phaseNums = [...new Set(Object.keys(pgPlayers).map(k => +k.split('-')[0]))]
-      .sort((a, b) => a - b);
+    const phaseNums = [...phaseSet].sort((a,b) => a-b);
 
     const phases = phaseNums.map(phIdx => {
-      const groupNums = [...new Set(
-        Object.keys(pgPlayers)
-          .filter(k => +k.split('-')[0] === phIdx)
-          .map(k => +k.split('-')[1])
-      )].sort((a, b) => a - b);
+      const groupNums = [...(groupSet[phIdx] || [])].sort((a,b) => a-b);
 
-      const groups  = groupNums.map(gi => [...pgPlayers[phIdx + '-' + gi]]);
-      const results = {};
-      Object.entries(pgResults).forEach(([rk, rv]) => {
-        if (+rk.split('-')[0] === phIdx) results[rk] = rv;
+      // Reconstruct group player order from match round-0 (serial 1 = mi=0)
+      // match 0: team_a=[g0,g1], team_b=[g2,g3]  ← preserves original order
+      const groups = groupNums.map(gi => {
+        const m0 = pgResults[phIdx + '-' + gi + '-0'];
+        if (m0) {
+          const tA = toTeamStr(m0.team_a).split(' / ').filter(Boolean);
+          const tB = toTeamStr(m0.team_b).split(' / ').filter(Boolean);
+          return [...tA, ...tB];
+        }
+        // fallback: collect from all matches of this group
+        const players = new Set();
+        [0,1,2].forEach(mi => {
+          const mx = pgResults[phIdx + '-' + gi + '-' + mi];
+          if (!mx) return;
+          toTeamStr(mx.team_a).split(' / ').filter(Boolean).forEach(p => players.add(p));
+          toTeamStr(mx.team_b).split(' / ').filter(Boolean).forEach(p => players.add(p));
+        });
+        return [...players];
       });
 
-      // Phase is complete when all matches in all groups are saved
+      // Results for this phase
+      const results = {};
+      Object.entries(pgResults).forEach(([k, v]) => {
+        if (+k.split('-')[0] === phIdx) results[k] = v;
+      });
+
       const complete = groups.every((g, gi) =>
-        groupMatches(g).every((_, mi) =>
-          results[phIdx + '-' + gi + '-' + mi]?.saved
-        )
+        groupMatches(g).every((_, mi) => results[phIdx + '-' + gi + '-' + mi]?.saved)
       );
 
-      return {
-        name:     PHASE_NAMES[phIdx] || ('Fase ' + (phIdx + 1)),
-        groups,
-        results,
-        complete,
-      };
+      return { name: PHASE_NAMES[phIdx] || ('Fase ' + (phIdx+1)), groups, results, complete };
     });
 
-    // ── Step 3: Determine current active phase ───────────────────────────────
-    let currentPhase = phases.findIndex(p => !p.complete);
-    if (currentPhase === -1) currentPhase = Math.max(0, phases.length - 1);
+    if (!phases.length) throw new Error('Não foi possível reconstruir fases. Verifique o formato do match_id na DB.');
 
-    // ── Step 4: Set T ────────────────────────────────────────────────────────
+    // ── Determine current phase ───────────────────────────────────────────────
+    let currentPhase = phases.findIndex(p => !p.complete);
+    if (currentPhase === -1) currentPhase = phases.length - 1;
+
+    // ── Build T ──────────────────────────────────────────────────────────────
     T = {
-      id:           trn.tournament_id,
-      name:         trn.tournament_name,
-      date:         trn.date,
-      local:        trn.venue || '',
-      categoria:    trn.tournament_category || '',
-      numFases:     +(trn.num_phases  || 3),
-      numGrupos:    +(trn.group_number || 2),
-      status:       trn.status || 'em_curso',
-      started:      true,
+      id:          trn.tournament_id,
+      name:        trn.tournament_name,
+      date:        trn.date,
+      local:       trn.venue || '',
+      categoria:   trn.tournament_category || '',
+      numFases:    +(trn.num_phases   || phases.length),
+      numGrupos:   +(trn.group_number || phases[0]?.groups.length || 2),
+      status:      trn.status || 'em_curso',
+      started:     true,
       currentPhase,
       phases,
       players: [...new Set(phases.flatMap(ph => ph.groups.flat()))],
@@ -6821,15 +6833,12 @@ async function openTournamentFromDB(tid) {
         { maxScore: 9, tbAt: 9 },
       ],
     };
-
-    // T_groups = current phase groups (for renderGrupos compatibility)
     T_groups = T.phases[0]?.groups?.map(g => [...g]) || [];
 
     persistT();
-
     overlay.remove();
 
-    // Render all panels then navigate
+    // Render + navigate
     try { renderGrupos();    } catch(e) { console.warn('[openTrn] renderGrupos:', e.message); }
     try { renderRounds();    } catch(e) { console.warn('[openTrn] renderRounds:', e.message); }
     try { renderRanking();   } catch(e) { console.warn('[openTrn] renderRanking:', e.message); }
@@ -6844,7 +6853,8 @@ async function openTournamentFromDB(tid) {
 
   } catch(e) {
     overlay.remove();
-    safeAlert('❌ Erro ao carregar torneio: ' + e.message, 'error');
+    safeAlert('❌ Erro: ' + e.message, 'error');
+    console.error('[openTournamentFromDB]', e);
   }
 }
 
