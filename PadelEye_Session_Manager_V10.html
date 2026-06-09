@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V10</title>
+<title>PadelEye · Session Manager · V10.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -440,7 +440,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   }
 })();
 </script>
-    <div class="login-sub">Session Manager · Ecotenis MVP · V10</div>
+    <div class="login-sub">Session Manager · Ecotenis MVP · V10.1</div>
   </div>
   <div class="login-card">
     <div class="login-card-title">Login do Organizador</div>
@@ -1462,9 +1462,10 @@ const PadelEyeDB = (() => {
       const rows = data.rows || [];
       if (!rows.length) return `S${MARK_ZERO_LAST + 1}`;
       // Accept both old 'numero' and new 'session_serial_number'
+      // .replace(/\D/g,'') strips the 'S' prefix so "S22" → 22 (fixes duplicate session number bug)
       const nums = rows
-        .map(r => parseInt(String(r.session_serial_number || r.numero || 0), 10))
-        .filter(n => !isNaN(n));
+        .map(r => parseInt(String(r.session_serial_number || r.numero || 0).replace(/\D/g, ''), 10))
+        .filter(n => !isNaN(n) && n > 0);
       const maxN = nums.length ? Math.max(...nums) : MARK_ZERO_LAST;
       return `S${maxN + 1}`;
     } catch(e) {
@@ -1572,20 +1573,23 @@ async function loadRanking() {
   const rkBodyEl = document.getElementById('rk-body'); if(rkBodyEl) rkBodyEl.innerHTML =
     '<div style="padding:20px;text-align:center;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">⏳ Carregando...</div>';
   try {
-    const [rankRes, sessRes, statsRes] = await Promise.all([
+    const [rankRes, sessRes, statsRes, matchRes] = await Promise.all([
       fetch(SESSION_MANAGER_URL + '?action=get_ranking_sessions'),
       fetch(SESSION_MANAGER_URL + '?action=get_sessions'),
       fetch(SESSION_MANAGER_URL + '?action=get_session_stats'),
+      fetch(SESSION_MANAGER_URL + '?action=get_session_matches'),
     ]);
     if (!rankRes.ok) throw new Error('HTTP ' + rankRes.status);
     const rankJson  = await rankRes.json();
     const sessJson  = sessRes.ok  ? await sessRes.json()  : {rows:[]};
     const statsJson = statsRes.ok ? await statsRes.json() : {rows:[]};
+    const matchJson = matchRes.ok ? await matchRes.json() : {rows:[]};
     const rows = rankJson.rows || [];
     if (!rows.length) throw new Error('empty');
     rkData = rows;
     rkAllSessions   = sessJson.rows  || [];
     rkSessData      = statsJson.rows || [];
+    rkMatchData     = matchJson.rows || [];
     rkTotalSessions = rkAllSessions.length;
     rkRecomputeMVPs();
     const ts = rows[0]?.updated_at ? new Date(rows[0].updated_at).toLocaleString('pt-BR') : '';
@@ -1688,22 +1692,15 @@ function rkRenderTable() {
 
   const _src = rkDataFiltered || rkData;
   const sorted = _src.map(norm).filter(p => p.matches >= 4).sort((a,b) => {
-    // Primary criterion
-    let d = 0;
-    if      (rkSort==='win_rate'||rkSort==='wr')          d = rkWR(b.win_rate)       - rkWR(a.win_rate);
-    else if (rkSort==='mvp_count')                         d = b.mvp_count            - a.mvp_count;
-    else if (rkSort==='points_difference'||rkSort==='gd')  d = b.points_difference    - a.points_difference;
-    else if (rkSort==='matches'||rkSort==='partidas')       d = b.matches              - a.matches;
-    else if (rkSort==='sessions'||rkSort==='sessoes')       d = b.sessions             - a.sessions;
-    else if (rkSort==='wins'||rkSort==='vitorias')          d = b.wins                 - a.wins;
-    else                                                    d = (+(b[rkSort]||0))      - (+(a[rkSort]||0));
-    if (d !== 0) return d;
-    // Tiebreakers: WR → MVP → SP → Partidas → Sessões
-    const wr = rkWR(b.win_rate) - rkWR(a.win_rate); if (wr!==0) return wr;
-    const mv = b.mvp_count - a.mvp_count;            if (mv!==0) return mv;
-    const sp = b.points_difference - a.points_difference; if (sp!==0) return sp;
-    const mt = b.matches - a.matches;                if (mt!==0) return mt;
-    return b.sessions - a.sessions;
+    // ── Ordem canónica fixa — os botões de sort não alteram a ordenação da tabela ──
+    // WR% → Vitórias → Saldo de Pontos → Confronto Direto → Partidas → Sessões → MVPs
+    const wr  = rkWR(b.win_rate) - rkWR(a.win_rate);           if (wr!==0)  return wr;
+    const wn  = b.wins - a.wins;                                 if (wn!==0)  return wn;
+    const sp  = b.points_difference - a.points_difference;      if (sp!==0)  return sp;
+    const h2h = computeH2H(a.player, b.player);                 if (h2h!==0) return -h2h;
+    const mt  = b.matches - a.matches;                          if (mt!==0)  return mt;
+    const ss  = b.sessions - a.sessions;                         if (ss!==0)  return ss;
+    return b.mvp_count - a.mvp_count;
   });
 
   const hmap = {
@@ -2158,11 +2155,37 @@ function rkSetSort(key, el) {
 }
 
 // ══════════════════════════════════════════
+// RANKING — HEAD-TO-HEAD (Confronto Direto)
+// ══════════════════════════════════════════
+// Usado como 4º critério de desempate no sort do ranking.
+// Lê rkMatchData (Matches_Sessions) para contar vitórias directas entre dois jogadores.
+// Retorna: + se nameA leva vantagem, - se nameB leva, 0 se igual ou sem dados.
+function computeH2H(nameA, nameB) {
+  if (!rkMatchData || !rkMatchData.length) return 0;
+  let winsA = 0, winsB = 0;
+  rkMatchData.forEach(m => {
+    const ta = String(m.team_a || m.equipa_a || '').split(/\s*\/\s*/).map(s => s.trim());
+    const tb = String(m.team_b || m.equipa_b || '').split(/\s*\/\s*/).map(s => s.trim());
+    const aInA = ta.includes(nameA), bInA = ta.includes(nameB);
+    const aInB = tb.includes(nameA), bInB = tb.includes(nameB);
+    // Só conta quando jogaram em equipas opostas (não parceiros)
+    if (!((aInA && bInB) || (aInB && bInA))) return;
+    // Determinar vencedor pelo score
+    const sa = +(m.score_a || 0), sb = +(m.score_b || 0);
+    if (sa === sb) return; // empate (tie-break não resolvido) → ignorar
+    const aWon = (aInA && sa > sb) || (aInB && sb > sa);
+    if (aWon) winsA++; else winsB++;
+  });
+  return winsA - winsB; // + = A venceu mais H2H, - = B venceu mais
+}
+
+// ══════════════════════════════════════════
 // RANKING STATE VARS & HELPERS
 // ══════════════════════════════════════════
 // ── OBJETIVO: Variáveis de estado e helpers visuais do ranking ────────────────
 let rkData = [], rkSort = 'win_rate', rkPeriod = 3, rkTotalSessions = 0, rkSessData = [];
 let rkAllSessions  = [];    // all Sessions_Sessions rows (with dates + session_mvp)
+let rkMatchData    = [];    // all Matches_Sessions rows — used for head-to-head tiebreaker
 let rkDataFiltered = null;  // null = show all; array = filtered result
 let rkFilterMode   = 'all'; // 'all' | 'year' | 'custom' | '2024' | '2025' | '2026'
 let rkFilterStart  = '';
