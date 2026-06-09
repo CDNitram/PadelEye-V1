@@ -943,6 +943,7 @@ let PLAYER_REGISTRY = [];
 let currentUser   = null;
 let sessionSaved     = false;
 let sessionIsOpen    = false;
+let sessionId        = null;   // generated at openSession(), used through lifecycle
 let sessionStatus    = '';
 let sessionSubstatus = '';
 let sessionOpenedAt  = null;
@@ -975,17 +976,39 @@ function stampStatus(status, substatus) {
   badge.style.color = color; badge.style.background = bg;
   badge.style.display = 'inline-flex';
   persistSession();
+  // GAS: update status on existing row (fire-and-forget)
+  if (sessionId) {
+    PadelEyeDB._send('update_session_status', {
+      session_id: sessionId, session_status: status, session_substatus: substatus
+    }).catch(e => console.warn('[lifecycle] update_status failed:', e.message));
+  }
 }
 
 function openSession() {
   if (sessionIsOpen) return;
-  sessionIsOpen  = true;
+  sessionIsOpen   = true;
+  sessionId       = PadelEyeDB._uid();
   sessionOpenedAt = new Date().toISOString();
   stampStatus('open','waiting_players');
   const ps = document.getElementById('player-section');
   if (ps) { ps.style.opacity='1'; ps.style.pointerEvents='auto'; }
   document.getElementById('open-session-btn').style.display='none';
   showAlert('alert-session','✅ Sessão aberta. Selecione os jogadores.','ok');
+  // GAS: create session row immediately with status Open
+  PadelEyeDB._send('open_session', {
+    row: {
+      session_id:             sessionId,
+      session_serial_number:  document.getElementById('cfg-num')?.textContent?.trim() || '',
+      session_date:           document.getElementById('cfg-date')?.value || new Date().toISOString().slice(0,10),
+      session_venue:          document.getElementById('cfg-local')?.value || '',
+      session_format:         document.getElementById('cfg-format')?.value || '',
+      session_source:         'App',
+      session_status:         'Open',
+      session_substatus:      'Waiting players',
+      opened_at:              sessionOpenedAt,
+      created_at:             sessionOpenedAt,
+    }
+  }).catch(e => console.warn('[lifecycle] open_session failed:', e.message));
 }
 
 // ── helper: re-evaluate players_confirmed / waiting_players after any player change ─
@@ -1593,7 +1616,7 @@ const PadelEyeDB = (() => {
   // ── V10: map session header → EN field names ──
   function mapSession(s) {
     return {
-      session_id:             uid(),
+      session_id:             sessionId || uid(), // reuse lifecycle ID if set
       session_serial_number:  s.numero || '',
       session_date:           s.data   || now().slice(0,10),
       session_venue:          s.local  || '',
@@ -1604,6 +1627,11 @@ const PadelEyeDB = (() => {
       session_format:         s.formato || '',
       notes:                  s.observacoes || '',
       created_at:             now(),
+      // lifecycle fields
+      session_status:         'Finalized',
+      session_substatus:      '',
+      opened_at:              sessionOpenedAt || now(),
+      finalized_at:           now(),
     };
   }
 
@@ -1691,7 +1719,7 @@ const PadelEyeDB = (() => {
     const stRows = mapSessionStats(sId, sessaoData.numero, sRow.session_date, stats);
 
     const [r1, r2, r3] = await Promise.all([
-      send('insert_session',         { row:  sRow   }),
+      send('upsert_session',         { row:  sRow   }), // V7.3: upserts existing row created by open_session
       send('insert_session_matches', { rows: pRows  }),
       send('insert_session_stats',   { rows: stRows }),
     ]);
@@ -1785,7 +1813,7 @@ const PadelEyeDB = (() => {
     if (type !== 'loading') setTimeout(() => el.style.display='none', 4000);
   }
 
-  return { saveSessao, logSession, registerPlayer, fetchNextSessionNumber, _url };
+  return { saveSessao, logSession, registerPlayer, fetchNextSessionNumber, _url, _uid: uid, _send: send };
 })();
 
 // ══════════════════════════════════════════════════════════════════
