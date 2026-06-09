@@ -500,6 +500,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="session-num" id="hero-num">—</div>
         <div class="session-date" id="hero-date">—</div>
         <div class="session-local" id="hero-local">—</div>
+        <div id="hero-status-badge" style="display:none;align-items:center;gap:5px;margin-top:8px;padding:3px 10px;border-radius:99px;font-family:'DM Mono';font-size:9px;font-weight:600;letter-spacing:.3px">
+          <span style="width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+          <span id="hero-status-text"></span>
+        </div>
       </div>
       <div class="session-hero-right">
         <div class="session-stat"><div class="session-stat-v" id="hero-players">0</div><div class="session-stat-l">JOGADORES</div></div>
@@ -556,6 +560,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div id="score-cfg-preview" style="margin-top:8px;font-size:11px;color:#9ab0c8;font-family:'DM Mono';padding:6px 10px;background:#f4f7fc;border-radius:7px;">
       Primeiro a <strong id="prev-max" style="color:#0d1e3a">4</strong> games ganha · TB em <strong id="prev-tb" style="color:#C9933A">4×4</strong>
     </div>
+    <div id="open-session-btn" style="margin-top:16px;margin-bottom:8px">
+      <button onclick="openSession()" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Abrir Sessão
+      </button>
+    </div>
+    <div id="player-section" style="opacity:.4;pointer-events:none;transition:opacity .3s">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div class="card-title" style="margin-bottom:0">Quem Joga Hoje?</div>
@@ -571,6 +582,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div id="start-session-wrap" style="margin-top:16px">
       <button onclick="startSession()" style="width:100%;padding:14px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s;">Iniciar Sessão → Registrar Partidas</button>
     </div>
+    </div><!-- /player-section -->
   </div>
 
   <!-- ── MATCH TAB ── -->
@@ -929,7 +941,11 @@ const init = name => name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0
 const _init = init; // alias used in histOpen
 let PLAYER_REGISTRY = [];
 let currentUser   = null;
-let sessionSaved  = false;
+let sessionSaved     = false;
+let sessionIsOpen    = false;
+let sessionStatus    = '';
+let sessionSubstatus = '';
+let sessionOpenedAt  = null;
 let activePlayers = [];
 let guestPlayers  = [];
 let matches       = [];
@@ -937,6 +953,50 @@ let matches       = [];
 // ══════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════
+// ── stampStatus: update lifecycle state + hero badge (GAS call in next sprint) ─
+function stampStatus(status, substatus) {
+  sessionStatus    = status;
+  sessionSubstatus = substatus;
+  const badge = document.getElementById('hero-status-badge');
+  const text  = document.getElementById('hero-status-text');
+  if (!badge || !text) { persistSession(); return; }
+  const MAP = {
+    'open:waiting_players':   ['Aberta · Aguardando jogadores',            '#C9933A','rgba(201,147,58,.12)'],
+    'open:players_confirmed': ['Aberta · Jogadores confirmados',            '#3a7bd5','rgba(58,123,213,.12)'],
+    'open:in_progress':       ['Aberta · Partidas em andamento',            '#27AE60','rgba(39,174,96,.12)'],
+    'open:waiting_save':      ['Aberta · Aguardando gravação de resultados','#9b59b6','rgba(155,89,182,.12)'],
+    'finalized:':             ['Finalizada',                                 '#1a7a44','rgba(26,122,68,.12)'],
+    'cancelled:abandonment':  ['Cancelada · Por abandono',                  '#c0392b','rgba(192,57,43,.12)'],
+    'cancelled:other':        ['Cancelada · Outros motivos',                '#c0392b','rgba(192,57,43,.12)'],
+  };
+  const key = `${status}:${substatus}`;
+  const [label,color,bg] = MAP[key] || [key,'#9ab0c8','#f4f7fc'];
+  text.textContent = label;
+  badge.style.color = color; badge.style.background = bg;
+  badge.style.display = 'inline-flex';
+  persistSession();
+}
+
+function openSession() {
+  if (sessionIsOpen) return;
+  sessionIsOpen  = true;
+  sessionOpenedAt = new Date().toISOString();
+  stampStatus('open','waiting_players');
+  const ps = document.getElementById('player-section');
+  if (ps) { ps.style.opacity='1'; ps.style.pointerEvents='auto'; }
+  document.getElementById('open-session-btn').style.display='none';
+  showAlert('alert-session','✅ Sessão aberta. Selecione os jogadores.','ok');
+}
+
+// ── helper: re-evaluate players_confirmed / waiting_players after any player change ─
+function _evalPlayersStamp() {
+  if (!sessionIsOpen) return;
+  if (activePlayers.length >= 2 && sessionSubstatus === 'waiting_players')
+    stampStatus('open','players_confirmed');
+  else if (activePlayers.length < 2 && sessionSubstatus === 'players_confirmed')
+    stampStatus('open','waiting_players');
+}
+
 // ── persistSession: save in-progress session to localStorage ────────────────
 function persistSession() {
   if (!currentUser) return;
@@ -946,6 +1006,7 @@ function persistSession() {
       guestPlayers,
       matches,
       sessionSaved,
+      sessionIsOpen, sessionStatus, sessionSubstatus, sessionOpenedAt,
       config: {
         num:    document.getElementById('cfg-num')?.textContent?.trim(),
         date:   document.getElementById('cfg-date')?.value,
@@ -962,10 +1023,21 @@ function persistSession() {
 // ── restoreSession: re-apply saved in-progress session after refresh ─────────
 function restoreSession(s) {
   if (!s) return;
-  activePlayers  = s.activePlayers  || [];
-  guestPlayers   = s.guestPlayers   || [];
-  matches        = s.matches        || [];
-  sessionSaved   = s.sessionSaved   || false;
+  activePlayers    = s.activePlayers    || [];
+  guestPlayers     = s.guestPlayers     || [];
+  matches          = s.matches          || [];
+  sessionSaved     = s.sessionSaved     || false;
+  sessionIsOpen    = s.sessionIsOpen    || false;
+  sessionStatus    = s.sessionStatus    || '';
+  sessionSubstatus = s.sessionSubstatus || '';
+  sessionOpenedAt  = s.sessionOpenedAt  || null;
+  if (sessionIsOpen) {
+    const ps = document.getElementById('player-section');
+    if (ps) { ps.style.opacity='1'; ps.style.pointerEvents='auto'; }
+    const ob = document.getElementById('open-session-btn');
+    if (ob) ob.style.display='none';
+    if (sessionStatus) stampStatus(sessionStatus, sessionSubstatus);
+  }
   if (s.config) {
     const cfg = s.config;
     if (cfg.num)    { const el=document.getElementById('cfg-num');    if(el) el.textContent = cfg.num; }
@@ -1045,9 +1117,11 @@ function _bootApp() {
 }
 
 function doLogout() {
+  if (sessionIsOpen && !sessionSaved) stampStatus('cancelled','abandonment');
   localStorage.removeItem('pe_auth_v10');
   localStorage.removeItem('pe_session_v10');
   currentUser = null; activePlayers = []; guestPlayers = []; matches = [];
+  sessionIsOpen=false; sessionStatus=''; sessionSubstatus=''; sessionOpenedAt=null;
   document.getElementById('s-app').classList.remove('active');
   document.getElementById('s-login').classList.add('active');
   document.getElementById('l-user').value = '';
@@ -1055,7 +1129,7 @@ function doLogout() {
   showTab('session', document.querySelector('.tab'));
   ['tab-match','tab-scoreboard','tab-save'].forEach(id=>{document.getElementById(id)?.classList.add('disabled');});
   document.getElementById('btn-close-session').style.display='none';
-  sessionSaved = false;
+  sessionSaved=false;
   document.getElementById('btn-save-session').style.display='block';
   document.getElementById('save-done-box').style.display='none';
 }
@@ -1122,6 +1196,7 @@ function renderPlayerGrid() {
 function togglePlayer(name) {
   if (activePlayers.includes(name)) activePlayers=activePlayers.filter(p=>p!==name);
   else activePlayers.push(name);
+  _evalPlayersStamp();
   renderPlayerGrid(); updateMatchSelects(); persistSession();
 }
 function addGuest() {
@@ -1129,6 +1204,7 @@ function addGuest() {
   const name=inp.value.trim();
   if (!name||allPlayers().includes(name)) return;
   guestPlayers.push(name); activePlayers.push(name); inp.value='';
+  _evalPlayersStamp();
   renderPlayerGrid(); updateMatchSelects(); persistSession();
 }
 
@@ -1403,6 +1479,7 @@ async function saveSession() {
     const result=await PadelEyeDB.saveSessao(sessaoData,partidasData,statsData);
     if(result.sessaoId){
       sessionSaved=true;
+      stampStatus('finalized','');
       document.getElementById('btn-save-session').style.display='none';
       const savedAt=new Date().toLocaleString('pt-BR');
       document.getElementById('save-done-box').style.display='block';
@@ -1419,12 +1496,13 @@ async function saveSession() {
 function startSession() {
   if(activePlayers.length<2){showAlert('alert-session','Selecione ao menos 2 jogadores.','warn');return;}
   ['tab-match','tab-scoreboard'].forEach(id=>document.getElementById(id)?.classList.remove('disabled'));
-  persistSession();
+  stampStatus('open','in_progress');
   showTab('match',document.getElementById('tab-match'));
 }
 function closeSession() {
   if(!matches.length){showAlert('alert-match','Adicione ao menos uma partida primeiro.','warn');return;}
   document.getElementById('tab-save')?.classList.remove('disabled');
+  stampStatus('open','waiting_save');
   renderScoreboard();
   showTab('save',document.getElementById('tab-save'));
   updateSaveTab();
