@@ -1167,11 +1167,71 @@ function getHistoricalStats(name) {
   };
 }
 
+// ══════════════════════════════════════════════════════════════════
+// MVP SORT — 7-criterion chain (session 1–4, historical 5–7)
+// ══════════════════════════════════════════════════════════════════
+
+// Criterion 4 helper: H2H within the current session only
+function computeSessionH2H(nameA, nameB) {
+  let wA = 0, wB = 0;
+  matches.forEach(m => {
+    if (m.sa === null || m.sb === null) return;
+    const aInA = m.teamA.includes(nameA), bInA = m.teamA.includes(nameB);
+    const aInB = m.teamB.includes(nameA), bInB = m.teamB.includes(nameB);
+    if (!((aInA && bInB) || (aInB && bInA))) return; // same team → skip
+    const aWon = (aInA && m.sa > m.sb) || (aInB && m.sb > m.sa);
+    if (m.sa !== m.sb) { aWon ? wA++ : wB++; }
+  });
+  return wA - wB; // + = A leads, - = B leads
+}
+
+// Criteria 5–7 helper: pull from rkData (historical ranking in memory)
+function getHistRk(name) {
+  const n = (name || '').trim().toLowerCase();
+  return rkData.find(r =>
+    (r.player || r.jogador || '').trim().toLowerCase() === n
+  ) || {};
+}
+
+// Full 7-criterion MVP sort — used by renderScoreboard, updateSaveTab, saveSession
+// Criteria 1–4: current session data only
+// Criteria 5–7: historical rkData
+function mvpSort(pA, pB) {
+  const sA = getPlayerStats(pA.name), sB = getPlayerStats(pB.name);
+
+  // 1. Win Rate % (session)
+  const wrA = sA.m > 0 ? sA.w / sA.m : 0;
+  const wrB = sB.m > 0 ? sB.w / sB.m : 0;
+  const wr = wrB - wrA; if (wr !== 0) return wr;
+
+  // 2. Vitórias (session)
+  const wn = sB.w - sA.w; if (wn !== 0) return wn;
+
+  // 3. Saldo de Pontos (session)
+  const sp = sB.gd - sA.gd; if (sp !== 0) return sp;
+
+  // 4. Confronto Direto (session) — + means pA won more H2H
+  const h2h = computeSessionH2H(pA.name, pB.name);
+  if (h2h !== 0) return -h2h; // negate: h2h>0 means A leads → A ranks higher
+
+  // 5. Partidas Jogadas (historical)
+  const hA = getHistRk(pA.name), hB = getHistRk(pB.name);
+  const mt = (+(hB.matches || hB.partidas || 0)) - (+(hA.matches || hA.partidas || 0));
+  if (mt !== 0) return mt;
+
+  // 6. Sessões Jogadas (historical)
+  const ss = (+(hB.sessions || hB.sessoes || 0)) - (+(hA.sessions || hA.sessoes || 0));
+  if (ss !== 0) return ss;
+
+  // 7. MVPs Ganhos (historical)
+  return (+(hB.mvp_count || 0)) - (+(hA.mvp_count || 0));
+}
+
 function renderScoreboard() {
   const c=document.getElementById('scoreboard');
   const played=activePlayers.filter(p=>getPlayerStats(p).m>0);
   if(!played.length){c.innerHTML='<div class="empty"><div class="empty-icon">🏆</div>O placar atualiza conforme as partidas são registradas.</div>';document.getElementById('mvp-card').style.display='none';return;}
-  const ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort((a,b)=>b.w-a.w||b.gd-a.gd||b.gw-a.gw);
+  const ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort(mvpSort);
   const maxW=ranked[0]?.w||1;
   const medal=['🥇','🥈','🥉'];
   c.innerHTML=ranked.map((p,i)=>{
@@ -1197,7 +1257,7 @@ function renderScoreboard() {
 // SAVE TAB
 // ══════════════════════════════════════════
 function updateSaveTab() {
-  const ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort((a,b)=>b.w-a.w||b.gd-a.gd);
+  const ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort(mvpSort);
   const mvp=ranked.find(p=>p.w>0);
   document.getElementById('sv-players').textContent=activePlayers.length;
   document.getElementById('sv-matches').textContent=matches.length;
@@ -1213,7 +1273,7 @@ async function saveSession() {
   const date  =document.getElementById('cfg-date').value||new Date().toISOString().slice(0,10);
   const local =document.getElementById('cfg-local').value||'';
   const format=document.getElementById('cfg-format').value;
-  const _ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort((a,b)=>b.w-a.w||b.gd-a.gd);
+  const _ranked=activePlayers.map(name=>({name,...getPlayerStats(name)})).sort(mvpSort);
   const _mvp=_ranked.find(p=>p.w>0);
   const mvp=_mvp?.name||'';
   const notes=document.getElementById('cfg-notes').value;
