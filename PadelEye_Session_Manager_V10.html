@@ -484,7 +484,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="sb-section-label">Análise</div>
     <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()"><span class="sb-ic" style="background:#ccfbf1">📊</span> Ranking</button>
     <button class="tab" id="tab-consistency" onclick="showTab('consistency',this);loadConsistency()"><span class="sb-ic" style="background:#dcfce7">📈</span> Score de Consistência</button>
-    <button class="tab" id="tab-progression" onclick="showTab('progression',this);loadProgression()"><span class="sb-ic" style="background:#ede9fe">🔢</span> Progressão</button>
+    <button class="tab" id="tab-progression" onclick="showTab('progression',this);loadProgression()"><span class="sb-ic" style="background:#ede9fe">🔢</span> Progressão · 10 Part.</button>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico de Sessões</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Sistema</div>
@@ -720,6 +720,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="rk-kpi"><div class="rk-kpi-v gold" id="rk-k-leader">—</div><div class="rk-kpi-l">Líder</div><div class="rk-kpi-sub" id="rk-k-leader-sub">—</div></div>
     </div>
     <div class="rk-sec">Ranking Completo</div>
+    <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono';padding:4px 2px 10px;letter-spacing:.3px">
+      Apenas jogadores com <strong style="color:#0a1628">3 ou mais sessões</strong> participam do ranking. Jogadores com menos de 3 sessões têm os dados acumulados mas não aparecem na tabela até atingir o mínimo.
+    </div>
     <div class="rk-sort-bar">
       <button class="rk-sbtn on" id="rk-sb-wr"  onclick="rkSetSort('win_rate',this)">📊 Win Rate</button>
       <button class="rk-sbtn"    id="rk-sb-mvp" onclick="rkSetSort('mvp_count',this)">🏅 MVP</button>
@@ -775,11 +778,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="rk-stxt" id="prog-stxt">—</div>
       <button class="rk-ref-btn" onclick="loadProgression()" style="margin-left:auto">↻</button>
     </div>
-    <div class="rk-sec" style="margin-bottom:12px">Posição nas últimas sessões</div>
+    <div class="rk-sec" style="margin-bottom:12px">Progressão · Últimas 10 Partidas por Jogador</div>
     <div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:16px;margin-bottom:14px">
-      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;margin-bottom:12px">EVOLUÇÃO · ÚLTIMAS 10 SESSÕES</div>
+      <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;margin-bottom:12px">POSIÇÃO NAS ÚLTIMAS 10 PARTIDAS DO JOGADOR</div>
       <div style="position:relative;width:100%;height:220px">
-        <canvas id="prog-chart" role="img" aria-label="Gráfico de progressão de posição nas últimas 10 sessões"></canvas>
+        <canvas id="prog-chart" role="img" aria-label="Gráfico de progressão de posição nas últimas 10 partidas por jogador"></canvas>
       </div>
       <div id="prog-legend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div>
     </div>
@@ -1269,6 +1272,23 @@ function getHistoricalStats(name) {
 // ══════════════════════════════════════════════════════════════════
 // MVP SORT — 7-criterion chain (session 1–4, historical 5–7)
 // ══════════════════════════════════════════════════════════════════
+
+// H2H helper for histOpen — reads from a provided matches array
+function _histH2H(nameA, nameB, matchRows) {
+  let wA = 0, wB = 0;
+  (matchRows || []).forEach(m => {
+    const ta = String(m.team_a||m.equipa_a||'').split(/\s*\/\s*/).map(s=>s.trim());
+    const tb = String(m.team_b||m.equipa_b||'').split(/\s*\/\s*/).map(s=>s.trim());
+    const aInA = ta.includes(nameA), bInA = ta.includes(nameB);
+    const aInB = tb.includes(nameA), bInB = tb.includes(nameB);
+    if (!((aInA&&bInB)||(aInB&&bInA))) return;
+    const sa = +(m.score_a||0), sb = +(m.score_b||0);
+    if (sa===sb) return;
+    const aWon = (aInA&&sa>sb)||(aInB&&sb>sa);
+    if (aWon) wA++; else wB++;
+  });
+  return wA - wB;
+}
 
 // Criterion 4 helper: H2H within the current session only
 function computeSessionH2H(nameA, nameB) {
@@ -1770,7 +1790,7 @@ async function loadRanking() {
 // ── rkUpdateKPIs — EN field names + sort-aware ──
 function rkUpdateKPIs(data) {
   const totalM = data.reduce((s,p) => s + (+(p.matches || p.partidas || 0)), 0);
-  const eligibleCount = data.filter(p => +(p.matches||p.partidas||0) >= 4).length;
+  const eligibleCount = data.filter(p => +(p.sessions||p.sessoes||0) >= 3).length;
   document.getElementById('rk-k-players').textContent = eligibleCount || data.length;
   document.getElementById('rk-k-sess').textContent    = rkTotalSessions;
   // Dynamic span from actual session dates
@@ -1784,7 +1804,7 @@ function rkUpdateKPIs(data) {
   document.getElementById('rk-k-matches').textContent = Math.round(totalM / 2);
 
   // Leader changes based on current sort criteria
-  const sorted = data.filter(p => +(p.matches||p.partidas||0) >= 4);
+  const sorted = data.filter(p => +(p.sessions||p.sessoes||0) >= 3);
   let leaderName = '—', leaderSub = '—', leaderLabel = 'Líder';
   if (rkSort === 'win_rate') {
     sorted.sort((a,b) => rkWR(b.win_rate) - rkWR(a.win_rate));
@@ -1851,16 +1871,44 @@ function rkRenderTable() {
   });
 
   const _src = rkDataFiltered || rkData;
-  const sorted = _src.map(norm).filter(p => p.matches >= 4).sort((a,b) => {
-    // ── Ordem canónica fixa — os botões de sort não alteram a ordenação da tabela ──
-    // WR% → Vitórias → Saldo de Pontos → Confronto Direto → Partidas → Sessões → MVPs
-    const wr  = rkWR(b.win_rate) - rkWR(a.win_rate);           if (wr!==0)  return wr;
-    const wn  = b.wins - a.wins;                                 if (wn!==0)  return wn;
-    const sp  = b.points_difference - a.points_difference;      if (sp!==0)  return sp;
-    const h2h = computeH2H(a.player, b.player);                 if (h2h!==0) return -h2h;
-    const mt  = b.matches - a.matches;                          if (mt!==0)  return mt;
-    const ss  = b.sessions - a.sessions;                         if (ss!==0)  return ss;
-    return b.mvp_count - a.mvp_count;
+  // Base filter: sessions >= 3 always applies
+  // MVP sort additionally requires at least 1 MVP
+  const _eligible = _src.map(norm).filter(p => p.sessions >= 3);
+  const _pool     = rkSort === 'mvp_count'
+    ? _eligible.filter(p => p.mvp_count >= 1)
+    : _eligible;
+
+  const sorted = _pool.sort((a,b) => {
+    // ── Primary: active sort button — higher value at top ──
+    let d = 0;
+    if      (rkSort === 'win_rate')          d = rkWR(b.win_rate) - rkWR(a.win_rate);
+    else if (rkSort === 'wins')              d = b.wins - a.wins;
+    else if (rkSort === 'mvp_count')         d = b.mvp_count - a.mvp_count;
+    else if (rkSort === 'points_difference') d = b.points_difference - a.points_difference;
+    else if (rkSort === 'matches')           d = b.matches - a.matches;
+    else if (rkSort === 'sessions')          d = b.sessions - a.sessions;
+    if (d !== 0) return d;
+    // ── Tiebreaker chain — canonical order, skip the primary criterion ──
+    if (rkSort !== 'win_rate') {
+      const wr = rkWR(b.win_rate) - rkWR(a.win_rate); if (wr!==0) return wr;
+    }
+    if (rkSort !== 'wins') {
+      const wn = b.wins - a.wins; if (wn!==0) return wn;
+    }
+    if (rkSort !== 'points_difference') {
+      const sp = b.points_difference - a.points_difference; if (sp!==0) return sp;
+    }
+    const h2h = computeH2H(a.player, b.player); if (h2h!==0) return -h2h;
+    if (rkSort !== 'matches') {
+      const mt = b.matches - a.matches; if (mt!==0) return mt;
+    }
+    if (rkSort !== 'sessions') {
+      const ss = b.sessions - a.sessions; if (ss!==0) return ss;
+    }
+    if (rkSort !== 'mvp_count') {
+      return b.mvp_count - a.mvp_count;
+    }
+    return 0;
   });
 
   const hmap = {
@@ -2144,6 +2192,7 @@ async function histOpen(numero) {
     if (el) el.innerHTML = '<div class="empty-panel"><div class="empty-icon">⏳</div><div>Carregando...</div></div>';
   });
   histSwitch('matches');
+  let _sessMatchRows = []; // populated after match fetch; used by histOpen sort H2H
   try {
     const [stRes, sessRes] = await Promise.all([
       fetch(SESSION_MANAGER_URL + '?action=get_session_stats'),
@@ -2183,9 +2232,24 @@ async function histOpen(numero) {
       player_mvp:        s.player_mvp || s.mvp || 'No',
     }));
 
-    const ranked = [...normStats].sort((a,b) =>
-      b.wins - a.wins || b.points_difference - a.points_difference);
-    const mvp    = ranked.find(s => s.player_mvp === 'Yes') || ranked[0];
+    // Sort by 7-criterion chain:
+    // Criteria 1-4: session data; 5-7: historical rkData
+    const ranked = [...normStats].sort((a,b) => {
+      const wrA = a.matches>0 ? a.wins/a.matches : 0;
+      const wrB = b.matches>0 ? b.wins/b.matches : 0;
+      const wr = wrB - wrA;                                      if (wr!==0) return wr;
+      const wn = b.wins - a.wins;                                if (wn!==0) return wn;
+      const sp = b.points_difference - a.points_difference;      if (sp!==0) return sp;
+      // H2H from session matches (partidas fetched below)
+      const h2h = _histH2H(a.player, b.player, _sessMatchRows);  if (h2h!==0) return -h2h;
+      // Historical fallback
+      const hA = getHistRk(a.player), hB = getHistRk(b.player);
+      const mt = (+(hB.matches||0)) - (+(hA.matches||0));        if (mt!==0) return mt;
+      const ss = (+(hB.sessions||0)) - (+(hA.sessions||0));      if (ss!==0) return ss;
+      return (+(hB.mvp_count||0)) - (+(hA.mvp_count||0));
+    });
+    // MVP = first in sort (recomputed — does not rely on player_mvp field from DB)
+    const mvp = ranked.find(s=>s.matches>0) || ranked[0];
     const medals = ['🥇','🥈','🥉'];
 
     const totalMatches = sess.session_total_matches || sess.total_partidas || '—';
@@ -2212,7 +2276,7 @@ async function histOpen(numero) {
           <div style="font-size:${i<3?'20px':'13px'};min-width:24px;text-align:center">${medals[i]||i+1}</div>
           <div style="width:30px;height:30px;border-radius:50%;background:${pc(p.player)};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:12px;color:#fff;flex-shrink:0">${init(p.player)}</div>
           <div style="flex:1">
-            <div style="font-size:13px;font-weight:700;color:#0d1e3a">${p.player}${p.player_mvp==='Yes'?' <span style="font-size:10px;color:#C9933A">MVP</span>':''}</div>
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">${p.player}${p.player===mvpName?' <span style="font-size:10px;color:#C9933A">MVP</span>':''}</div>
             <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:1px">${m}M · ${w}V · ${l}D · GD ${gd>=0?'+':''}${gd}</div>
           </div>
           <div style="font-family:'Bebas Neue';font-size:22px;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'}">${wr}<span style="font-size:11px;color:#9ab0c8">%</span></div>
@@ -2247,7 +2311,7 @@ async function histOpen(numero) {
             <td style="text-align:center;padding:6px 8px">${p.points_for}</td>
             <td style="text-align:center;padding:6px 8px;font-weight:700;color:${gd>0?'#1a7a44':gd<0?'#c0392b':'#9ab0c8'}">${gd>=0?'+':''}${gd}</td>
             <td style="text-align:center;padding:6px 8px;font-weight:700;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'}">${wr}%</td>
-            <td style="text-align:center;padding:6px 8px">${p.player_mvp==='Yes'?'🏅':''}</td>
+            <td style="text-align:center;padding:6px 8px">${p.player===mvpName?'🏅':''}</td>
           </tr>`;
         }).join('')}</tbody>
       </table></div>
@@ -2261,7 +2325,8 @@ async function histOpen(numero) {
       const numStr3 = String(numero);
       const numS3   = numStr3.startsWith('S') ? numStr3 : 'S' + numStr3;
       const numN3   = numStr3.replace(/^S/i,'');
-      const partidas = (pJson.rows || []).filter(p => {
+      _sessMatchRows = pJson.rows || [];
+      const partidas = _sessMatchRows.filter(p => {
         const sn = String(p.session || p.session_id || p.sessao || '');
         const sn2= String(p.session_serial_number || p.sessao_numero || '');
         return sn===numStr3||sn===numS3||sn===numN3||sn2===numStr3||sn2===numS3||sn2===numN3;
@@ -3112,23 +3177,31 @@ async function loadProgression() {
     (bySession[sn] = bySession[sn]||[]).push(r);
   });
 
-  // Last 10 sessions by date
-  const last10 = Object.keys(bySession).sort((a,b) => {
+  // All sessions sorted by date — compute position map for all
+  const allSessions = Object.keys(bySession).sort((a,b) => {
     return (sessDateMap[a]||new Date(0)) - (sessDateMap[b]||new Date(0));
-  }).slice(-10);
+  });
 
   const posPerSess = {};
-  last10.forEach(sn => { posPerSess[sn] = _progRankSession(bySession[sn]); });
+  allSessions.forEach(sn => { posPerSess[sn] = _progRankSession(bySession[sn]); });
 
+  // Per-player: only sessions they participated in → last 10 of those
+  // This eliminates gaps in the chart
   const playerSet = new Set();
-  last10.forEach(sn => Object.keys(posPerSess[sn]).forEach(p => playerSet.add(p)));
+  allSessions.forEach(sn => Object.keys(posPerSess[sn]).forEach(p => playerSet.add(p)));
   const players = [...playerSet].sort();
 
   const COLORS = ['#3a7bd5','#e74c3c','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#f39c12','#00bcd4','#795548'];
-  const series = players.map((p,i) => ({
-    name: p, color: COLORS[i%COLORS.length],
-    positions: last10.map(sn => posPerSess[sn][p] ?? null),
-  }));
+  const series = players.map((p,i) => {
+    // Get only sessions this player appeared in, sorted, last 10
+    const playerSessions = allSessions.filter(sn => posPerSess[sn][p] !== undefined);
+    const last10p = playerSessions.slice(-10);
+    return {
+      name: p, color: COLORS[i%COLORS.length],
+      sessions: last10p,  // per-player session list for tooltip
+      positions: last10p.map(sn => posPerSess[sn][p]),
+    };
+  }).filter(s => s.positions.length > 0);
 
   // ── Chart ──
   if (_progChart) { _progChart.destroy(); _progChart = null; }
@@ -3139,11 +3212,9 @@ async function loadProgression() {
       s.onload = res; document.head.appendChild(s);
     });
   }
-  const maxPos = Math.max(...series.flatMap(s => s.positions.filter(Boolean)), 4);
-  const labels = last10.map(sn => {
-    const d = sessDateMap[sn];
-    return d ? d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : `S${sn}`;
-  });
+  const maxPos = Math.max(...series.flatMap(s => s.positions), 4);
+  // X-axis: ordinal 1-10 (each player's own last sessions)
+  const labels = Array.from({length:10},(_,i)=>`${i+1}ª`);
   const ctx = document.getElementById('prog-chart');
   if (ctx) {
     _progChart = new Chart(ctx, {
@@ -3173,7 +3244,14 @@ async function loadProgression() {
         },
         plugins: {
           legend: { display: false },
-          tooltip: { callbacks: { label: c => `${c.dataset.label}: #${c.parsed.y}` } },
+          tooltip: { callbacks: {
+            label: ctx => {
+              const s = series[ctx.datasetIndex];
+              const sn = s.sessions[ctx.dataIndex];
+              const d = sessDateMap[sn] ? sessDateMap[sn].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : `S${sn}`;
+              return `${ctx.dataset.label}: #${ctx.parsed.y} (${d})`;
+            },
+          }},
         },
       },
     });
