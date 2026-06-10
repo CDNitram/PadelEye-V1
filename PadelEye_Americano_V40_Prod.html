@@ -1153,7 +1153,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
     </div>
 
+    <!-- Abrir Torneio button -->
+    <div id="trn-open-btn" style="margin-top:16px;margin-bottom:8px">
+      <button onclick="openTournament()" style="width:100%;padding:14px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Abrir Torneio
+      </button>
+    </div>
     <!-- CARD 2 · SELEÇÃO DE JOGADORES -->
+    <div id="trn-player-section" style="opacity:.4;pointer-events:none;transition:opacity .3s">
     <div class="card">
       <div class="card-hd">
         <div class="card-title">① Seleção de Jogadores</div>
@@ -1230,15 +1238,20 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="kpi"><div class="kpi-v" id="s-rounds">—</div><div class="kpi-l">Grupos F1</div></div>
         <div class="kpi"><div class="kpi-v" id="s-matches">—</div><div class="kpi-l">Total Partidas</div></div>
       </div>
+      <div id="trn-status-badge" style="display:none;align-items:center;gap:6px;padding:4px 12px;border-radius:99px;font-family:'DM Mono';font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:10px">
+        <span style="width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0"></span>
+        <span id="trn-status-text"></span>
+      </div>
       <button class="btn btn-gold btn-full" onclick="launch()">▶ Iniciar Torneio</button>
     </div>
 
+    </div><!-- /trn-player-section -->
   </div><!-- /p-setup -->
 
   <!-- ── GRUPOS (phase 1 draw) ── -->
   <div class="panel" id="p-grupos">
     <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-      <button onclick="openSubModal()" id="btn-sub-grupos" style="display:none;padding:7px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#5a8aaa;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">🔄 Substituir Jogador</button>
+      <button onclick="openSubModal(T.currentPhase)" id="btn-sub-grupos" style="display:none;padding:7px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#5a8aaa;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">🔄 Substituir Jogador</button>
     </div>
     <div id="grupos-container">
       <div class="empty-panel"><div class="empty-icon">🗂</div><div>Os grupos aparecem após iniciar o torneio no Setup.</div></div>
@@ -1248,7 +1261,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <!-- ── RODADAS ── -->
   <div class="panel" id="p-rodadas">
     <div style="display:flex;justify-content:flex-end;padding-top:8px">
-      <button onclick="openSubModal()" id="btn-sub-rodadas" style="display:none;padding:7px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#5a8aaa;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">🔄 Substituir Jogador</button>
+      <button onclick="openSubModal(T.currentPhase)" id="btn-sub-rodadas" style="display:none;padding:7px 14px;background:#fff;border:1.5px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#5a8aaa;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'" onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">🔄 Substituir Jogador</button>
     </div>
     <div class="alert" id="alert-game" style="margin:14px 0 0"></div>
     <div id="rounds-container">
@@ -2084,7 +2097,11 @@ function updateVagas() {
   document.getElementById('vagas-cur').textContent = cur;
   document.getElementById('vagas-max').textContent = max;
   if (status) {
-    if (cur>=max)        { status.textContent='✅ Completo'; status.style.cssText='background:#E8F8EE;color:#1a7a44;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
+    if (T.status === 'open' && T.substatus === 'setup' && cur >= 4)
+    stampTournamentStatus('open', 'players_confirmed');
+  else if (T.status === 'open' && T.substatus === 'players_confirmed' && cur < 4)
+    stampTournamentStatus('open', 'setup');
+  if (cur>=max)        { status.textContent='✅ Completo'; status.style.cssText='background:#E8F8EE;color:#1a7a44;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
     else if (cur>=max*.75) { status.textContent='🟡 Quase'; status.style.cssText='background:#FFF8E0;color:#865a10;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
     else                 { status.textContent='Aberto'; status.style.cssText='background:#f0f5fb;color:#7090b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
   }
@@ -2230,6 +2247,8 @@ let T = {
   players: [],
   phases: [],
   currentPhase: 0,
+  tieOverrides: {},
+  matchOrder:   {},
   phaseConfig: [
     { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore: 6, tbAt: 5 },  // F1
     { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore: 6, tbAt: 5 },  // F2
@@ -2246,6 +2265,61 @@ function generateTorneiId() {
   const rand = Math.random().toString(36).substr(2,5).toUpperCase();
   return `TRN-${date}-${rand}`;
   // e.g. TRN-20260515-A3X7K
+}
+
+// ── Tournament lifecycle stamps ────────────────────────────────────────────
+function stampTournamentStatus(status, substatus) {
+  T.status    = status;
+  T.substatus = substatus;
+  const badge = document.getElementById('trn-status-badge');
+  const STATUS_MAP = {
+    'open:setup':            ['Aberto · Configuração',         '#C9933A','rgba(201,147,58,.15)'],
+    'open:players_confirmed':['Aberto · Jogadores confirmados','#3a7bd5','rgba(58,123,213,.15)'],
+    'open:groups_draft':     ['Aberto · Grupos definidos',     '#9b59b6','rgba(155,89,182,.15)'],
+    'open:fase_1_em_curso':  ['Fase 1 em curso',               '#27AE60','rgba(39,174,96,.15)'],
+    'open:fase_2_em_curso':  ['Fase 2 em curso',               '#27AE60','rgba(39,174,96,.15)'],
+    'open:final_em_curso':   ['Final em curso',                '#C9933A','rgba(201,147,58,.15)'],
+    'finalizado:':           ['Finalizado',                    '#1a7a44','rgba(26,122,68,.15)'],
+    'cancelado:abandonment': ['Cancelado · Por abandono',      '#c0392b','rgba(192,57,43,.15)'],
+  };
+  const key = `${status}:${substatus}`;
+  const [label, color, bg] = STATUS_MAP[key] || [key, '#9ab0c8', '#f4f7fc'];
+  if (badge) {
+    badge.textContent = label;
+    badge.style.color = color;
+    badge.style.background = bg;
+    badge.style.display = 'inline-flex';
+  }
+  persistT();
+  if (T.id) {
+    PadelEyeDB.send('update_tournament_status', {
+      tournament_id: T.id, tournament_status: status, tournament_substatus: substatus,
+      opened_at: T.openedAt || '', finalized_at: T.finalizedAt || '',
+    }).catch(e => console.warn('[stamp]', e.message));
+  }
+}
+
+function openTournament() {
+  if (T.status === 'open') return;
+  if (!T.id) T.id = generateTorneiId();
+  T.openedAt = new Date().toISOString();
+  const ps = document.getElementById('trn-player-section');
+  if (ps) { ps.style.opacity = '1'; ps.style.pointerEvents = 'auto'; }
+  const ob = document.getElementById('trn-open-btn');
+  if (ob) ob.style.display = 'none';
+  stampTournamentStatus('open', 'setup');
+  PadelEyeDB.send('create_tournament', { row: {
+    tournament_id: T.id,
+    tournament_name: document.getElementById('cfg-name')?.value || 'Torneio Americano',
+    date: getCfgDate(),
+    venue: T.local || '',
+    tournament_format: 'Americano · Modelo Brasileiro',
+    tournament_category: document.getElementById('cfg-categoria')?.value || '',
+    num_phases: parseInt(document.getElementById('cfg-num-fases')?.value || 3),
+    status: 'open', tournament_status: 'open', tournament_substatus: 'setup',
+    opened_at: T.openedAt, created_at: T.openedAt,
+  }}).catch(e => console.warn('[openTournament]', e.message));
+  safeAlert('✅ Torneio aberto. Selecione os jogadores.', 'ok');
 }
 
 // ── Persist T to localStorage (crash recovery) ─────────────────────────────
@@ -2513,6 +2587,29 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   return sorted;
 }
 
+// ── Match order helpers ─────────────────────────────────────────────────────
+function getMatchOrder(phIdx, gi) {
+  const key = phIdx + '-' + gi;
+  const n   = groupMatches(T.phases[phIdx]?.groups[gi] || []).length;
+  return (T.matchOrder?.[key] && T.matchOrder[key].length === n)
+    ? T.matchOrder[key]
+    : Array.from({length: n}, (_, i) => i);
+}
+
+function setMatchOrder(phIdx, gi, newOrder) {
+  if (!T.matchOrder) T.matchOrder = {};
+  T.matchOrder[phIdx + '-' + gi] = newOrder;
+  persistT();
+}
+
+function moveMatch(phIdx, gi, fromIdx, toIdx) {
+  const order = [...getMatchOrder(phIdx, gi)];
+  const [moved] = order.splice(fromIdx, 1);
+  order.splice(toIdx, 0, moved);
+  setMatchOrder(phIdx, gi, order);
+  renderRounds();
+}
+
 // ── PHASE COMPLETE? ──
 // ── OBJETIVO: Verificar se todas as partidas de uma fase foram guardadas ──────
 // CONTEXTO: Usado em renderRounds() para mostrar o botão "Avançar de fase" e
@@ -2557,27 +2654,35 @@ function advancePhase() {
   }).filter(Boolean).sort((a, b) => b.gd - a.gd);
   const wildcardPlayers = wcCandidates.slice(0, wc).map(w => w.name);
 
-  // Full pool in seed order
+  // Full pool (flat) kept for single-group fallback
   const pool = [...qualifiers.flat(), ...wildcardPlayers].filter(Boolean);
 
-  // ── Build next phase groups ──
-  const isFinal = (phIdx === (T.numFases || 3) - 2); // advancing TO the last phase
+  // ── Build next phase groups — cross-pairing avoids rematches ──────────────
   let nextGroups;
+  const numNextGroups = pool.length <= nextPPG ? 1 : Math.ceil(pool.length / nextPPG);
 
-  if (pool.length <= nextPPG) {
-    // Small pool: single group
+  if (numNextGroups <= 1) {
     nextGroups = [pool];
   } else {
-    // Serpentine seeding into groups of nextPPG
-    const numNextGroups = Math.ceil(pool.length / nextPPG);
     nextGroups = Array.from({ length: numNextGroups }, () => []);
-    pool.forEach((p, i) => {
-      const round = Math.floor(i / numNextGroups);
-      const pos   = i % numNextGroups;
-      // Serpentine: reverse direction every round
-      const gi    = round % 2 === 0 ? pos : (numNextGroups - 1 - pos);
-      nextGroups[gi].push(p);
+
+    // Cross-pairing by column: players from the same F1 group go to DIFFERENT F2 groups
+    // src group i, rank r → dest = (i + r) % numNextGroups
+    // This guarantees no two players from same F1 group land in same F2 group
+    qualifiers.forEach((srcGroup, gi) => {
+      srcGroup.forEach((player, rank) => {
+        const destIdx = (gi + rank) % numNextGroups;
+        nextGroups[destIdx].push(player);
+      });
     });
+
+    // Wildcards: balance across destinations to fill evenly
+    wildcardPlayers.forEach((player) => {
+      const minLen  = Math.min(...nextGroups.map(g => g.length));
+      const destIdx = nextGroups.findIndex(g => g.length === minLen);
+      nextGroups[destIdx].push(player);
+    });
+
     nextGroups = nextGroups.filter(g => g.length > 0);
   }
 
@@ -2594,6 +2699,11 @@ function advancePhase() {
 
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
+  if (T.status === 'open') {
+    const isFinalPh = nextPhaseIdx === (T.numFases || 3) - 1;
+    stampTournamentStatus('open', isFinalPh ? 'final_em_curso' : 'fase_2_em_curso');
+  }
+  _updateSubButtons();
   renderRounds();
   renderRanking();
   renderHistorico();
@@ -3047,7 +3157,9 @@ function renderRounds() {
         <div class="round-status ${allSaved?'done':''}">${allSaved?'✅ Concluído':`3 partidas · máx ${getPhaseConfig(phIdx).maxScore??9} · TB@${getPhaseConfig(phIdx).tbAt??9}×${getPhaseConfig(phIdx).tbAt??9}`}</div>
       </div>`;
 
-    matches.forEach((match, mi) => {
+    const _mOrder = getMatchOrder(phIdx, gi);
+    _mOrder.forEach((mi, displayIdx) => {
+      const match = matches[mi];
       const key   = `${phIdx}-${gi}-${mi}`;
       const res   = ph.results[key] || {};
       const sa    = res.sa ?? '';
@@ -3110,9 +3222,15 @@ function renderRounds() {
       <div style="background:#fff;border:1px solid ${borderColor};border-radius:10px;overflow:hidden;margin-bottom:8px">
         <div style="padding:5px 12px;border-bottom:1px solid #f0f5fb;display:flex;align-items:center;justify-content:space-between">
           <span style="font-size:9px;font-weight:600;color:#9ab0c8;letter-spacing:0.06em;text-transform:uppercase">
-            Partida ${mi+1} · Quadra ${mi % T.courts + 1}
+            Partida ${displayIdx+1} · Quadra ${(displayIdx) % T.courts + 1}
           </span>
-          ${statusHtml}
+          <div style="display:flex;align-items:center;gap:6px">
+            ${!res.saved ? `<div style="display:flex;gap:2px">
+              ${displayIdx > 0 ? `<button onclick="moveMatch(${phIdx},${gi},${displayIdx},${displayIdx-1})" title="Mover para cima" style="width:20px;height:20px;border:1px solid #dde6f0;border-radius:4px;background:#fff;color:#9ab0c8;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1">↑</button>` : ''}
+              ${displayIdx < _mOrder.length-1 ? `<button onclick="moveMatch(${phIdx},${gi},${displayIdx},${displayIdx+1})" title="Mover para baixo" style="width:20px;height:20px;border:1px solid #dde6f0;border-radius:4px;background:#fff;color:#9ab0c8;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1">↓</button>` : ''}
+            </div>` : ''}
+            ${statusHtml}
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 12px;gap:8px">
           <div>
@@ -3803,14 +3921,24 @@ function renderGrupos() {
 
     // Bottom CTA — original style, only F1 before results
     if (pi === 0) {
+      const _groupsApproved = T.substatus === 'fase_1_em_curso' || hasResults;
       html += `<div class="card" style="border-color:rgba(58,123,213,.2);background:#f0f8ff;margin-top:14px">
         <div style="font-size:12px;color:#1a5276;margin-bottom:14px;line-height:1.7">
           Os grupos estão definidos. As partidas da Fase 1 já foram geradas.<br>
           <strong style="color:#0d1e3a">Total: 21 partidas</strong> — F1: 12 · F2: 6 · Final: 3
         </div>
+        ${_groupsApproved ? `
         <button class="btn btn-gold btn-full" onclick="showTab('rodadas', document.querySelector('[onclick*=rodadas]'))" style="font-size:15px">
           🏸 Ver Rodadas da Fase 1 →
-        </button>
+        </button>` : `
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="reshuffleGroups()" style="flex:1">
+            🔀 Novo sorteio
+          </button>
+          <button onclick="approveTournamentGroups()" style="flex:3;padding:14px;background:linear-gradient(135deg,#1a7a44,#27AE60);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;font-family:'DM Sans';transition:all .2s">
+            ✅ Aprovar Grupos → Iniciar Fase 1
+          </button>
+        </div>`}
       </div>`;
     }
 
@@ -4623,6 +4751,8 @@ const PadelEyeDB = (() => {
     const scRows       = scoreData ? mapScorecard(T, torneioId, scoreData) : [];
 
     // ── Run all writes + status update concurrently ───────────────────────────
+    T.finalizedAt = new Date().toISOString();
+    stampTournamentStatus('finalizado', '');
     const [r1, r2, r3, r4] = await Promise.all([
       send('upsert_tournament',        { row: torneioRow }),
       send('update_tournament_status', { tournament_id: torneioId, status: 'finalizado' }),
@@ -5306,6 +5436,7 @@ function raffleAllDone() {
 //   Após este ponto, substituições via modal são a única forma de alterar jogadores.
 function raffleFinish() {
   clearInterval(_raffleTimer);
+  stampTournamentStatus('open', 'groups_draft');
   document.getElementById('s-raffle').classList.remove('show');
 
   // Guarantee T state is complete before any render
@@ -5362,8 +5493,11 @@ function raffleFinish() {
 // ══════════════════════════════════════════
 // SUBSTITUIÇÃO DE JOGADOR
 // ══════════════════════════════════════════
-function openSubModal() {
+let _subFromPhase = 0; // which phase the substitution applies from
+
+function openSubModal(fromPhaseIdx) {
   if (!T.started) { safeAlert('Inicie o torneio antes de substituir.','warn'); return; }
+  _subFromPhase = fromPhaseIdx ?? T.currentPhase;
 
   const modal     = document.getElementById('modal-sub');
   const outSel    = document.getElementById('sub-out');
@@ -5371,16 +5505,19 @@ function openSubModal() {
   const inCustom  = document.getElementById('sub-in-custom');
   const warn      = document.getElementById('sub-warning');
   const label     = document.getElementById('sub-scenario-label');
+  const titleEl   = document.getElementById('sub-modal-title');
+  const PHASE_NAMES = ['Fase 1','Fase 2','Final'];
+  const phaseName = PHASE_NAMES[_subFromPhase] || `Fase ${_subFromPhase + 1}`;
 
-  // Scenario label
-  const hasResults = T.phases.some(ph => Object.keys(ph?.results||{}).length > 0);
-  label.textContent = hasResults
-    ? '⚠️ Torneio em andamento — partidas futuras serão atualizadas'
-    : 'Torneio criado — substituição antes do início das partidas';
+  if (titleEl) titleEl.textContent = `Substituir Jogador — ${phaseName}`;
+  label.textContent = _subFromPhase === 0
+    ? 'Substituição aplica-se desde a Fase 1 (todo o torneio)'
+    : `Substituição aplica-se apenas a partir da ${phaseName} — fases anteriores preservadas`;
 
-  // Populate "out" select — all current players
+  // Populate "out" select — players in current phase
+  const phPlayers = T.phases[_subFromPhase]?.groups.flat() || T.players;
   outSel.innerHTML = '<option value="">— Selecionar —</option>' +
-    T.players.map(p => `<option value="${p}">${p}</option>`).join('');
+    phPlayers.map(p => `<option value="${p}">${p}</option>`).join('');
 
   // Populate "in" select — known players NOT already in tournament
   const allKnown = [...new Set([
@@ -5412,7 +5549,7 @@ function confirmSub() {
   if (T.players.includes(inName)) { warn.style.display='block'; warn.textContent=`${inName} já está no torneio.`; return; }
 
   // ── Apply substitution ──
-  substitutePlayer(outName, inName);
+  substitutePlayer(outName, inName, _subFromPhase);
 
   closeSubModal();
   safeAlert(`✅ ${outName} substituído por ${inName}.`, 'ok');
@@ -5431,20 +5568,22 @@ function confirmSub() {
 // ATENÇÃO: Resultados de partidas já guardadas NÃO são alterados (os índices
 //   de key não mudam). Apenas o nome na posição do grupo é atualizado,
 //   afetando partidas futuras e o display histórico.
-function substitutePlayer(outName, inName) {
-  // 1. T.players list
+function substitutePlayer(outName, inName, fromPhaseIdx) {
+  const startPh = fromPhaseIdx ?? 0;
+
+  // 1. T.players list (global — always update for display purposes)
   const pi = T.players.indexOf(outName);
   if (pi !== -1) T.players[pi] = inName;
 
-  // 2. selectedPlayers (setup list)
-  if (typeof selectedPlayers !== 'undefined') {
+  // 2. selectedPlayers (setup list) — only if substituting from phase 0
+  if (startPh === 0 && typeof selectedPlayers !== 'undefined') {
     const si = selectedPlayers.indexOf(outName);
     if (si !== -1) selectedPlayers[si] = inName;
   }
 
-  // 3. All phase groups
-  T.phases.forEach(phase => {
-    if (!phase) return;
+  // 3. Phase groups — only from startPh onward
+  T.phases.forEach((phase, phIdx) => {
+    if (!phase || phIdx < startPh) return; // skip earlier phases
     phase.groups.forEach((group, gi) => {
       const idx = group.indexOf(outName);
       if (idx !== -1) group[idx] = inName;
@@ -5472,9 +5611,14 @@ function substitutePlayer(outName, inName) {
 
 // Show/hide sub buttons when tournament starts
 function _updateSubButtons() {
+  const PHASE_NAMES = ['Fase 1', 'Fase 2', 'Final'];
+  const phaseName = PHASE_NAMES[T.currentPhase] || `Fase ${T.currentPhase + 1}`;
   ['btn-sub-grupos','btn-sub-rodadas'].forEach(id => {
     const btn = document.getElementById(id);
-    if (btn) btn.style.display = T.started ? 'block' : 'none';
+    if (!btn) return;
+    btn.style.display = T.started ? 'block' : 'none';
+    btn.textContent = `🔄 Substituir Jogador — ${phaseName}`;
+    btn.onclick = () => openSubModal(T.currentPhase);
   });
 }
 
@@ -7298,7 +7442,7 @@ function startSpecAutoRefresh() {
 <!-- ═══════════════════════════════ SUBSTITUTE PLAYER MODAL ═══ -->
 <div id="modal-sub" style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:9000;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18)">
-    <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Substituir Jogador</div>
+    <div id="sub-modal-title" style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Substituir Jogador</div>
     <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-bottom:18px" id="sub-scenario-label"></div>
 
     <div style="margin-bottom:14px">
