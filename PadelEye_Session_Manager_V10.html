@@ -874,6 +874,83 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div id="test-db-results" style="display:none"></div>
       </div>
     </div>
+
+    <!-- Teste por Tabela -->
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8">Teste por Tabela</div>
+        <div class="card-badge">6 tabelas</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+
+        <!-- Players -->
+        <div id="tbl-row-players" class="card" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:11px 14px">
+          <div style="font-size:18px">👤</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Players</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_players</div>
+          </div>
+          <div id="tbl-status-players" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="testOneTable('get_players','players',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Sessions_Sessions -->
+        <div id="tbl-row-sessions" class="card" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:11px 14px">
+          <div style="font-size:18px">📋</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Sessions_Sessions</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_sessions</div>
+          </div>
+          <div id="tbl-status-sessions" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="testOneTable('get_sessions','sessions',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Matches_Sessions -->
+        <div id="tbl-row-matches" class="card" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:11px 14px">
+          <div style="font-size:18px">🏸</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Matches_Sessions</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_session_matches</div>
+          </div>
+          <div id="tbl-status-matches" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="testOneTable('get_session_matches','matches',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Stats_Sessions -->
+        <div id="tbl-row-stats" class="card" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:11px 14px">
+          <div style="font-size:18px">📊</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Stats_Sessions</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_session_stats</div>
+          </div>
+          <div id="tbl-status-stats" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="testOneTable('get_session_stats','stats',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Ranking_Sessions -->
+        <div id="tbl-row-ranking" class="card" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:11px 14px">
+          <div style="font-size:18px">🏆</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Ranking_Sessions</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_ranking_sessions</div>
+          </div>
+          <div id="tbl-status-ranking" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="testOneTable('get_ranking_sessions','ranking',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+        <!-- Log_Sessions -->
+        <div id="tbl-row-log" class="card" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:11px 14px">
+          <div style="font-size:18px">📝</div>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:#0d1e3a">Log_Sessions</div>
+            <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ping (health check)</div>
+          </div>
+          <div id="tbl-status-log" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+          <button onclick="testOneTable('ping','log',true)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+        </div>
+
+      </div>
+    </div>
   </div>
   </div><!-- /main-content -->
   </div><!-- /app-body -->
@@ -2971,6 +3048,35 @@ function renderTestDBTab(){
     const el = document.getElementById(id);
     if(el) el.textContent = url;
   });
+}
+
+async function testOneTable(action, key, pingOnly) {
+  const statusEl = document.getElementById('tbl-status-' + key);
+  const rowEl    = document.getElementById('tbl-row-'    + key);
+  if (!statusEl) return;
+  statusEl.textContent = '⏳ ...';
+  statusEl.style.color = '#9ab0c8';
+  if (rowEl) { rowEl.style.borderColor = '#dde6f0'; rowEl.style.background = '#f8fafd'; }
+  try {
+    const r    = await fetch(SESSION_MANAGER_URL + '?action=' + action);
+    const data = await r.json();
+    const ok   = data.ok === true || data.status === 'ok' || Array.isArray(data.rows);
+    const rows = Array.isArray(data.rows) ? data.rows.length : null;
+    if (ok) {
+      statusEl.textContent = pingOnly ? '✅ Online' : '✅ ' + rows + ' rows';
+      statusEl.style.color = '#1a7a44';
+      if (rowEl) { rowEl.style.borderColor = '#c8e8d0'; rowEl.style.background = '#f0fdf4'; }
+    } else {
+      const msg = (data.error || data.message || 'erro').toString().slice(0,25);
+      statusEl.textContent = '❌ ' + msg;
+      statusEl.style.color = '#c0392b';
+      if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ Sem resposta';
+    statusEl.style.color = '#c0392b';
+    if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
+  }
 }
 function editDBUrl(){
   const el = document.getElementById('test-db-url-display');
