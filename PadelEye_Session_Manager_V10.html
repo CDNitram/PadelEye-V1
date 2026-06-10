@@ -2958,24 +2958,77 @@ function renderTestDBTab(){
 }
 function editDBUrl(){
   const el = document.getElementById('test-db-url-display');
-  if(!el)return;
+  const editBtn = document.querySelector('[onclick="editDBUrl()"]');
+  if(!el) return;
+
+  // Build input
   const inp = document.createElement('input');
-  inp.value = SESSION_MANAGER_URL||'';
-  inp.style.cssText='width:100%;font-family:DM Mono,monospace;font-size:10px;border:1px solid #3a7bd5;border-radius:6px;padding:6px 8px;color:#0d1e3a;';
-  inp.onblur=()=>{
-    const v=inp.value.trim();
-    if(v.startsWith('https://')){
-      SESSION_MANAGER_URL=v;
-      localStorage.setItem('pe_session_url',v);
-      el.textContent=v;
-      showAlert('alert-save','URL saved ✓','ok');
+  inp.id = 'db-url-input';
+  inp.value = SESSION_MANAGER_URL || '';
+  inp.style.cssText = 'width:100%;font-family:DM Mono,monospace;font-size:10px;border:1.5px solid #3a7bd5;border-radius:6px;padding:7px 10px;color:#0d1e3a;outline:none;margin-bottom:8px;display:block;';
+
+  // Build Save + Cancel buttons
+  const btnRow = document.createElement('div');
+  btnRow.id = 'db-url-btns';
+  btnRow.style.cssText = 'display:flex;gap:8px;margin-top:4px;';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.textContent = '💾 Salvar URL';
+  saveBtn.style.cssText = 'padding:6px 14px;background:#0a1628;color:#C9933A;border:1.5px solid #C9933A;border-radius:6px;font-family:DM Mono,monospace;font-size:9px;font-weight:700;cursor:pointer;letter-spacing:.5px;';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.textContent = 'Cancelar';
+  cancelBtn.style.cssText = 'padding:6px 12px;background:#f0f5fb;color:#5a7090;border:1px solid #dde6f0;border-radius:6px;font-family:DM Mono,monospace;font-size:9px;cursor:pointer;';
+
+  // Confirmation span
+  const confirm = document.createElement('div');
+  confirm.id = 'db-url-confirm';
+  confirm.style.cssText = 'display:none;margin-top:8px;font-family:DM Mono,monospace;font-size:10px;color:#1a7a44;background:#E8F8EE;border:1px solid #c8e8d0;border-radius:6px;padding:6px 10px;';
+  confirm.textContent = '✅ Nova URL guardada com sucesso.';
+
+  function doSave(){
+    const v = inp.value.trim();
+    if(!v.startsWith('https://')){
+      inp.style.borderColor = '#c0392b';
+      inp.title = 'URL deve começar com https://';
+      inp.focus();
+      return;
     }
+    SESSION_MANAGER_URL = v;
+    localStorage.setItem('pe_session_url', v);
+    el.textContent = v;
+    confirm.style.display = 'block';
+    // Restore edit button, hide input + buttons after delay
+    setTimeout(()=>{
+      inp.replaceWith(el);
+      btnRow.remove();
+      confirm.remove();
+      if(editBtn) editBtn.style.display = '';
+    }, 2000);
+  }
+
+  function doCancel(){
     inp.replaceWith(el);
-  };
+    btnRow.remove();
+    confirm.remove();
+    if(editBtn) editBtn.style.display = '';
+  }
+
+  saveBtn.onclick   = doSave;
+  cancelBtn.onclick = doCancel;
+  inp.onkeydown = e => { if(e.key==='Enter') doSave(); if(e.key==='Escape') doCancel(); };
+
+  btnRow.append(saveBtn, cancelBtn);
+
+  // Replace display with input + buttons + confirm
   el.replaceWith(inp);
+  inp.after(btnRow);
+  btnRow.after(confirm);
+  if(editBtn) editBtn.style.display = 'none';
   inp.focus();
   inp.select();
 }
+
 
 // ══════════════════════════════════════════
 // INIT
