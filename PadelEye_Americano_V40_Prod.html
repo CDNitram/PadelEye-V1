@@ -3562,6 +3562,40 @@ function resumeTorneio() {
   const saved = window._savedT;
   if (!saved) return;
   Object.assign(T, saved);
+
+  // ── Migrate old T (pre-lifecycle) to new fields ───────────────────────────
+  if (!T.matchOrder) T.matchOrder = {};
+  if (!T.status || T.status === 'em_curso') {
+    // Infer substatus from current tournament state
+    let sub = 'fase_1_em_curso';
+    const ph = T.currentPhase || 0;
+    const hasAnyResult = T.phases?.some(p => Object.keys(p?.results || {}).some(k => p.results[k]?.saved));
+    if      (ph === 0 && !hasAnyResult) sub = 'groups_draft';
+    else if (ph === 0)                  sub = 'fase_1_em_curso';
+    else if (ph === 1)                  sub = 'fase_2_em_curso';
+    else                                sub = 'final_em_curso';
+    T.status    = 'open';
+    T.substatus = sub;
+    T.openedAt  = T.openedAt || new Date().toISOString();
+    // Patch DB record to new fields (fire-and-forget)
+    if (T.id) {
+      PadelEyeDB.send('update_tournament_status', {
+        tournament_id: T.id,
+        tournament_status: 'open',
+        tournament_substatus: sub,
+        opened_at: T.openedAt,
+      }).catch(() => {});
+    }
+  }
+
+  // Restore Abrir Torneio button state
+  const ob = document.getElementById('trn-open-btn');
+  if (ob) ob.style.display = 'none';
+  const ps = document.getElementById('trn-player-section');
+  if (ps) { ps.style.opacity = '1'; ps.style.pointerEvents = 'auto'; }
+  stampTournamentStatus(T.status, T.substatus);
+  _updateSubButtons();
+
   document.getElementById('resume-banner').style.display = 'none';
   showTab('grupos', document.querySelector('[onclick*="grupos"]'));
   renderGrupos();
@@ -5684,6 +5718,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const saved = restoreT();
         const isFinalized = saved && (saved.status === 'finalizado' || isTournamentLocallyComplete(saved));
         if (saved && !isFinalized) {
+          // Backfill new lifecycle fields on old saves
+          if (!saved.status || saved.status === 'em_curso') {
+            saved.status    = 'open';
+            const ph = saved.currentPhase || 0;
+            const hasRes = saved.phases?.some(p => Object.keys(p?.results || {}).some(k => p.results[k]?.saved));
+            saved.substatus = ph === 0 && !hasRes ? 'groups_draft' : ph === 0 ? 'fase_1_em_curso' : ph === 1 ? 'fase_2_em_curso' : 'final_em_curso';
+          }
+          if (!saved.matchOrder) saved.matchOrder = {};
           const resumeBanner = document.getElementById('resume-banner');
           if (resumeBanner) {
             document.getElementById('resume-torneio-name').textContent = saved.name || 'Torneio em curso';
@@ -7015,7 +7057,7 @@ async function loadOpenTournaments() {
     });
     const all = Object.values(dedupMap).filter(t => {
       const st = (t.status || '').toLowerCase().trim();
-      return st === 'em_curso' || st === 'in_progress' || st === 'active' || st === '';
+      return st === 'em_curso' || st === 'in_progress' || st === 'active' || st === 'open' || st === '';
     });
 
     if (!all.length) {
