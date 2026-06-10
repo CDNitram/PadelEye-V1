@@ -1448,6 +1448,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             CANCELAR
           </button>
         </div>
+        <div id="dbt-url-confirm" style="display:none;margin-top:8px;font-family:'DM Mono';font-size:10px;color:#1a7a44;background:#E8F8EE;border:1px solid #c8e8d0;border-radius:6px;padding:6px 10px">
+          ✅ Nova URL guardada com sucesso.
+        </div>
         <div style="font-size:9px;color:#b0c4d8;margin-top:6px;font-family:'DM Mono'">
           ⚠️ URL gravada localmente no browser. Atualizar após cada novo deployment do Apps Script.
         </div>
@@ -4677,11 +4680,15 @@ function dbtSaveUrl() {
   badge.textContent = 'Atualizado ✅';
   badge.style.background = '#e8f9ed';
   badge.style.color = '#1a6b3a';
+  // Explicit confirmation box (V10 standard)
+  const confirmEl = document.getElementById('dbt-url-confirm');
+  if (confirmEl) confirmEl.style.display = 'block';
   setTimeout(() => {
     badge.textContent = 'Custom';
     badge.style.background = '#fef3cd';
     badge.style.color = '#7a5c00';
-  }, 3000);
+    if (confirmEl) confirmEl.style.display = 'none';
+  }, 2000);
   dbtCancelUrl();
 }
 
@@ -4738,52 +4745,70 @@ async function dbtTestAll() {
   var badge    = document.getElementById('dbt-badge-all');
   var resultEl = document.getElementById('dbt-result-all');
   if (badge) { badge.textContent = '⏳ A testar...'; badge.className = 'card-badge'; }
-  if (resultEl) resultEl.innerHTML = '<div style="font-size:12px;color:#9ab0c8;padding:8px 0">A testar todas as tabelas...</div>';
 
-  // Definição local das tabelas a testar
-  var tables = [
-    { action:'get_players',          key:'jogadores', pingOnly:false },
-    { action:'get_tournaments',           key:'torneios',  pingOnly:false },
-    { action:'get_partidas_torneios',  key:'partidas',  pingOnly:false },
-    { action:'get_scorecard_torneios', key:'scorecard', pingOnly:false },
-    { action:'get_ranking_torneios',   key:'ranking',   pingOnly:false },
-    { action:'ping',                   key:'log',       pingOnly:true  },
+  var TESTS = [
+    { id:'d1', label:'👤 Jogadores',             action:'get_players',              pingOnly:false },
+    { id:'d2', label:'🏆 Torneios',              action:'get_tournaments',           pingOnly:false },
+    { id:'d3', label:'🏸 Partidas_Torneios',     action:'get_partidas_torneios',     pingOnly:false },
+    { id:'d4', label:'🏅 Scorecard_Torneios',    action:'get_scorecard_torneios',    pingOnly:false },
+    { id:'d5', label:'📊 Ranking_Torneios',      action:'get_ranking_torneios',      pingOnly:false },
+    { id:'d6', label:'📋 Log_Torneios',          action:'ping',                      pingOnly:true  },
   ];
 
-  // Correr todos em paralelo
-  await Promise.allSettled(tables.map(function(t) {
-    return dbtTestOne(t.action, t.key, t.pingOnly);
-  }));
+  // ── Pre-render all rows immediately ──────────────────────────────────
+  if (resultEl) resultEl.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
+    '  <div id="dbt-dot" style="width:8px;height:8px;border-radius:50%;background:#C9933A"></div>' +
+    '  <div id="dbt-summary" style="font-family:DM Mono,monospace;font-size:11px;color:#5a7090;font-weight:700">A testar ' + TESTS.length + ' tabelas...</div>' +
+    '</div>' +
+    TESTS.map(function(t) { return (
+      '<div style="background:#fff;border:1px solid #dde6f0;border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
+      '  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+      '    <span style="font-size:12px;font-weight:600;color:#0d1e3a">' + t.label + '</span>' +
+      '    <span id="dres-' + t.id + '" style="font-family:DM Mono,monospace;font-size:11px;color:#b0c4d8">⏳</span>' +
+      '  </div>' +
+      '  <div style="height:4px;background:#eaf0f8;border-radius:2px;overflow:hidden">' +
+      '    <div id="dbar-' + t.id + '" style="height:100%;width:0%;background:#27AE60;border-radius:2px;transition:width .5s ease"></div>' +
+      '  </div>' +
+      '</div>'
+    ); }).join('');
 
-  // Ler resultados dos elementos DOM após os testes
-  var okCount = 0;
-  var lines   = '';
-  var labels  = { jogadores:'👤 Jogadores', torneios:'🏆 Torneios', partidas:'🏸 Partidas_Torneios',
-                  scorecard:'🏅 Scorecard_Torneios', ranking:'📊 Ranking_Torneios', log:'📋 Log_Torneios' };
-
-  tables.forEach(function(t) {
-    var el     = document.getElementById('dbt-status-' + t.key);
-    var txt    = el ? el.textContent : '—';
-    var passed = txt.indexOf('✅') === 0;
-    if (passed) okCount++;
-    lines += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f0f5fb;font-size:11px">';
-    lines += '<span style="color:#5a7090">' + (labels[t.key] || t.key) + '</span>';
-    lines += '<span style="font-family:DM Mono,monospace;font-weight:700;color:' + (passed?'#1a7a44':'#c0392b') + '">' + txt + '</span>';
-    lines += '</div>';
+  // Animate to 20%
+  requestAnimationFrame(function() {
+    TESTS.forEach(function(t) {
+      var b = document.getElementById('dbar-' + t.id);
+      if (b) b.style.width = '20%';
+    });
   });
 
-  var allOk = okCount === tables.length;
-  if (badge) {
-    badge.textContent = (allOk ? '✅ ' : '⚠️ ') + okCount + '/6 OK';
-    badge.className   = 'card-badge ' + (allOk ? 'green' : 'gold');
-  }
-  if (resultEl) {
-    resultEl.innerHTML =
-      '<div style="background:' + (allOk?'#f0fdf4':'#fffbf0') + ';border:1px solid ' + (allOk?'#c8e8d0':'#e8c870') + ';border-radius:10px;padding:14px;margin-top:4px">' +
-      '<div style="font-family:Bebas Neue,sans-serif;font-size:16px;letter-spacing:1px;color:' + (allOk?'#1a7a44':'#865a10') + ';margin-bottom:10px">' +
-      (allOk ? '🟢 Todas as tabelas acessíveis' : '🟡 ' + okCount + ' de 6 tabelas responderam') + '</div>' +
-      lines + '</div>';
-  }
+  // ── Run all in parallel, update each row as it resolves ──────────────
+  await Promise.allSettled(TESTS.map(function(t) {
+    return (async function() {
+      try {
+        var res = await fetch(WEB_APP_URL + '?action=' + t.action);
+        var j   = await res.json();
+        var rowCount = t.pingOnly ? (j.ok ? '✓' : '?') : (j.rows ? j.rows.length : (j.ok ? '✓' : '?'));
+        var ok  = j.ok !== false;
+        var barEl = document.getElementById('dbar-' + t.id);
+        var resEl = document.getElementById('dres-' + t.id);
+        if (barEl) { barEl.style.width = '100%'; if (!ok) barEl.style.background = '#E74C3C'; }
+        if (resEl) { resEl.textContent = ok ? ('✅ ' + (typeof rowCount==='number' ? rowCount+' rows' : rowCount)) : '❌ Erro'; resEl.style.color = ok ? '#1a7a44' : '#c0392b'; }
+      } catch(e) {
+        var barEl = document.getElementById('dbar-' + t.id);
+        var resEl = document.getElementById('dres-' + t.id);
+        if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#E74C3C'; }
+        if (resEl) { resEl.textContent = '❌ Sem resposta'; resEl.style.color = '#c0392b'; }
+      }
+      // Live counter
+      var done  = TESTS.filter(function(t2){ var el=document.getElementById('dres-'+t2.id); return el && el.textContent!=='⏳'; }).length;
+      var curOk = TESTS.filter(function(t2){ var el=document.getElementById('dres-'+t2.id); return el && el.textContent.indexOf('✅')===0; }).length;
+      var sumEl = document.getElementById('dbt-summary');
+      var dotEl = document.getElementById('dbt-dot');
+      if (sumEl) sumEl.textContent = done < TESTS.length ? curOk+'/'+done+' tabelas testadas...' : curOk+'/'+TESTS.length+' tabelas acessíveis';
+      if (dotEl && done===TESTS.length) dotEl.style.background = curOk===TESTS.length ? '#27AE60' : '#C9933A';
+      if (done===TESTS.length && badge) { badge.textContent=(curOk===TESTS.length?'✅ ':'⚠️ ')+curOk+'/6 OK'; badge.className='card-badge '+(curOk===TESTS.length?'green':'gold'); }
+    })();
+  }));
 }
 
 // ══════════════════════════════════════════
