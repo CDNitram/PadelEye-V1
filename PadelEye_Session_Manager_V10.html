@@ -2894,55 +2894,71 @@ async function testDBConnection() {
   const btn = document.querySelector('[onclick="testDBConnection()"]');
   const res = document.getElementById('test-db-results');
   if (btn) btn.textContent = '⏳ A testar...';
-  if (res) { res.style.display = 'block'; res.innerHTML = '<div style="text-align:center;padding:20px;font-family:DM Mono,monospace;font-size:11px;color:#9ab0c8">A conectar ao GS V7...</div>'; }
 
-  const tests = [
-    { label:'Players',            action:'get_players' },
-    { label:'Sessions_Sessions',  action:'get_sessions' },
-    { label:'Matches_Sessions',   action:'get_session_matches' },
-    { label:'Stats_Sessions',     action:'get_session_stats' },
-    { label:'Ranking_Sessions',   action:'get_ranking_sessions' },
-    { label:'Log_Sessions',       action:'ping' },
+  const TESTS = [
+    { id:'t1', label:'Players',            action:'get_players' },
+    { id:'t2', label:'Sessions_Sessions',  action:'get_sessions' },
+    { id:'t3', label:'Matches_Sessions',   action:'get_session_matches' },
+    { id:'t4', label:'Stats_Sessions',     action:'get_session_stats' },
+    { id:'t5', label:'Ranking_Sessions',   action:'get_ranking_sessions' },
+    { id:'t6', label:'Log_Sessions',       action:'ping' },
   ];
 
-  let pingOk = false;
-  try {
-    const pr = await fetch(SESSION_MANAGER_URL + '?action=ping');
-    const pj = await pr.json();
-    pingOk = pj.ok === true;
-  } catch(e) {}
+  // ── Pre-render all rows immediately ──────────────────────────────────
+  res.style.display = 'block';
+  res.innerHTML =
+    `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+       <div id="tdb-dot" style="width:8px;height:8px;border-radius:50%;background:#C9933A"></div>
+       <div id="tdb-summary" style="font-family:'DM Mono';font-size:11px;color:#5a7090;font-weight:700">A testar ${TESTS.length} tabelas...</div>
+     </div>` +
+    TESTS.map(t => `
+    <div style="background:#fff;border:1px solid #dde6f0;border-radius:8px;padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600;color:#0d1e3a">${t.label}</span>
+        <span id="res-${t.id}" style="font-family:'DM Mono';font-size:11px;color:#b0c4d8">⏳</span>
+      </div>
+      <div style="height:4px;background:#eaf0f8;border-radius:2px;overflow:hidden">
+        <div id="bar-${t.id}" style="height:100%;width:0%;background:#27AE60;border-radius:2px;transition:width .5s ease"></div>
+      </div>
+    </div>`).join('');
 
-  if (!pingOk) {
-    if (res) res.innerHTML = `<div style="background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:10px;padding:14px;color:#c0392b;font-family:DM Mono,monospace;font-size:11px">❌ Sem resposta do servidor. Verifique a URL.</div>`;
-    if (btn) btn.textContent = '⚡ TESTAR CONEXÃO COMPLETA';
-    return;
-  }
+  // Animate bars to 20% immediately to show activity
+  requestAnimationFrame(() => TESTS.forEach(t => {
+    const b = document.getElementById('bar-' + t.id);
+    if (b) b.style.width = '20%';
+  }));
 
-  const results = [];
-  for (const t of tests) {
+  // ── Run all fetches in parallel, update each row as it resolves ──────
+  let okCount = 0;
+  await Promise.allSettled(TESTS.map(async t => {
     try {
       const r = await fetch(SESSION_MANAGER_URL + '?action=' + t.action);
       const j = await r.json();
-      const rows = j.rows ? j.rows.length : (j.ok ? '✓' : '?');
-      results.push({ label: t.label, rows, ok: j.ok !== false });
-    } catch(e) {
-      results.push({ label: t.label, rows: '—', ok: false });
+      const rowCount = j.rows ? j.rows.length : (j.ok ? '✓' : '?');
+      const ok = j.ok !== false;
+      if (ok) okCount++;
+      const barEl = document.getElementById('bar-' + t.id);
+      const resEl = document.getElementById('res-' + t.id);
+      if (barEl) { barEl.style.width = '100%'; if (!ok) barEl.style.background = '#E74C3C'; }
+      if (resEl) { resEl.textContent = ok ? `✅ ${typeof rowCount==='number'?rowCount+' rows':rowCount}` : '❌ Erro'; resEl.style.color = ok ? '#1a7a44' : '#c0392b'; }
+    } catch {
+      const barEl = document.getElementById('bar-' + t.id);
+      const resEl = document.getElementById('res-' + t.id);
+      if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#E74C3C'; }
+      if (resEl) { resEl.textContent = '❌ Sem resposta'; resEl.style.color = '#c0392b'; }
     }
-  }
+    // Update live counter
+    const done = TESTS.filter(t2 => {
+      const el = document.getElementById('res-' + t2.id);
+      return el && el.textContent !== '⏳';
+    }).length;
+    const curOk = TESTS.filter(t2 => { const el = document.getElementById('res-' + t2.id); return el && el.textContent.startsWith('✅'); }).length;
+    const sumEl = document.getElementById('tdb-summary');
+    const dotEl = document.getElementById('tdb-dot');
+    if (sumEl) sumEl.textContent = done < TESTS.length ? `${curOk}/${done} tabelas testadas...` : `${curOk}/${TESTS.length} tabelas acessíveis`;
+    if (dotEl && done === TESTS.length) dotEl.style.background = curOk === TESTS.length ? '#27AE60' : '#C9933A';
+  }));
 
-  const okCount = results.filter(r => r.ok).length;
-  if (res) {
-    res.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-        <div style="width:8px;height:8px;border-radius:50%;background:${okCount===results.length?'#27AE60':'#C9933A'}"></div>
-        <div style="font-family:'DM Mono';font-size:11px;color:#0d1e3a;font-weight:700">${okCount}/${results.length} tabelas acessíveis</div>
-      </div>
-      ${results.map(r => `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fff;border:1px solid #dde6f0;border-radius:8px;margin-bottom:5px">
-          <div style="font-size:12px;font-weight:600">${r.label}</div>
-          <div style="font-family:'DM Mono';font-size:11px;color:${r.ok?'#1a7a44':'#c0392b'}">${r.ok?'✅':' ❌'} ${typeof r.rows === 'number' ? r.rows + ' rows' : r.rows}</div>
-        </div>`).join('')}`;
-  }
   if (btn) btn.textContent = '⚡ TESTAR CONEXÃO COMPLETA';
 }
 // ══════════════════════════════════════════
