@@ -993,6 +993,17 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             style="cursor:pointer;color-scheme:light">
         </div>
       </div>
+      <div class="row2" style="margin-bottom:12px">
+        <div class="field">
+          <label>Local / Clube</label>
+          <input class="finput" id="cfg-venue" value="EcoTenis"
+            placeholder="Ex: EcoTenis Indoor · Foz do Iguaçu">
+        </div>
+        <div class="field">
+          <label>Cidade</label>
+          <input class="finput" id="cfg-city" value="Foz do Iguaçu" placeholder="Ex: Foz do Iguaçu">
+        </div>
+      </div>
       <div class="row4cfg" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
         <div class="field">
           <label>Categoria</label>
@@ -1016,7 +1027,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <option value="32">32 jogadores</option>
           </select>
         </div>
-        <div class="field" id="field-num-fases" style="display:none">
+        <div class="field" id="field-num-fases">
           <label>Número de Fases</label>
           <select class="finput" id="cfg-num-fases" onchange="updateSummary()">
             <option value="3" selected>3 Fases (F1 → F2 → Final)</option>
@@ -1394,7 +1405,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="trk-sort on" id="trk-s-wins"      onclick="trkSetSort('wins',this)">🏆 Vitórias</button>
       <button class="trk-sort"    id="trk-s-win_rate"   onclick="trkSetSort('win_rate',this)">📊 Win Rate</button>
       <button class="trk-sort"    id="trk-s-matches"    onclick="trkSetSort('matches',this)">🎯 Partidas</button>
-      <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ SP</button>
+      <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ Saldo</button>
       <button class="trk-sort"    id="trk-s-champion"   onclick="trkSetSort('champion',this)">🥇 Campeão</button>
       <button class="trk-sort"    id="trk-s-medals"     onclick="trkSetSort('medals',this)">🏅 Medalhas</button>
     </div>
@@ -2209,6 +2220,7 @@ function launch() {
     })()],
     ['Seeds designados', seedList.length>0?seedList.map((s,i)=>`S${i+1}: ${s}`).join(' · '):'Nenhum'],
     ['Distribuição',     'Automática · 1 seed por grupo'],
+    ['Local',            (document.getElementById('cfg-venue')?.value||'—') + (document.getElementById('cfg-city')?.value ? ' · ' + document.getElementById('cfg-city').value : '')],
     ['Organizador',      currentUser?.name||'—'],
   ].map(([l,v])=>`<div class="ok-row"><span class="ok-lbl">${l}</span><span class="ok-val">${v}</span></div>`).join('');
 
@@ -2294,8 +2306,7 @@ function stampTournamentStatus(status, substatus) {
   persistT();
   if (T.id) {
     PadelEyeDB.send('update_tournament_status', {
-      tournament_id: T.id, tournament_status: status, tournament_substatus: substatus,
-      opened_at: T.openedAt || '', finalized_at: T.finalizedAt || '',
+      tournament_id: T.id, status: status,  // GAS reads 'status'
     }).catch(e => console.warn('[stamp]', e.message));
   }
 }
@@ -2313,12 +2324,12 @@ function openTournament() {
     tournament_id: T.id,
     tournament_name: document.getElementById('cfg-name')?.value || 'Torneio Americano',
     date: getCfgDate(),
-    venue: T.local || '',
+    venue: (document.getElementById('cfg-venue')?.value?.trim() || '') + (document.getElementById('cfg-city')?.value?.trim() ? ' · ' + document.getElementById('cfg-city').value.trim() : ''),
     tournament_format: 'Americano · Modelo Brasileiro',
     tournament_category: document.getElementById('cfg-categoria')?.value || '',
     num_phases: parseInt(document.getElementById('cfg-num-fases')?.value || 3),
-    status: 'open', tournament_status: 'open', tournament_substatus: 'setup',
-    opened_at: T.openedAt, created_at: T.openedAt,
+    status: 'open',  // TOURNAMENT_COLS has 'status'; GAS filter accepts 'open'
+    created_at: T.openedAt,
   }}).catch(e => console.warn('[openTournament]', e.message));
   safeAlert('✅ Torneio aberto. Selecione os jogadores.', 'ok');
 }
@@ -2677,11 +2688,16 @@ function advancePhase() {
       });
     });
 
-    // Wildcards: balance across destinations to fill evenly
-    wildcardPlayers.forEach((player) => {
-      const minLen  = Math.min(...nextGroups.map(g => g.length));
-      const destIdx = nextGroups.findIndex(g => g.length === minLen);
-      nextGroups[destIdx].push(player);
+    // Wildcards: avoid same-source-group collisions
+    wcCandidates.slice(0, wc).forEach((wc_entry, wci) => {
+      const player   = wildcardPlayers[wci];
+      if (!player) return;
+      const srcGi    = T.phases[phIdx].groups.findIndex(g => g.includes(wc_entry.name));
+      const srcGroup = srcGi >= 0 ? T.phases[phIdx].groups[srcGi] : [];
+      const ranked   = nextGroups
+        .map((g, di) => ({ di, conflicts: g.filter(p => srcGroup.includes(p)).length, len: g.length }))
+        .sort((a, b) => a.conflicts - b.conflicts || a.len - b.len);
+      nextGroups[ranked[0].di].push(player);
     });
 
     nextGroups = nextGroups.filter(g => g.length > 0);
@@ -2840,7 +2856,7 @@ function saveMatchForce(phaseIdx, groupIdx, matchIdx) {
       match_id:            `${T.id}-${key}`,
       tournament_id:       T.id,
       phase:               ph.name,
-      group:               LETTERS[groupIdx],
+      group:               (phaseIdx === (T.numFases||3)-1) ? 'Z' : LETTERS[groupIdx],
       team_a:              (m?.a || []).join(' / '),
       score_a:             sa,
       score_b:             sb,
@@ -2985,7 +3001,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
       match_id:            `${T.id}-${key}`,
       tournament_id:       T.id,
       phase:               ph.name,
-      group:               LETTERS[groupIdx],
+      group:               (phaseIdx === (T.numFases||3)-1) ? 'Z' : LETTERS[groupIdx],
       team_a:              (m?.a || []).join(' / '),
       score_a:             sa,
       score_b:             sb,
@@ -3282,7 +3298,7 @@ function renderRounds() {
     html += `<div style="margin-top:10px;border-top:1px solid #f0f5fb;padding-top:10px">
       <div style="font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;color:#b0c4d8;margin-bottom:6px">CLASSIFICAÇÃO</div>
       <table style="width:100%;font-size:11px;border-collapse:collapse">
-        <tr style="color:#9ab0c8"><td style="padding:2px 4px">#</td><td>Jogador</td><td style="text-align:right">V</td><td style="text-align:right">GD</td><td style="text-align:right">Pts</td></tr>`;
+        <tr style="color:#9ab0c8"><td style="padding:2px 4px">#</td><td>Jogador</td><td style="text-align:right">V</td><td style="text-align:right">Saldo</td><td style="text-align:right">Pts</td></tr>`;
     standings.forEach((s, i) => {
       const qualify = i < 2;
       html += `<tr style="${qualify?'font-weight:700;color:#0d1e3a':'color:#9ab0c8'}">
@@ -3290,7 +3306,7 @@ function renderRounds() {
         <td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${_pc(s.name)};margin-right:5px"></span>${s.name}</td>
         <td style="text-align:right">${s.w}</td>
         <td style="text-align:right;${s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':''}">${s.gd>0?'+':''}${s.gd}</td>
-        <td style="text-align:right;font-family:'Bebas Neue';font-size:14px;color:#C9933A">${s.m>0?s.gw:'—'}</td>
+        <td style="text-align:right;font-family:'Bebas Neue';font-size:14px;color:#C9933A">${s.m>0?(s.w*5 + s.l*3 + s.gw):'—'}</td>
       </tr>`;
     });
     html += `</table>`;
@@ -3315,7 +3331,7 @@ function renderRounds() {
             ${isFinal ? `Escolha quem fica em <strong>${posLabel}</strong> lugar.` : `Escolha quem avança para a próxima fase.`}
           </div>
           <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-bottom:8px;letter-spacing:.5px">
-            CRITÉRIOS: Vitórias → Saldo GD → Confronto Direto → Games Marcados → Saldo TB
+            CRITÉRIOS: Vitórias → Saldo de Jogos → Confronto Direto → Jogos a Favor → Saldo TB
           </div>
           <div class="tie-pick-btns">
             <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}')">
@@ -3472,8 +3488,8 @@ function renderRanking() {
   // ── SORT TABS ──
   html += `<div style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap">
     <button id="etab-pct" onclick="estatSwitch('pct')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#0a1628;color:#fff;transition:all .2s">Win Rate</button>
-    <button id="etab-sets" onclick="estatSwitch('sets')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Sets Vencidos</button>
-    <button id="etab-games" onclick="estatSwitch('games')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Games Vencidos</button>
+    <button id="etab-sets" onclick="estatSwitch('sets')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Partidas Vencidas</button>
+    <button id="etab-games" onclick="estatSwitch('games')" style="padding:5px 14px;border-radius:20px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;transition:all .2s">Jogos a Favor</button>
   </div>`;
 
   // ── TABLE ──
@@ -3482,13 +3498,13 @@ function renderRanking() {
       <thead><tr>
         <th style="text-align:center;width:32px">#</th>
         <th>Jogador</th>
-        <th class="r">Sets Jogados</th>
-        <th class="r" style="color:#27AE60">Sets Vencidos</th>
-        <th class="r" style="color:#9ab0c8">Sets Perdidos</th>
-        <th class="r">Games Jogados</th>
-        <th class="r" style="color:#C9933A">Games Vencidos</th>
-        <th class="r" style="color:#9ab0c8">Games Perdidos</th>
-        <th class="r">SP</th>
+        <th class="r">Partidas Jogadas</th>
+        <th class="r" style="color:#27AE60">Partidas Vencidas</th>
+        <th class="r" style="color:#9ab0c8">Partidas Perdidas</th>
+        <th class="r">Jogos (Total)</th>
+        <th class="r" style="color:#C9933A">Jogos a Favor</th>
+        <th class="r" style="color:#9ab0c8">Jogos Contra</th>
+        <th class="r">Saldo</th>
         <th class="r">Win Rate</th>
       </tr></thead>
       <tbody id="estat-tbody">`;
@@ -3582,9 +3598,7 @@ function resumeTorneio() {
     if (T.id) {
       PadelEyeDB.send('update_tournament_status', {
         tournament_id: T.id,
-        tournament_status: 'open',
-        tournament_substatus: sub,
-        opened_at: T.openedAt,
+        status: 'em_curso',  // GAS reads 'status'; 'em_curso' keeps backward compat
       }).catch(() => {});
     }
   }
@@ -3777,7 +3791,7 @@ function renderHistorico() {
             return '<div style="background:rgba(255,255,255,.06);border-radius:8px;padding:8px 6px">'
               +'<div style="font-size:9px;color:#93C5FD;font-family:DM Mono;letter-spacing:1px;margin-bottom:4px">'+medals[i]+'</div>'
               +'<div style="font-size:10px;font-weight:700;color:#f1f5f9;margin-bottom:3px">'+p.name+'</div>'
-              +'<div style="font-size:9px;color:#94a3b8;font-family:DM Mono">'+p.w+'V · GD'+gd+'</div>'
+              +'<div style="font-size:9px;color:#94a3b8;font-family:DM Mono">'+p.w+'V · Saldo '+gd+'</div>'
               +'</div>';
           }).join('');
         })()}
@@ -3919,7 +3933,7 @@ function renderGrupos() {
             ${playerCardCompact(s.name, isSeed)}
             <div style="position:absolute;right:36px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;align-items:flex-end;gap:1px;pointer-events:none">
               <span style="line-height:1.3">${badge}</span>
-              <span style="font-size:8px;color:${gdCol};font-family:'DM Mono',monospace">${s.m>0?`${s.w}V · SP${gdStr}`:'—'}</span>
+              <span style="font-size:8px;color:${gdCol};font-family:'DM Mono',monospace">${s.m>0?`${s.w}V · Saldo ${gdStr}`:'—'}</span>
             </div>
           </div>`;
         }
@@ -4611,7 +4625,7 @@ const LABELS = {
   losses:                'Derrotas',
   points_for:            'Pts a Favor',
   points_against:        'Pts Contra',
-  points_difference:     'SP',
+  points_difference:     'Saldo',
   win_rate:              '% Vitórias',
   last_tournament_date:  'Último Torneio',
   // Common
@@ -4711,7 +4725,7 @@ const PadelEyeDB = (() => {
             match_id:            uid(),
             tournament_id:       torneioId,
             phase:               ph.name,
-            group:               LETTERS[gi + (phIdx===1?4:0)],
+            group:               (phIdx === (T.numFases||3)-1) ? 'Z' : LETTERS[gi + (phIdx===1?4:0)],
             team_a:              m.a.join(' / '),
             score_a:             res.sa ?? '',
             score_b:             res.sb ?? '',
@@ -5267,7 +5281,7 @@ function startRaffle() {
   if (!T.id) T.id = generateTorneiId();
 
   // Pull local + categoria from setup form
-  T.local     = document.getElementById('setup-local')?.value?.trim()     || '';
+  T.local = (document.getElementById('cfg-venue')?.value?.trim() || '') + (document.getElementById('cfg-city')?.value?.trim() ? ' · ' + document.getElementById('cfg-city').value.trim() : '');
   T.categoria = document.getElementById('setup-categoria')?.value?.trim() || '';
 
   // Pull config
@@ -5674,13 +5688,8 @@ function updateFasesToggle() {
                       document.getElementById('f2-config-row')?.parentElement;
 
   if (vagas === 8) {
-    // Show the fases toggle for 8 players only
+    // Always show — organizer chooses 2 or 3 phases for any player count
     if (fieldFases) fieldFases.style.display = 'block';
-  } else {
-    // For other player counts: always 3 phases, hide toggle
-    if (fieldFases) fieldFases.style.display = 'none';
-    const sel = document.getElementById('cfg-num-fases');
-    if (sel) sel.value = '3';
   }
 
   // Show/hide F2 config + rename Final card when 2 fases
@@ -5937,9 +5946,30 @@ function mgAssignToGroup(name, gi) {
 
 function mgRemoveFromGroup(name, gi) {
   _mgGroups[gi] = _mgGroups[gi].filter(p => p !== name);
-  _mgRenderPool();
-  _mgRenderGroups();
-  _mgUpdateProgress();
+  _swapFrom = null;
+  _mgRenderPool(); _mgRenderGroups(); _mgUpdateProgress();
+}
+
+let _swapFrom = null;
+function mgClickPlayer(name, gi) {
+  if (!_swapFrom) {
+    _swapFrom = { name, gi };
+    _mgRenderGroups();
+    safeAlert('↔ ' + name + ' — clique noutro jogador para trocar.', 'ok');
+  } else if (_swapFrom.name === name && _swapFrom.gi === gi) {
+    _swapFrom = null; _mgRenderGroups();
+  } else {
+    var fi = _mgGroups[_swapFrom.gi].indexOf(_swapFrom.name);
+    var ti = _mgGroups[gi].indexOf(name);
+    if (fi !== -1 && ti !== -1) {
+      _mgGroups[_swapFrom.gi][fi] = name;
+      _mgGroups[gi][ti] = _swapFrom.name;
+    }
+    var msg = '↔ ' + _swapFrom.name + ' ↔ ' + name;
+    _swapFrom = null;
+    _mgRenderPool(); _mgRenderGroups(); _mgUpdateProgress();
+    safeAlert(msg, 'ok');
+  }
 }
 
 function _mgRenderGroups() {
@@ -6404,7 +6434,7 @@ function _htBuildGrupos(tm) {
             </div>
             <table style="width:100%;border-collapse:collapse">
               <thead><tr style="background:#f8fafd">
-                ${['#','JOGADOR','P','V','D','PF','PC','SP'].map((h,i)=>`<th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:7px ${i===0||i===1?'12':'8'}px;text-align:${i<=1?'left':'center'};border-bottom:1px solid #dde6f0${i===7?';text-align:right':''}">${h}</th>`).join('')}
+                ${['#','JOGADOR','P','V','D','Jogos a Favor','Jogos Contra','Saldo'].map((h,i)=>`<th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:7px ${i===0||i===1?'12':'8'}px;text-align:${i<=1?'left':'center'};border-bottom:1px solid #dde6f0${i===7?';text-align:right':''}">${h}</th>`).join('')}
               </tr></thead>
               <tbody>${sorted.map((p,i)=>{
                 const gd=p.pf-p.pa, bg=i===0?'linear-gradient(135deg,#fffbf0,#fff8e8)':i%2?'#fafcff':'#fff';
@@ -6433,7 +6463,7 @@ function _htBuildStats(tm) {
   if(!tm.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas.</div>';
   const sorted=_htCalcPlayers(tm);
   return `<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead><tr style="background:#f4f7fc">${['#','Jogador','Partidas','Vitórias','Derrotas','Win%','PF','PC','SP'].map(h=>`<th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:8px 10px;text-align:left;border-bottom:1px solid #dde6f0">${h}</th>`).join('')}</tr></thead>
+    <thead><tr style="background:#f4f7fc">${['#','Jogador','Partidas','Vitórias','Derrotas','Win %','Jogos a Favor','Jogos Contra','Saldo'].map(h=>`<th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:8px 10px;text-align:left;border-bottom:1px solid #dde6f0">${h}</th>`).join('')}</tr></thead>
     <tbody>${sorted.map((p,i)=>{
       const gd=p.pf-p.pa, wr=p.m>0?Math.round(p.w/p.m*100):0;
       return `<tr style="border-bottom:1px solid #f4f7fc">
@@ -6475,7 +6505,7 @@ function _htBuildHistorico(tm, sc) {
   const pGrad=name=>flagGrad(getPlayerReg(name).nacionalidade);
   const pTxt=name=>flagTextCol(getPlayerReg(name).nacionalidade);
   const pIni=name=>_init(name);
-  const pod=(p,sz,bCol,barH)=>{if(!p)return'<div></div>';const s=pStats(p.player);return`<div style="display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${pGrad(p.player)};border:3px solid ${bCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:${Math.round(sz*.28)}px;color:${pTxt(p.player)};box-shadow:0 3px 14px rgba(0,0,0,.3);text-shadow:0 1px 4px rgba(0,0,0,.4)">${pIni(p.player)}</div><div style="font-size:11px;font-weight:700;color:#fff;max-width:${sz+20}px;line-height:1.3;text-align:center">${p.player||'—'}</div><div style="font-family:'DM Mono';font-size:9px;color:#93C5FD">${s.w}V · SP${s.gd>=0?'+':''}${s.gd}</div></div>`;};
+  const pod=(p,sz,bCol,barH)=>{if(!p)return'<div></div>';const s=pStats(p.player);return`<div style="display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${pGrad(p.player)};border:3px solid ${bCol};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:${Math.round(sz*.28)}px;color:${pTxt(p.player)};box-shadow:0 3px 14px rgba(0,0,0,.3);text-shadow:0 1px 4px rgba(0,0,0,.4)">${pIni(p.player)}</div><div style="font-size:11px;font-weight:700;color:#fff;max-width:${sz+20}px;line-height:1.3;text-align:center">${p.player||'—'}</div><div style="font-family:'DM Mono';font-size:9px;color:#93C5FD">${s.w}V · Saldo ${s.gd>=0?'+':''}${s.gd}</div></div>`;};
   html+=`<div style="max-width:680px;margin:24px auto 0;padding:28px 20px 20px;background:linear-gradient(160deg,#0a1628,#1a3052);border-radius:16px;text-align:center">
     <div style="font-family:'DM Mono';font-size:9px;letter-spacing:3px;color:#93C5FD;text-transform:uppercase;margin-bottom:22px">🏆 Pódio Final</div>
     <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;margin-bottom:16px">
@@ -6969,7 +6999,7 @@ function trkUpdateKPIs() {
     if (trkSort==='wins')     { leaderLbl='Mais Vitórias'; leaderSub=`${l.wins||0}V`; }
     else if (trkSort==='win_rate') { leaderLbl='Líder WR';  leaderSub=l.win_rate||'—'; }
     else if (trkSort==='matches')  { leaderLbl='Mais Ativo'; leaderSub=`${l.matches||0}P`; }
-    else if (trkSort==='sp')       { const sp=+(l.points_difference||0); leaderLbl='Melhor SP'; leaderSub=`${sp>=0?'+':''}${sp} SP`; }
+    else if (trkSort==='sp')       { const sp=+(l.points_difference||0); leaderLbl='Melhor Saldo'; leaderSub=`${sp>=0?'+':''}${sp}`; }
     else if (trkSort==='champion') { leaderLbl='Champion'; leaderSub=`🥇 ${l.champion_count||0}×`; }
   }
   document.getElementById('trk-k-leader').textContent     = leaderName;
@@ -7360,7 +7390,7 @@ async function loadSpectatorView(tid) {
               <th style="padding:6px 8px;text-align:left;font-family:'DM Mono';font-size:9px;color:#9ab0c8;font-weight:500">JOGADOR</th>
               <th style="padding:6px 4px;text-align:center;font-family:'DM Mono';font-size:9px;color:#9ab0c8;font-weight:500">V</th>
               <th style="padding:6px 4px;text-align:center;font-family:'DM Mono';font-size:9px;color:#9ab0c8;font-weight:500">D</th>
-              <th style="padding:6px 4px;text-align:center;font-family:'DM Mono';font-size:9px;color:#9ab0c8;font-weight:500">GD</th>
+              <th style="padding:6px 4px;text-align:center;font-family:'DM Mono';font-size:9px;color:#9ab0c8;font-weight:500">Saldo</th>
             </tr>
             ${sorted.map((p,i) => `
               <tr style="border-bottom:1px solid #f4f7fc;background:${i===0?'#f0fdf4':i<2?'#f8fafd':'#fff'}">
