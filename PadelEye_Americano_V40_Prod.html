@@ -4502,7 +4502,7 @@ function startTournament() {
   T.name         = document.getElementById('cfg-name').value || 'Torneio Americano EcoTenis';
   T.date         = getCfgDate();
   T.courts       = parseInt(document.getElementById('cfg-courts').value);
-  T.scoring      = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
+  T.scoring      = '15 · 30 · 40 · Game'; // canonical default — cfg-scoring is now a hidden input
   T.players      = [...selectedPlayers];
   T.currentPhase = 0;
   T.phaseConfig  = readPhaseConfig();
@@ -6536,7 +6536,7 @@ function launchManualGroups() {
   T.name         = document.getElementById('cfg-name').value || 'Torneio Americano EcoTenis';
   T.date         = getCfgDate();
   T.courts       = parseInt(document.getElementById('cfg-courts').value);
-  T.scoring      = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
+  T.scoring      = '15 · 30 · 40 · Game'; // canonical default — cfg-scoring is now a hidden input
   T.players      = [...selectedPlayers];
   T.currentPhase = 0;
   T.numFases     = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
