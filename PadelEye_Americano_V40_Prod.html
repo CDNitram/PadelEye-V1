@@ -2321,6 +2321,9 @@ function openTournament() {
   if (T.status === 'Iniciado' || T.status === 'open') return;
   if (!T.id) T.id = generateTorneiId();
   T.openedAt = new Date().toISOString();
+  // ── Persist venue to T.local immediately so raffleFinish/startTournament use it ──
+  T.local = (document.getElementById('cfg-venue')?.value?.trim() || '')
+    + (document.getElementById('cfg-city')?.value?.trim() ? ' · ' + document.getElementById('cfg-city').value.trim() : '');
   const ps = document.getElementById('trn-player-section');
   if (ps) { ps.style.opacity = '1'; ps.style.pointerEvents = 'auto'; }
   const ob = document.getElementById('trn-open-btn');
