@@ -53,6 +53,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 /* TABS */
 .app-body{display:flex;min-height:calc(100vh - 56px);}
 .sidebar-nav{width:230px;background:#fff;border-right:1px solid #dde6f0;flex-shrink:0;padding:8px 0 20px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.mob-menu-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid #dde6f0;background:#f4f7fc;cursor:pointer;flex-shrink:0;}
+.mob-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(10,22,40,.4);z-index:350;opacity:0;pointer-events:none;transition:opacity .25s ease;}
 .sb-section-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#b0c4d8;padding:14px 16px 5px;display:flex;align-items:center;gap:6px;}
 .sb-section-label::after{content:'';flex:1;height:0.5px;background:#edf2f7;}
 .sb-ic{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;transition:transform .15s;}
@@ -383,6 +385,19 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .db-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));}
   .kpi-row{grid-template-columns:repeat(3,1fr);}
   .panel{padding:14px;}
+  #canonical-btn-8,#canonical-btn-12,#canonical-btn-16{padding:6px 4px;}
+
+  /* ── Mobile sidebar ── */
+  .sidebar-nav{
+    position:fixed;top:56px;left:0;bottom:0;z-index:400;
+    transform:translateX(-100%);transition:transform .25s ease;
+    box-shadow:4px 0 24px rgba(0,0,0,.12);
+  }
+  .sidebar-nav.mob-open{transform:translateX(0);}
+  .main-content{margin-left:0 !important;}
+  .mob-menu-btn{display:flex !important;}
+  .mob-overlay{display:block !important;}
+  .mob-overlay.show{opacity:1;pointer-events:auto;}
 }
 
 /* ═══════════════════════════════════
@@ -895,7 +910,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <div class="screen" id="s-dashboard">
 
   <div class="topbar">
-    <div class="topbar-logo">PADEL<em>EYE</em></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="mob-menu-btn" onclick="toggleMobMenu()" id="mob-menu-btn" aria-label="Menu">
+        <svg id="mob-menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5a7090" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="topbar-logo">PADEL<em>EYE</em></div>
+    </div>
     <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">TOURNAMENT MANAGER · V40.1</div>
     <div class="topbar-right">
       <div class="topbar-user">
@@ -931,8 +951,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
   </div>
 
+  <!-- Mobile overlay -->
+  <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
+
   <div class="app-body">
-  <div class="sidebar-nav">
+  <div class="sidebar-nav" id="sidebar-nav">
     <div class="sb-section-label">Jogadores</div>
     <button class="tab-btn on" onclick="showTab('cadastro',this)"><span class="sb-ic" style="background:#dbeafe">👤</span> Cadastro de Jogadores</button>
     <div class="sb-divider"></div>
@@ -1004,7 +1027,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <input class="finput" id="cfg-city" value="Foz do Iguaçu" placeholder="Ex: Foz do Iguaçu">
         </div>
       </div>
-      <div class="row4cfg" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+      <div class="row2" style="margin-bottom:0">
         <div class="field">
           <label>Categoria</label>
           <select class="finput" id="cfg-categoria">
@@ -1012,26 +1035,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <option value="7a">7ª Categoria</option>
             <option value="6a">6ª Categoria</option>
             <option value="5a">5ª Categoria</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Vagas no Torneio</label>
-          <select class="finput" id="cfg-vagas" onchange="updateVagas(); updateFasesToggle()">
-            <option value="4">4 jogadores</option>
-            <option value="8">8 jogadores</option>
-            <option value="12">12 jogadores</option>
-            <option value="16" selected>16 jogadores</option>
-            <option value="20">20 jogadores</option>
-            <option value="24">24 jogadores</option>
-            <option value="28">28 jogadores</option>
-            <option value="32">32 jogadores</option>
-          </select>
-        </div>
-        <div class="field" id="field-num-fases">
-          <label>Número de Fases</label>
-          <select class="finput" id="cfg-num-fases" onchange="updateSummary()">
-            <option value="3" selected>3 Fases (F1 → F2 → Final)</option>
-            <option value="2">2 Fases (F1 → Final)</option>
           </select>
         </div>
         <div class="field">
@@ -1043,18 +1046,59 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <option value="4">4 quadras</option>
           </select>
         </div>
-        <div class="field">
-          <label>Sistema de Pontuação</label>
-          <select class="finput" id="cfg-scoring">
-            <option value="no-deuce" selected>15 · 30 · 40 · Game</option>
-            <option value="deuce">15 · 30 · 40 · Deuce · Game</option>
-          </select>
-        </div>
       </div>
+
+      <!-- hidden fields kept for JS compatibility -->
+      <input type="hidden" id="cfg-vagas" value="16">
+      <input type="hidden" id="cfg-num-fases" value="3">
+      <input type="hidden" id="cfg-scoring" value="no-deuce">
     </div>
 
-    <!-- CARD 1b · PER-PHASE CONFIG -->
+    <!-- CARD: Configuração Canônica -->
     <div class="card">
+      <div class="card-hd">
+        <div class="card-title">Número de Jogadores</div>
+        <div class="card-badge gold" id="canonical-badge">Selecione</div>
+      </div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:16px;line-height:1.6">
+        Selecione o número de participantes. A estrutura do torneio é definida automaticamente.
+      </div>
+
+      <!-- Canonical buttons -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+
+        <!-- 8 jogadores -->
+        <button id="canonical-btn-8" onclick="applyCanonical(8)"
+          style="padding:8px 6px;border-radius:10px;border:2px solid #dde6f0;background:#f8fafd;
+                 cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Sans'">
+          <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;line-height:1">8</div>
+          <div style="font-size:9px;font-weight:700;color:#5a7090;margin-top:2px">jogadores</div>
+        </button>
+
+        <!-- 12 jogadores -->
+        <button id="canonical-btn-12" onclick="applyCanonical(12)"
+          style="padding:8px 6px;border-radius:10px;border:2px solid #dde6f0;background:#f8fafd;
+                 cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Sans'">
+          <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;line-height:1">12</div>
+          <div style="font-size:9px;font-weight:700;color:#5a7090;margin-top:2px">jogadores</div>
+        </button>
+
+        <!-- 16 jogadores -->
+        <button id="canonical-btn-16" onclick="applyCanonical(16)"
+          style="padding:8px 6px;border-radius:10px;border:2px solid #dde6f0;background:#f8fafd;
+                 cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Sans'">
+          <div style="font-family:'Bebas Neue';font-size:22px;color:#0a1628;line-height:1">16</div>
+          <div style="font-size:9px;font-weight:700;color:#5a7090;margin-top:2px">jogadores</div>
+        </button>
+
+      </div>
+
+      <!-- Canonical structure preview -->
+      <div id="canonical-preview" style="display:none"></div>
+    </div>
+
+    <!-- CARD 1b · PER-PHASE CONFIG — hidden by default, shown in advanced mode -->
+    <div class="card" id="card-phase-cfg" style="display:none">
       <div class="card-hd">
         <div class="card-title">Configuração por Fase</div>
         <div class="card-badge">Score máx &amp; Tie-Break</div>
@@ -1897,6 +1941,33 @@ function doLogout() {
 // ══════════════════════════════════
 // TABS
 // ══════════════════════════════════
+// ── Mobile menu toggle ────────────────────────────────────────────────────
+function toggleMobMenu() {
+  const sidebar  = document.getElementById('sidebar-nav');
+  const overlay  = document.getElementById('mob-overlay');
+  const icon     = document.getElementById('mob-menu-icon');
+  if (!sidebar) return;
+  const isOpen = sidebar.classList.contains('mob-open');
+  if (isOpen) {
+    closeMobMenu();
+  } else {
+    sidebar.classList.add('mob-open');
+    overlay.classList.add('show');
+    // Switch to × icon
+    icon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+  }
+}
+
+function closeMobMenu() {
+  const sidebar = document.getElementById('sidebar-nav');
+  const overlay = document.getElementById('mob-overlay');
+  const icon    = document.getElementById('mob-menu-icon');
+  if (!sidebar) return;
+  sidebar.classList.remove('mob-open');
+  if (overlay) overlay.classList.remove('show');
+  if (icon) icon.innerHTML = '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+}
+
 // ── OBJETIVO: Navegar entre os painéis principais do dashboard ───────────────
 // CONTEXTO: Chamado pelos botões da tabs-bar. Ativa o painel correto e
 //   dispara o render adequado (rodadas, ranking, etc.) apenas quando necessário.
@@ -1908,6 +1979,8 @@ function showTab(id, el) {
   if (el) el.classList.add('on');
   const panel = document.getElementById('p-' + id);
   if (panel) panel.classList.add('on');
+  // Close mobile menu on tab selection
+  closeMobMenu();
   if (id === 'rodadas')   renderRounds();
   if (id === 'ranking')   renderRanking();
   if (id === 'historico') renderHistorico();
@@ -2131,6 +2204,131 @@ function updateVagas() {
 //   de jogadores selecionados. Modelo Brasileiro: grupos de 4, 3 partidas cada.
 // ATENÇÃO: O cálculo pressupõe sempre grupos completos de 4.
 //   Para nº ímpar de jogadores, o comportamento pode ser inesperado.
+// ── CANONICAL CONFIG ────────────────────────────────────────────────────────
+const CANONICAL = {
+  8: {
+    vagas: 8, numFases: 2,
+    phaseConfig: [
+      { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F1
+      { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F2 (unused)
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 }, // Final
+    ],
+    preview: [
+      { phase:'Fase 1',   desc:'8 jogadores · 2 grupos de 4 · top-2 avançam · wildcards: 0' },
+      { phase:'Final (Z)', desc:'4 jogadores · 1 grupo · 3 partidas · Pódio' },
+    ],
+    partidas: '6 + 3 = 9',
+  },
+  12: {
+    vagas: 12, numFases: 3,
+    phaseConfig: [
+      { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 }, // F1
+      { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F2
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 }, // Final
+    ],
+    preview: [
+      { phase:'Fase 1',   desc:'12 jogadores · 3 grupos de 4 · top-2 avançam · wildcards: 2' },
+      { phase:'Fase 2',   desc:'8 jogadores · 2 grupos de 4 · top-2 avançam · wildcards: 0' },
+      { phase:'Final (Z)', desc:'4 jogadores · 1 grupo · 3 partidas · Pódio' },
+    ],
+    partidas: '9 + 6 + 3 = 18',
+  },
+  16: {
+    vagas: 16, numFases: 3,
+    phaseConfig: [
+      { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F1
+      { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F2
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 }, // Final
+    ],
+    preview: [
+      { phase:'Fase 1',   desc:'16 jogadores · 4 grupos de 4 · top-2 avançam · wildcards: 0' },
+      { phase:'Fase 2',   desc:'8 jogadores · 2 grupos de 4 · top-2 avançam · wildcards: 0' },
+      { phase:'Final (Z)', desc:'4 jogadores · 1 grupo · 3 partidas · Pódio' },
+    ],
+    partidas: '12 + 6 + 3 = 21',
+  },
+};
+
+let _canonicalSelected = 0; // 0 = none selected yet
+
+function applyCanonical(n) {
+  const cfg = CANONICAL[n];
+  if (!cfg) return;
+  _canonicalSelected = n;
+
+  // Update hidden inputs (JS compatibility)
+  document.getElementById('cfg-vagas').value     = cfg.vagas;
+  document.getElementById('cfg-num-fases').value = cfg.numFases;
+
+  // Update phase config selects (still in DOM, hidden)
+  const pc = cfg.phaseConfig;
+  ['f1','f2'].forEach((ph, i) => {
+    const sel = id => document.getElementById(id);
+    sel(`cfg-ppg-${ph}`) && (sel(`cfg-ppg-${ph}`).value = pc[i].playersPerGroup);
+    sel(`cfg-adv-${ph}`) && (sel(`cfg-adv-${ph}`).value = pc[i].advancePerGroup);
+    sel(`cfg-wc-${ph}`)  && (sel(`cfg-wc-${ph}`).value  = pc[i].wildcards);
+    sel(`cfg-max-${ph}`) && (sel(`cfg-max-${ph}`).value = pc[i].maxScore);
+    sel(`cfg-tb-${ph}`)  && (sel(`cfg-tb-${ph}`).value  = pc[i].tbAt);
+  });
+  document.getElementById('cfg-max-final') && (document.getElementById('cfg-max-final').value = pc[2].maxScore);
+  document.getElementById('cfg-tb-final')  && (document.getElementById('cfg-tb-final').value  = pc[2].tbAt);
+
+  // Highlight selected button
+  [8,12,16].forEach(v => {
+    const btn = document.getElementById(`canonical-btn-${v}`);
+    if (!btn) return;
+    if (v === n) {
+      btn.style.borderColor = '#C9933A';
+      btn.style.background  = 'linear-gradient(135deg,#fffbf0,#fff8e0)';
+      btn.querySelector('div').style.color = '#C9933A';
+    } else {
+      btn.style.borderColor = '#dde6f0';
+      btn.style.background  = '#f8fafd';
+      btn.querySelector('div').style.color = '#0a1628';
+    }
+  });
+
+  // Update badge
+  const badge = document.getElementById('canonical-badge');
+  if (badge) { badge.textContent = n + ' jogadores'; badge.className = 'card-badge green'; }
+
+  // Render preview
+  const prev = document.getElementById('canonical-preview');
+  if (prev) {
+    prev.style.display = 'block';
+    prev.innerHTML = `
+      <div style="background:#f4f7fc;border-radius:10px;padding:14px 16px;border:1px solid #dde6f0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8">Estrutura do torneio</div>
+          <div style="font-family:'DM Mono';font-size:10px;font-weight:700;color:#C9933A">${cfg.partidas} partidas</div>
+        </div>
+        ${cfg.preview.map((p, i) => `
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 0;${i < cfg.preview.length-1 ? 'border-bottom:1px solid #eaf0f8' : ''}">
+            <div style="width:22px;height:22px;border-radius:6px;background:${p.phase.includes('Final') ? 'linear-gradient(135deg,#C9933A,#e0a840)' : '#0a1628'};
+                        display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+              <span style="font-family:'Bebas Neue';font-size:10px;color:${p.phase.includes('Final') ? '#0a1628' : '#C9933A'}">${p.phase.includes('Final') ? 'Z' : 'F'+(i+1)}</span>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#0d1e3a;margin-bottom:2px">${p.phase}</div>
+              <div style="font-size:11px;color:#5a7090;line-height:1.5">${p.desc}</div>
+            </div>
+          </div>`).join('')}
+        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #dde6f0;font-size:10px;color:#9ab0c8;font-family:'DM Mono'">
+          Score: F1+F2 máx 6 · TB@5×5 · Final máx 9 · TB@8×8
+        </div>
+      </div>`;
+  }
+
+  updateVagas();
+  updateSummary();
+}
+
+// Auto-select 16 on load
+document.addEventListener('DOMContentLoaded', () => {
+  // only auto-select if not already set by existing tournament
+  if (!_canonicalSelected) setTimeout(() => applyCanonical(16), 100);
+});
+
 function updateSummary() {
   const n = selectedPlayers.length;
 
@@ -2551,9 +2749,8 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
       b.gd         - a.gd         ||  // 2. Saldo de Games
       h2hCmp(b.name, a.name)      ||  // 3. Confronto Directo
       b.gw         - a.gw         ||  // 4. Total Games Marcados
-      b.tbsaldo    - a.tbsaldo    ||  // 5. Saldo Tie-Breaks
-      historyScore(b.name) - historyScore(a.name) // 6. Histórico (só na final)
-      // Se ainda empatado → botão do organizador (sem ordem alfabética)
+      b.tbsaldo    - a.tbsaldo        // 5. Saldo Tie-Breaks
+      // Se ainda empatado → modo de desempate escolhido pelo organizador
     );
   }
 
@@ -2675,16 +2872,24 @@ function advancePhase() {
   }).filter(Boolean).sort((a, b) => b.gd - a.gd);
   const wildcardPlayers = wcCandidates.slice(0, wc).map(w => w.name);
 
-  // Full pool (flat) kept for single-group fallback
-  const pool = [...qualifiers.flat(), ...wildcardPlayers].filter(Boolean);
-
-  // ── Build next phase groups — V40.1 FIX: Final = always 1 group ──────────
-  let nextGroups;
+  // ── Final ignores wildcards — only top-advPer per group advance ────────────
   const nextPhaseIdx_ = phIdx + 1;
   const isFinalPhase  = nextPhaseIdx_ === (T.numFases || 3) - 1;
 
+  // For the Final: pool = qualifiers only (no wildcards)
+  // This enforces the deterministic rule:
+  //   8  players → 2 groups × 2 advance = 4 finalists
+  //   12 players → F2 has 2 groups × 2 advance = 4 finalists
+  //   16 players → F2 has 2 groups × 2 advance = 4 finalists
+  const pool = isFinalPhase
+    ? qualifiers.flat().filter(Boolean)
+    : [...qualifiers.flat(), ...wildcardPlayers].filter(Boolean);
+
+  // ── Build next phase groups ───────────────────────────────────────────────
+  let nextGroups;
+
   if (isFinalPhase) {
-    // Final: always 1 group with ALL qualifiers (ignore playersPerGroup)
+    // Final: always exactly 1 group with the qualifiers (no wildcards, no extras)
     nextGroups = [pool];
   } else {
     const numNextGroups = pool.length <= nextPPG ? 1 : Math.ceil(pool.length / nextPPG);
@@ -2890,6 +3095,81 @@ function saveMatchForce(phaseIdx, groupIdx, matchIdx) {
   gameAlert(`✅ ${sa}×${sb} guardado (fora das regras — aprovado pelo organizador).`, 'ok');
 }
 
+
+// ── Tie mode helpers ────────────────────────────────────────────────────────
+function setTieMode(phaseIdx, groupIdx, mode) {
+  if (!T.tieOverrides) T.tieOverrides = {};
+  T.tieOverrides[`${phaseIdx}-${groupIdx}_mode`] = mode;
+  persistT();
+  renderRounds(); renderGrupos();
+}
+
+function resetTieMode(phaseIdx, groupIdx) {
+  if (!T.tieOverrides) return;
+  delete T.tieOverrides[`${phaseIdx}-${groupIdx}_mode`];
+  persistT();
+  renderRounds(); renderGrupos();
+}
+
+function clearTieMode(phaseIdx, groupIdx) {
+  if (!T.tieOverrides) return;
+  delete T.tieOverrides[`${phaseIdx}-${groupIdx}_mode`];
+  // keep winner override
+}
+
+// ── Tie raffle ────────────────────────────────────────────────────────────────
+function startTieRaffle(phaseIdx, groupIdx, pa, pb, isFinal) {
+  const ballEl = document.getElementById(`tie-raffle-ball-${phaseIdx}-${groupIdx}`);
+  const cdEl   = document.getElementById(`tie-raffle-cd-${phaseIdx}-${groupIdx}`);
+  if (!ballEl || !cdEl) return;
+
+  const players = [pa, pb];
+  let count = 4;
+  cdEl.textContent = count;
+  ballEl.style.borderColor = '#C9933A';
+  ballEl.innerHTML = '🎱';
+
+  // Tick every second showing countdown
+  const tick = setInterval(() => {
+    count--;
+    cdEl.textContent = count;
+    // Show random name during countdown
+    const preview = players[Math.floor(Math.random() * 2)];
+    const ini = preview.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    ballEl.innerHTML = `<div style="font-size:11px;line-height:1.2;padding:0 6px">${preview.split(' ')[0]}</div>`;
+    ballEl.style.borderColor = count <= 1 ? '#27AE60' : '#C9933A';
+
+    if (count <= 0) {
+      clearInterval(tick);
+      // Final winner
+      const winner = players[Math.floor(Math.random() * 2)];
+      const loser  = winner === pa ? pb : pa;
+      ballEl.innerHTML = `<div style="font-family:'Bebas Neue';font-size:13px;color:#1a7a44;line-height:1.2;padding:0 6px">🎱<br>${winner.split(' ')[0]}<br>avança!</div>`;
+      ballEl.style.borderColor = '#27AE60';
+      ballEl.style.background  = '#E8F8EE';
+      cdEl.textContent = '✅';
+
+      // Apply after short pause
+      setTimeout(() => {
+        chooseTieWinner(phaseIdx, groupIdx, winner, loser);
+        clearTieMode(phaseIdx, groupIdx);
+      }, 1200);
+    }
+  }, 1000);
+}
+
+// ── Tie minigame save ─────────────────────────────────────────────────────────
+function saveTieMinigame(phaseIdx, groupIdx, pa, pb, isFinal) {
+  const va = parseInt(document.getElementById(`mg-a-${phaseIdx}-${groupIdx}`)?.value || '');
+  const vb = parseInt(document.getElementById(`mg-b-${phaseIdx}-${groupIdx}`)?.value || '');
+  if (isNaN(va) || isNaN(vb)) { safeAlert('Insira o placar dos dois lados.', 'warn'); return; }
+  if (va === vb) { safeAlert('Empate não é válido no minigame. Jogue novamente.', 'warn'); return; }
+  const winner = va > vb ? pa : pb;
+  const loser  = winner === pa ? pb : pa;
+  chooseTieWinner(phaseIdx, groupIdx, winner, loser);
+  clearTieMode(phaseIdx, groupIdx);
+  safeAlert(`✅ Minigame: ${winner} vence ${va}×${vb}`, 'ok');
+}
 
 // ── Tie override — organizer picks who advances ────────────────────────────
 function chooseTieWinner(phaseIdx, groupIdx, winner, loser) {
@@ -3332,34 +3612,178 @@ function renderRounds() {
       const [ta, tb, tiePos] = standings.tieAtCutoff;
       const posLabels = ['1º','2º','3º','4º'];
       const posLabel  = posLabels[tiePos] || `${tiePos+1}º`;
-      const posNext   = posLabels[tiePos+1] || `${tiePos+2}º`;
       const isFinal   = standings.isLastPhase;
-      const btnLabel  = isFinal
-        ? (pos, pl) => `${pl} fica em ${pos}`
-        : (pos, pl) => `${pl} avança`;
-      html += `<div class="tie-banner">
-        <div class="tie-banner-head">⚠️ EMPATE NA ${posLabel.toUpperCase()} POSIÇÃO</div>
-        <div class="tie-banner-body">
-          <div class="tie-banner-sub">
-            <strong>${ta}</strong> e <strong>${tb}</strong> estão empatados em todos os critérios:
-            vitórias · saldo de games · confronto directo · games marcados · saldo TB.<br>
-            ${isFinal ? `Escolha quem fica em <strong>${posLabel}</strong> lugar.` : `Escolha quem avança para a próxima fase.`}
+      const overrideKey_ = `${phIdx}-${gi}`;
+      const tieMode = (T.tieOverrides||{})[overrideKey_+'_mode'];
+
+      if (!tieMode) {
+        // ── Step 1: choose tiebreak mode ────────────────────────────────────
+        html += `<div class="tie-banner">
+          <div class="tie-banner-head">⚠️ EMPATE — ${ta} e ${tb}</div>
+          <div class="tie-banner-body">
+            <div class="tie-banner-sub">
+              Empatados em todos os 5 critérios: Vitórias · Saldo · H2H · Jogos · TB.<br>
+              <strong>Como resolver?</strong>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+              <button onclick="setTieMode(${phIdx},${gi},'organizer')"
+                style="padding:10px 8px;border-radius:8px;border:1.5px solid #0a1628;background:#fff;
+                       font-family:'DM Sans';font-size:12px;font-weight:700;cursor:pointer;
+                       display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s"
+                onmouseover="this.style.background='#0a1628';this.style.color='#fff'"
+                onmouseout="this.style.background='#fff';this.style.color=''">
+                <span style="font-size:20px">👆</span>
+                <span>Organizador escolhe</span>
+              </button>
+              <button onclick="setTieMode(${phIdx},${gi},'raffle')"
+                style="padding:10px 8px;border-radius:8px;border:1.5px solid #C9933A;background:#fff;
+                       font-family:'DM Sans';font-size:12px;font-weight:700;cursor:pointer;
+                       display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s"
+                onmouseover="this.style.background='#C9933A';this.style.color='#fff'"
+                onmouseout="this.style.background='#fff';this.style.color=''">
+                <span style="font-size:20px">🎱</span>
+                <span>Sorteio</span>
+              </button>
+              <button onclick="setTieMode(${phIdx},${gi},'history')"
+                style="padding:10px 8px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;
+                       font-family:'DM Sans';font-size:12px;font-weight:700;cursor:pointer;
+                       display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s"
+                onmouseover="this.style.background='#3a7bd5';this.style.color='#fff'"
+                onmouseout="this.style.background='#fff';this.style.color=''">
+                <span style="font-size:20px">📊</span>
+                <span>Histórico da Temporada</span>
+              </button>
+              <button onclick="setTieMode(${phIdx},${gi},'minigame')"
+                style="padding:10px 8px;border-radius:8px;border:1.5px solid #27AE60;background:#fff;
+                       font-family:'DM Sans';font-size:12px;font-weight:700;cursor:pointer;
+                       display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s"
+                onmouseover="this.style.background='#27AE60';this.style.color='#fff'"
+                onmouseout="this.style.background='#fff';this.style.color=''">
+                <span style="font-size:20px">🏓</span>
+                <span>Minigame</span>
+              </button>
+            </div>
           </div>
-          <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-bottom:8px;letter-spacing:.5px">
-            CRITÉRIOS: Vitórias → Saldo de Jogos → Confronto Direto → Jogos a Favor → Saldo TB
+        </div>`;
+      } else if (tieMode === 'organizer') {
+        // ── Organizer picks ──────────────────────────────────────────────────
+        html += `<div class="tie-banner">
+          <div class="tie-banner-head">👆 ORGANIZADOR — quem avança?</div>
+          <div class="tie-banner-body">
+            <div class="tie-pick-btns">
+              <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}')">
+                <div class="tie-av" style="background:${_pc(ta)}">${ta.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+                ${isFinal ? ta+' fica melhor' : ta+' avança'}
+              </button>
+              <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${tb.replace(/'/g,"\'")}','${ta.replace(/'/g,"\'")}')">
+                <div class="tie-av" style="background:${_pc(tb)}">${tb.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+                ${isFinal ? tb+' fica melhor' : tb+' avança'}
+              </button>
+            </div>
+            <button onclick="resetTieMode(${phIdx},${gi})" style="margin-top:8px;width:100%;padding:5px;border-radius:6px;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;font-size:10px;cursor:pointer;font-family:'DM Mono'">← Voltar ao modo</button>
           </div>
-          <div class="tie-pick-btns">
-            <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}')">
-              <div class="tie-av" style="background:${_pc(ta)}">${ta.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
-              ${btnLabel(posLabel, ta)}
+        </div>`;
+      } else if (tieMode === 'raffle') {
+        // ── Raffle animation ─────────────────────────────────────────────────
+        html += `<div class="tie-banner" id="tie-raffle-${phIdx}-${gi}">
+          <div class="tie-banner-head">🎱 SORTEIO</div>
+          <div class="tie-banner-body">
+            <div style="text-align:center;padding:12px 0">
+              <div id="tie-raffle-ball-${phIdx}-${gi}"
+                style="width:80px;height:80px;border-radius:50%;background:#fff;border:3px solid #C9933A;
+                       margin:0 auto 12px;display:flex;flex-direction:column;align-items:center;
+                       justify-content:center;font-family:'Bebas Neue';font-size:13px;color:#0a1628;
+                       box-shadow:0 4px 16px rgba(201,147,58,.2);line-height:1.2;text-align:center;padding:8px">
+                🎱
+              </div>
+              <div id="tie-raffle-cd-${phIdx}-${gi}" style="font-family:'Bebas Neue';font-size:28px;color:#C9933A">4</div>
+              <div style="font-size:11px;color:#9ab0c8;margin-top:4px">${ta} vs ${tb}</div>
+            </div>
+            <button onclick="startTieRaffle(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}',${isFinal})"
+              style="width:100%;padding:10px;border-radius:8px;border:none;background:#C9933A;
+                     color:#0a1628;font-family:'DM Mono';font-size:11px;font-weight:700;cursor:pointer">
+              ▶ INICIAR SORTEIO
             </button>
-            <button class="tie-pick-btn" onclick="chooseTieWinner(${phIdx},${gi},'${tb.replace(/'/g,"\'")}','${ta.replace(/'/g,"\'")}')">
-              <div class="tie-av" style="background:${_pc(tb)}">${tb.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
-              ${btnLabel(posLabel, tb)}
-            </button>
+            <button onclick="resetTieMode(${phIdx},${gi})" style="margin-top:6px;width:100%;padding:5px;border-radius:6px;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;font-size:10px;cursor:pointer;font-family:'DM Mono'">← Voltar</button>
           </div>
-        </div>
-      </div>`;
+        </div>`;
+      } else if (tieMode === 'history') {
+        // ── History ranking ──────────────────────────────────────────────────
+        const _ta_entry = (typeof trkData!=='undefined'?trkData:[]).find(p=>p.player===ta||p.nome===ta);
+        const _tb_entry = (typeof trkData!=='undefined'?trkData:[]).find(p=>p.player===tb||p.nome===tb);
+        const _ta_rank  = _ta_entry ? ((trkData||[]).indexOf(_ta_entry)+1) : null;
+        const _tb_rank  = _tb_entry ? ((trkData||[]).indexOf(_tb_entry)+1) : null;
+        const _ta_w     = _ta_entry?.wins || 0;
+        const _tb_w     = _tb_entry?.wins || 0;
+        const _ta_g     = _ta_entry?.gold || 0;
+        const _tb_g     = _tb_entry?.gold || 0;
+        const _histWinner = (!_ta_entry && !_tb_entry) ? null
+          : (!_ta_entry) ? tb : (!_tb_entry) ? ta
+          : (_ta_w + _ta_g*3) > (_tb_w + _tb_g*3) ? ta
+          : (_tb_w + _tb_g*3) > (_ta_w + _ta_g*3) ? tb
+          : null; // still tied in history
+        html += `<div class="tie-banner">
+          <div class="tie-banner-head">📊 HISTÓRICO DA TEMPORADA</div>
+          <div class="tie-banner-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div style="background:${_histWinner===ta?'#E8F8EE':'#f8fafd'};border:1.5px solid ${_histWinner===ta?'#27AE60':'#dde6f0'};border-radius:8px;padding:10px;text-align:center">
+                <div style="font-family:'Bebas Neue';font-size:14px;color:#0a1628">${ta}</div>
+                ${_ta_entry
+                  ? `<div style="font-family:'DM Mono';font-size:10px;color:#5a7090;margin-top:4px">${_ta_w}V · 🥇${_ta_g} · Rank #${_ta_rank||'?'}</div>`
+                  : `<div style="font-size:10px;color:#9ab0c8;margin-top:4px">Sem histórico</div>`}
+              </div>
+              <div style="background:${_histWinner===tb?'#E8F8EE':'#f8fafd'};border:1.5px solid ${_histWinner===tb?'#27AE60':'#dde6f0'};border-radius:8px;padding:10px;text-align:center">
+                <div style="font-family:'Bebas Neue';font-size:14px;color:#0a1628">${tb}</div>
+                ${_tb_entry
+                  ? `<div style="font-family:'DM Mono';font-size:10px;color:#5a7090;margin-top:4px">${_tb_w}V · 🥇${_tb_g} · Rank #${_tb_rank||'?'}</div>`
+                  : `<div style="font-size:10px;color:#9ab0c8;margin-top:4px">Sem histórico</div>`}
+              </div>
+            </div>
+            ${_histWinner
+              ? `<button onclick="chooseTieWinner(${phIdx},${gi},'${_histWinner.replace(/'/g,"\'")}','${(_histWinner===ta?tb:ta).replace(/'/g,"\'")}');clearTieMode(${phIdx},${gi})"
+                  style="width:100%;padding:10px;border-radius:8px;border:none;background:#27AE60;
+                         color:#fff;font-family:'DM Sans';font-size:13px;font-weight:700;cursor:pointer">
+                  ✅ ${_histWinner} avança pelo histórico
+                </button>`
+              : `<div style="font-size:11px;color:#9ab0c8;text-align:center;padding:8px">
+                   Histórico também empatado — escolha outro modo.
+                 </div>`}
+            <button onclick="resetTieMode(${phIdx},${gi})" style="margin-top:6px;width:100%;padding:5px;border-radius:6px;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;font-size:10px;cursor:pointer;font-family:'DM Mono'">← Voltar</button>
+          </div>
+        </div>`;
+      } else if (tieMode === 'minigame') {
+        // ── Minigame score entry ─────────────────────────────────────────────
+        const _mgKey = `mg-${phIdx}-${gi}`;
+        const _mgRes = (T.tieOverrides||{})[overrideKey_+'_mgres'];
+        html += `<div class="tie-banner">
+          <div class="tie-banner-head">🏓 MINIGAME — Super Tie-Break 1×1</div>
+          <div class="tie-banner-body">
+            <div style="font-size:11px;color:#5a3a00;margin-bottom:10px">
+              Jogue um super tie-break entre <strong>${ta}</strong> e <strong>${tb}</strong>.<br>
+              Insira o resultado abaixo.
+            </div>
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:10px">
+              <div style="text-align:right;font-size:13px;font-weight:700;color:#0a1628">${ta}</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" min="0" id="mg-a-${phIdx}-${gi}"
+                  style="width:44px;text-align:center;font-size:22px;font-weight:700;border:1.5px solid #e8c870;
+                         border-radius:8px;padding:6px 2px;outline:none;font-family:'DM Mono';color:#865a10;background:#fffbf0">
+                <span style="font-family:'Bebas Neue';font-size:18px;color:#c0cdd8">×</span>
+                <input type="number" min="0" id="mg-b-${phIdx}-${gi}"
+                  style="width:44px;text-align:center;font-size:22px;font-weight:700;border:1.5px solid #e8c870;
+                         border-radius:8px;padding:6px 2px;outline:none;font-family:'DM Mono';color:#865a10;background:#fffbf0">
+              </div>
+              <div style="font-size:13px;font-weight:700;color:#0a1628">${tb}</div>
+            </div>
+            <button onclick="saveTieMinigame(${phIdx},${gi},'${ta.replace(/'/g,"\'")}','${tb.replace(/'/g,"\'")}',${isFinal})"
+              style="width:100%;padding:10px;border-radius:8px;border:none;background:#27AE60;
+                     color:#fff;font-family:'DM Sans';font-size:13px;font-weight:700;cursor:pointer">
+              💾 Confirmar Resultado
+            </button>
+            <button onclick="resetTieMode(${phIdx},${gi})" style="margin-top:6px;width:100%;padding:5px;border-radius:6px;border:1px solid #dde6f0;background:#f4f7fc;color:#9ab0c8;font-size:10px;cursor:pointer;font-family:'DM Mono'">← Voltar</button>
+          </div>
+        </div>`;
+      }
     } else if (existingOverride) {
       html += `<div class="tie-override-done">
         ✅ Escolha do organizador: <strong>${existingOverride.winner}</strong> ${standings.isLastPhase ? 'fica em melhor posição' : 'avança'}
