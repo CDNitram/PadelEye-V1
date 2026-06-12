@@ -1393,6 +1393,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">#</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">JOGADOR</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">TORNEIOS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">PARTIDAS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">VITÓRIAS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">DERROTAS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">WIN RATE</th>
@@ -1450,9 +1451,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="trk-sort on" id="trk-s-wins"      onclick="trkSetSort('wins',this)">🏆 Vitórias</button>
       <button class="trk-sort"    id="trk-s-win_rate"   onclick="trkSetSort('win_rate',this)">📊 Win Rate</button>
       <button class="trk-sort"    id="trk-s-matches"    onclick="trkSetSort('matches',this)">🎯 Partidas</button>
-      <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ Saldo</button>
+      <button class="trk-sort"    id="trk-s-sp"         onclick="trkSetSort('sp',this)">⚡ Saldo de Pontos</button>
       <button class="trk-sort"    id="trk-s-champion"   onclick="trkSetSort('champion',this)">🥇 Campeão</button>
-      <button class="trk-sort"    id="trk-s-medals"     onclick="trkSetSort('medals',this)">🏅 Medalhas</button>
+      <button class="trk-sort"    id="trk-s-medals"     onclick="trkSetSort('medals',this)">🏅 Ranking de Medalhas</button>
     </div>
 
     <!-- Ranking table -->
@@ -1463,6 +1464,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">#</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 12px;text-align:left;letter-spacing:1px">JOGADOR</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">TORNEIOS</th>
+            <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">PARTIDAS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">VITÓRIAS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">DERROTAS</th>
             <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">WIN RATE</th>
@@ -2533,8 +2535,9 @@ function openTournament() {
   T.openedAt = new Date().toISOString();
 
   // ── Persist venue + canonical config to T immediately ────────────────────
-  T.local    = _venue + (document.getElementById('cfg-city')?.value?.trim() ? ' · ' + document.getElementById('cfg-city').value.trim() : '');
-  T.numFases = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  T.local     = _venue + (document.getElementById('cfg-city')?.value?.trim() ? ' · ' + document.getElementById('cfg-city').value.trim() : '');
+  T.numFases  = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  T.categoria = _cat || document.getElementById('cfg-categoria')?.value || '';
 
   // ── Fix 2: Compute group_number and players_per_group from canonical config ──
   const _vagas      = parseInt(document.getElementById('cfg-vagas')?.value || 16);
@@ -3839,7 +3842,7 @@ function renderRounds() {
       <div style="font-size:13px;color:#865a10;margin-bottom:12px">
         🥇 ${winners[0]?.name} · 🥈 ${winners[1]?.name} · 🥉 ${winners[2]?.name}
       </div>
-      <button class="btn btn-primary btn-full" onclick="finalizeTournament()" style="font-size:13px">
+      <button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()" style="font-size:13px">
         💾 Guardar Torneio no Google Sheets
       </button>
     </div>`;
@@ -5011,9 +5014,26 @@ function renderRoster() {
 //   aviso mas não há retry automático — cabe ao organizador tentar novamente.
 async function finalizeTournament() {
   if (!T.started || !T.phases.length) return;
+
+  const btn = document.getElementById('btn-finalize');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ A guardar...';
+    btn.style.background = '#475569';
+  }
+
   const scoreData = typeof computeScorecard === 'function' ? computeScorecard() : [];
   const org = currentUser?.name || '—';
-  await PadelEyeDB.saveTournament(T, org, scoreData);
+  const result = await PadelEyeDB.saveTournament(T, org, scoreData);
+
+  if (btn) {
+    const ok = result?.results?.torneio?.ok !== false && result?.results?.torneio?.status !== 'error';
+    btn.textContent    = ok ? '✅ Salvo no Database' : '❌ Erro — tente novamente';
+    btn.style.background = ok ? '#1a7a44' : '#c0392b';
+    btn.style.color      = '#fff';
+    btn.onclick          = ok ? null : () => finalizeTournament();
+    btn.disabled         = ok;
+  }
 }
 
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url') ||
@@ -5754,7 +5774,7 @@ function startRaffle() {
   T.numFases    = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
   T.date        = getCfgDate();
   T.courts      = parseInt(document.getElementById('cfg-courts').value);
-  T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
+  T.categoria   = T.categoria || document.getElementById('cfg-categoria')?.value || '';
   T.scoring     = '15 · 30 · 40 · Game'; // canonical default — cfg-scoring is now a hidden input
   T.players     = [...selectedPlayers];
   T.currentPhase = 0;
@@ -6540,6 +6560,7 @@ function launchManualGroups() {
   T.players      = [...selectedPlayers];
   T.currentPhase = 0;
   T.numFases     = parseInt(document.getElementById('cfg-num-fases')?.value || 3);
+  T.categoria    = T.categoria || document.getElementById('cfg-categoria')?.value || '';
   T.phaseConfig = readPhaseConfig(); // includes playersPerGroup, advancePerGroup, wildcards
 
   T_groups = _mgGroups.map(g => [...g]);
@@ -6625,10 +6646,10 @@ function toTeamStr(t) {
 function _htRenderGrid() {
   const grid = document.getElementById('ht-grid');
   const trns = [..._htData.tournaments].sort((a, b) => {
-    const da = a.date || a.created_at || '';
-    const db = b.date || b.created_at || '';
-    const dateCmp = db.localeCompare(da); // newest first
-    if (dateCmp !== 0) return dateCmp;
+    // Use parseTDate for correct chronological sort (handles PT-BR "01 de mai. de 2026")
+    const da = parseTDate(a.date) || parseTDate(a.created_at) || new Date(0);
+    const db = parseTDate(b.date) || parseTDate(b.created_at) || new Date(0);
+    if (db - da !== 0) return db - da; // newest first
     return String(b.tournament_id||'').localeCompare(String(a.tournament_id||''));
   });
   if (!trns.length) {
@@ -6796,7 +6817,7 @@ function _htOpenTorneio(tid) {
       <div id="ht-dp-ht-setup"    class="ht-dp ht-dp-on">${_htBuildSetup(t)}</div>
       <div id="ht-dp-ht-rodadas"  class="ht-dp"            >${_htBuildRodadas(tm)}</div>
       <div id="ht-dp-ht-grupos"   class="ht-dp"            >${_htBuildGrupos(tm)}</div>
-      <div id="ht-dp-ht-stats"    class="ht-dp"            >${_htBuildStats(tm)}</div>
+      <div id="ht-dp-ht-stats"    class="ht-dp"            >${_htBuildStats(tm, tid)}</div>
       <div id="ht-dp-ht-historico" class="ht-dp"           >${_htBuildHistorico(tm,sc)}</div>
       <div id="ht-dp-ht-scorecard" class="ht-dp"           >${_htBuildScorecard(sc)}</div>`;
 
@@ -6811,6 +6832,11 @@ function _htOpenTorneio(tid) {
 
 
 // ── Always go back to list when navigating to hist-torneios ──────────────────
+function _htReloadAndOpen(tid) {
+  _htLoaded = false; // invalidate cache — force fresh fetch from DB
+  loadHistTorneios(tid);
+}
+
 function _htResetToList() {
   const lv = document.getElementById('ht-list-view');
   const dv = document.getElementById('ht-detail-view');
@@ -6943,10 +6969,19 @@ function _htBuildGrupos(tm) {
 }
 
 // ── Estatísticas ──
-function _htBuildStats(tm) {
+function _htBuildStats(tm, tid) {
   if(!tm.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas.</div>';
   const sorted=_htCalcPlayers(tm);
-  return `<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+  return `<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+    <button onclick="_htReloadAndOpen('${tid||''}')"
+      style="display:flex;align-items:center;gap:6px;padding:6px 14px;background:#f4f7fc;border:1px solid #dde6f0;
+             border-radius:8px;font-family:'DM Mono';font-size:9px;color:#5a8aaa;cursor:pointer;transition:all .2s"
+      onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'"
+      onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">
+      ↻ Recarregar do DB
+    </button>
+  </div>
+  <div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="background:#f4f7fc">${['#','Jogador','Partidas','Vitórias','Derrotas','Win %','Jogos a Favor','Jogos Contra','Saldo'].map(h=>`<th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:8px 10px;text-align:left;border-bottom:1px solid #dde6f0">${h}</th>`).join('')}</tr></thead>
     <tbody>${sorted.map((p,i)=>{
       const gd=p.pf-p.pa, wr=p.m>0?Math.round(p.w/p.m*100):0;
@@ -7456,7 +7491,10 @@ function _trkFiltered() {
 }
 
 function _trkSorted(rows) {
-  const r = [...rows];
+  // When sorting by medals, show only players with at least 1 medal
+  const r = (trkSort === 'medals')
+    ? [...rows].filter(p => (p.gold||0) + (p.silver||0) + (p.bronze||0) > 0)
+    : [...rows];
   if (trkSort === 'wins')     r.sort((a,b)=>(+(b.wins||b.vitorias||0))-(+(a.wins||a.vitorias||0)));
   else if (trkSort==='win_rate') r.sort((a,b)=>rkWR(b.win_rate)-rkWR(a.win_rate));
   else if (trkSort==='matches')  r.sort((a,b)=>(+(b.matches||b.partidas||0))-(+(a.matches||a.partidas||0)));
@@ -7483,7 +7521,7 @@ function trkUpdateKPIs() {
     if (trkSort==='wins')     { leaderLbl='Mais Vitórias'; leaderSub=`${l.wins||0}V`; }
     else if (trkSort==='win_rate') { leaderLbl='Líder WR';  leaderSub=l.win_rate||'—'; }
     else if (trkSort==='matches')  { leaderLbl='Mais Ativo'; leaderSub=`${l.matches||0}P`; }
-    else if (trkSort==='sp')       { const sp=+(l.points_difference||0); leaderLbl='Melhor Saldo'; leaderSub=`${sp>=0?'+':''}${sp}`; }
+    else if (trkSort==='sp')       { const sp=+(l.points_difference||0); leaderLbl='Melhor Saldo de Pontos'; leaderSub=`${sp>=0?'+':''}${sp}`; }
     else if (trkSort==='champion') { leaderLbl='Champion'; leaderSub=`🥇 ${l.champion_count||0}×`; }
   }
   document.getElementById('trk-k-leader').textContent     = leaderName;
@@ -7531,6 +7569,7 @@ function trkRenderTable() {
         </div>
       </td>
       <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${trns||matches}</td>
+      <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${matches}</td>
       <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44">${wins}</td>
       <td style="padding:10px 8px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8">${losses}</td>
       <td style="padding:10px 8px;text-align:center">
