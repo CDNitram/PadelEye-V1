@@ -1098,14 +1098,14 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
 
     <!-- CARD 1b · PER-PHASE CONFIG — hidden by default, shown in advanced mode -->
-    <div class="card" id="card-phase-cfg" style="display:none">
+    <div class="card" id="card-phase-cfg">
       <div class="card-hd">
-        <div class="card-title">Configuração por Fase</div>
-        <div class="card-badge">Score máx &amp; Tie-Break</div>
+        <div class="card-title">Score & Tie-Break por Fase</div>
+        <div class="card-badge gold">Configuração do Organizador</div>
       </div>
       <div style="font-size:11px;color:#9ab0c8;margin-bottom:12px;line-height:1.6">
-        <strong style="color:#0d1e3a">Score máximo</strong> — pontuação máxima do jogo (ex: 6 → quem chegar a 6 games primeiro vence).<br>
-        <strong style="color:#0d1e3a">TB a partir de</strong> — se o placar atingir este empate, vai a Tie-Break (ex: TB em 5×5 num jogo até 6).
+        <strong style="color:#0d1e3a">Score máximo</strong> — quem chegar primeiro a este número de games vence (ex: 6 games).<br>
+        <strong style="color:#0d1e3a">TB a partir de</strong> — se o placar atingir este empate, vai a Tie-Break (ex: 5×5 num jogo até 6).
       </div>
       <div class="phase-cfg-grid" id="phase-cfg-grid">
         <div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd">
@@ -1123,7 +1123,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <option value="3">3 × 3</option><option value="4">4 × 4</option><option value="5" selected>5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9">9 × 9</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom:8px">
+          <div class="field" style="display:none">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Jogadores por grupo</label>
             <select class="finput" id="cfg-ppg-f1" style="font-size:12px;padding:7px 10px" onchange="updateSummary()">
               <option value="3">3 jogadores</option>
@@ -1131,7 +1131,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <option value="5">5 jogadores</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom:8px">
+          <div class="field" style="display:none">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Avançam por grupo</label>
             <select class="finput" id="cfg-adv-f1" style="font-size:12px;padding:7px 10px" onchange="updateSummary()">
               <option value="1">1 jogador</option>
@@ -1139,7 +1139,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <option value="3">3 jogadores</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom:0">
+          <div class="field" style="display:none">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Wildcards</label>
             <select class="finput" id="cfg-wc-f1" style="font-size:12px;padding:7px 10px" onchange="updateSummary()">
               <option value="0">0</option>
@@ -1165,7 +1165,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <option value="3">3 × 3</option><option value="4">4 × 4</option><option value="5" selected>5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9">9 × 9</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom:8px">
+          <div class="field" style="display:none">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Jogadores por grupo</label>
             <select class="finput" id="cfg-ppg-f2" style="font-size:12px;padding:7px 10px" onchange="updateSummary()">
               <option value="3">3 jogadores</option>
@@ -1173,7 +1173,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <option value="5">5 jogadores</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom:8px">
+          <div class="field" style="display:none">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Avançam por grupo</label>
             <select class="finput" id="cfg-adv-f2" style="font-size:12px;padding:7px 10px" onchange="updateSummary()">
               <option value="1">1 jogador</option>
@@ -1181,7 +1181,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <option value="3">3 jogadores</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom:0">
+          <div class="field" style="display:none">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Wildcards</label>
             <select class="finput" id="cfg-wc-f2" style="font-size:12px;padding:7px 10px" onchange="updateSummary()">
               <option value="0" selected>0</option>
@@ -1196,13 +1196,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <div class="field" style="margin-bottom:8px">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">Score máximo</label>
             <select class="finput" id="cfg-max-final" style="font-size:12px;padding:7px 10px" onchange="syncMaxTb('cfg-max-final','cfg-tb-final')">
-              <option value="4">4 games</option><option value="5">5 games</option><option value="6">6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9" selected>9 games</option>
+              <option value="4">4 games</option><option value="5">5 games</option><option value="6" selected>6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9">9 games</option>
             </select>
           </div>
           <div class="field" style="margin-bottom:0">
             <label style="font-size:10px;color:#7090b0;margin-bottom:4px;display:block">TB a partir de</label>
             <select class="finput" id="cfg-tb-final" style="font-size:12px;padding:7px 10px">
-              <option value="3">3 × 3</option><option value="4">4 × 4</option><option value="5">5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9" selected>9 × 9</option>
+              <option value="3">3 × 3</option><option value="4">4 × 4</option><option value="5" selected>5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9">9 × 9</option>
             </select>
           </div>
         </div>
@@ -2211,7 +2211,7 @@ const CANONICAL = {
     phaseConfig: [
       { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F1
       { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F2 (unused)
-      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 }, // Final
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:6, tbAt:5 }, // Final
     ],
     preview: [
       { phase:'Fase 1',   desc:'8 jogadores · 2 grupos de 4 · top-2 avançam · wildcards: 0' },
@@ -2224,7 +2224,7 @@ const CANONICAL = {
     phaseConfig: [
       { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 }, // F1
       { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F2
-      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 }, // Final
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:6, tbAt:5 }, // Final
     ],
     preview: [
       { phase:'Fase 1',   desc:'12 jogadores · 3 grupos de 4 · top-2 avançam · wildcards: 2' },
@@ -2238,7 +2238,7 @@ const CANONICAL = {
     phaseConfig: [
       { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F1
       { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 }, // F2
-      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 }, // Final
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:6, tbAt:5 }, // Final
     ],
     preview: [
       { phase:'Fase 1',   desc:'16 jogadores · 4 grupos de 4 · top-2 avançam · wildcards: 0' },
@@ -2313,9 +2313,7 @@ function applyCanonical(n) {
               <div style="font-size:11px;color:#5a7090;line-height:1.5">${p.desc}</div>
             </div>
           </div>`).join('')}
-        <div style="margin-top:12px;padding-top:10px;border-top:1px solid #dde6f0;font-size:10px;color:#9ab0c8;font-family:'DM Mono'">
-          Score: F1+F2 máx 6 · TB@5×5 · Final máx 9 · TB@8×8
-        </div>
+
       </div>`;
   }
 
