@@ -5755,7 +5755,7 @@ function startRaffle() {
   T.date        = getCfgDate();
   T.courts      = parseInt(document.getElementById('cfg-courts').value);
   T.categoria   = document.getElementById('cfg-categoria')?.value || '8a';
-  T.scoring     = document.getElementById('cfg-scoring').options[document.getElementById('cfg-scoring').selectedIndex].text;
+  T.scoring     = '15 · 30 · 40 · Game'; // canonical default — cfg-scoring is now a hidden input
   T.players     = [...selectedPlayers];
   T.currentPhase = 0;
   // Use canonical phaseConfig if selected, else read from form
