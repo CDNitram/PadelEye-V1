@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Ecotenis MVP · Torneio Americano · V40 Prod</title>
+<title>PadelEye · Ecotenis MVP · Torneio Americano · V40.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -887,7 +887,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
       <button class="btn-login" onclick="doLogin()">Entrar no PadelEye →</button>
     </div>
-    <div class="login-footer">Tournament Manager V40 Prod - BY TECHNIGMA AI LAB</div>
+    <div class="login-footer">Tournament Manager V40.1 - BY TECHNIGMA AI LAB</div>
   </div>
 </div>
 
@@ -896,7 +896,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
   <div class="topbar">
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">TOURNAMENT MANAGER · V40</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">TOURNAMENT MANAGER · V40.1</div>
     <div class="topbar-right">
       <div class="topbar-user">
         <div class="topbar-name" id="tb-name">—</div>
@@ -2110,9 +2110,9 @@ function updateVagas() {
   document.getElementById('vagas-max').textContent = max;
   if (status) {
     if (T.status === 'open' && T.substatus === 'setup' && cur >= 4)
-    stampTournamentStatus('open', 'players_confirmed');
+    stampTournamentStatus('Iniciado', 'players_confirmed');
   else if (T.status === 'open' && T.substatus === 'players_confirmed' && cur < 4)
-    stampTournamentStatus('open', 'setup');
+    stampTournamentStatus('Iniciado', 'setup');
   if (cur>=max)        { status.textContent='✅ Completo'; status.style.cssText='background:#E8F8EE;color:#1a7a44;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
     else if (cur>=max*.75) { status.textContent='🟡 Quase'; status.style.cssText='background:#FFF8E0;color:#865a10;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
     else                 { status.textContent='Aberto'; status.style.cssText='background:#f0f5fb;color:#7090b0;font-size:10px;font-weight:600;padding:2px 8px;border-radius:99px;flex-shrink:0'; }
@@ -2286,14 +2286,20 @@ function stampTournamentStatus(status, substatus) {
   T.substatus = substatus;
   const badge = document.getElementById('trn-status-badge');
   const STATUS_MAP = {
-    'open:setup':            ['Aberto · Configuração',         '#C9933A','rgba(201,147,58,.15)'],
-    'open:players_confirmed':['Aberto · Jogadores confirmados','#3a7bd5','rgba(58,123,213,.15)'],
-    'open:groups_draft':     ['Aberto · Grupos definidos',     '#9b59b6','rgba(155,89,182,.15)'],
-    'open:fase_1_em_curso':  ['Fase 1 em curso',               '#27AE60','rgba(39,174,96,.15)'],
-    'open:fase_2_em_curso':  ['Fase 2 em curso',               '#27AE60','rgba(39,174,96,.15)'],
-    'open:final_em_curso':   ['Final em curso',                '#C9933A','rgba(201,147,58,.15)'],
-    'finalizado:':           ['Finalizado',                    '#1a7a44','rgba(26,122,68,.15)'],
-    'cancelado:abandonment': ['Cancelado · Por abandono',      '#c0392b','rgba(192,57,43,.15)'],
+    'Iniciado:setup':             ['Iniciado · Configuração',         '#C9933A','rgba(201,147,58,.15)'],
+    'Iniciado:players_confirmed': ['Iniciado · Jogadores confirmados','#3a7bd5','rgba(58,123,213,.15)'],
+    'Iniciado:groups_draft':      ['Iniciado · Grupos definidos',     '#9b59b6','rgba(155,89,182,.15)'],
+    'Em Curso · Fase 1:':         ['Em Curso · Fase 1',               '#27AE60','rgba(39,174,96,.15)'],
+    'Em Curso · Fase 2:':         ['Em Curso · Fase 2',               '#27AE60','rgba(39,174,96,.15)'],
+    'Em Curso · Final:':          ['Em Curso · Final',                '#C9933A','rgba(201,147,58,.15)'],
+    'Finalizado:':                ['Finalizado',                      '#1a7a44','rgba(26,122,68,.15)'],
+    'Cancelado:abandonment':      ['Cancelado · Por abandono',        '#c0392b','rgba(192,57,43,.15)'],
+    // legacy keys for backward-compat with persisted T
+    'open:setup':                 ['Iniciado · Configuração',         '#C9933A','rgba(201,147,58,.15)'],
+    'open:fase_1_em_curso':       ['Em Curso · Fase 1',               '#27AE60','rgba(39,174,96,.15)'],
+    'open:fase_2_em_curso':       ['Em Curso · Fase 2',               '#27AE60','rgba(39,174,96,.15)'],
+    'open:final_em_curso':        ['Em Curso · Final',                '#C9933A','rgba(201,147,58,.15)'],
+    'finalizado:':                ['Finalizado',                      '#1a7a44','rgba(26,122,68,.15)'],
   };
   const key = `${status}:${substatus}`;
   const [label, color, bg] = STATUS_MAP[key] || [key, '#9ab0c8', '#f4f7fc'];
@@ -2312,14 +2318,14 @@ function stampTournamentStatus(status, substatus) {
 }
 
 function openTournament() {
-  if (T.status === 'open') return;
+  if (T.status === 'Iniciado' || T.status === 'open') return;
   if (!T.id) T.id = generateTorneiId();
   T.openedAt = new Date().toISOString();
   const ps = document.getElementById('trn-player-section');
   if (ps) { ps.style.opacity = '1'; ps.style.pointerEvents = 'auto'; }
   const ob = document.getElementById('trn-open-btn');
   if (ob) ob.style.display = 'none';
-  stampTournamentStatus('open', 'setup');
+  stampTournamentStatus('Iniciado', 'setup');
   PadelEyeDB.send('create_tournament', { row: {
     tournament_id: T.id,
     tournament_name: document.getElementById('cfg-name')?.value || 'Torneio Americano',
@@ -2328,7 +2334,7 @@ function openTournament() {
     tournament_format: 'Americano · Modelo Brasileiro',
     tournament_category: document.getElementById('cfg-categoria')?.value || '',
     num_phases: parseInt(document.getElementById('cfg-num-fases')?.value || 3),
-    status: 'open',  // TOURNAMENT_COLS has 'status'; GAS filter accepts 'open'
+    status: 'Iniciado',
     created_at: T.openedAt,
   }}).catch(e => console.warn('[openTournament]', e.message));
   safeAlert('✅ Torneio aberto. Selecione os jogadores.', 'ok');
@@ -2669,43 +2675,49 @@ function advancePhase() {
   // Full pool (flat) kept for single-group fallback
   const pool = [...qualifiers.flat(), ...wildcardPlayers].filter(Boolean);
 
-  // ── Build next phase groups — cross-pairing avoids rematches ──────────────
+  // ── Build next phase groups — V40.1 FIX: Final = always 1 group ──────────
   let nextGroups;
-  const numNextGroups = pool.length <= nextPPG ? 1 : Math.ceil(pool.length / nextPPG);
+  const nextPhaseIdx_ = phIdx + 1;
+  const isFinalPhase  = nextPhaseIdx_ === (T.numFases || 3) - 1;
 
-  if (numNextGroups <= 1) {
+  if (isFinalPhase) {
+    // Final: always 1 group with ALL qualifiers (ignore playersPerGroup)
     nextGroups = [pool];
   } else {
-    nextGroups = Array.from({ length: numNextGroups }, () => []);
+    const numNextGroups = pool.length <= nextPPG ? 1 : Math.ceil(pool.length / nextPPG);
 
-    // Cross-pairing by column: players from the same F1 group go to DIFFERENT F2 groups
-    // src group i, rank r → dest = (i + r) % numNextGroups
-    // This guarantees no two players from same F1 group land in same F2 group
-    qualifiers.forEach((srcGroup, gi) => {
-      srcGroup.forEach((player, rank) => {
-        const destIdx = (gi + rank) % numNextGroups;
-        nextGroups[destIdx].push(player);
+    if (numNextGroups <= 1) {
+      nextGroups = [pool];
+    } else {
+      nextGroups = Array.from({ length: numNextGroups }, () => []);
+
+      // Cross-pairing by column: players from the same F1 group go to DIFFERENT F2 groups
+      qualifiers.forEach((srcGroup, gi) => {
+        srcGroup.forEach((player, rank) => {
+          const destIdx = (gi + rank) % numNextGroups;
+          nextGroups[destIdx].push(player);
+        });
       });
-    });
 
-    // Wildcards: avoid same-source-group collisions
-    wcCandidates.slice(0, wc).forEach((wc_entry, wci) => {
-      const player   = wildcardPlayers[wci];
-      if (!player) return;
-      const srcGi    = T.phases[phIdx].groups.findIndex(g => g.includes(wc_entry.name));
-      const srcGroup = srcGi >= 0 ? T.phases[phIdx].groups[srcGi] : [];
-      const ranked   = nextGroups
-        .map((g, di) => ({ di, conflicts: g.filter(p => srcGroup.includes(p)).length, len: g.length }))
-        .sort((a, b) => a.conflicts - b.conflicts || a.len - b.len);
-      nextGroups[ranked[0].di].push(player);
-    });
+      // Wildcards: avoid same-source-group collisions
+      wcCandidates.slice(0, wc).forEach((wc_entry, wci) => {
+        const player   = wildcardPlayers[wci];
+        if (!player) return;
+        const srcGi    = T.phases[phIdx].groups.findIndex(g => g.includes(wc_entry.name));
+        const srcGroup = srcGi >= 0 ? T.phases[phIdx].groups[srcGi] : [];
+        const ranked   = nextGroups
+          .map((g, di) => ({ di, conflicts: g.filter(p => srcGroup.includes(p)).length, len: g.length }))
+          .sort((a, b) => a.conflicts - b.conflicts || a.len - b.len);
+        nextGroups[ranked[0].di].push(player);
+      });
 
-    nextGroups = nextGroups.filter(g => g.length > 0);
+      nextGroups = nextGroups.filter(g => g.length > 0);
+    }
   }
 
   // ── Write next phase ──
   const nextPhaseIdx = phIdx + 1;
-  const nextPhaseName = nextPhaseIdx === (T.numFases || 3) - 1 ? 'Final'
+  const nextPhaseName = isFinalPhase ? 'Final'
                       : nextPhaseIdx === 1 ? 'Fase 2' : `Fase ${nextPhaseIdx + 1}`;
   T.phases[nextPhaseIdx] = {
     name:    nextPhaseName,
@@ -2716,9 +2728,9 @@ function advancePhase() {
 
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
-  if (T.status === 'open') {
-    const isFinalPh = nextPhaseIdx === (T.numFases || 3) - 1;
-    stampTournamentStatus('open', isFinalPh ? 'final_em_curso' : 'fase_2_em_curso');
+  {
+    const _isFinalPh = nextPhaseIdx === (T.numFases || 3) - 1;
+    stampTournamentStatus(_isFinalPh ? 'Em Curso · Final' : 'Em Curso · Fase 2', '');
   }
   _updateSubButtons();
   renderRounds();
@@ -4701,7 +4713,7 @@ const PadelEyeDB = (() => {
       players_per_group:   jogPorGrupo,
       num_phases:          T.numFases || 3,
       tournament_category: T.categoria || '',
-      status:              'finalizado',
+      status:              'Finalizado',
       created_at:          now(),
     };
   }
@@ -4801,10 +4813,10 @@ const PadelEyeDB = (() => {
 
     // ── Run all writes + status update concurrently ───────────────────────────
     T.finalizedAt = new Date().toISOString();
-    stampTournamentStatus('finalizado', '');
+    stampTournamentStatus('Finalizado', '');
     const [r1, r2, r3, r4] = await Promise.all([
       send('upsert_tournament',        { row: torneioRow }),
-      send('update_tournament_status', { tournament_id: torneioId, status: 'finalizado' }),
+      send('update_tournament_status', { tournament_id: torneioId, status: 'Finalizado' }),
       send('insert_matches',           { rows: partidasRows }),
       scRows.length ? send('insert_scorecard', { rows: scRows }) : Promise.resolve({ status:'skipped' }),
     ]);
@@ -5485,7 +5497,7 @@ function raffleAllDone() {
 //   Após este ponto, substituições via modal são a única forma de alterar jogadores.
 function raffleFinish() {
   clearInterval(_raffleTimer);
-  stampTournamentStatus('open', 'groups_draft');
+  stampTournamentStatus('Iniciado', 'groups_draft');
   document.getElementById('s-raffle').classList.remove('show');
 
   // Guarantee T state is complete before any render
@@ -5515,7 +5527,7 @@ function raffleFinish() {
         wildcards:           T.phaseConfig?.[0]?.wildcards       ?? 0,
         num_phases:          T.numFases     || 3,
         tournament_category: T.categoria    || '',
-        status:              'em_curso',
+        status:              'Em Curso · Fase 1',
         created_at:          new Date().toISOString(),
       }
     });
@@ -6155,14 +6167,26 @@ function _htRenderGrid() {
   const trns = [..._htData.tournaments].sort((a, b) => {
     const da = a.date || a.created_at || '';
     const db = b.date || b.created_at || '';
-    return da.localeCompare(db); // oldest first
+    const dateCmp = db.localeCompare(da); // newest first
+    if (dateCmp !== 0) return dateCmp;
+    return String(b.tournament_id||'').localeCompare(String(a.tournament_id||''));
   });
   if (!trns.length) {
     grid.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Nenhum torneio encontrado.</div>';
     return;
   }
 
-  const STATUS = {finalizado:'#E8F8EE|#1a7a44', em_curso:'#FFF8E0|#865a10', cancelado:'rgba(231,76,60,.1)|#c0392b'};
+  const STATUS = {
+    'Finalizado':         '#E8F8EE|#1a7a44',
+    'finalizado':         '#E8F8EE|#1a7a44',
+    'Em Curso · Fase 1':  '#FFF8E0|#865a10',
+    'Em Curso · Fase 2':  '#FFF8E0|#865a10',
+    'Em Curso · Final':   '#FFF8E0|#865a10',
+    'em_curso':           '#FFF8E0|#865a10',
+    'Iniciado':           '#e0f0ff|#1a4a7a',
+    'open':               '#e0f0ff|#1a4a7a',
+    'cancelado':          'rgba(231,76,60,.1)|#c0392b',
+  };
   const catColor = {'8a':'#d97706','7a':'#b85c38','6a':'#276221','5a':'#1a5fa8'};
 
   let html = `<div style="background:transparent">
@@ -7087,8 +7111,14 @@ async function loadOpenTournaments() {
         dedupMap[tid] = t;
     });
     const all = Object.values(dedupMap).filter(t => {
-      const st = (t.status || '').toLowerCase().trim();
-      return st === 'em_curso' || st === 'in_progress' || st === 'active' || st === 'open' || st === '';
+      const st = (t.status || '').trim();
+      return st === 'Iniciado'
+          || st.startsWith('Em Curso')
+          || st === 'em_curso'
+          || st === 'in_progress'
+          || st === 'active'
+          || st === 'open'
+          || st === '';
     });
 
     if (!all.length) {
