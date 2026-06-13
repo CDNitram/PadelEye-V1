@@ -6642,6 +6642,19 @@ function toTeamStr(t) {
   if (Array.isArray(t)) return t.join(' / ');
   return String(t || '');
 }
+// ── parseTDate: parse PT-BR and ISO date strings to Date objects ─────────────
+const _ptMo = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+function parseTDate(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return new Date(iso[1]+'-'+iso[2]+'-'+iso[3]+'T12:00:00');
+  const pt = s.match(/^(\d{1,2})\s+de\s+([a-z]+)\.?\s+de\s+(\d{4})/i);
+  if (pt) { const mo = _ptMo[pt[2].toLowerCase().slice(0,3)]; if(mo) return new Date(+pt[3],mo-1,+pt[1],12); }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
 function _htRenderGrid() {
   const grid = document.getElementById('ht-grid');
   const trns = [..._htData.tournaments].sort((a, b) => {
@@ -6702,17 +6715,7 @@ function _htRenderGrid() {
     const cat    = t.tournament_category || '—';
     const [stBg, stCol] = (STATUS[t.status] || '#f0f5fb|#7090b0').split('|');
     // Robust date parser — ISO, PT-BR "15 de mai. de 2026", fallback
-    const ptMo = {jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
-    function parseTDate(raw) {
-      if (!raw) return null;
-      const s = String(raw).trim();
-      const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (iso) return new Date(iso[1]+'-'+iso[2]+'-'+iso[3]+'T12:00:00');
-      const pt = s.match(/^(\d{1,2})\s+de\s+([a-z]+)\.?\s+de\s+(\d{4})/i);
-      if (pt) { const mo = ptMo[pt[2].toLowerCase().slice(0,3)]; if(mo) return new Date(+pt[3],mo-1,+pt[1],12); }
-      const d = new Date(s);
-      return isNaN(d) ? null : d;
-    }
+    // parseTDate is defined globally below _htRenderGrid
     const dateObj = parseTDate(t.date) || parseTDate(t.created_at);
     const dateFmt = dateObj ? dateObj.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'}) : '—';
 
