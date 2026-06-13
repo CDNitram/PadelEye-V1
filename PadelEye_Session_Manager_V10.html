@@ -3474,6 +3474,9 @@ async function loadConsistency() {
 // PROGRESSION — position per session · last 10 · line chart + trend
 // ══════════════════════════════════════════════════════════════════
 let _progChart = null;
+let _progSeries = [];       // all computed series
+let _progSelected = new Set(); // names of selected players
+let _progSessDateMap = {};  // shared date map
 
 function _progRankSession(rows) {
   const sorted = [...rows].sort((a, b) => {
@@ -3496,8 +3499,91 @@ function _progTrend(positions) {
   const recent = v.slice(-3), older = v.slice(-6,-3);
   if (!older.length) return 'neutral';
   const avg = arr => arr.reduce((s,x)=>s+x,0)/arr.length;
-  const delta = avg(older) - avg(recent); // positive = improved
+  const delta = avg(older) - avg(recent);
   return delta > 0.7 ? 'up' : delta < -0.7 ? 'down' : 'neutral';
+}
+
+// ── Rebuild chart with currently selected players ────────────────────────────
+function _progRebuildChart() {
+  const active = _progSeries.filter(s => _progSelected.has(s.name));
+  if (_progChart) { _progChart.destroy(); _progChart = null; }
+  const maxPos = active.length
+    ? Math.max(...active.flatMap(s => s.positions), 4)
+    : 4;
+  const labels = Array.from({length:10},(_,i)=>`${i+1}ª`);
+  const ctx = document.getElementById('prog-chart');
+  if (!ctx) return;
+  _progChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: active.map(s => ({
+        label: s.name, data: s.positions,
+        borderColor: s.color, backgroundColor: s.color+'15',
+        borderWidth: 2, pointRadius: 5, pointHoverRadius: 7,
+        pointBackgroundColor: s.color, tension: 0.3, spanGaps: false,
+      })),
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        y: {
+          reverse: true, min: 1, max: maxPos,
+          ticks: {
+            stepSize: 1,
+            callback: v => v===1?'🥇':v===2?'🥈':v===3?'🥉':`#${v}`,
+            font: { size: 11 },
+          },
+          grid: { color: '#f0f5fb' },
+        },
+        x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: c => {
+            const s = active[c.datasetIndex];
+            const sn = s.sessions[c.dataIndex];
+            const d = _progSessDateMap[sn]
+              ? _progSessDateMap[sn].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})
+              : `S${sn}`;
+            return `${c.dataset.label}: #${c.parsed.y} (${d})`;
+          },
+        }},
+      },
+    },
+  });
+
+  // Update legend
+  const legendEl = document.getElementById('prog-legend');
+  if (legendEl) {
+    legendEl.innerHTML = active.map(s =>
+      `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#5a7090">
+        <span style="width:10px;height:10px;border-radius:2px;background:${s.color};flex-shrink:0"></span>${s.name}
+      </span>`
+    ).join('');
+  }
+}
+
+// ── Toggle a player card on/off ──────────────────────────────────────────────
+function _progTogglePlayer(name) {
+  if (_progSelected.has(name)) {
+    _progSelected.delete(name);
+  } else {
+    _progSelected.add(name);
+  }
+  // Update card visual
+  const card = document.getElementById('prog-card-' + CSS.escape(name));
+  if (card) {
+    const isOn = _progSelected.has(name);
+    const s = _progSeries.find(x => x.name === name);
+    card.style.border        = isOn ? `2px solid ${s?.color||'#3a7bd5'}` : '1px solid #dde6f0';
+    card.style.opacity       = isOn ? '1' : '0.45';
+    card.style.boxShadow     = isOn ? `0 2px 10px ${s?.color||'#3a7bd5'}30` : 'none';
+    const dot = card.querySelector('.prog-sel-dot');
+    if (dot) dot.style.background = isOn ? (s?.color||'#3a7bd5') : '#dde6f0';
+  }
+  _progRebuildChart();
 }
 
 async function loadProgression() {
@@ -3508,13 +3594,13 @@ async function loadProgression() {
   if (!rkSessData.length || !rkAllSessions.length) await loadRanking();
 
   // Session → Date map
-  const sessDateMap = {};
+  _progSessDateMap = {};
   rkAllSessions.forEach(s => {
     const num = String(s.session_serial_number||s.numero||'').replace(/\D/g,'').trim();
     const raw = s.session_date||s.date||s.data||'';
     if (!num||!raw) return;
     const d = /^\d{4}-\d{2}-\d{2}/.test(raw) ? new Date(raw.slice(0,10)+'T12:00:00') : new Date(raw);
-    if (!isNaN(d)) sessDateMap[num] = d;
+    if (!isNaN(d)) _progSessDateMap[num] = d;
   });
 
   // Group stats by session
@@ -3525,119 +3611,89 @@ async function loadProgression() {
     (bySession[sn] = bySession[sn]||[]).push(r);
   });
 
-  // All sessions sorted by date — compute position map for all
-  const allSessions = Object.keys(bySession).sort((a,b) => {
-    return (sessDateMap[a]||new Date(0)) - (sessDateMap[b]||new Date(0));
-  });
+  // All sessions sorted by date
+  const allSessions = Object.keys(bySession).sort((a,b) =>
+    (_progSessDateMap[a]||new Date(0)) - (_progSessDateMap[b]||new Date(0))
+  );
 
   const posPerSess = {};
   allSessions.forEach(sn => { posPerSess[sn] = _progRankSession(bySession[sn]); });
 
-  // Per-player: only sessions they participated in → last 10 of those
-  // This eliminates gaps in the chart
+  // Build series for all players
   const playerSet = new Set();
   allSessions.forEach(sn => Object.keys(posPerSess[sn]).forEach(p => playerSet.add(p)));
   const players = [...playerSet].sort();
 
   const COLORS = ['#3a7bd5','#e74c3c','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e91e63','#f39c12','#00bcd4','#795548'];
-  const series = players.map((p,i) => {
-    // Get only sessions this player appeared in, sorted, last 10
+  _progSeries = players.map((p,i) => {
     const playerSessions = allSessions.filter(sn => posPerSess[sn][p] !== undefined);
     const last10p = playerSessions.slice(-10);
     return {
-      name: p, color: COLORS[i%COLORS.length],
-      sessions: last10p,  // per-player session list for tooltip
+      name: p, color: COLORS[i % COLORS.length],
+      sessions: last10p,
       positions: last10p.map(sn => posPerSess[sn][p]),
+      sessCount: last10p.length,
     };
-  }).filter(s => s.positions.length > 0);
+  }).filter(s => s.sessCount > 0);
 
-  // ── Chart ──
-  if (_progChart) { _progChart.destroy(); _progChart = null; }
+  // ── Default selection: top 6 by session count ────────────────────────────
+  _progSelected = new Set(
+    [..._progSeries]
+      .sort((a,b) => b.sessCount - a.sessCount)
+      .slice(0, 6)
+      .map(s => s.name)
+  );
+
+  // ── Load Chart.js if needed ──────────────────────────────────────────────
   if (!window.Chart) {
     await new Promise(res => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
-      s.onload = res; document.head.appendChild(s);
-    });
-  }
-  const maxPos = Math.max(...series.flatMap(s => s.positions), 4);
-  // X-axis: ordinal 1-10 (each player's own last sessions)
-  const labels = Array.from({length:10},(_,i)=>`${i+1}ª`);
-  const ctx = document.getElementById('prog-chart');
-  if (ctx) {
-    _progChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels,
-        datasets: series.map(s => ({
-          label: s.name, data: s.positions,
-          borderColor: s.color, backgroundColor: s.color+'15',
-          borderWidth: 2, pointRadius: 5, pointHoverRadius: 7,
-          pointBackgroundColor: s.color, tension: 0.3, spanGaps: false,
-        })),
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        scales: {
-          y: {
-            reverse: true, min: 1, max: maxPos,
-            ticks: {
-              stepSize: 1,
-              callback: v => v===1?'🥇':v===2?'🥈':v===3?'🥉':`#${v}`,
-              font: { size: 11 },
-            },
-            grid: { color: '#f0f5fb' },
-          },
-          x: { ticks: { font: { size: 10 } }, grid: { display: false } },
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: { callbacks: {
-            label: ctx => {
-              const s = series[ctx.datasetIndex];
-              const sn = s.sessions[ctx.dataIndex];
-              const d = sessDateMap[sn] ? sessDateMap[sn].toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : `S${sn}`;
-              return `${ctx.dataset.label}: #${ctx.parsed.y} (${d})`;
-            },
-          }},
-        },
-      },
+      const sc = document.createElement('script');
+      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+      sc.onload = res; document.head.appendChild(sc);
     });
   }
 
-  // ── Legend below chart ──
-  const legendEl = document.getElementById('prog-legend');
-  if (legendEl) {
-    legendEl.innerHTML = series.map(s =>
-      `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#5a7090">
-        <span style="width:10px;height:10px;border-radius:2px;background:${s.color};flex-shrink:0"></span>${s.name}
-      </span>`
-    ).join('');
-  }
+  // ── Build chart with selected players ────────────────────────────────────
+  _progRebuildChart();
 
-  // ── Player cards ──
+  // ── Player cards — all players, selected highlighted ─────────────────────
   const T = {
     up:      { icon:'↑', label:'A subir',  bg:'#E8F8EE', col:'#1a7a44', br:'#c8e8d0' },
     down:    { icon:'↓', label:'A descer', bg:'#FCEBEB', col:'#A32D2D', br:'#f5c0c0' },
     neutral: { icon:'→', label:'Estável',  bg:'#FFF8E0', col:'#865a10', br:'#e8c870' },
   };
-  const cards = series.map(s => {
-    const v = s.positions.filter(p => p!==null);
-    return { ...s, last:v[v.length-1]??null, best:Math.min(...v)||null, worst:Math.max(...v)||null, trend:_progTrend(s.positions), sessCount:v.length };
-  }).filter(s => s.sessCount>0).sort((a,b) => (a.last??99)-(b.last??99));
+  const cards = _progSeries.map(s => {
+    const v = s.positions.filter(p => p !== null);
+    return { ...s, last:v[v.length-1]??null, best:Math.min(...v)||null, worst:Math.max(...v)||null, trend:_progTrend(s.positions) };
+  }).sort((a,b) => (a.last??99)-(b.last??99));
 
   const cardsEl = document.getElementById('prog-cards');
   if (cardsEl) {
-    cardsEl.innerHTML = cards.map(s => {
+    // Header hint
+    cardsEl.innerHTML = `<div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin-bottom:6px;padding:0 2px">
+      Clique num jogador para mostrar/ocultar no gráfico · <span style="color:#C9933A">Top 6 selecionados por defeito</span>
+    </div>` + cards.map(s => {
       const t = T[s.trend];
       const medal = s.last===1?'🥇':s.last===2?'🥈':s.last===3?'🥉':`#${s.last}`;
+      const isOn  = _progSelected.has(s.name);
       const posStr = s.positions.map(p => p
         ? `<span style="font-weight:${p<=3?700:400};color:${p===1?'#C9933A':p<=3?'#0a1628':'#9ab0c8'}">${p}</span>`
         : '<span style="color:#dde6f0">—</span>'
       ).join('<span style="color:#dde6f0;font-size:10px"> · </span>');
       const nat = getPlayerNat(s.name);
-      return `<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:12px 16px;display:grid;grid-template-columns:36px 1fr 40px 72px;align-items:center;gap:12px">
-        <div style="width:36px;height:36px;border-radius:50%;background:${flagGrad(nat)};color:${flagTextCol(nat)};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.35)">${rkIni(s.name)}</div>
+      const safeId = s.name.replace(/[^a-zA-Z0-9]/g, '_');
+      return `<div id="prog-card-${safeId}"
+          onclick="_progTogglePlayer('${s.name.replace(/'/g,"\\'")}')"
+          style="background:#fff;border:${isOn?`2px solid ${s.color}`:'1px solid #dde6f0'};border-radius:12px;padding:12px 16px;
+            display:grid;grid-template-columns:36px 1fr 40px 72px;align-items:center;gap:12px;
+            cursor:pointer;transition:all .15s;opacity:${isOn?'1':'0.45'};
+            box-shadow:${isOn?`0 2px 10px ${s.color}30`:'none'}"
+          onmouseover="this.style.opacity='1'"
+          onmouseout="this.style.opacity='${isOn?'1':'0.45'}'">
+        <div style="position:relative">
+          <div style="width:36px;height:36px;border-radius:50%;background:${flagGrad(nat)};color:${flagTextCol(nat)};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,.35)">${rkIni(s.name)}</div>
+          <div class="prog-sel-dot" style="position:absolute;bottom:-1px;right:-1px;width:10px;height:10px;border-radius:50%;border:2px solid #fff;background:${isOn?s.color:'#dde6f0'};transition:background .15s"></div>
+        </div>
         <div>
           <div style="font-size:13px;font-weight:700;color:#0d1e3a;margin-bottom:3px">${s.name}</div>
           <div style="font-family:'DM Mono';font-size:10px;line-height:1.8">${posStr}</div>
@@ -3650,13 +3706,38 @@ async function loadProgression() {
         </div>
       </div>`;
     }).join('');
+
+    // Fix IDs — CSS.escape not available in all envs, used safe replace above
+    // Re-patch onclick to use safe ID too
   }
 
   const ts = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  if (document.getElementById('prog-upd')) document.getElementById('prog-upd').textContent = `Atualizado às ${ts}`;
+  if (document.getElementById('prog-upd')) document.getElementById('prog-upd').textContent = `Atualizado às ${ts} · ${_progSeries.length} jogadores`;
   if (dot)  { dot.className='rk-dot'; dot.style.background='#27AE60'; }
-  if (stxt) stxt.textContent = `${players.length} jogadores · ${last10.length} sessões`;
+  if (stxt) stxt.textContent = `${_progSeries.length} jogadores · ${allSessions.length} sessões`;
 }
+
+// ── _progTogglePlayer uses safeId for DOM lookup too ────────────────────────
+// Override to use same safe ID logic
+_progTogglePlayer = function(name) {
+  if (_progSelected.has(name)) {
+    _progSelected.delete(name);
+  } else {
+    _progSelected.add(name);
+  }
+  const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
+  const card = document.getElementById('prog-card-' + safeId);
+  if (card) {
+    const isOn = _progSelected.has(name);
+    const s = _progSeries.find(x => x.name === name);
+    card.style.border    = isOn ? `2px solid ${s?.color||'#3a7bd5'}` : '1px solid #dde6f0';
+    card.style.opacity   = isOn ? '1' : '0.45';
+    card.style.boxShadow = isOn ? `0 2px 10px ${s?.color||'#3a7bd5'}30` : 'none';
+    const dot = card.querySelector('.prog-sel-dot');
+    if (dot) dot.style.background = isOn ? (s?.color||'#3a7bd5') : '#dde6f0';
+  }
+  _progRebuildChart();
+};
 </script>
 
 <!-- VIEW MODAL — perfil do jogador -->
