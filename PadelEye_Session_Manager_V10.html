@@ -3479,11 +3479,14 @@ let _progSelected = new Set(); // names of selected players
 let _progSessDateMap = {};  // shared date map
 
 function _progRankSession(rows) {
+  // Canonical sort — mirrors mvpSort: WR% → Vitórias → SP → GF
   const sorted = [...rows].sort((a, b) => {
-    const wA = +(a.wins||a.vitorias||0), wB = +(b.wins||b.vitorias||0);
+    const mA = +(a.matches||a.partidas||0), mB = +(b.matches||b.partidas||0);
+    const wA = +(a.wins||a.vitorias||0),    wB = +(b.wins||b.vitorias||0);
+    const wrA = mA > 0 ? wA / mA : 0,      wrB = mB > 0 ? wB / mB : 0;
     const dA = +(a.points_difference||a.gd||0), dB = +(b.points_difference||b.gd||0);
-    const fA = +(a.points_for||a.gw||0), fB = +(b.points_for||b.gw||0);
-    return wB-wA || dB-dA || fB-fA;
+    const fA = +(a.points_for||a.gw||0),    fB = +(b.points_for||b.gw||0);
+    return (wrB - wrA) || (wB - wA) || (dB - dA) || (fB - fA);
   });
   const map = {};
   sorted.forEach((r,i) => {
