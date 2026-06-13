@@ -1446,7 +1446,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
     <!-- Category filter -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="trk-cat-tabs">
-      <button class="trk-cat on" onclick="trkSetCat('all',this)">Todos</button>
     </div>
 
     <!-- Sort buttons -->
@@ -7434,15 +7433,17 @@ async function loadTrnRanking() {
 }
 
 function trkBuildCatTabs() {
-  const cats = ['all', ...new Set(
-    trkData.map(p => p.player_category || p.categoria || p.category || '').filter(Boolean)
-  ).values()].sort((a,b) => a==='all'?-1:b==='all'?1:a.localeCompare(b,'pt'));
+  // Fixed categories — no "Todos", always show 5a 6a 7a 8a
+  const FIXED_CATS = ['5a','6a','7a','8a'];
+  // Default to first cat with data, or first fixed cat
+  const available = new Set(trkData.map(p => p.player_category || p.categoria || p.category || '').filter(Boolean));
+  if (!trkCat || trkCat === 'all') {
+    trkCat = FIXED_CATS.find(c => available.has(c)) || FIXED_CATS[0];
+  }
   const el = document.getElementById('trk-cat-tabs');
   if (!el) return;
-  el.innerHTML = cats.map(cat =>
-    `<button class="trk-cat${cat===trkCat?' on':''}" onclick="trkSetCat('${cat}',this)">
-      ${cat==='all'?'Todos':cat}
-    </button>`
+  el.innerHTML = FIXED_CATS.map(cat =>
+    `<button class="trk-cat${cat===trkCat?' on':''}" onclick="trkSetCat('${cat}',this)">${cat}</button>`
   ).join('');
 }
 
