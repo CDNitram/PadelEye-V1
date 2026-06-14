@@ -626,9 +626,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div id="player-section" style="opacity:.4;pointer-events:none;transition:opacity .3s">
     <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div class="card-title" style="margin-bottom:0">Quem Joga Hoje?</div>
         <span class="badge gray" id="player-count-badge">0 selecionados</span>
+      </div>
+      <div style="position:relative;margin-bottom:10px">
+        <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b0c4d8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="player-search-cfg" type="text" placeholder="Pesquisar jogador..." oninput="filterPlayerGrid(this.value)"
+          style="width:100%;padding:9px 12px 9px 32px;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Sans';font-size:12px;color:#0d1e3a;background:#f8fafd;outline:none;transition:border-color .15s"
+          onfocus="this.style.borderColor='#C9933A';this.style.background='#fff'"
+          onblur="this.style.borderColor='#dde6f0';this.style.background='#f8fafd'">
       </div>
       <div class="player-grid" id="player-grid"></div>
       <button onclick="openAddPlayer()" style="display:flex;align-items:center;gap:6px;margin-top:10px;padding:8px 14px;background:#fff;border:1.5px dashed #9ab0c8;border-radius:8px;font-size:12px;font-weight:600;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .2s" onmouseover="this.style.borderColor='#3a7bd5';this.style.color='#0d1e3a'" onmouseout="this.style.borderColor='#9ab0c8';this.style.color='#5a7090'">➕ Novo Jogador to Database</button>
@@ -1349,6 +1356,15 @@ function renderPlayerGrid() {
   }).join('');
   document.getElementById('player-count-badge').textContent = activePlayers.length+' selecionados';
   updateHero();
+}
+
+function filterPlayerGrid(q) {
+  const term = (q||'').toLowerCase().trim();
+  document.querySelectorAll('#player-grid .player-chip').forEach(chip => {
+    const nameEl = chip.querySelector('.player-chip-name');
+    const name   = (nameEl?.textContent || '').toLowerCase();
+    chip.style.display = (!term || name.includes(term)) ? '' : 'none';
+  });
 }
 
 function togglePlayer(name) {
@@ -2757,13 +2773,31 @@ function flagTextCol(nat) {
   return '#fff';
 }
 function getPlayerNat(name) {
-  const r = PLAYER_REGISTRY.find(p => {
+  if (!name) return '';
+  const nameLow = name.toLowerCase().trim();
+  // 1st pass: exact displayName match
+  let r = PLAYER_REGISTRY.find(p => {
     const nick  = p.player_nickname || p.nickname || '';
     const fname = p.player_name     || p.nome     || '';
     const lname = p.player_surname  || p.sobrenome|| '';
     const disp  = nick || (fname + (lname ? ' ' + lname : '')).trim();
-    return disp === name;
+    return disp.toLowerCase() === nameLow;
   });
+  // 2nd pass: first name only (handles "Fabiano Garcia" matching player_name "Fabiano")
+  if (!r) {
+    r = PLAYER_REGISTRY.find(p => {
+      const fname = (p.player_name || p.nome || '').toLowerCase();
+      const lname = (p.player_surname || p.sobrenome || '').toLowerCase();
+      return nameLow === fname || nameLow === (fname + ' ' + lname).trim() || nameLow.startsWith(fname + ' ');
+    });
+  }
+  // 3rd pass: any part of the stored name is contained in name or vice versa
+  if (!r) {
+    r = PLAYER_REGISTRY.find(p => {
+      const fname = (p.player_name || p.nome || '').toLowerCase();
+      return fname && (nameLow.includes(fname) || fname.includes(nameLow.split(' ')[0]));
+    });
+  }
   return r ? (r.player_nationality || r.nacionalidade || '') : '';
 }
 // ══════════════════════════════════════════
