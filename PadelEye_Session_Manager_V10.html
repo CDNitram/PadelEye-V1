@@ -630,6 +630,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="card-title" style="margin-bottom:0">Quem Joga Hoje?</div>
         <span class="badge gray" id="player-count-badge">0 selecionados</span>
       </div>
+      <!-- Quick-select buttons -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#b0c4d8;text-transform:uppercase;display:flex;align-items:center;margin-right:2px">Jogadores hoje:</div>
+        <button onclick="quickSelectPlayers(4)" id="qbtn-4" style="padding:4px 12px;border-radius:99px;border:1.5px solid #dde6f0;background:#f8fafd;font-size:11px;font-weight:700;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .15s">4</button>
+        <button onclick="quickSelectPlayers(5)" id="qbtn-5" style="padding:4px 12px;border-radius:99px;border:1.5px solid #dde6f0;background:#f8fafd;font-size:11px;font-weight:700;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .15s">5</button>
+        <button onclick="quickSelectPlayers(6)" id="qbtn-6" style="padding:4px 12px;border-radius:99px;border:1.5px solid #dde6f0;background:#f8fafd;font-size:11px;font-weight:700;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .15s">6</button>
+        <button onclick="quickSelectPlayers(7)" id="qbtn-7" style="padding:4px 12px;border-radius:99px;border:1.5px solid #dde6f0;background:#f8fafd;font-size:11px;font-weight:700;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .15s">7</button>
+        <button onclick="quickSelectPlayers(8)" id="qbtn-8" style="padding:4px 12px;border-radius:99px;border:1.5px solid #dde6f0;background:#f8fafd;font-size:11px;font-weight:700;color:#5a7090;cursor:pointer;font-family:'DM Sans';transition:all .15s">8</button>
+      </div>
       <div style="position:relative;margin-bottom:10px">
         <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);pointer-events:none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b0c4d8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input id="player-search-cfg" type="text" placeholder="Pesquisar jogador..." oninput="filterPlayerGrid(this.value)"
@@ -691,11 +700,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div class="card" style="border:1.5px dashed #dde6f0;background:#f8fafd">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div><div class="card-title" style="margin-bottom:2px">🎲 Gerar Partidas Aleatórias</div>
-        <div style="font-size:11px;color:#9ab0c8">Sem repetições · Todos os pares · Baseado nos jogadores selecionados</div></div>
+        <div><div class="card-title" style="margin-bottom:2px">🎲 Gerar Partidas</div>
+        <div style="font-size:11px;color:#9ab0c8">Baseado nos jogadores selecionados</div></div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex:1">🎯 Rotação Americano</button>
+        <button onclick="generateRandom('americano')" style="padding:9px 16px;background:#0a1628;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex:1">🎯 Partidas Únicas</button>
         <button onclick="generateRandom('round')" style="padding:9px 16px;background:#fff;color:#0a1628;border:1.5px solid #dde6f0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;flex:1">🔄 Round Robin</button>
       </div>
       <div id="random-preview" style="margin-top:10px;display:none">
@@ -1358,6 +1367,23 @@ function renderPlayerGrid() {
   updateHero();
 }
 
+function quickSelectPlayers(n) {
+  // Update button styles
+  [4,5,6,7,8].forEach(k => {
+    const btn = document.getElementById('qbtn-'+k);
+    if (!btn) return;
+    if (k === n) {
+      btn.style.background = '#0a1628';
+      btn.style.color      = '#C9933A';
+      btn.style.borderColor= '#0a1628';
+    } else {
+      btn.style.background = '#f8fafd';
+      btn.style.color      = '#5a7090';
+      btn.style.borderColor= '#dde6f0';
+    }
+  });
+}
+
 function filterPlayerGrid(q) {
   const term = (q||'').toLowerCase().trim();
   document.querySelectorAll('#player-grid .player-chip').forEach(chip => {
@@ -1690,27 +1716,129 @@ function showAlert(id,msg,type='ok'){
   el.textContent=msg;el.className='alert '+type;el.style.display='block';
   setTimeout(()=>el.style.display='none',4000);
 }
-function generateRandom(type) {
-  const preview=document.getElementById('random-preview');
-  const label=document.getElementById('random-preview-label');
-  const list=document.getElementById('random-preview-list');
-  if(activePlayers.length<4){showAlert('alert-match','Mínimo de 4 jogadores necessário.','warn');return;}
-  const players=[...activePlayers];
-  const generated=[];
-  if(type==='americano'){
-    for(let i=0;i<players.length;i++)for(let j=i+1;j<players.length;j++)for(let k=0;k<players.length;k++)for(let l=k+1;l<players.length;l++){
-      const all=[players[i],players[j],players[k],players[l]];
-      if(new Set(all).size===4)generated.push({a:[players[i],players[j]],b:[players[k],players[l]]});
+// ── Partidas Únicas: cobertura mínima — todos os pares fazem dupla >=1x ─────
+// Greedy set cover com tie-break por load balancing.
+// 4 jogadores → 3 partidas | 5 → 5 | 6 → 8 | 7 → 11 | 8 → 14
+function _getAllPossibleMatches(players) {
+  const n = players.length, matches = [], seen = new Set();
+  for (let i = 0; i < n-1; i++)
+    for (let j = i+1; j < n; j++) {
+      const a = [players[i], players[j]];
+      const rest = players.filter((_,idx) => idx!==i && idx!==j);
+      for (let k = 0; k < rest.length-1; k++)
+        for (let l = k+1; l < rest.length; l++) {
+          const b = [rest[k], rest[l]];
+          const key = [a.slice().sort().join('|'), b.slice().sort().join('|')].sort().join('||');
+          if (seen.has(key)) continue;
+          seen.add(key);
+          matches.push({ a, b });
+        }
     }
-  }else{
-    for(let i=0;i<players.length-1;i+=2){
-      if(i+3<players.length)generated.push({a:[players[i],players[i+1]],b:[players[i+2],players[i+3]]});
+  return matches;
+}
+function _pairsInMatch(m) {
+  return [m.a.slice().sort().join('|'), m.b.slice().sort().join('|')];
+}
+function _genUniqueMatches(players) {
+  const allMatches = _getAllPossibleMatches(players);
+  const allPairs   = [];
+  const n = players.length;
+  for (let i = 0; i < n-1; i++)
+    for (let j = i+1; j < n; j++)
+      allPairs.push(players[i]+'|'+players[j]);
+
+  const covered     = new Set();
+  const chosen      = [];
+  const playerCount = {};
+  players.forEach(p => playerCount[p] = 0);
+
+  while (covered.size < allPairs.length) {
+    let best = null, bestScore = -Infinity;
+    for (const m of allMatches) {
+      if (chosen.includes(m)) continue;
+      const newPairs = _pairsInMatch(m).filter(p => !covered.has(p)).length;
+      if (newPairs === 0) continue;
+      // Tie-break: prefer players who have played less (load balance)
+      const load = [...m.a,...m.b].reduce((s,p) => s + playerCount[p], 0);
+      const score = newPairs * 100 - load;
+      if (score > bestScore) { bestScore = score; best = m; }
+    }
+    if (!best) break;
+    chosen.push(best);
+    _pairsInMatch(best).forEach(p => covered.add(p));
+    [...best.a,...best.b].forEach(p => playerCount[p]++);
+  }
+  return chosen;
+}
+
+// ── Round Robin verdadeiro 2v2: rotação de Berger, agrupa pares em duplas ────
+// Pad para múltiplo de 4 para agrupamento 2v2 limpo.
+// Cada ronda R gera N/2 pares 1v1; agrupamos 2 pares consecutivos → 1 partida 2v2.
+function _genRoundRobin(players) {
+  let ps = [...players];
+  while (ps.length % 4 !== 0) ps.push('__bye__');
+  const n = ps.length;
+  const fixed    = ps[0];
+  const rotating = ps.slice(1);
+  const matches  = [];
+  const seen     = new Set();
+  const rounds   = n - 1;
+
+  for (let r = 0; r < rounds; r++) {
+    const round = [[fixed, rotating[r % (n-1)]]];
+    for (let i = 1; i < n / 2; i++)
+      round.push([rotating[(r+i)%(n-1)], rotating[(r+n-1-i)%(n-1)]]);
+    const valid = round.filter(pair => !pair.includes('__bye__'));
+    for (let i = 0; i + 1 < valid.length; i += 2) {
+      const a = valid[i], b = valid[i+1];
+      if (new Set([...a,...b]).size !== 4) continue;
+      const key = [a.slice().sort().join('|'), b.slice().sort().join('|')].sort().join('||');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      matches.push({ a, b });
     }
   }
-  window._pendingMatches=generated.slice(0,12);
-  label.textContent=type==='americano'?'Rotação Americano':'Round Robin';
-  list.innerHTML=window._pendingMatches.map((m,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:#fff;border:1px solid #eaf0f8;border-radius:7px;font-size:11px;"><span style="font-family:'DM Mono';color:#9ab0c8;font-size:9px">${i+1}</span><span style="font-weight:600">${m.a.join(' / ')}</span><span style="color:#c0cdd8">vs</span><span style="font-weight:600">${m.b.join(' / ')}</span></div>`).join('');
-  preview.style.display='block';
+  return matches;
+}
+
+function generateRandom(type) {
+  const preview = document.getElementById('random-preview');
+  const label   = document.getElementById('random-preview-label');
+  const list    = document.getElementById('random-preview-list');
+  const info    = document.getElementById('random-preview-info');
+
+  if (activePlayers.length < 4) {
+    showAlert('alert-match','Mínimo de 4 jogadores necessário.','warn');
+    return;
+  }
+
+  const players  = [...activePlayers];
+  const generated = type === 'americano'
+    ? _genUniqueMatches(players)
+    : _genRoundRobin(players);
+
+  window._pendingMatches = generated;
+
+  const n = players.length;
+  const totalPairs  = n*(n-1)/2;
+  const typeLabel   = type === 'americano' ? 'Partidas Únicas' : 'Round Robin';
+  const infoText    = type === 'americano'
+    ? `${n} jogadores · ${generated.length} partidas · uma partida por cada dupla possível`
+    : `${n} jogadores · ${generated.length} partidas · cada jogador enfrenta todos os outros`;
+
+  label.textContent = typeLabel;
+  if (info) info.textContent = infoText;
+
+  list.innerHTML = window._pendingMatches.map((m,i) =>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#fff;border:1px solid #eaf0f8;border-radius:7px;font-size:11px;">
+      <span style="font-family:'DM Mono';color:#9ab0c8;font-size:9px;min-width:16px">${i+1}</span>
+      <span style="font-weight:600;flex:1">${m.a.join(' / ')}</span>
+      <span style="color:#c0cdd8;font-size:10px;font-weight:700">VS</span>
+      <span style="font-weight:600;flex:1;text-align:right">${m.b.join(' / ')}</span>
+    </div>`
+  ).join('');
+
+  preview.style.display = 'block';
 }
 function confirmRandom(){
   if(!window._pendingMatches)return;
