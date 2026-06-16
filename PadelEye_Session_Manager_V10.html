@@ -3819,7 +3819,7 @@ async function loadProgression() {
   if (!window.Chart) {
     await new Promise(res => {
       const sc = document.createElement('script');
-      sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';
+      sc.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
       sc.onload = res; document.head.appendChild(sc);
     });
   }
