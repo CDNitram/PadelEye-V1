@@ -3641,6 +3641,10 @@ let _progSelected = new Set(); // names of selected players
 let _progSessDateMap = {};  // shared date map
 
 function _progRankSession(rows) {
+  // DEBUG — remove after confirming player_mvp values
+  const s23check = rows.filter(r => String(r.session_serial_number||r.session||'').includes('23'));
+  if (s23check.length) console.log('[PROG DEBUG S23]', s23check.map(r=>({player:r.player||r.jogador, mvp:r.player_mvp, type:typeof r.player_mvp})));
+
   // Canonical sort — mirrors mvpSort: WR% → Vitórias → SP → GF → MVP flag
   const sorted = [...rows].sort((a, b) => {
     const mA = +(a.matches||a.partidas||0),    mB = +(b.matches||b.partidas||0);
@@ -3648,8 +3652,8 @@ function _progRankSession(rows) {
     const wrA = mA > 0 ? wA / mA : 0,          wrB = mB > 0 ? wB / mB : 0;
     const dA = +(a.points_difference||a.gd||0), dB = +(b.points_difference||b.gd||0);
     const fA = +(a.points_for||a.gw||0),        fB = +(b.points_for||b.gw||0);
-    const mvpA = a.player_mvp === 1 || a.player_mvp === true || String(a.player_mvp).toLowerCase() === 'true' || String(a.player_mvp) === '1' ? 1 : 0;
-    const mvpB = b.player_mvp === 1 || b.player_mvp === true || String(b.player_mvp).toLowerCase() === 'true' || String(b.player_mvp) === '1' ? 1 : 0;
+    const mvpA = a.player_mvp === 1 || a.player_mvp === true || ['true','1','yes','sim'].includes(String(a.player_mvp).toLowerCase()) ? 1 : 0;
+    const mvpB = b.player_mvp === 1 || b.player_mvp === true || ['true','1','yes','sim'].includes(String(b.player_mvp).toLowerCase()) ? 1 : 0;
     return (wrB - wrA) || (wB - wA) || (dB - dA) || (fB - fA) || (mvpB - mvpA);
   });
   const map = {};
