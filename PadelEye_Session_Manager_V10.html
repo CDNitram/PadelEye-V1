@@ -3836,7 +3836,7 @@ async function loadProgression() {
   const cards = _progSeries.map(s => {
     const v = s.positions.filter(p => p !== null);
     return { ...s, last:v[v.length-1]??null, best:Math.min(...v)||null, worst:Math.max(...v)||null, trend:_progTrend(s.positions) };
-  }).sort((a,b) => (a.last??99)-(b.last??99));
+  }).sort((a,b) => b.sessCount - a.sessCount || (a.last??99)-(b.last??99));
 
   const cardsEl = document.getElementById('prog-cards');
   if (cardsEl) {
