@@ -1096,6 +1096,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 // ══════════════════════════════════════════
 // CONSTANTS & STATE
 // ══════════════════════════════════════════
+const SM_AUTH_KEY = 'pe_auth_v10';
 const USERS = {
   'martin':                    { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
   'organizer@padeleye.com':  { pass:'654321',    name:'Martin Cordoba',  av:'MC' },
@@ -1381,11 +1382,10 @@ function doLogin() {
     return;
   }
   currentUser = { ...USERS[user], key: user };
-  localStorage.setItem('pe_auth_v10', JSON.stringify({ key: user, name: currentUser.name, av: currentUser.av }));
+  localStorage.setItem(SM_AUTH_KEY, JSON.stringify({ key: user, name: currentUser.name, av: currentUser.av }));
   _bootApp();
   PadelEyeDB.logSession(user, 'session_login', '', { name: currentUser.name });
 }
-
 
 // ── _bootApp: common init called by doLogin and refresh auto-restore ──────────
 function _bootApp() {
@@ -3622,17 +3622,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   renderTestDBTab();
   // Auto-restore session if user was logged in before refresh
-  const savedAuth = localStorage.getItem('pe_auth_v10');
+  const savedAuth = localStorage.getItem(SM_AUTH_KEY);
   if (savedAuth) {
     try {
       const auth = JSON.parse(savedAuth);
-      // Validate credentials still exist in USERS table
-      if (USERS[auth.key]) {
+      if (auth && auth.key && USERS[auth.key]) {
         currentUser = { ...USERS[auth.key], key: auth.key };
         _bootApp();
-        return; // _bootApp handles all further init
+        return;
       }
-    } catch(e) { localStorage.removeItem('pe_auth_v10'); }
+    } catch(e) { localStorage.removeItem(SM_AUTH_KEY); }
   }
   // Not logged in — just pre-load players for the login screen
   await loadPlayersFromDB();
