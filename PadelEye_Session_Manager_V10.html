@@ -545,6 +545,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab" id="tab-progression" onclick="showTab('progression',this);loadProgression()"><span class="sb-ic" style="background:#ede9fe">🔢</span> Progressão · 10 Part.</button>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico de Sessões</button>
     <div class="sb-divider"></div>
+    <div class="sb-section-label">Em Andamento</div>
+    <button class="tab" id="tab-open-sessions" onclick="showTab('open-sessions',this);loadOpenSessions()"><span class="sb-ic" style="background:#d1fae5">🎾</span> Sessões Abertas</button>
+    <div class="sb-divider"></div>
     <div class="sb-section-label">Sistema</div>
     <button class="tab" id="tab-testdb" onclick="showTab('testdb',this);renderTestDBTab()"><span class="sb-ic" style="background:#f1f5f9">🔧</span> Test DB</button>
   </div>
@@ -624,6 +627,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         Abrir Sessão
       </button>
     </div>
+
     <div id="player-section" style="opacity:.4;pointer-events:none;transition:opacity .3s">
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -877,6 +881,21 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 
 <!-- ── SESSION HISTORY ── -->
+  <!-- ═══ SESSÕES ABERTAS ═══ -->
+  <div class="panel" id="p-open-sessions">
+    <div style="margin-bottom:24px">
+      <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px">SESSÕES ABERTAS</div>
+      <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px">Sessões em andamento — retoma de qualquer dispositivo</div>
+    </div>
+    <div id="os-cards">
+      <div style="padding:60px 20px;text-align:center;font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1px">⏳ A carregar sessões...</div>
+    </div>
+    <div id="os-empty" style="display:none;text-align:center;padding:60px 20px;font-family:'DM Mono';font-size:11px;color:#9ab0c8">
+      Nenhuma sessão em andamento de momento.<br>
+      <span style="color:#c0cdd8;font-size:10px">Abre uma nova sessão na aba Configuração.</span>
+    </div>
+  </div>
+
   <div class="panel" id="p-history">
     <div id="hist-debug" style="background:#0a1628;color:#93C5FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-family:'DM Mono';font-size:10px;line-height:1.8;display:none"></div>
     <div id="hist-list-view">
@@ -1162,6 +1181,116 @@ function openSession() {
   }).catch(e => console.warn('[lifecycle] open_session failed:', e.message));
 }
 
+// ── Cross-device session resume ────────────────────────────────────────────
+
+// ── Restore session from DB (cross-device resume via ?resume=SESSION_ID) ──────
+async function restoreSessionFromDB(sid) {
+  showAlert('alert-session', '⏳ Carregando sessão do servidor…', 'info');
+  try {
+    // 1. Fetch all sessions and find the target
+    const sesRes = await PadelEyeDB._fetch('get_sessions', {});
+    const sessRow = (sesRes.rows || []).find(r => r.session_id === sid);
+    if (!sessRow) {
+      showAlert('alert-session', '❌ Sessão não encontrada no banco. Verifique o link.', 'error');
+      return;
+    }
+    if (sessRow.session_status === 'Finalized') {
+      showAlert('alert-session', '⚠ Esta sessão já foi finalizada e salva.', 'warning');
+      return;
+    }
+
+    // 2. Fetch matches for this session
+    const matchRes = await PadelEyeDB._fetch('get_session_matches', { session_id: sid });
+    const dbMatches = matchRes.rows || [];
+
+    // 3. Reconstruct state
+    sessionId       = sid;
+    sessionIsOpen   = true;
+    sessionOpenedAt = sessRow.opened_at || sessRow.created_at || new Date().toISOString();
+    sessionStatus   = sessRow.session_status    || 'Open';
+    sessionSubstatus= sessRow.session_substatus || 'In progress';
+    sessionSaved    = false;
+
+    // 4. Restore players from session matches (extract unique names from team_a/team_b)
+    const playerNames = new Set();
+    dbMatches.forEach(m => {
+      (m.team_a || '').split(' / ').forEach(n => { if (n.trim()) playerNames.add(n.trim()); });
+      (m.team_b || '').split(' / ').forEach(n => { if (n.trim()) playerNames.add(n.trim()); });
+    });
+
+    // Match names against loaded players list
+    activePlayers = allPlayers.filter(p => {
+      const full = ((p.player_name||p.nome||'') + ' ' + (p.player_surname||p.sobrenome||'')).trim();
+      const nick = p.player_nickname || p.apelido || '';
+      return playerNames.has(full) || playerNames.has(nick) || playerNames.has(p.player_name||p.nome||'');
+    });
+
+    // Any name not matched goes to guestPlayers
+    guestPlayers = [];
+    playerNames.forEach(name => {
+      const matched = activePlayers.some(p => {
+        const full = ((p.player_name||p.nome||'') + ' ' + (p.player_surname||p.sobrenome||'')).trim();
+        return full === name || (p.player_name||p.nome||'') === name;
+      });
+      if (!matched) guestPlayers.push({ player_name: name, player_nickname: name, _guest: true });
+    });
+
+    // 5. Rebuild matches array
+    matches = dbMatches.map(m => ({
+      id:      m.match_id,
+      teamA:   (m.team_a || '').split(' / '),
+      teamB:   (m.team_b || '').split(' / '),
+      scoreA:  m.score_a !== '' ? +m.score_a : null,
+      scoreB:  m.score_b !== '' ? +m.score_b : null,
+      winner:  m.winner_team || null,
+      tb:      m.tie_break === 'Yes' || m.tie_break === 'Sim',
+      tbA:     m.tb_a !== '' ? +m.tb_a : null,
+      tbB:     m.tb_b !== '' ? +m.tb_b : null,
+      saved:   true,
+    }));
+
+    // 6. Restore config fields
+    if (sessRow.session_serial_number) { const el=document.getElementById('cfg-num'); if(el) el.textContent=sessRow.session_serial_number; }
+    if (sessRow.session_date)          { const el=document.getElementById('cfg-date');  if(el) el.value=sessRow.session_date; }
+    if (sessRow.session_venue)         { const el=document.getElementById('cfg-local'); if(el) el.value=sessRow.session_venue; }
+    if (sessRow.session_format)        { const el=document.getElementById('cfg-format');if(el) el.value=sessRow.session_format; }
+
+    // 7. Update UI
+    const ps = document.getElementById('player-section');
+    if (ps) { ps.style.opacity='1'; ps.style.pointerEvents='auto'; }
+    document.getElementById('open-session-btn').style.display = 'none';
+
+    ['tab-match','tab-scoreboard','tab-save'].forEach(id =>
+      document.getElementById(id)?.classList.remove('disabled'));
+
+    renderPlayerGrid();
+    updateMatchSelects();
+    if (matches.length > 0) {
+      renderMatchLog();
+      renderScoreboard();
+      document.getElementById('btn-close-session')?.style && (document.getElementById('btn-close-session').style.display='block');
+    }
+
+    persistSession(); // sync to localStorage for same-device refresh
+    showAlert('alert-session', `✅ Sessão retomada: ${activePlayers.length + guestPlayers.length} jogadores · ${matches.length} partidas registadas.`, 'ok');
+
+    // Navigate to the most relevant tab
+    if (matches.length > 0) {
+      showTab('scoreboard', document.getElementById('tab-scoreboard'));
+    } else if (activePlayers.length > 0 || guestPlayers.length > 0) {
+      showTab('match', document.getElementById('tab-match'));
+    } else {
+      showTab('session', document.querySelector('.tab[onclick*="session"]'));
+    }
+
+  } catch(e) {
+    console.error('[resume]', e);
+    showAlert('alert-session', '❌ Erro ao carregar sessão: ' + e.message, 'error');
+  }
+}
+
+}
+
 // ── helper: re-evaluate players_confirmed / waiting_players after any player change ─
 function _evalPlayersStamp() {
   if (!sessionIsOpen) return;
@@ -1285,7 +1414,16 @@ function _bootApp() {
     });
   }
   updateHero();
-  loadPlayersFromDB().then(() => { renderRoster(); });
+  // ── Cross-device resume: check for ?resume=SESSION_ID in URL ──────────────
+  const _resumeId = new URLSearchParams(window.location.search).get('resume');
+  loadPlayersFromDB().then(() => {
+    renderRoster();
+    if (_resumeId && !sessionIsOpen) {
+      // Clean URL without reload so the param doesn't persist on next refresh
+      window.history.replaceState({}, '', window.location.pathname);
+      restoreSessionFromDB(_resumeId);
+    }
+  });
   loadRanking();
   showTab('cadastro', document.getElementById('tab-cadastro'));
 }
@@ -2092,7 +2230,7 @@ const PadelEyeDB = (() => {
     if (type !== 'loading') setTimeout(() => el.style.display='none', 4000);
   }
 
-  return { saveSessao, logSession, registerPlayer, fetchNextSessionNumber, _url, _uid: uid, _send: send };
+  return { saveSessao, logSession, registerPlayer, fetchNextSessionNumber, _url, _uid: uid, _send: send, _fetch: send };
 })();
 
 // ══════════════════════════════════════════════════════════════════
@@ -2496,6 +2634,102 @@ function rkRenderConsistency() {
 }
 
 // ── loadHistory — reads Sessions_Sessions with EN field names ──
+// ── loadOpenSessions — Sessões Abertas panel ──────────────────────────────────
+async function loadOpenSessions() {
+  const cards = document.getElementById('os-cards');
+  const empty = document.getElementById('os-empty');
+  if (!cards) return;
+  cards.innerHTML = '<div style="padding:60px 20px;text-align:center;font-family:\'DM Mono\';font-size:11px;color:#9ab0c8;letter-spacing:1px">⏳ A carregar sessões...</div>';
+  empty.style.display = 'none';
+
+  try {
+    const res  = await PadelEyeDB._send('get_sessions', {});
+    const rows = res.rows || [];
+
+    // Filter open sessions (not finalized, not cancelled)
+    const open = rows.filter(s => {
+      const st = (s.session_status || '').trim().toLowerCase();
+      return st === 'open' || st === 'in_progress' || st === '' || st === 'aberta';
+    }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+    if (!open.length) {
+      cards.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+
+    cards.innerHTML = '<div style="display:flex;flex-direction:column;gap:12px">' +
+      open.slice(0, 5).map(s => {
+        const sn      = s.session_serial_number || s.session_id || '—';
+        const date    = s.session_date    || '—';
+        const venue   = s.session_venue   || '—';
+        const players = s.session_total_players ? s.session_total_players + ' jog.' : '—';
+        const matches = s.session_total_matches ? s.session_total_matches + ' part.' : '—';
+        const sub     = s.session_substatus || s.session_status || 'Em andamento';
+        const fmt     = s.session_format || '';
+        const resumeUrl = window.location.href.split('?')[0] + '?resume=' + encodeURIComponent(s.session_id);
+
+        return `<div style="background:#fff;border-radius:16px;border:1px solid #dde6f0;padding:20px;box-shadow:0 2px 8px rgba(13,30,58,.06)">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <span style="background:#1a6fa8;color:#fff;font-family:'DM Mono';font-size:10px;font-weight:700;padding:2px 10px;border-radius:99px">${sn}</span>
+            <span style="background:#fef9c3;color:#854d0e;font-family:'DM Mono';font-size:9px;padding:2px 8px;border-radius:99px">● EM ANDAMENTO</span>
+            ${fmt ? `<span style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">${fmt}</span>` : ''}
+          </div>
+          <div style="font-family:'Bebas Neue';font-size:18px;color:#0a1628;margin-bottom:4px;letter-spacing:.5px">
+            ${venue}
+          </div>
+          <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-bottom:14px">
+            📅 ${date} · ${players} · ${matches}
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="resumeOpenSession('${s.session_id}')"
+              style="flex:1;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:8px;
+                     padding:10px;font-family:'DM Mono';font-size:11px;font-weight:700;
+                     letter-spacing:1px;cursor:pointer">▶ RETOMAR</button>
+            <button onclick="copySessionResumeLink('${resumeUrl}',this)"
+              style="background:#f4f7fc;color:#0a1628;border:1px solid #dde6f0;border-radius:8px;
+                     padding:10px 14px;font-family:'DM Mono';font-size:11px;cursor:pointer"
+              title="Copiar link para continuar noutro dispositivo">📱 LINK</button>
+          </div>
+        </div>`;
+      }).join('') + '</div>';
+
+  } catch(e) {
+    cards.innerHTML = `<div style="padding:60px 20px;text-align:center;font-family:'DM Mono';font-size:11px;color:#c0392b;letter-spacing:1px">
+      <div style="font-size:28px;margin-bottom:12px">⚠️</div>
+      <div style="font-weight:700;margin-bottom:8px">Erro ao carregar sessões</div>
+      <div style="color:#9ab0c8;font-size:10px;margin-bottom:16px">${e.message}</div>
+      <button onclick="loadOpenSessions()"
+        style="background:#0a1628;color:#fff;border:none;border-radius:8px;
+               padding:8px 20px;font-family:'DM Mono';font-size:10px;cursor:pointer">↻ Tentar novamente</button>
+    </div>`;
+  }
+}
+
+function resumeOpenSession(sid) {
+  // If already on same device and session matches, just go to session tab
+  if (sessionId === sid && sessionIsOpen) {
+    showTab('session', document.querySelector('.tab[onclick*="session"]'));
+    return;
+  }
+  // Otherwise restore from DB (cross-device or fresh load)
+  restoreSessionFromDB(sid);
+  showTab('session', document.querySelector('.tab[onclick*="session"]'));
+}
+
+function copySessionResumeLink(url, btn) {
+  navigator.clipboard?.writeText(url).then(() => {
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => { btn.textContent = '📱 LINK'; }, 2000);
+  }).catch(() => {
+    const tmp = document.createElement('textarea');
+    tmp.value = url; document.body.appendChild(tmp);
+    tmp.select(); document.execCommand('copy'); document.body.removeChild(tmp);
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => { btn.textContent = '📱 LINK'; }, 2000);
+  });
+}
+
 async function loadHistory() {
   const btn   = document.getElementById('hist-main-btn');
   const dbg   = document.getElementById('hist-debug');
