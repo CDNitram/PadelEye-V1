@@ -113,6 +113,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .cfg-date{font-family:'DM Mono';font-size:10px;color:rgba(255,255,255,.6);margin-top:3px;margin-bottom:14px;}
 .cfg-rows{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .cfg-cell{background:rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;}
+.cfg-cell-full{grid-column:1/-1;}
 .cfg-label{font-family:'DM Mono';font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:3px;}
 .cfg-value{font-size:13px;font-weight:600;color:#fff;}
 
@@ -464,30 +465,41 @@ function showTab(id, el) {
 // ── Config panel ──────────────────────────────────────────────────────────────
 function renderConfig() {
   const s = sessionData; if (!s) return;
-  const sn = s.session_serial_number || '—';
+  const sn   = s.session_serial_number || '—';
   const date = s.session_date ? String(s.session_date).slice(0, 10) : '—';
-  const venue = s.session_venue || '—';
-  const fmt = s.session_format || '—';
+  const venue  = s.session_venue  || '—';
+  const fmt    = s.session_format || '—';
   const players = s.session_total_players || '—';
   const matches = s.session_total_matches || '—';
-  const mvp = s.session_mvp || '';
-  const status = s.session_status || 'Open';
+  const mvp   = s.session_mvp || '';
+  const notes = s.notes || '';
+
+  // Read-only field helper
+  const field = (label, value, full) =>
+    '<div class="cfg-cell' + (full ? ' cfg-cell-full' : '') + '">' +
+      '<div class="cfg-label">' + label + '</div>' +
+      '<div class="cfg-value">' + value + '</div>' +
+    '</div>';
+
   document.getElementById('cfg-content').innerHTML =
     '<div class="cfg-hero">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
-        '<div class="cfg-sn">' + sn + '</div>' +
-        '<span style="background:rgba(255,255,255,.15);color:#fff;font-family:\'DM Mono\',monospace;font-size:8px;padding:3px 10px;border-radius:99px;letter-spacing:1px">' + status.toUpperCase() + '</span>' +
-      '</div>' +
+      '<div class="cfg-sn">' + sn + '</div>' +
       '<div class="cfg-date">📅 ' + date + '</div>' +
       '<div class="cfg-rows">' +
-        '<div class="cfg-cell"><div class="cfg-label">Local</div><div class="cfg-value">' + venue + '</div></div>' +
-        '<div class="cfg-cell"><div class="cfg-label">Formato</div><div class="cfg-value" style="font-size:11px">' + fmt + '</div></div>' +
-        '<div class="cfg-cell"><div class="cfg-label">Jogadores</div><div class="cfg-value">' + players + '</div></div>' +
-        '<div class="cfg-cell"><div class="cfg-label">Partidas</div><div class="cfg-value">' + matches + '</div></div>' +
+        field('Local', venue, true) +
+        field('Formato', fmt) +
+        field('Jogadores', players) +
+        field('Partidas', matches) +
       '</div>' +
-      (mvp ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)"><div style="font-family:\'DM Mono\',monospace;font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1.5px;margin-bottom:3px">SESSION MVP</div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#fde68a;letter-spacing:1px">🏅 ' + mvp + '</div></div>' : '') +
+      (mvp ? '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)">' +
+        '<div style="font-family:\'DM Mono\',monospace;font-size:8px;color:rgba(255,255,255,.5);letter-spacing:1.5px;margin-bottom:3px">MVP DA SESSÃO</div>' +
+        '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:#fde68a;letter-spacing:1px">🏅 ' + mvp + '</div>' +
+      '</div>' : '') +
     '</div>' +
-    (sessionData.notes ? '<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px;font-size:12px;color:#5a7090;line-height:1.6"><span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#9ab0c8;letter-spacing:1px;display:block;margin-bottom:5px">NOTAS</span>' + sessionData.notes + '</div>' : '');
+    (notes ? '<div style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:14px;font-size:12px;color:#5a7090;line-height:1.6">' +
+      '<span style="font-family:\'DM Mono\',monospace;font-size:9px;color:#9ab0c8;letter-spacing:1px;display:block;margin-bottom:5px">NOTAS</span>' +
+      notes +
+    '</div>' : '');
 }
 
 // ── Players panel ─────────────────────────────────────────────────────────────
@@ -502,7 +514,7 @@ async function loadPlayers() {
       (m.team_a || '').split(' / ').forEach(n => n.trim() && names.add(n.trim()));
       (m.team_b || '').split(' / ').forEach(n => n.trim() && names.add(n.trim()));
     });
-    if (!names.size) { el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">AGUARDANDO JOGADORES</div></div>'; return; }
+    if (!names.size) { el.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">AGUARDANDO PRIMEIRA PARTIDA</div><div style="font-family:\'DM Mono\',monospace;font-size:9px;color:#c0cdd8;margin-top:6px;letter-spacing:.5px">Os jogadores aparecem assim que a primeira partida for lançada</div></div>'; return; }
     el.innerHTML = '<div class="plr-grid">' + [...names].map(name => {
       const nat = getPlayerNat(name), bg = flagGrad(nat), col = flagTextCol(nat);
       const player = PLAYER_REGISTRY.find(p => {
