@@ -2044,7 +2044,7 @@ const PadelEyeDB = (() => {
       created_at:             now(),
       // lifecycle fields
       session_status:         'Finalized',
-      session_substatus:      '',
+      session_substatus:      'Finalized',
       opened_at:              sessionOpenedAt || now(),
       finalized_at:           now(),
     };
@@ -2647,7 +2647,7 @@ async function loadOpenSessions() {
     // Filter open sessions (not finalized, not cancelled)
     const open = rows.filter(s => {
       const st = (s.session_status || '').trim().toLowerCase();
-      return st === 'open' || st === 'in_progress' || st === '' || st === 'aberta';
+      return st === 'open' || st === 'in_progress';
     }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
     if (!open.length) {
