@@ -99,7 +99,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .btn-add-match:hover{background:#132240;}
 .match-log{display:flex;flex-direction:column;gap:8px;}
 .match-item{background:#fff;border:1px solid #eaf0f8;border-radius:10px;padding:10px 13px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;}
-.match-team{font-size:12px;font-weight:600;line-height:1.4;color:#0d1e3a;}
+.match-team{font-size:12px;font-weight:600;line-height:1.4;color:#0d1e3a;min-width:0;overflow-wrap:break-word;word-break:break-word;}
 .match-team.right{text-align:right;}
 .match-team.win{color:#1a7a44;}
 .match-team.lose{color:#9ab0c8;}
@@ -309,6 +309,19 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 @keyframes splashBar{0%{width:0}30%{width:45%}70%{width:75%}90%{width:92%}100%{width:100%}}
 #s-splash.splash-exit{animation:splashOut .5s ease forwards}
 @keyframes splashOut{to{opacity:0;transform:scale(1.03)}}
+
+/* ── Mobile overflow fixes ── */
+@media(max-width:480px){
+  .match-item{gap:4px;padding:8px 8px;}
+  .match-team{font-size:11px;}
+  .roster-card{flex-wrap:wrap;}
+  .roster-info{min-width:0;overflow:hidden;}
+  .roster-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+  .session-hero{padding:14px;}
+  .hero-num{font-size:32px;}
+  /* History detail chips */
+  .chip-row,.match-chip-row{flex-wrap:wrap;gap:4px;}
+}
 </style>
 </head>
 <body>
@@ -1430,9 +1443,10 @@ function _bootApp() {
     const saved = localStorage.getItem('pe_session_v10');
     if (saved) restoreSession(JSON.parse(saved));
   } catch(e) {}
-  // Fetch next session number (only if session not already restored with a number)
+  // Fetch next session number (only if session not already restored and not resuming from URL)
+  const _hasResume = new URLSearchParams(window.location.search).get('resume');
   const numEl = document.getElementById('cfg-num');
-  if (!numEl?.textContent?.trim() || numEl.textContent.trim() === '—') {
+  if (!_hasResume && (!numEl?.textContent?.trim() || numEl.textContent.trim() === '—')) {
     const loadingEl = document.getElementById('cfg-num-loading');
     if (loadingEl) loadingEl.textContent = 'LOADING...';
     PadelEyeDB.fetchNextSessionNumber().then(nextNum => {
@@ -2785,10 +2799,11 @@ async function loadOpenSessions() {
     const res  = await PadelEyeDB._send('get_sessions', {});
     const rows = res.rows || [];
 
-    // Filter open sessions (not finalized, not cancelled)
+    // Filter open sessions (not finalized, not cancelled, not saved)
+    const CLOSED_STATUSES = ['finalized','cancelled','discarded','saved','closed','completed'];
     const open = rows.filter(s => {
       const st = (s.session_status || '').trim().toLowerCase();
-      return st === 'open' || st === 'in_progress';
+      return !CLOSED_STATUSES.some(c => st.includes(c));
     }).sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 
     if (!open.length) {
@@ -3100,11 +3115,11 @@ async function histOpen(numero) {
             const aWin = sa > sb;
             const hasTB = p.tie_break === 'Yes';
             const tbTag = hasTB ? `<div style="font-size:9px;color:#C9933A;font-family:'DM Mono';margin-top:1px">🏓 TB ${p.tb_a||''}×${p.tb_b||''}</div>` : '';
-            const pillA = ta.split(' / ').map(n=>`<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:${flagGrad(getPlayerNat(n.trim()))};color:${flagTextCol(getPlayerNat(n.trim()))};font-size:10px;font-weight:700;white-space:nowrap;margin:0 1px;text-shadow:0 1px 2px rgba(0,0,0,.2)">${n.trim()}</span>`).join('');
-            const pillB = tb.split(' / ').map(n=>`<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:${flagGrad(getPlayerNat(n.trim()))};color:${flagTextCol(getPlayerNat(n.trim()))};font-size:10px;font-weight:700;white-space:nowrap;margin:0 1px;text-shadow:0 1px 2px rgba(0,0,0,.2)">${n.trim()}</span>`).join('');
-            const wrapA = aWin  ? 'style="display:inline-flex;align-items:center;gap:2px;padding:2px 5px;border-radius:30px;border:3px solid #27AE60;background:rgba(39,174,96,.08)"' : 'style="display:inline-flex;align-items:center;gap:2px"';
-            const wrapB = !aWin ? 'style="display:inline-flex;align-items:center;gap:2px;padding:2px 5px;border-radius:30px;border:3px solid #27AE60;background:rgba(39,174,96,.08)"' : 'style="display:inline-flex;align-items:center;gap:2px"';
-            return `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:#fff;border-bottom:1px solid #f0f4f8;padding:8px 12px">
+            const pillA = ta.split(' / ').map(n=>`<span style="display:inline-block;padding:2px 6px;border-radius:20px;background:${flagGrad(getPlayerNat(n.trim()))};color:${flagTextCol(getPlayerNat(n.trim()))};font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;margin:0 1px;text-shadow:0 1px 2px rgba(0,0,0,.2)">${n.trim()}</span>`).join('');
+            const pillB = tb.split(' / ').map(n=>`<span style="display:inline-block;padding:2px 6px;border-radius:20px;background:${flagGrad(getPlayerNat(n.trim()))};color:${flagTextCol(getPlayerNat(n.trim()))};font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;margin:0 1px;text-shadow:0 1px 2px rgba(0,0,0,.2)">${n.trim()}</span>`).join('');
+            const wrapA = aWin  ? 'style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:2px 5px;border-radius:30px;border:3px solid #27AE60;background:rgba(39,174,96,.08);min-width:0"' : 'style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-width:0"';
+            const wrapB = !aWin ? 'style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:2px 5px;border-radius:30px;border:3px solid #27AE60;background:rgba(39,174,96,.08);min-width:0"' : 'style="display:flex;flex-wrap:wrap;align-items:center;gap:2px;min-width:0"';
+            return `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;background:#fff;border-bottom:1px solid #f0f4f8;padding:8px 8px;min-width:0">
               <div style="display:flex;align-items:center"><div ${wrapA}>${pillA}</div></div>
               <div style="text-align:center;min-width:80px">
                 <div style="font-family:'DM Mono';font-size:8px;color:#c0cdd8;letter-spacing:1px;margin-bottom:2px">MATCH ${i+1}</div>
@@ -3360,7 +3375,31 @@ function parseSmartDate(s){
 // ADD PLAYER MODAL
 // ══════════════════════════════════════════
 // ── OBJETIVO: Registar novo jogador localmente e no Google Sheets ─────────────
-function openAddPlayer(){ document.getElementById('add-player-modal').style.display='flex'; }
+function openEditPlayer(pid) {
+  const p = PLAYER_REGISTRY.find(x => (x.player_id||x.id) === pid);
+  if (!p) { alert('Jogador não encontrado.'); return; }
+  // Pre-fill modal fields
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('ap-nome',         p.player_name     || p.nome      || '');
+  set('ap-sobrenome',    p.player_surname  || p.sobrenome || '');
+  set('ap-nickname',     p.player_nickname || p.apelido   || '');
+  set('ap-categoria',    p.player_category || p.categoria || '');
+  set('ap-genero',       p.player_gender   || p.genero    || '');
+  set('ap-cidade',       p.player_city     || p.cidade    || '');
+  set('ap-nacionalidade',p.player_nationality || p.nacionalidade || '');
+  set('ap-email',        p.email || '');
+  set('ap-celular',      p.mobile_number   || p.celular   || '');
+  // Store editing player_id for saveNewPlayer
+  document.getElementById('add-player-modal').dataset.editingId = pid;
+  document.getElementById('add-player-modal').querySelector('h2, .modal-title, [class*="title"]')
+    && (document.querySelector('#add-player-modal h2, #add-player-modal [class*="title"]') ||
+        document.querySelector('#add-player-modal .section-title'))?.let?.(el => el.textContent = 'Editar Jogador');
+  document.getElementById('add-player-modal').style.display='flex';
+}
+function openAddPlayer(){
+  document.getElementById('add-player-modal').dataset.editingId = '';
+  document.getElementById('add-player-modal').style.display='flex';
+}
 function closeAddPlayer(){ document.getElementById('add-player-modal').style.display='none'; }
 async function saveNewPlayer(){
   const nome  = document.getElementById('ap-nome')?.value?.trim();
@@ -3541,7 +3580,7 @@ function renderRoster() {
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
             </svg>
           </button>
-          <button onclick="openAddPlayer()" title="Adicionar jogador"
+          <button onclick="openEditPlayer('${pid}')" title="Editar jogador"
             style="width:28px;height:28px;border-radius:5px;border:1.5px solid #C9933A;background:rgba(201,147,58,.07);color:#C9933A;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
             onmouseover="this.style.background='rgba(201,147,58,.18)'"
             onmouseout="this.style.background='rgba(201,147,58,.07)'">
