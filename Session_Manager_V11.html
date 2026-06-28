@@ -1,3 +1,15 @@
+window.onerror = (m,s,l,c,e)=>{
+  alert("ERROR\n"+m+"\nLine: "+l);
+};
+
+window.onunhandledrejection = e=>{
+  alert("PROMISE\n"+e.reason);
+};
+
+document.addEventListener("DOMContentLoaded",()=>{
+  alert("DOM READY");
+});
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
