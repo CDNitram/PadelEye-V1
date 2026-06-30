@@ -2888,14 +2888,21 @@ async function loadOpenSessions() {
 }
 
 function resumeOpenSession(sid) {
-  // If already on same device and session matches, just go to session tab
+  // If already on same device and session matches, just navigate to session tab
   if (sessionId === sid && sessionIsOpen) {
-    showTab('session', document.querySelector('.tab[onclick*="session"]'));
+    showTab('session', document.getElementById('tab-session'));
+    const _db = document.getElementById('btn-discard-session');
+    if (_db && !sessionSaved) _db.style.display = 'block';
     return;
   }
-  // Otherwise restore from DB (cross-device or fresh load)
+  // Clear any stale localStorage session before restoring from DB
+  // (prevents S26 data from bleeding into S25 restore)
+  localStorage.removeItem('pe_session_v10');
+  activePlayers = []; guestPlayers = []; matches = [];
+  sessionIsOpen = false; sessionStatus = ''; sessionSubstatus = '';
+  sessionId = null; sessionSaved = false;
+  // Restore from DB
   restoreSessionFromDB(sid);
-  showTab('session', document.querySelector('.tab[onclick*="session"]'));
 }
 
 function copySessionResumeLink(url, btn) {
