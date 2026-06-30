@@ -2887,7 +2887,7 @@ async function loadOpenSessions() {
   }
 }
 
-function resumeOpenSession(sid) {
+async function resumeOpenSession(sid) {
   // If already on same device and session matches, just navigate to session tab
   if (sessionId === sid && sessionIsOpen) {
     showTab('session', document.getElementById('tab-session'));
@@ -2902,7 +2902,7 @@ function resumeOpenSession(sid) {
   sessionIsOpen = false; sessionStatus = ''; sessionSubstatus = '';
   sessionId = null; sessionSaved = false;
   // Restore from DB
-  restoreSessionFromDB(sid);
+  await restoreSessionFromDB(sid);
 }
 
 function copySessionResumeLink(url, btn) {
