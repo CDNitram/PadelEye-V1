@@ -2895,13 +2895,17 @@ async function resumeOpenSession(sid) {
     if (_db && !sessionSaved) _db.style.display = 'block';
     return;
   }
-  // Clear any stale localStorage session before restoring from DB
-  // (prevents S26 data from bleeding into S25 restore)
+  // 1. Navigate immediately so user sees feedback
+  showTab('session', document.getElementById('tab-session'));
+  showAlert('alert-session', '⏳ Carregando sessão S' + sid.split('_')[1] + '…', 'info');
+
+  // 2. Clear any stale localStorage so S26 doesn't bleed into S25
   localStorage.removeItem('pe_session_v10');
   activePlayers = []; guestPlayers = []; matches = [];
   sessionIsOpen = false; sessionStatus = ''; sessionSubstatus = '';
   sessionId = null; sessionSaved = false;
-  // Restore from DB
+
+  // 3. Restore from DB
   await restoreSessionFromDB(sid);
 }
 
@@ -3410,8 +3414,11 @@ function parseSmartDate(s){
 // ══════════════════════════════════════════
 // ── OBJETIVO: Registar novo jogador localmente e no Google Sheets ─────────────
 function openEditPlayer(pid) {
-  const p = PLAYER_REGISTRY.find(x => (x.player_id||x.id) === pid);
-  if (!p) { alert('Jogador não encontrado.'); return; }
+  // Normalise: strip leading '#' from both sides for robust matching
+  const _normalise = s => (s || '').replace(/^#+/, '');
+  const _pid = _normalise(pid);
+  const p = PLAYER_REGISTRY.find(x => _normalise(x.player_id||x.id) === _pid);
+  if (!p) { alert('Jogador não encontrado. (id=' + pid + ')'); return; }
   // Pre-fill modal fields
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   set('ap-nome',         p.player_name     || p.nome      || '');
