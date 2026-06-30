@@ -3432,9 +3432,11 @@ function openEditPlayer(pid) {
   set('ap-celular',      p.mobile_number   || p.celular   || '');
   // Store editing player_id for saveNewPlayer
   document.getElementById('add-player-modal').dataset.editingId = pid;
-  document.getElementById('add-player-modal').querySelector('h2, .modal-title, [class*="title"]')
-    && (document.querySelector('#add-player-modal h2, #add-player-modal [class*="title"]') ||
-        document.querySelector('#add-player-modal .section-title'))?.let?.(el => el.textContent = 'Editar Jogador');
+  // Update modal title if possible
+  const _modalTitle = document.querySelector('#add-player-modal h2') ||
+                      document.querySelector('#add-player-modal .section-title') ||
+                      document.querySelector('#add-player-modal [class*="title"]');
+  if (_modalTitle) _modalTitle.textContent = 'Editar Jogador';
   document.getElementById('add-player-modal').style.display='flex';
 }
 function openAddPlayer(){
@@ -3453,15 +3455,17 @@ async function saveNewPlayer(){
   const email = document.getElementById('ap-email')?.value?.trim()||'';
   const cel   = document.getElementById('ap-celular')?.value?.trim()||'';
   if(!nome){showAlert('ap-status','Nome obrigatório.','warn');document.getElementById('ap-status').style.display='block';return;}
-  const id='p_'+Date.now()+'_'+Math.random().toString(36).substr(2,5);
+  // ID sequencial gerado pelo GAS
+  const apSt = document.getElementById('ap-status');
+  if(apSt){apSt.style.display='block';apSt.textContent='⏳ Salvando…';}
+  const res = await PadelEyeDB.registerPlayer({id: null, nome, sobrenome:sobr, nickname:nick, categoria:cat, genero:gen, cidade:city, nacionalidade:nat, email, celular:cel});
+  const id = (res && res.player_id) || null;
+  if(apSt){apSt.style.display='block';apSt.textContent=(res&&res.status==='error')?'⚠️ Erro: '+(res.message||''):'✅ Jogador salvo! ID: '+id;}
+  await loadCadastro();
   const display = nick||nome;
   if(!BASE_PLAYERS.includes(display)) BASE_PLAYERS.push(display);
   renderPlayerGrid();
   updateMatchSelects();
-  closeAddPlayer();
-  const res = await PadelEyeDB.registerPlayer({id, nome, sobrenome:sobr, nickname:nick, categoria:cat, genero:gen, cidade:city, nacionalidade:nat, email, celular:cel});
-  const apSt = document.getElementById('ap-status');
-  if(apSt){apSt.style.display='block';apSt.textContent=res.status==='error'?'⚠️ Erro ao salvar (local ok)':'✅ Jogador salvo!';}
   setTimeout(()=>closeAddPlayer(),1200);
   await PadelEyeDB.logSession('App','insert_player',id,{nome,nick,cat});
 }
