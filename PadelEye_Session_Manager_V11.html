@@ -1230,7 +1230,7 @@ async function restoreSessionFromDB(sid) {
       showAlert('alert-session', '❌ Sessão não encontrada no banco. Verifique o link.', 'error');
       return;
     }
-    if (sessRow.session_status === 'Finalized') {
+    if ((sessRow.session_status||'').toLowerCase() === 'finalized') {
       showAlert('alert-session', '⚠ Esta sessão já foi finalizada e salva.', 'warning');
       return;
     }
@@ -1296,33 +1296,45 @@ async function restoreSessionFromDB(sid) {
     if (ps) { ps.style.opacity='1'; ps.style.pointerEvents='auto'; }
     document.getElementById('open-session-btn').style.display = 'none';
 
+    // Enable all tabs since session is open
     ['tab-match','tab-scoreboard','tab-save'].forEach(id =>
       document.getElementById(id)?.classList.remove('disabled'));
 
-    renderPlayerGrid();
-    updateMatchSelects();
-    if (matches.length > 0) {
-      renderMatchLog();
-      renderScoreboard();
-      document.getElementById('btn-close-session')?.style && (document.getElementById('btn-close-session').style.display='block');
-    }
-
-    persistSession(); // sync to localStorage for same-device refresh
-    showAlert('alert-session', `✅ Sessão retomada: ${activePlayers.length + guestPlayers.length} jogadores · ${matches.length} partidas registadas.`, 'ok');
-
-    // Show discard button — always visible when session is open (resumed or fresh)
+    // Always show discard button — session is open
     const _discardBtn = document.getElementById('btn-discard-session');
     if (_discardBtn) _discardBtn.style.display = 'block';
 
-    // Navigate to the most relevant tab based on substatus
-    const _sub = (sessRow.session_substatus || '').toLowerCase();
+    renderPlayerGrid();
+    updateMatchSelects();
+
     if (matches.length > 0) {
+      renderMatchLog();
+      renderScoreboard();
+      document.getElementById('btn-close-session')?.style &&
+        (document.getElementById('btn-close-session').style.display='block');
+    }
+
+    persistSession(); // sync to localStorage for this device
+
+    const _nP = activePlayers.length + guestPlayers.length;
+    const _nM = matches.length;
+
+    if (_nM > 0) {
+      // Has matches — go to scoreboard
+      showAlert('alert-session', `✅ Sessão retomada: ${_nP} jogadores · ${_nM} partidas registadas.`, 'ok');
       showTab('scoreboard', document.getElementById('tab-scoreboard'));
-    } else if (activePlayers.length > 0 || guestPlayers.length > 0 || _sub === 'players_confirmed') {
+    } else if (_nP > 0) {
+      // Has players but no matches — go to match tab to start registering
+      showAlert('alert-session', `✅ Sessão retomada: ${_nP} jogadores seleccionados · sem partidas ainda.`, 'ok');
       showTab('match', document.getElementById('tab-match'));
     } else {
-      // waiting_players or unknown — go to session config tab
-      showTab('session', document.querySelector('.tab[onclick*="session"]'));
+      // Empty session (S25 case) — no players, no matches. Show session tab to pick players.
+      showAlert('alert-session',
+        `✅ Sessão ${sessRow.session_serial_number || sid} retomada. Nenhum jogador ou partida registada ainda. Seleccione os jogadores abaixo.`,
+        'ok');
+      showTab('session', document.getElementById('tab-session'));
+      // Make sure player-section is unlocked so user can pick players
+      if (ps) { ps.style.opacity='1'; ps.style.pointerEvents='auto'; }
     }
 
   } catch(e) {
@@ -1448,12 +1460,18 @@ function _bootApp() {
   const dateEl = document.getElementById('cfg-date');
   if (dateEl && !dateEl.value) dateEl.value = `${yyyy}-${mm}-${dd}`;
   // Restore in-progress session from localStorage
-  try {
-    const saved = localStorage.getItem('pe_session_v10');
-    if (saved) restoreSession(JSON.parse(saved));
-  } catch(e) {}
-  // Fetch next session number (only if session not already restored and not resuming from URL)
+  // SKIP if ?resume= is in URL — the DB version takes priority and we don't want stale data
   const _hasResume = new URLSearchParams(window.location.search).get('resume');
+  if (!_hasResume) {
+    try {
+      const saved = localStorage.getItem('pe_session_v10');
+      if (saved) restoreSession(JSON.parse(saved));
+    } catch(e) {}
+  } else {
+    // Clear any stale localStorage session so it doesn't bleed into the resumed one
+    localStorage.removeItem('pe_session_v10');
+  }
+  // Fetch next session number (only if session not already restored and not resuming from URL)
   const numEl = document.getElementById('cfg-num');
   if (!_hasResume && (!numEl?.textContent?.trim() || numEl.textContent.trim() === '—')) {
     const loadingEl = document.getElementById('cfg-num-loading');
