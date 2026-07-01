@@ -1702,6 +1702,7 @@ function rkSetFilter(mode, el) {
 /** Apply the active filter and re-render */
 // ── rkUpdateKPIs ─────────────────────────────────────────────────
 function rkUpdateKPIs(rows) {
+  if (!rows) rows = rkDataFiltered || rkData || [];
   const players  = rows.length;
   const sessions = rkSessData.length;
   const matches  = rows.reduce((a,r) => a + (+r.matches||0), 0);
@@ -1727,6 +1728,7 @@ function rkUpdateKPIs(rows) {
 
 // ── rkRenderTable ─────────────────────────────────────────────────
 function rkRenderTable(rows) {
+  if (!rows) rows = rkDataFiltered || rkData || [];
   const body = document.getElementById('rk-body');
   if (!body) return;
 
@@ -2848,8 +2850,9 @@ async function loadRanking() {
     if (dot)  dot.style.background  = '#27AE60';
     if (stxt) stxt.textContent = 'Atualizado';
   } catch(e) {
+    console.error('[loadRanking]', e);
     if (dot)  dot.style.background  = '#e74c3c';
-    if (stxt) stxt.textContent = 'Erro';
+    if (stxt) stxt.textContent = 'Erro: ' + e.message;
   }
 }
 
