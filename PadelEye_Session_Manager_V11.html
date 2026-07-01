@@ -1158,7 +1158,7 @@ const PadelEyeDB = (() => {
 // ══════════════════════════════════════════
 // CONSTANTS & STATE
 // ══════════════════════════════════════════
-let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') || 'https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec';
+let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') || 'https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec';
 const SM_AUTH_KEY = 'pe_auth_v10';
 const USERS = {
   'martin':                    { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
@@ -1249,13 +1249,38 @@ function openSession() {
 // ── Cross-device session resume ────────────────────────────────────────────
 
 // ── Restore session from DB (cross-device resume via ?resume=SESSION_ID) ──────
-function loadCadastro() {
-  const roster = document.getElementById('player-roster');
-  if (!PLAYER_REGISTRY.length) {
-    if (roster) roster.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div>A carregar...</div>';
-    loadPlayersFromDB().then(() => renderRoster());
-    return;
+// ── Player DB helpers ──────────────────────────────────────────────
+function displayNameV10(p) {
+  if (!p) return '';
+  const nick = p.player_nickname || p.nickname || '';
+  const name = p.player_name     || p.nome     || '';
+  const sur  = p.player_surname  || p.sobrenome|| '';
+  if (nick) return nick;
+  return (name + (sur ? ' ' + sur : '')).trim();
+}
+
+async function loadPlayersFromDB() {
+  try {
+    const res = await PadelEyeDB._fetch('get_players', {});
+    const rows = (res && res.rows) || [];
+    if (rows.length) {
+      PLAYER_REGISTRY = rows;
+      BASE_PLAYERS.length = 0;
+      rows.forEach(p => {
+        const display = displayNameV10(p);
+        if (display && !BASE_PLAYERS.includes(display)) BASE_PLAYERS.push(display);
+      });
+    }
+  } catch(e) {
+    console.warn('[SM] loadPlayersFromDB error:', e);
   }
+}
+
+
+async function loadCadastro() {
+  const roster = document.getElementById('player-roster');
+  if (roster) roster.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8"><div style="font-size:32px">⏳</div><div style="margin-top:8px;font-size:13px">A carregar jogadores…</div></div>';
+  await loadPlayersFromDB();
   renderRoster();
 }
 function renderRoster() {
@@ -2718,7 +2743,11 @@ async function loadHistory() {
   try {
     const res = await PadelEyeDB._fetch('get_sessions', {});
     const rows = (res?.rows||[]).filter(r => (r.session_status||'').toLowerCase()==='finalized')
-      .sort((a,b) => (b.session_serial_number||'').localeCompare(a.session_serial_number||''));
+      .sort((a,b) => {
+        const na = parseInt((b.session_serial_number||'0').toString().replace(/\D/g,'')) || 0;
+        const nb = parseInt((a.session_serial_number||'0').toString().replace(/\D/g,'')) || 0;
+        return na - nb;
+      });
     if (!rows.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:#9ab0c8">Sem sessões finalizadas.</div>'; return; }
     el.innerHTML = rows.map(s => {
       const serial = s.session_serial_number||'?';
