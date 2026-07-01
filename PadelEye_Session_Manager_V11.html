@@ -559,6 +559,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico de Sessões</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Em Andamento</div>
+    <button class="tab" id="tab-open-sessions" onclick="showTab('open-sessions',this);loadOpenSessions()"><span class="sb-ic" style="background:#d1fae5">🎾</span> Sessões Abertas</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Sistema</div>
     <button class="tab" id="tab-testdb" onclick="showTab('testdb',this);renderTestDBTab()"><span class="sb-ic" style="background:#f1f5f9">🔧</span> Test DB</button>
@@ -916,6 +917,23 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 <!-- ── SESSION HISTORY ── -->
   <!-- ═══ SESSÕES ABERTAS ═══ -->
 
+
+  <div class="panel" id="p-open-sessions">
+    <div style="margin-bottom:24px">
+      <div style="font-family:'Bebas Neue';font-size:28px;letter-spacing:1px;color:#0a1628">SESSÕES ABERTAS</div>
+      <div style="font-size:12px;color:#9ab0c8;font-family:'DM Mono'">Sessões em andamento — retoma ou abre no Session Live</div>
+    </div>
+    <div id="os-empty" style="padding:40px 20px;text-align:center;color:#9ab0c8;font-size:13px;display:none">
+      Nenhuma sessão aberta no momento.
+    </div>
+    <div id="os-cards" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div style="margin-top:20px">
+      <button onclick="showTab('session',document.getElementById('tab-session'))" style="width:100%;padding:13px;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;font-family:'DM Sans'">
+        + Nova Sessão
+      </button>
+    </div>
+  </div>
+
   <div class="panel" id="p-history">
     <div id="hist-debug" style="background:#0a1628;color:#93C5FD;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-family:'DM Mono';font-size:10px;line-height:1.8;display:none"></div>
     <div id="hist-list-view">
@@ -1113,9 +1131,34 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 </div>
 <script>
+
+// ══════════════════════════════════════════════════════════════════
+// PadelEyeDB — API module (restored)
+// ══════════════════════════════════════════════════════════════════
+const PadelEyeDB = (() => {
+  function uid() {
+    return 'pe_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+  }
+  async function send(action, data) {
+    const res = await fetch(SESSION_MANAGER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, data }),
+    });
+    return res.json();
+  }
+  async function fetchAction(action, data) {
+    const params = new URLSearchParams({ action, ...data });
+    const res = await fetch(SESSION_MANAGER_URL + '?' + params);
+    return res.json();
+  }
+  return { _send: send, _fetch: fetchAction, _uid: uid };
+})();
+
 // ══════════════════════════════════════════
 // CONSTANTS & STATE
 // ══════════════════════════════════════════
+let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') || 'https://script.google.com/macros/s/AKfycbw_oh3ChmCqj4ehP5Uc4spRhaejwX3eV4JTu-er4Qn7EXsqqaRSC6HyrGXU7jh8btIhTw/exec';
 const SM_AUTH_KEY = 'pe_auth_v10';
 const USERS = {
   'martin':                    { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
@@ -2802,6 +2845,236 @@ async function loadRanking() {
     if (dot)  dot.style.background  = '#e74c3c';
     if (stxt) stxt.textContent = 'Erro';
   }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SESSÕES ABERTAS — load, render, manage (restored correctly)
+// ══════════════════════════════════════════════════════════════════
+
+// Statuses considered "closed" — these are NEVER shown as open
+const CLOSED_STATUSES = ['finalized','cancelled','discarded','saved','closed','completed'];
+
+function _isClosedStatus(st) {
+  const s = (st || '').trim().toLowerCase();
+  return CLOSED_STATUSES.some(c => s.includes(c));
+}
+
+async function loadOpenSessions() {
+  const cards  = document.getElementById('os-cards');
+  const empty  = document.getElementById('os-empty');
+  if (!cards) return;
+
+  cards.innerHTML = '<div style="text-align:center;padding:30px;color:#9ab0c8;font-size:13px">⏳ Carregando…</div>';
+  if (empty) empty.style.display = 'none';
+
+  try {
+    const res  = await PadelEyeDB._fetch('get_sessions', {});
+    const rows = (res && res.rows) || [];
+
+    // Filter: only open sessions, not closed
+    const open = rows
+      .filter(s => !_isClosedStatus(s.session_status))
+      .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+
+    if (!open.length) {
+      cards.innerHTML = '';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+
+    const LIVE_URL = 'https://cdnitram.github.io/PadelEye-V1/PadelEye_Session_Live_V2.html';
+
+    cards.innerHTML = open.map(s => {
+      const sid     = s.session_id || '';
+      const serial  = s.session_serial_number || '?';
+      const date    = s.session_date || s.session_date || '';
+      const venue   = s.session_venue || '';
+      const fmt     = s.session_format || '';
+      const status  = s.session_status || '';
+      const substatus = s.session_substatus || '';
+      const nP      = s.session_total_players || '—';
+      const nM      = s.session_total_matches || '—';
+
+      // Is this the currently active session in THIS tab?
+      const isThisSession = (sid === sessionId && sessionIsOpen);
+
+      // Status badge
+      const badgeColor = substatus === 'in_progress' ? '#27AE60' :
+                         substatus === 'players_confirmed' ? '#3a7bd5' : '#C9933A';
+      const badgeLabel = substatus === 'in_progress' ? 'EM ANDAMENTO' :
+                         substatus === 'players_confirmed' ? 'JOGADORES CONFIRMADOS' : 'AGUARDANDO';
+
+      const liveUrl = `${LIVE_URL}?session_id=${encodeURIComponent(sid)}`;
+      const resumeUrl = window.location.href.split('?')[0] + '?resume=' + encodeURIComponent(sid);
+
+      return `<div style="background:#fff;border-radius:16px;border:1.5px solid ${isThisSession ? '#C9933A' : '#dde6f0'};padding:18px 20px;box-shadow:0 2px 8px rgba(13,30,58,.06)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-family:'Bebas Neue';font-size:22px;color:#C9933A;letter-spacing:1px">${serial}</span>
+          <span style="background:${badgeColor}20;color:${badgeColor};border-radius:20px;padding:3px 10px;font-family:'DM Mono';font-size:9px;font-weight:700;letter-spacing:.5px">● ${badgeLabel}</span>
+          ${fmt ? `<span style="font-size:11px;color:#9ab0c8">${fmt}</span>` : ''}
+          ${isThisSession ? '<span style="font-size:10px;color:#C9933A;font-weight:700;margin-left:auto">● Sessão actual</span>' : ''}
+        </div>
+        <div style="font-size:14px;font-weight:700;color:#0a1628;margin-bottom:4px">${venue || '—'}</div>
+        <div style="font-size:11px;color:#9ab0c8;font-family:'DM Mono';margin-bottom:14px">
+          📅 ${date} · 👥 ${nP} jogadores · 🎾 ${nM} partidas
+        </div>
+        <div style="display:flex;gap:8px">
+          ${isThisSession
+            ? `<button onclick="showTab('session',document.getElementById('tab-session'))"
+                style="flex:1;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:8px;padding:10px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer">
+                ▶ CONTINUAR AQUI</button>`
+            : `<button onclick="resumeSession('${sid}')"
+                style="flex:1;background:#0a1628;color:#C9933A;border:2px solid #C9933A;border-radius:8px;padding:10px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer">
+                ▶ RETOMAR</button>`
+          }
+          <a href="${liveUrl}" target="_blank"
+            style="background:#1a7a44;color:#fff;border:none;border-radius:8px;padding:10px 14px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:4px">
+            📡 LIVE</a>
+          <button onclick="copyLink('${resumeUrl}', this)"
+            style="background:#f4f7fc;color:#0a1628;border:1px solid #dde6f0;border-radius:8px;padding:10px 14px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px;cursor:pointer">
+            📱 LINK</button>
+          ${!isThisSession ? `<button onclick="discardOpenSession('${sid}', this)"
+            style="background:none;color:#9ab0c8;border:1px solid #dde6f0;border-radius:8px;padding:10px 14px;font-size:11px;cursor:pointer"
+            title="Descartar sessão">🗑</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+  } catch(e) {
+    if (cards) cards.innerHTML = `<div style="color:#e74c3c;font-size:13px;padding:20px">❌ Erro: ${e.message}</div>`;
+  }
+}
+
+// Resume a session from DB (different device or session not in memory)
+async function resumeSession(sid) {
+  if (sessionIsOpen && sessionId !== sid) {
+    if (!confirm('Tens uma sessão activa. Abandonar e retomar a outra?')) return;
+    discardSession();
+  }
+  // Clear any stale localStorage
+  localStorage.removeItem('pe_session_v10');
+  activePlayers = []; guestPlayers = []; matches = [];
+  sessionIsOpen = false; sessionStatus = ''; sessionSubstatus = '';
+  sessionId = null; sessionSaved = false;
+
+  showTab('session', document.getElementById('tab-session'));
+  showAlert('alert-session', '⏳ Carregando sessão do servidor…', 'info');
+
+  try {
+    const [sessRes, matchRes] = await Promise.all([
+      PadelEyeDB._fetch('get_sessions', {}),
+      PadelEyeDB._fetch('get_session_matches', { session_id: sid }),
+    ]);
+
+    const sessRow = (sessRes.rows || []).find(r => r.session_id === sid);
+    if (!sessRow) {
+      showAlert('alert-session', '❌ Sessão não encontrada no DB.', 'warn');
+      return;
+    }
+    if (_isClosedStatus(sessRow.session_status)) {
+      showAlert('alert-session', '⚠️ Esta sessão já foi finalizada.', 'warn');
+      return;
+    }
+
+    // Restore state
+    sessionId        = sid;
+    sessionIsOpen    = true;
+    sessionSaved     = false;
+    sessionOpenedAt  = sessRow.opened_at || sessRow.created_at || new Date().toISOString();
+    sessionStatus    = sessRow.session_status    || 'open';
+    sessionSubstatus = sessRow.session_substatus || 'in_progress';
+
+    // Restore config fields
+    const cfgNum = document.getElementById('cfg-num');
+    const cfgDate = document.getElementById('cfg-date');
+    const cfgLocal = document.getElementById('cfg-local');
+    const cfgFmt = document.getElementById('cfg-format');
+    const serial = (sessRow.session_serial_number || '').toString().replace(/^S/i,'');
+    if (cfgNum) cfgNum.value = serial;
+    if (cfgDate) cfgDate.value = sessRow.session_date || '';
+    if (cfgLocal) cfgLocal.value = sessRow.session_venue || '';
+    if (cfgFmt) cfgFmt.value = sessRow.session_format || '';
+
+    // Restore matches from DB
+    const dbMatches = matchRes.rows || [];
+    matches = dbMatches.map((m, i) => ({
+      id: m.match_id || ('pe_' + Date.now() + '_' + i),
+      n: m.match_serial_number || (i + 1),
+      teamA: m.team_a || '', scoreA: m.score_a !== '' ? +m.score_a : 0,
+      scoreB: m.score_b !== '' ? +m.score_b : 0, teamB: m.team_b || '',
+      winner: m.winner_team || '',
+      tb: m.tie_break === 'Yes' || m.tie_break === 'Sim',
+      tbA: m.tb_a !== '' ? +m.tb_a : null,
+      tbB: m.tb_b !== '' ? +m.tb_b : null,
+    }));
+
+    // Extract players from matches
+    const playerNames = new Set();
+    dbMatches.forEach(m => {
+      (m.team_a || '').split('/').forEach(n => { if (n.trim()) playerNames.add(n.trim()); });
+      (m.team_b || '').split('/').forEach(n => { if (n.trim()) playerNames.add(n.trim()); });
+    });
+    activePlayers = [...playerNames];
+    guestPlayers = [];
+
+    // Show discard button
+    const discardBtn = document.getElementById('btn-discard-session');
+    if (discardBtn) discardBtn.style.display = 'block';
+
+    // Hide open-session-btn
+    const openBtn = document.getElementById('open-session-btn');
+    if (openBtn) openBtn.style.display = 'none';
+
+    // Update UI
+    stampStatus(sessionStatus, sessionSubstatus);
+    updateHero();
+    updateMatchSelects();
+    if (matches.length > 0) {
+      renderMatchLog();
+      renderScoreboard();
+      showTab('match', document.getElementById('tab-match'));
+    } else {
+      // No matches yet — go to player selection
+      const ps = document.getElementById('player-section');
+      if (ps) { ps.style.opacity = '1'; ps.style.pointerEvents = 'auto'; }
+      showAlert('alert-session', `✅ Sessão ${sessRow.session_serial_number} retomada. Seleccione os jogadores.`, 'ok');
+    }
+    persistSession();
+
+  } catch(e) {
+    showAlert('alert-session', '❌ Erro ao carregar: ' + e.message, 'warn');
+  }
+}
+
+async function discardOpenSession(sid, btn) {
+  if (!confirm('Descartar esta sessão? Não pode ser desfeito.')) return;
+  if (btn) btn.disabled = true;
+  try {
+    await PadelEyeDB._send('update_session_status', {
+      session_id: sid,
+      session_status: 'cancelled',
+      session_substatus: 'discarded',
+    });
+    loadOpenSessions(); // refresh the list
+  } catch(e) {
+    if (btn) btn.disabled = false;
+    alert('Erro: ' + e.message);
+  }
+}
+
+function copyLink(url, btn) {
+  navigator.clipboard?.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }).catch(() => {
+    const tmp = document.createElement('textarea');
+    tmp.value = url;
+    document.body.appendChild(tmp);
+    tmp.select();
+    document.execCommand('copy');
+    document.body.removeChild(tmp);
+  });
 }
 
 function discardSession() {
