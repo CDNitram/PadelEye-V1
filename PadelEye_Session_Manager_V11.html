@@ -1,4 +1,19 @@
-<!DOCTYPE html>
+<!DOCTYPE  <div class="panel" id="p-history">
+    <div id="hs-list-view">
+      <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px;margin-bottom:4px">Histórico de Sessões</div>
+      <div style="font-size:12px;color:#9ab0c8;margin-bottom:20px;font-family:'DM Mono'">Sessões finalizadas registadas no banco de dados</div>
+      <div id="hs-grid">
+        <div style="text-align:center;padding:40px;color:#9ab0c8;font-family:'DM Mono';font-size:11px">
+          Clique no tab para carregar o histórico.
+        </div>
+      </div>
+    </div>
+    <div id="hs-detail-view" style="display:none">
+      <div id="hs-detail-content"></div>
+    </div>
+  </div>
+
+html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -48,7 +63,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tab.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
 .sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
 .main-content{flex:1;overflow-y:auto;padding:16px;}
-.panel{display:none;max-width:700px;margin:0 auto;width:100%;}.panel.active{display:block;}
+.panel{display:none;max-width:700px;margin:0 auto;width:100%;}.panel.active{display:block;}.hsd-dp{display:none;}.hsd-dp-on{display:block;}
 .panel.on{display:block;}
 .card{background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:16px;margin-bottom:14px;}
 .card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin-bottom:12px;}
@@ -1284,6 +1299,31 @@ async function loadCadastro() {
   renderRoster();
 }
 
+// ── Player card helpers ────────────────────────────────────────────
+function flagGrad(nat) {
+  // Gradient by nationality — simple solid colours for SM
+  const n = (nat || '').toLowerCase();
+  if (n.includes('brasil') || n === 'br') return 'linear-gradient(135deg,#009c3b,#ffdf00)';
+  if (n.includes('argentin'))              return 'linear-gradient(135deg,#74acdf,#fff)';
+  if (n.includes('parag'))                 return 'linear-gradient(135deg,#d52b1e,#fff,#009a44)';
+  if (n.includes('urug'))                  return 'linear-gradient(135deg,#fff,#0038a8)';
+  if (n.includes('espan') || n === 'es')  return 'linear-gradient(135deg,#c60b1e,#ffc400)';
+  // Default: brand gradient
+  return 'linear-gradient(135deg,#0a1628,#1a3052)';
+}
+
+function flagTextCol(nat) {
+  const n = (nat || '').toLowerCase();
+  if (n.includes('brasil') || n === 'br') return '#0a1628';
+  return '#ffffff';
+}
+
+function rkIni(name) {
+  if (!name || typeof name !== 'string') return '??';
+  return name.trim().split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '??';
+}
+
+
 function renderRoster() {
   const container = document.getElementById('player-roster');
   const badge     = document.getElementById('roster-badge');
@@ -2101,87 +2141,7 @@ _progTogglePlayer = function(name) {
 };
 
 // ── Duplas Históricas ─────────────────────────────────────────────────
-function renderHistPairs() {
-  const card  = document.getElementById('hist-pairs-card');
-  const body  = document.getElementById('hist-pairs-body');
-  const label = document.getElementById('hist-pairs-filter-label');
-  if (!card || !body) return;
-  if (!rkMatchData || !rkMatchData.length) { card.style.display='none'; return; }
 
-  // Build the filtered session_id set from rkAllSessions + current filter
-  let filtSessions = null; // null = all
-  if (rkFilterMode && rkFilterMode !== 'all') {
-    const filteredSess = rkAllSessions.filter(s => {
-      const d = s.session_date || s.date || '';
-      if (rkFilterMode === 'custom') {
-        const from = document.getElementById('rk-date-from')?.value || '';
-        const to   = document.getElementById('rk-date-to')?.value   || '';
-        return (!from || d >= from) && (!to || d <= to);
-      }
-      return d.startsWith(rkFilterMode);
-    });
-    filtSessions = new Set(filteredSess.map(s => s.session_id));
-    if (label) label.textContent = rkFilterMode === 'custom' ? 'PERÍODO PERSONALIZADO' : 'ANO ' + rkFilterMode;
-  } else {
-    if (label) label.textContent = 'TODAS AS SESSÕES';
-  }
-
-  // Build pair stats
-  const pairMap = {};
-  const pairKey = (a, b) => [a.trim(), b.trim()].sort().join(' / ');
-
-  rkMatchData.forEach(m => {
-    if (filtSessions && !filtSessions.has(m.session_id)) return;
-    const ta = String(m.team_a || m.equipa_a || '').split(/\s*\/\s*/).map(s => s.trim()).filter(Boolean);
-    const tb = String(m.team_b || m.equipa_b || '').split(/\s*\/\s*/).map(s => s.trim()).filter(Boolean);
-    if (ta.length < 2 || tb.length < 2) return;
-    const sa = +(m.score_a ?? 0), sb = +(m.score_b ?? 0);
-
-    [[ta, sa, sb], [tb, sb, sa]].forEach(([team, gf, ga]) => {
-      const k = pairKey(team[0], team[1]);
-      if (!pairMap[k]) pairMap[k] = { k, p1: [team[0],team[1]].sort()[0], p2: [team[0],team[1]].sort()[1], w:0, l:0, gf:0, ga:0 };
-      if (gf > ga) pairMap[k].w++; else pairMap[k].l++;
-      pairMap[k].gf += gf; pairMap[k].ga += ga;
-    });
-  });
-
-  const pairs = Object.values(pairMap).filter(p => p.w + p.l >= 2); // min 2 partidas
-  if (!pairs.length) { card.style.display='none'; return; }
-
-  pairs.sort((a, b) => {
-    const wrA = a.w/(a.w+a.l), wrB = b.w/(b.w+b.l);
-    if (wrB !== wrA) return wrB - wrA;
-    if (b.w  !== a.w) return b.w - a.w;
-    return (b.gf-b.ga)-(a.gf-a.ga);
-  });
-
-  const top = pairs.slice(0, 10);
-  const medal = ['🥇','🥈','🥉'];
-
-  body.innerHTML = top.map((p, i) => {
-    const wr  = Math.round(p.w/(p.w+p.l)*100);
-    const gd  = p.gf - p.ga;
-    const gdC = gd>0?'#27AE60':gd<0?'#E74C3C':'#9ab0c8';
-    const n1  = p.p1.split(' ')[0], n2 = p.p2.split(' ')[0];
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f0f5fb">
-      <div style="font-size:15px;width:24px;text-align:center;flex-shrink:0">${medal[i]||i+1}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:#0d1e3a">${n1} &amp; ${n2}</div>
-        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;margin-top:2px">${p.w+p.l}P · ${p.w}V · ${p.l}D · SP <span style="color:${gdC}">${gd>0?'+':''}${gd}</span></div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-family:'Bebas Neue';font-size:22px;color:${wr>=50?'#1a6fa8':'#9ab0c8'}">${wr}%</div>
-        <div style="font-family:'DM Mono';font-size:8px;color:#9ab0c8">WR</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  card.style.display = 'block';
-}
-
-
-// ── discardSession ────────────────────────────────────────────────────
-// ── Player modal functions ────────────────────────────────────────
 function openAddPlayer() {
   const modal = document.getElementById('add-player-modal');
   if (!modal) return;
@@ -2736,74 +2696,8 @@ function rkSetSort(col) {
 }
 
 // ── HISTORY ─────────────────────────────────────────────────────────
-async function loadHistory() {
-  const el = document.getElementById('hist-sessions-grid');
-  const err = document.getElementById('hist-error');
-  if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:20px;color:#9ab0c8">⏳ Carregando…</div>';
-  try {
-    const res = await PadelEyeDB._fetch('get_sessions', {});
-    const rows = (res?.rows||[]).filter(r => (r.session_status||'').toLowerCase()==='finalized')
-      .sort((a,b) => {
-        const na = parseInt((b.session_serial_number||'0').toString().replace(/\D/g,'')) || 0;
-        const nb = parseInt((a.session_serial_number||'0').toString().replace(/\D/g,'')) || 0;
-        return na - nb;
-      });
-    if (!rows.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:#9ab0c8">Sem sessões finalizadas.</div>'; return; }
-    el.innerHTML = rows.map(s => {
-      const serial = s.session_serial_number||'?';
-      const date   = s.session_date||'';
-      const venue  = s.session_venue||'';
-      const mvp    = s.session_mvp||'—';
-      const nP     = s.session_total_players||'?';
-      const nM     = s.session_total_matches||'?';
-      return `<div onclick="histSwitch('${s.session_id}')" style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:16px;cursor:pointer;margin-bottom:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-family:'Bebas Neue';font-size:22px;color:#C9933A">${serial}</span>
-          <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">${date}</span>
-        </div>
-        <div style="font-size:12px;color:#0d1e3a;margin-bottom:4px">📍 ${venue}</div>
-        <div style="font-size:11px;color:#9ab0c8">👥 ${nP} jogadores · 🎾 ${nM} partidas · 🏅 ${mvp}</div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    if (err) { err.textContent='Erro: '+e.message; err.style.display='block'; }
-  }
-}
 
-async function histSwitch(sessionId) {
-  const list = document.getElementById('hist-list-view');
-  const detail = document.getElementById('hist-detail-view');
-  if (list) list.style.display='none';
-  if (detail) detail.style.display='block';
-  document.getElementById('hist-detail-num').textContent = '⏳';
-  try {
-    const [sessRes, matchRes] = await Promise.all([
-      PadelEyeDB._fetch('get_sessions',{}),
-      PadelEyeDB._fetch('get_session_matches',{ session_id: sessionId }),
-    ]);
-    const sess = (sessRes?.rows||[]).find(r=>r.session_id===sessionId) || {};
-    document.getElementById('hist-detail-num').textContent  = sess.session_serial_number||'?';
-    document.getElementById('hist-detail-meta').textContent = `${sess.session_date||''} · ${sess.session_venue||''}`;
-    const mEl = document.getElementById('hist-tab-matches');
-    if (mEl) mEl.innerHTML = (matchRes?.rows||[]).map(m=>`
-      <div style="padding:8px 0;border-bottom:1px solid #edf2f7;font-size:12px">
-        <strong>${m.team_a}</strong> <span style="font-family:'DM Mono'">${m.score_a}–${m.score_b}</span> <strong>${m.team_b}</strong>
-        ${m.tie_break==='Yes'?`<span style="color:#C9933A;font-size:10px"> TB ${m.tb_a}–${m.tb_b}</span>`:''}
-      </div>`).join('');
-  } catch(e) {
-    document.getElementById('hist-detail-num').textContent = 'Erro';
-  }
-}
 
-function histBack() {
-  const list = document.getElementById('hist-list-view');
-  const detail = document.getElementById('hist-detail-view');
-  if (list) list.style.display='block';
-  if (detail) detail.style.display='none';
-}
-
-// ── SHARE / VIEW MODAL ────────────────────────────────────────────────
 function shareSession() {
   const url = window.location.href;
   navigator.clipboard?.writeText(url).catch(()=>{});
@@ -3105,6 +2999,278 @@ function copyLink(url, btn) {
     document.execCommand('copy');
     document.body.removeChild(tmp);
   });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HISTÓRICO DE SESSÕES — design parity with TM V40 history
+// ══════════════════════════════════════════════════════════════════
+
+let _hsData    = { sessions: [], matches: [], stats: [] };
+let _hsLoaded  = false;
+let _hsCurrent = null; // current session_id in detail view
+
+async function loadHistory() {
+  _hsResetToList();
+  if (_hsLoaded) { _hsRenderGrid(); return; }
+  const grid = document.getElementById('hs-grid');
+  if (grid) grid.innerHTML = `<div style="text-align:center;padding:40px;font-family:'DM Mono';font-size:11px;color:#9ab0c8">⏳ A carregar sessões...</div>`;
+  try {
+    const [r1, r2, r3] = await Promise.all([
+      PadelEyeDB._fetch('get_sessions', {}),
+      PadelEyeDB._fetch('get_session_matches', {}),
+      PadelEyeDB._fetch('get_session_stats', {}),
+    ]);
+    _hsData.sessions = (r1.rows || []).filter(s => (s.session_status||'').toLowerCase() === 'finalized');
+    _hsData.matches  = r2.rows || [];
+    _hsData.stats    = r3.rows || [];
+    _hsLoaded = true;
+    _hsRenderGrid();
+  } catch(e) {
+    if (grid) grid.innerHTML = `<div style="text-align:center;padding:40px;color:#c0392b;font-family:'DM Mono';font-size:11px">❌ Erro ao carregar: ${e.message}</div>`;
+  }
+}
+
+function _hsRenderGrid() {
+  const grid = document.getElementById('hs-grid');
+  if (!grid) return;
+  const sessions = [..._hsData.sessions].sort((a, b) => {
+    const na = parseInt((b.session_serial_number||'0').toString().replace(/\D/g,'')) || 0;
+    const nb = parseInt((a.session_serial_number||'0').toString().replace(/\D/g,'')) || 0;
+    return na - nb;
+  });
+  if (!sessions.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Nenhuma sessão finalizada.</div>';
+    return;
+  }
+
+  let html = `<table style="width:100%;border-collapse:separate;border-spacing:0 7px;font-size:12px">
+    <thead>
+      <tr style="background:#f0f5fb">
+        <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 14px;text-align:left;letter-spacing:1px">#</th>
+        <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:left;letter-spacing:1px">SESSÃO</th>
+        <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">FORMATO</th>
+        <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">JOGADORES</th>
+        <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 8px;text-align:center;letter-spacing:1px">PARTIDAS</th>
+        <th style="font-family:'DM Mono';font-size:8px;color:#9ab0c8;padding:10px 14px;text-align:center;letter-spacing:1px">MVP</th>
+      </tr>
+    </thead>
+    <tbody>`;
+
+  sessions.forEach((s, idx) => {
+    const sid    = s.session_id || '';
+    const serial = s.session_serial_number || `#${idx+1}`;
+    const date   = s.session_date || '';
+    const venue  = s.session_venue || '—';
+    const fmt    = s.session_format || '—';
+    const mvp    = s.session_mvp || '—';
+    const nP     = s.session_total_players || '—';
+    const nM     = s.session_total_matches || '—';
+
+    html += `<tr style="background:#fff;box-shadow:0 1px 4px rgba(13,30,58,.06);cursor:pointer;transition:all .12s"
+      onclick="_hsOpen('${sid.replace(/'/g,"\\'")}')"
+      onmouseover="this.style.background='#f8fafd'"
+      onmouseout="this.style.background=''">
+      <td style="padding:16px 14px;font-family:'DM Mono';font-size:12px;font-weight:600;color:#9ab0c8;border-radius:10px 0 0 10px">${idx+1}</td>
+      <td style="padding:16px 8px">
+        <div style="font-weight:700;font-size:13px;color:#0d1e3a;display:flex;align-items:center;gap:8px">
+          <span style="font-family:'Bebas Neue';font-size:18px;color:#C9933A">${serial}</span>
+          ${venue !== '—' ? `<span style="font-size:11px;color:#9ab0c8">· ${venue}</span>` : ''}
+        </div>
+        <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;margin-top:2px">📅 ${date}</div>
+      </td>
+      <td style="padding:16px 8px;text-align:center">
+        <span style="background:#dbeafe;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-family:'DM Mono';font-size:10px;font-weight:600">${fmt}</span>
+      </td>
+      <td style="padding:16px 8px;text-align:center;font-family:'Bebas Neue';font-size:20px;color:#C9933A">${nP}</td>
+      <td style="padding:16px 8px;text-align:center;font-family:'Bebas Neue';font-size:20px;color:#C9933A">${nM}</td>
+      <td style="padding:16px 14px;text-align:center;font-size:12px;font-weight:700;color:#1a7a44;border-radius:0 10px 10px 0">🏅 ${mvp}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  grid.innerHTML = html;
+}
+
+function _hsOpen(sid) {
+  document.getElementById('hs-list-view').style.display   = 'none';
+  document.getElementById('hs-detail-view').style.display = 'block';
+  document.getElementById('hs-detail-content').innerHTML  =
+    `<div style="text-align:center;padding:80px 20px">
+       <div style="font-size:32px;display:inline-block">🎾</div>
+       <div style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:2px;margin-top:16px">A CARREGAR SESSÃO...</div>
+     </div>`;
+
+  const sidStr   = String(sid);
+  const s        = _hsData.sessions.find(x => String(x.session_id) === sidStr);
+  const matches  = _hsData.matches.filter(m => String(m.session_id) === sidStr);
+  const stats    = _hsData.stats.filter(x => String(x.session_id) === sidStr);
+
+  if (!s) {
+    document.getElementById('hs-detail-content').innerHTML =
+      `<div style="text-align:center;padding:60px;color:#c0392b;font-family:'DM Mono';font-size:11px">❌ Sessão não encontrada.</div>`;
+    return;
+  }
+
+  _hsCurrent = sidStr;
+
+  // Build players set from matches
+  const players = new Set();
+  matches.forEach(m => {
+    (m.team_a||'').split('/').forEach(n => n.trim() && players.add(n.trim()));
+    (m.team_b||'').split('/').forEach(n => n.trim() && players.add(n.trim()));
+  });
+
+  document.getElementById('hs-detail-content').innerHTML = `
+    <div onclick="_hsBack()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:#f4f7fc;border:1px solid #dde6f0;border-radius:8px;font-family:'DM Mono';font-size:10px;color:#5a8aaa;cursor:pointer;margin-bottom:16px;transition:all .2s"
+      onmouseover="this.style.borderColor='#C9933A';this.style.color='#C9933A'"
+      onmouseout="this.style.borderColor='#dde6f0';this.style.color='#5a8aaa'">← Voltar às Sessões</div>
+
+    <div style="background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:14px;padding:20px 22px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-family:'Bebas Neue';font-size:26px;color:#fff;letter-spacing:2px">${s.session_serial_number||'?'}</div>
+          <div style="font-family:'DM Mono';font-size:10px;color:#93C5FD;margin-top:4px">📅 ${s.session_date||'—'} · 📍 ${s.session_venue||'—'} · 🎯 ${s.session_format||'—'}</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:99px;background:#E8F8EE;color:#1a7a44">${s.session_status||'—'}</span>
+      </div>
+      <div style="display:flex;gap:20px;margin-top:14px">
+        ${[['Jogadores',players.size||s.session_total_players||'—'],['Partidas',matches.length||s.session_total_matches||'—'],['MVP',s.session_mvp||'—']].map(([l,v])=>`
+          <div style="text-align:center">
+            <div style="font-family:'Bebas Neue';font-size:${l==='MVP'?'14':'20'}px;color:#C9933A;line-height:1.2">${v}</div>
+            <div style="font-family:'DM Mono';font-size:8px;color:rgba(255,255,255,.4);text-transform:uppercase;margin-top:2px">${l}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:0;border-bottom:2px solid #dde6f0;margin-bottom:16px;overflow-x:auto">
+      ${[['hsd-partidas','🎾 Partidas'],['hsd-stats','📊 Estatísticas']].map(([id,label],i)=>`
+        <button id="hstab-${id}" onclick="_hsDswitch('${id}',this)"
+          style="padding:10px 16px;font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:${i===0?'#0a1628':'#9ab0c8'};background:none;border:none;border-bottom:${i===0?'2px solid #C9933A':'2px solid transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;transition:all .15s"
+          onmouseover="if(!this.classList.contains('hsd-on'))this.style.color='#0d1e3a'"
+          onmouseout="if(!this.classList.contains('hsd-on'))this.style.color='#9ab0c8'"
+          class="${i===0?'hsd-on':''}">${label}</button>`).join('')}
+    </div>
+
+    <div id="hsd-dp-hsd-partidas" class="hsd-dp hsd-dp-on">${_hsBuildPartidas(matches)}</div>
+    <div id="hsd-dp-hsd-stats"    class="hsd-dp"           >${_hsBuildStats(stats, matches)}</div>
+  `;
+}
+
+function _hsDswitch(id, el) {
+  document.querySelectorAll('.hsd-dp').forEach(p => p.classList.remove('hsd-dp-on'));
+  document.querySelectorAll('[id^="hstab-"]').forEach(b => {
+    b.classList.remove('hsd-on');
+    b.style.color = '#9ab0c8';
+    b.style.borderBottom = '2px solid transparent';
+  });
+  document.getElementById('hsd-dp-' + id)?.classList.add('hsd-dp-on');
+  el.classList.add('hsd-on');
+  el.style.color = '#0a1628';
+  el.style.borderBottom = '2px solid #C9933A';
+}
+
+function _hsBuildPartidas(matches) {
+  if (!matches.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:DM Mono,monospace;font-size:11px">Sem partidas registadas.</div>';
+  const sorted = [...matches].sort((a,b) => (+a.match_serial_number||0) - (+b.match_serial_number||0));
+  return `<div style="max-width:680px;margin:0 auto">${sorted.map(m => {
+    const sa=+(m.score_a||0), sb=+(m.score_b||0), aWin=sa>sb;
+    const hasTB = m.tie_break==='Yes'||m.tie_break==='Sim';
+    const tbTag = hasTB ? `<div style="font-size:9px;color:#C9933A;font-family:'DM Mono';margin-top:2px">TB ${m.tb_a||''}×${m.tb_b||''}</div>` : '';
+    const names = (team, isWin) => (team||'—').split('/').map(n=>`<div style="font-size:12px;font-weight:${isWin?600:400};color:${isWin?'#1a7a44':'#9ab0c8'};line-height:1.6">${n.trim()}</div>`).join('');
+    return `<div style="max-width:680px;margin:0 auto 6px;background:#fff;border:0.5px solid #dde6f0;border-radius:10px;display:grid;grid-template-columns:1fr 72px 1fr;align-items:stretch">
+      <div style="padding:12px 16px;text-align:right;border-right:0.5px solid #dde6f0;display:flex;flex-direction:column;justify-content:center">${names(m.team_a,aWin)}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px;text-align:center">
+        <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;line-height:1;display:flex;align-items:center;gap:4px">
+          <span style="color:${aWin?'#1a7a44':'#c0cdd8'}">${sa}</span><span style="color:#d8e0ea;font-size:14px">·</span><span style="color:${!aWin?'#1a7a44':'#c0cdd8'}">${sb}</span>
+        </div>${tbTag}
+        <div style="font-family:'DM Mono';font-size:8px;color:#b0c4d8;letter-spacing:.5px;margin-top:3px">#${m.match_serial_number||'?'}</div>
+      </div>
+      <div style="padding:12px 16px;border-left:0.5px solid #dde6f0;display:flex;flex-direction:column;justify-content:center">${names(m.team_b,!aWin)}</div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function _hsBuildStats(stats, matches) {
+  // Prefer stats from DB; fallback to computing from matches
+  let rows = [];
+  if (stats && stats.length) {
+    rows = [...stats].sort((a,b) => {
+      const wa = +(a.wins||0), wb = +(b.wins||0);
+      const ma = +(a.matches||0), mb = +(b.matches||0);
+      const wra = ma ? wa/ma : 0, wrb = mb ? wb/mb : 0;
+      return wrb - wra || wb - wa;
+    });
+    return `<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="background:#f4f7fc">${['#','Jogador','P','V','D','WR%','PF','PA','Saldo'].map(h=>`<th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:8px 10px;text-align:left;border-bottom:1px solid #dde6f0">${h}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map((p,i)=>{
+        const w=+(p.wins||0),m=+(p.matches||0),l=+(p.losses||0);
+        const pf=+(p.points_for||0),pa=+(p.points_against||0);
+        const gd=pf-pa, wr=m>0?Math.round(w/m*100):0;
+        const isMvp = p.player_mvp==='Yes'||p.player_mvp===true||p.player_mvp==='TRUE';
+        return `<tr style="border-bottom:1px solid #f4f7fc">
+          <td style="font-family:'Bebas Neue';font-size:18px;color:#9ab0c8;padding:8px 10px">${i+1}</td>
+          <td style="font-weight:700;padding:8px 10px">${p.player||'—'}${isMvp?` <span style="font-size:10px">🏅</span>`:''}` +
+          `</td>
+          <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${m}</td>
+          <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44;padding:8px 10px">${w}</td>
+          <td style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;padding:8px 10px">${l}</td>
+          <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'};padding:8px 10px">${wr}%</td>
+          <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${pf}</td>
+          <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${pa}</td>
+          <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'#1a7a44':'#c0392b'};padding:8px 10px">${gd>=0?'+':''}${gd}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div></div>`;
+  }
+  // Fallback: compute from matches
+  const pm = {};
+  matches.forEach(m => {
+    const ta=(m.team_a||'').split('/').map(n=>n.trim()).filter(Boolean);
+    const tb=(m.team_b||'').split('/').map(n=>n.trim()).filter(Boolean);
+    const sa=+(m.score_a||0),sb=+(m.score_b||0),aWin=sa>sb;
+    [...ta,...tb].forEach(n=>{if(!pm[n])pm[n]={p:n,m:0,w:0,l:0,pf:0,pa:0};});
+    ta.forEach(n=>{pm[n].m++;pm[n].pf+=sa;pm[n].pa+=sb;if(aWin)pm[n].w++;else pm[n].l++;});
+    tb.forEach(n=>{pm[n].m++;pm[n].pf+=sb;pm[n].pa+=sa;if(!aWin)pm[n].w++;else pm[n].l++;});
+  });
+  const sorted2 = Object.values(pm).sort((a,b)=>b.w-a.w||(b.pf-b.pa)-(a.pf-a.pa));
+  if (!sorted2.length) return '<div style="text-align:center;padding:40px;color:#9ab0c8;font-size:13px">Sem dados.</div>';
+  return `<div class="card"><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f4f7fc">${['#','Jogador','P','V','D','WR%','PF','PA','Saldo'].map(h=>`<th style="font-family:'DM Mono';font-size:9px;color:#9ab0c8;padding:8px 10px;text-align:left;border-bottom:1px solid #dde6f0">${h}</th>`).join('')}</tr></thead>
+    <tbody>${sorted2.map((p,i)=>{
+      const gd=p.pf-p.pa, wr=p.m>0?Math.round(p.w/p.m*100):0;
+      return `<tr style="border-bottom:1px solid #f4f7fc">
+        <td style="font-family:'Bebas Neue';font-size:18px;color:#9ab0c8;padding:8px 10px">${i+1}</td>
+        <td style="font-weight:700;padding:8px 10px">${p.p}</td>
+        <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${p.m}</td>
+        <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:#1a7a44;padding:8px 10px">${p.w}</td>
+        <td style="font-family:'DM Mono';font-size:11px;color:#9ab0c8;padding:8px 10px">${p.l}</td>
+        <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${wr>=60?'#1a7a44':wr<30?'#c0392b':'#0d1e3a'};padding:8px 10px">${wr}%</td>
+        <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${p.pf}</td>
+        <td style="font-family:'DM Mono';font-size:11px;padding:8px 10px">${p.pa}</td>
+        <td style="font-family:'DM Mono';font-size:12px;font-weight:700;color:${gd>=0?'#1a7a44':'#c0392b'};padding:8px 10px">${gd>=0?'+':''}${gd}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function _hsResetToList() {
+  const lv = document.getElementById('hs-list-view');
+  const dv = document.getElementById('hs-detail-view');
+  if (lv) lv.style.display = '';
+  if (dv) dv.style.display = 'none';
+}
+
+function _hsBack() {
+  document.getElementById('hs-list-view').style.display   = 'block';
+  document.getElementById('hs-detail-view').style.display = 'none';
+}
+
+// Legacy aliases (called from sidebar onclick)
+function histSwitch(sid) { _hsOpen(sid); }
+function histBack()      { _hsBack(); }
+function shareHistSession() {
+  navigator.clipboard?.writeText(window.location.href).catch(()=>{});
+  showAlert('alert-match','🔗 URL copiado!','ok');
 }
 
 function discardSession() {
