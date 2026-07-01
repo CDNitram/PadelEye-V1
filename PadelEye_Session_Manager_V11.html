@@ -2218,6 +2218,589 @@ async function saveNewPlayer() {
 }
 
 
+// ══════════════════════════════════════════════════════════════════
+// CORE APP FUNCTIONS (restored)
+// ══════════════════════════════════════════════════════════════════
+
+// ── UI ─────────────────────────────────────────────────────────────
+function showTab(name, btnEl) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const panel = document.getElementById('p-' + name);
+  if (panel) panel.classList.add('active');
+  if (btnEl) btnEl.classList.add('active');
+  closeMobileMenu();
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'alert alert-' + (type || 'info');
+  el.style.display = 'block';
+  if (type === 'ok') setTimeout(() => { el.style.display='none'; }, 3000);
+}
+
+function persistSession() {
+  if (!sessionId) return;
+  const data = {
+    sessionId, sessionStatus, sessionSubstatus, sessionIsOpen, sessionSaved,
+    sessionOpenedAt, activePlayers, guestPlayers, matches,
+    cfgNum: document.getElementById('cfg-num')?.value,
+    cfgDate: document.getElementById('cfg-date')?.value,
+    cfgLocal: document.getElementById('cfg-local')?.value,
+    cfgFormat: document.getElementById('cfg-format')?.value,
+    cfgMax: document.getElementById('cfg-max-score')?.value,
+    cfgTB: document.getElementById('cfg-tb-at')?.value,
+  };
+  try { localStorage.setItem('pe_session_v10', JSON.stringify(data)); } catch(e) {}
+}
+
+// ── AUTH ────────────────────────────────────────────────────────────
+function doLogin() {
+  const user = (document.getElementById('l-user')?.value || '').trim().toLowerCase();
+  const pass = document.getElementById('l-pass')?.value || '';
+  const u = USERS[user];
+  if (!u || u.pass !== pass) {
+    const err = document.getElementById('login-err');
+    if (err) { err.textContent = 'Usuário ou senha incorretos.'; err.style.display = 'block'; }
+    return;
+  }
+  currentUser = { user, ...u };
+  try { localStorage.setItem(SM_AUTH_KEY, JSON.stringify(currentUser)); } catch(e) {}
+  document.getElementById('s-login').style.display = 'none';
+  document.getElementById('s-app').style.display   = 'flex';
+  const av = document.getElementById('tb-av');
+  if (av) av.textContent = u.av;
+  _bootApp();
+}
+
+function doLogout() {
+  try { localStorage.removeItem(SM_AUTH_KEY); localStorage.removeItem('pe_session_v10'); } catch(e) {}
+  currentUser = null;
+  document.getElementById('s-app').style.display   = 'none';
+  document.getElementById('s-login').style.display = 'flex';
+  const err = document.getElementById('login-err');
+  if (err) err.style.display = 'none';
+}
+
+function _bootApp() {
+  // Restore session from localStorage
+  const raw = localStorage.getItem('pe_session_v10');
+  if (raw) {
+    try {
+      const d = JSON.parse(raw);
+      sessionId = d.sessionId; sessionStatus = d.sessionStatus;
+      sessionSubstatus = d.sessionSubstatus; sessionIsOpen = d.sessionIsOpen;
+      sessionSaved = d.sessionSaved; sessionOpenedAt = d.sessionOpenedAt;
+      activePlayers = d.activePlayers || []; guestPlayers = d.guestPlayers || [];
+      matches = d.matches || [];
+      if (d.cfgNum)   { const el = document.getElementById('cfg-num');   if(el) el.value=d.cfgNum; }
+      if (d.cfgDate)  { const el = document.getElementById('cfg-date');  if(el) el.value=d.cfgDate; }
+      if (d.cfgLocal) { const el = document.getElementById('cfg-local'); if(el) el.value=d.cfgLocal; }
+      if (d.cfgFormat){ const el = document.getElementById('cfg-format');if(el) el.value=d.cfgFormat; }
+      if (d.cfgMax)   { const el = document.getElementById('cfg-max-score'); if(el) el.value=d.cfgMax; }
+      if (d.cfgTB)    { const el = document.getElementById('cfg-tb-at'); if(el) el.value=d.cfgTB; }
+      if (sessionIsOpen && sessionId) {
+        document.getElementById('btn-discard-session').style.display='block';
+        stampStatus(sessionStatus, sessionSubstatus);
+        renderRoster(); renderMatchLog(); renderScoreboard(); updateHero();
+      }
+    } catch(e) {}
+  }
+  loadCadastro();
+  fetchNextSessionNumber();
+  showTab('cadastro', document.getElementById('tab-cadastro'));
+}
+
+async function fetchNextSessionNumber() {
+  try {
+    const res = await PadelEyeDB._fetch('get_sessions', {});
+    const rows = (res && res.rows) || [];
+    const serials = rows.map(r => parseInt((r.session_serial_number||r.numero||'0').toString().replace(/\D/g,''))).filter(n=>!isNaN(n));
+    const next = serials.length ? Math.max(...serials) + 1 : 1;
+    const el = document.getElementById('cfg-num');
+    const disp = document.getElementById('cfg-num-display');
+    const load = document.getElementById('cfg-num-loading');
+    if (el) el.value = next;
+    if (disp) { disp.textContent = 'S' + next; disp.style.display='inline'; }
+    if (load) load.style.display = 'none';
+    const heroNum = document.getElementById('hero-num');
+    if (heroNum && !sessionIsOpen) heroNum.textContent = 'S' + next;
+  } catch(e) {}
+}
+
+// ── SESSION — PLAYERS ───────────────────────────────────────────────
+function quickSelectPlayers(n) {
+  [4,5,6,7,8].forEach(i => {
+    const btn = document.getElementById('qbtn-' + i);
+    if (btn) btn.classList.toggle('active', i === n);
+  });
+}
+
+function addGuest() {
+  const inp = document.getElementById('guest-input');
+  if (!inp) return;
+  const name = inp.value.trim();
+  if (!name) return;
+  if (!guestPlayers.includes(name)) {
+    guestPlayers.push(name);
+    if (!BASE_PLAYERS.includes(name)) BASE_PLAYERS.push(name);
+    renderRoster(); updateMatchSelects();
+    stampStatus('open','players_confirmed');
+  }
+  inp.value = '';
+}
+
+function startSession() {
+  if (activePlayers.length < 2) {
+    showAlert('alert-session', 'Seleccione pelo menos 2 jogadores.', 'warn');
+    return;
+  }
+  stampStatus('open','in_progress');
+  renderMatchLog(); updateMatchSelects(); renderScoreboard();
+  showTab('match', document.getElementById('tab-match'));
+}
+
+// ── SESSION — MATCHES ────────────────────────────────────────────────
+function updateMatchSelects() {
+  const all = [...activePlayers, ...guestPlayers];
+  ['sel-a1','sel-a2','sel-b1','sel-b2'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— Jogador —</option>' +
+      all.map(p => `<option value="${p}" ${p===cur?'selected':''}>${p}</option>`).join('');
+  });
+}
+
+function toggleTB() {
+  const inp = document.getElementById('tb-inputs');
+  const btn = document.getElementById('tb-btn');
+  if (!inp || !btn) return;
+  const show = inp.style.display === 'none' || !inp.style.display;
+  inp.style.display = show ? 'flex' : 'none';
+  btn.textContent   = show ? '🔴 Remover TB' : '➕ Adicionar Tie-Break';
+}
+
+function addMatch() {
+  const a1 = document.getElementById('sel-a1')?.value;
+  const a2 = document.getElementById('sel-a2')?.value;
+  const b1 = document.getElementById('sel-b1')?.value;
+  const b2 = document.getElementById('sel-b2')?.value;
+  const sa = parseInt(document.getElementById('sc-a')?.value || 0);
+  const sb = parseInt(document.getElementById('sc-b')?.value || 0);
+  const tbOn = document.getElementById('tb-inputs')?.style.display !== 'none';
+  const tba = tbOn ? parseInt(document.getElementById('tb-a')?.value || 0) : null;
+  const tbb = tbOn ? parseInt(document.getElementById('tb-b')?.value || 0) : null;
+
+  if (!a1 || !a2 || !b1 || !b2) { showAlert('alert-match','Seleccione todos os jogadores.','warn'); return; }
+  if (a1===a2||a1===b1||a1===b2||a2===b1||a2===b2||b1===b2) { showAlert('alert-match','Jogadores duplicados.','warn'); return; }
+  const maxSc = parseInt(document.getElementById('cfg-max-score')?.value || 4);
+  if (sa === sb) { showAlert('alert-match','Empate não permitido.','warn'); return; }
+  if (sa > maxSc || sb > maxSc) { showAlert('alert-match',`Score máximo: ${maxSc}.`,'warn'); return; }
+
+  const winner = sa > sb ? `${a1} / ${a2}` : `${b1} / ${b2}`;
+  const n = matches.length + 1;
+  matches.push({
+    id: `pe_${Date.now()}_${Math.random().toString(36).substr(2,5)}`,
+    n, teamA: `${a1} / ${a2}`, scoreA: sa, scoreB: sb,
+    teamB: `${b1} / ${b2}`, winner,
+    tb: tbOn, tbA: tba, tbB: tbb,
+  });
+
+  // Reset inputs
+  ['sel-a1','sel-a2','sel-b1','sel-b2'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['sc-a','sc-b','tb-a','tb-b'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  const tbInp = document.getElementById('tb-inputs');
+  const tbBtn = document.getElementById('tb-btn');
+  if (tbInp) tbInp.style.display='none';
+  if (tbBtn) tbBtn.textContent = '➕ Adicionar Tie-Break';
+
+  renderMatchLog(); renderScoreboard(); updateHero();
+  stampStatus('open','in_progress');
+  persistSession();
+  showAlert('alert-match','✅ Partida registada!','ok');
+}
+
+function renderMatchLog() {
+  const el = document.getElementById('match-log');
+  const cnt = document.getElementById('match-count');
+  if (!el) return;
+  if (cnt) cnt.textContent = matches.length;
+  if (!matches.length) { el.innerHTML='<div style="text-align:center;color:#9ab0c8;padding:20px;font-size:13px;">Nenhuma partida registada ainda.</div>'; return; }
+  el.innerHTML = matches.map(m => `
+    <div class="match-item" style="background:#f8fafd;border:1px solid #edf2f7;border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px">
+      <div style="font-family:'DM Mono';font-size:10px;color:#9ab0c8;min-width:24px">#${m.n}</div>
+      <div style="flex:1;font-size:12px">
+        <span style="font-weight:700;color:${m.scoreA>m.scoreB?'#0a1628':'#9ab0c8'}">${m.teamA}</span>
+        <span style="margin:0 8px;font-family:'DM Mono';font-weight:700">${m.scoreA}–${m.scoreB}</span>
+        <span style="font-weight:700;color:${m.scoreB>m.scoreA?'#0a1628':'#9ab0c8'}">${m.teamB}</span>
+        ${m.tb?`<span style="font-family:'DM Mono';font-size:9px;color:#C9933A;margin-left:6px">TB ${m.tbA}–${m.tbB}</span>`:''}
+      </div>
+      <div style="font-family:'Bebas Neue';font-size:11px;color:#27AE60;letter-spacing:.5px">✓ ${m.winner.split(' / ')[0]}</div>
+    </div>`).join('');
+}
+
+// ── SCOREBOARD / MVP ─────────────────────────────────────────────────
+function calcMVP() {
+  const stats = {};
+  const all = [...activePlayers, ...guestPlayers];
+  all.forEach(p => { stats[p] = {w:0,m:0,pf:0,pa:0}; });
+  matches.forEach(m => {
+    [m.teamA.split(' / '), m.teamB.split(' / ')].forEach((team, ti) => {
+      const won = ti===0 ? m.scoreA>m.scoreB : m.scoreB>m.scoreA;
+      const pf  = ti===0 ? m.scoreA : m.scoreB;
+      const pa  = ti===0 ? m.scoreB : m.scoreA;
+      team.forEach(p => {
+        if (stats[p]) { stats[p].m++; stats[p].pf+=pf; stats[p].pa+=pa; if(won) stats[p].w++; }
+      });
+    });
+  });
+  const ranked = Object.entries(stats)
+    .filter(([,s]) => s.m > 0)
+    .sort(([,a],[,b]) => (b.w/b.m - a.w/a.m) || (b.w - a.w) || ((b.pf-b.pa)-(a.pf-a.pa)));
+  return { ranked, stats };
+}
+
+function renderScoreboard() {
+  const el = document.getElementById('scoreboard');
+  const mvpEl = document.getElementById('mvp-display');
+  const mvpSave = document.getElementById('mvp-display-save');
+  const svMvp = document.getElementById('sv-mvp');
+  if (!el) return;
+  if (!matches.length) { el.innerHTML='<div style="text-align:center;color:#9ab0c8;padding:20px">Sem partidas ainda.</div>'; return; }
+
+  const { ranked, stats } = calcMVP();
+  const mvp = ranked[0]?.[0] || '—';
+  if (mvpEl) mvpEl.textContent = mvp;
+  if (mvpSave) mvpSave.textContent = mvp;
+  if (svMvp) svMvp.textContent = mvp;
+
+  el.innerHTML = ranked.map(([p, s], i) => {
+    const wr = s.m ? Math.round(s.w/s.m*100) : 0;
+    const pd = s.pf - s.pa;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #edf2f7">
+      <div style="font-family:'Bebas Neue';font-size:20px;color:#C9933A;min-width:28px">${i+1}</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:${pc(p)};display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:11px">${init(p)}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${p}</div>
+        <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">${s.w}V · ${s.m-s.w}D · PF:${s.pf} PA:${s.pa} PD:${pd>=0?'+':''}${pd}</div></div>
+      <div style="font-family:'Bebas Neue';font-size:22px;color:${wr>=50?'#27AE60':'#e74c3c'}">${wr}%</div>
+    </div>`;
+  }).join('');
+}
+
+function updateHero() {
+  const el = document.getElementById('hero-matches');
+  if (el) el.textContent = matches.length;
+  const svM = document.getElementById('sv-matches');
+  if (svM) svM.textContent = matches.length;
+  const svP = document.getElementById('sv-players');
+  if (svP) svP.textContent = activePlayers.length + guestPlayers.length;
+}
+
+// ── SESSION — RANDOM GENERATION ─────────────────────────────────────
+function generateRandom(mode) {
+  const all = [...activePlayers, ...guestPlayers];
+  if (all.length < 4) { showAlert('alert-match','Precisa de pelo menos 4 jogadores.','warn'); return; }
+  const pairs = [];
+  if (mode === 'americano') {
+    for (let i=0;i<all.length;i++) for(let j=i+1;j<all.length;j++)
+      for(let k=0;k<all.length;k++) for(let l=k+1;l<all.length;l++)
+        if(![i,j].some(x=>[k,l].includes(x))) pairs.push([[all[i],all[j]],[all[k],all[l]]]);
+  } else {
+    // Round robin pairs
+    for (let i=0;i<all.length-1;i+=2)
+      if (all[i+1]) pairs.push([[all[i],all[(i+2)%all.length]],[all[(i+1)],all[(i+3)%all.length]]]);
+  }
+  const shuffled = pairs.sort(()=>Math.random()-.5).slice(0, Math.min(pairs.length, 10));
+  const el = document.getElementById('random-preview-list');
+  const wrap = document.getElementById('random-preview');
+  if (!el || !wrap) return;
+  wrap.style.display = 'block';
+  window._pendingRandom = shuffled;
+  el.innerHTML = shuffled.map((p,i)=>`
+    <div style="background:#f8fafd;border:1px solid #edf2f7;border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px">
+      <span style="font-family:'DM Mono';color:#9ab0c8;margin-right:8px">#${i+1}</span>
+      <strong>${p[0].join(' / ')}</strong>
+      <span style="margin:0 8px;color:#9ab0c8">vs</span>
+      <strong>${p[1].join(' / ')}</strong>
+    </div>`).join('');
+}
+
+function confirmRandom() {
+  if (!window._pendingRandom) return;
+  window._pendingRandom.forEach(([ta, tb]) => {
+    const maxSc = parseInt(document.getElementById('cfg-max-score')?.value || 4);
+    matches.push({
+      id: `pe_${Date.now()}_${Math.random().toString(36).substr(2,5)}`,
+      n: matches.length+1,
+      teamA: ta.join(' / '), scoreA: 0, scoreB: 0,
+      teamB: tb.join(' / '), winner: '',
+      tb: false, tbA: null, tbB: null, _pending: true,
+    });
+  });
+  window._pendingRandom = null;
+  const wrap = document.getElementById('random-preview');
+  if (wrap) wrap.style.display='none';
+  renderMatchLog(); updateHero(); persistSession();
+  showAlert('alert-match',`✅ ${matches.length} partidas geradas — preencha os scores.`,'ok');
+}
+
+function cancelRandom() {
+  window._pendingRandom = null;
+  const wrap = document.getElementById('random-preview');
+  if (wrap) wrap.style.display='none';
+}
+
+// ── SESSION — SAVE ───────────────────────────────────────────────────
+async function saveSession() {
+  if (!sessionId) { showAlert('alert-save','Nenhuma sessão aberta.','warn'); return; }
+  if (!matches.length) { showAlert('alert-save','Adicione pelo menos uma partida.','warn'); return; }
+
+  const btn = document.getElementById('btn-save-session');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ Salvando…'; }
+  showAlert('alert-save','⏳ A guardar no Google Sheets…','info');
+
+  const { ranked, stats } = calcMVP();
+  const mvp = ranked[0]?.[0] || '';
+  const allP = [...activePlayers, ...guestPlayers];
+  const serial = document.getElementById('cfg-num')?.value || '';
+  const date   = document.getElementById('cfg-date')?.value || new Date().toISOString().slice(0,10);
+  const venue  = document.getElementById('cfg-local')?.value || '';
+  const fmt    = document.getElementById('cfg-format')?.value || '';
+  const notes  = document.getElementById('cfg-notes')?.value || '';
+  const now    = new Date().toISOString();
+
+  // Build match rows
+  const matchRows = matches.map((m,i) => ({
+    match_id: m.id, session_id: sessionId, session: 'S'+serial, date,
+    match_serial_number: i+1,
+    team_a: m.teamA, score_a: m.scoreA, score_b: m.scoreB, team_b: m.teamB,
+    winner_team: m.winner, tie_break: m.tb ? 'Yes':'No',
+    tb_a: m.tbA||'', tb_b: m.tbB||'', status:'finalized', created_at: now,
+  }));
+
+  // Build stat rows
+  const statRows = Object.entries(stats).filter(([,s])=>s.m>0).map(([p,s])=>({
+    stat_id: `pe_${sessionId}_${p.replace(/\s/g,'_').toLowerCase().slice(0,10)}`,
+    session_id: sessionId, session_serial_number: 'S'+serial, date, player: p,
+    matches: s.m, wins: s.w, losses: s.m-s.w,
+    points_for: s.pf, points_against: s.pa, points_difference: s.pf-s.pa,
+    player_mvp: p===mvp ? 'Yes':'No', created_at: now,
+  }));
+
+  // Build session row
+  const sessRow = {
+    session_id: sessionId, session_serial_number: 'S'+serial,
+    session_date: date, session_venue: venue,
+    session_total_players: allP.length, session_total_matches: matches.length,
+    session_mvp: mvp, session_source:'App', session_format: fmt, notes,
+    created_at: sessionOpenedAt||now, session_status:'Finalized',
+    session_substatus:'', opened_at: sessionOpenedAt||now, finalized_at: now,
+  };
+
+  try {
+    await Promise.all([
+      PadelEyeDB._send('upsert_session',         { row: sessRow }),
+      PadelEyeDB._send('insert_session_matches',  { rows: matchRows }),
+      PadelEyeDB._send('insert_session_stats',    { rows: statRows }),
+    ]);
+
+    // Upsert ranking
+    const rkRes = await PadelEyeDB._fetch('get_ranking_sessions', {});
+    const rkMap = {};
+    (rkRes?.rows||[]).forEach(r => { rkMap[r.player] = r; });
+    const rkRows = Object.entries(stats).filter(([,s])=>s.m>0).map(([p,s]) => {
+      const c = rkMap[p] || {};
+      const ns = (parseInt(c.sessions)||0)+1;
+      const nm = (parseInt(c.matches)||0)+s.m;
+      const nw = (parseInt(c.wins)||0)+s.w;
+      const nl = (parseInt(c.losses)||0)+(s.m-s.w);
+      const npf=(parseInt(c.points_for)||0)+s.pf;
+      const npa=(parseInt(c.points_against)||0)+s.pa;
+      const mv = (parseInt(c.mvp_count)||0)+(p===mvp?1:0);
+      return { player:p, sessions:ns, matches:nm, wins:nw, losses:nl,
+               points_for:npf, points_against:npa, points_difference:npf-npa,
+               win_rate: Math.round(nw/nm*100)+'%', mvp_count:mv, updated_at:now };
+    });
+    await PadelEyeDB._send('upsert_ranking_sessions', { rows: rkRows });
+
+    sessionSaved = true;
+    stampStatus('finalized','');
+    localStorage.removeItem('pe_session_v10');
+
+    const doneBox = document.getElementById('save-done-box');
+    const doneLog = document.getElementById('save-done-log');
+    if (doneBox) doneBox.style.display='block';
+    if (doneLog) doneLog.innerHTML = `✅ Sessão S${serial} · ${allP.length} jogadores · ${matches.length} partidas · MVP: ${mvp}`;
+    if (btn) { btn.disabled=false; btn.textContent='✅ Sessão Salva'; }
+    showAlert('alert-save','✅ Sessão guardada com sucesso!','ok');
+  } catch(err) {
+    if (btn) { btn.disabled=false; btn.textContent='💾 Tentar novamente'; }
+    showAlert('alert-save','❌ Erro ao guardar: '+err.message,'warn');
+  }
+}
+
+function closeSession() {
+  showTab('save', document.getElementById('tab-save'));
+}
+
+// ── RANKING ──────────────────────────────────────────────────────────
+function rkSetPeriod(period) {
+  document.querySelectorAll('#rk-filter-bar button').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('rk-f-'+period);
+  if (btn) btn.classList.add('active');
+  const custom = document.getElementById('rk-date-range');
+  if (custom) custom.style.display = period==='custom' ? 'flex':'none';
+  applyRkFilter();
+}
+
+function rkSetSort(col) {
+  document.querySelectorAll('[id^="rk-sb-"]').forEach(b=>b.classList.remove('active'));
+  const btn = document.getElementById('rk-sb-'+col);
+  if (btn) btn.classList.add('active');
+  applyRkFilter();
+}
+
+// ── HISTORY ─────────────────────────────────────────────────────────
+async function loadHistory() {
+  const el = document.getElementById('hist-sessions-grid');
+  const err = document.getElementById('hist-error');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:#9ab0c8">⏳ Carregando…</div>';
+  try {
+    const res = await PadelEyeDB._fetch('get_sessions', {});
+    const rows = (res?.rows||[]).filter(r => (r.session_status||'').toLowerCase()==='finalized')
+      .sort((a,b) => (b.session_serial_number||'').localeCompare(a.session_serial_number||''));
+    if (!rows.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:#9ab0c8">Sem sessões finalizadas.</div>'; return; }
+    el.innerHTML = rows.map(s => {
+      const serial = s.session_serial_number||'?';
+      const date   = s.session_date||'';
+      const venue  = s.session_venue||'';
+      const mvp    = s.session_mvp||'—';
+      const nP     = s.session_total_players||'?';
+      const nM     = s.session_total_matches||'?';
+      return `<div onclick="histSwitch('${s.session_id}')" style="background:#fff;border:1px solid #dde6f0;border-radius:12px;padding:16px;cursor:pointer;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-family:'Bebas Neue';font-size:22px;color:#C9933A">${serial}</span>
+          <span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">${date}</span>
+        </div>
+        <div style="font-size:12px;color:#0d1e3a;margin-bottom:4px">📍 ${venue}</div>
+        <div style="font-size:11px;color:#9ab0c8">👥 ${nP} jogadores · 🎾 ${nM} partidas · 🏅 ${mvp}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (err) { err.textContent='Erro: '+e.message; err.style.display='block'; }
+  }
+}
+
+async function histSwitch(sessionId) {
+  const list = document.getElementById('hist-list-view');
+  const detail = document.getElementById('hist-detail-view');
+  if (list) list.style.display='none';
+  if (detail) detail.style.display='block';
+  document.getElementById('hist-detail-num').textContent = '⏳';
+  try {
+    const [sessRes, matchRes] = await Promise.all([
+      PadelEyeDB._fetch('get_sessions',{}),
+      PadelEyeDB._fetch('get_session_matches',{ session_id: sessionId }),
+    ]);
+    const sess = (sessRes?.rows||[]).find(r=>r.session_id===sessionId) || {};
+    document.getElementById('hist-detail-num').textContent  = sess.session_serial_number||'?';
+    document.getElementById('hist-detail-meta').textContent = `${sess.session_date||''} · ${sess.session_venue||''}`;
+    const mEl = document.getElementById('hist-tab-matches');
+    if (mEl) mEl.innerHTML = (matchRes?.rows||[]).map(m=>`
+      <div style="padding:8px 0;border-bottom:1px solid #edf2f7;font-size:12px">
+        <strong>${m.team_a}</strong> <span style="font-family:'DM Mono'">${m.score_a}–${m.score_b}</span> <strong>${m.team_b}</strong>
+        ${m.tie_break==='Yes'?`<span style="color:#C9933A;font-size:10px"> TB ${m.tb_a}–${m.tb_b}</span>`:''}
+      </div>`).join('');
+  } catch(e) {
+    document.getElementById('hist-detail-num').textContent = 'Erro';
+  }
+}
+
+function histBack() {
+  const list = document.getElementById('hist-list-view');
+  const detail = document.getElementById('hist-detail-view');
+  if (list) list.style.display='block';
+  if (detail) detail.style.display='none';
+}
+
+// ── SHARE / VIEW MODAL ────────────────────────────────────────────────
+function shareSession() {
+  const url = window.location.href;
+  navigator.clipboard?.writeText(url).catch(()=>{});
+  showAlert('alert-match','🔗 URL copiado!','ok');
+}
+
+function shareHistSession() { shareSession(); }
+
+function openViewModalV10(sid) {
+  const modal = document.getElementById('view-modal-v10');
+  if (!modal) return;
+  modal.style.display='flex';
+}
+
+function closeViewModalV10() {
+  const modal = document.getElementById('view-modal-v10');
+  if (modal) modal.style.display='none';
+}
+
+// ── BOOT ─────────────────────────────────────────────────────────────
+(function init() {
+  // Splash
+  const splash = document.getElementById('s-splash');
+  if (splash) setTimeout(() => { splash.style.display='none'; }, 2000);
+
+  // Check existing auth
+  try {
+    const saved = JSON.parse(localStorage.getItem(SM_AUTH_KEY)||'null');
+    if (saved && USERS[saved.user] && USERS[saved.user].pass === (saved.pass||USERS[saved.user].pass)) {
+      currentUser = saved;
+      document.getElementById('s-login').style.display='none';
+      document.getElementById('s-app').style.display='flex';
+      const av = document.getElementById('tb-av');
+      if (av) av.textContent = saved.av;
+      _bootApp();
+      return;
+    }
+  } catch(e) {}
+
+  // Show login
+  document.getElementById('s-app').style.display='none';
+  document.getElementById('s-login').style.display='flex';
+  // Allow Enter key on login
+  ['l-user','l-pass'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  });
+})();
+
+async function loadRanking() {
+  const dot  = document.getElementById('rk-dot');
+  const stxt = document.getElementById('rk-stxt');
+  if (dot)  dot.style.background  = '#C9933A';
+  if (stxt) stxt.textContent = 'Carregando…';
+  try {
+    const [rkRes, sessRes, matchRes] = await Promise.all([
+      PadelEyeDB._fetch('get_ranking_sessions', {}),
+      PadelEyeDB._fetch('get_sessions', {}),
+      PadelEyeDB._fetch('get_session_matches', {}),
+    ]);
+    rkSessData    = rkRes?.rows   || [];
+    sessionsData  = sessRes?.rows || [];
+    matchesSessData = matchRes?.rows || [];
+    rkRecomputeMVPs();
+    applyRkFilter();
+    if (dot)  dot.style.background  = '#27AE60';
+    if (stxt) stxt.textContent = 'Atualizado';
+  } catch(e) {
+    if (dot)  dot.style.background  = '#e74c3c';
+    if (stxt) stxt.textContent = 'Erro';
+  }
+}
+
 function discardSession() {
   if (!sessionIsOpen) return;
   const num = document.getElementById('cfg-num')?.textContent?.trim() || 'esta sessão';
