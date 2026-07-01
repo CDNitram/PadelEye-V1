@@ -1130,7 +1130,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="ap-status" id="ap-status"></div>
   </div>
 </div>
-<script>
+<script>let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') || 'https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec';
+
 
 // ══════════════════════════════════════════════════════════════════
 // PadelEyeDB — API module (restored)
@@ -1158,7 +1159,6 @@ const PadelEyeDB = (() => {
 // ══════════════════════════════════════════
 // CONSTANTS & STATE
 // ══════════════════════════════════════════
-let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') || 'https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec';
 const SM_AUTH_KEY = 'pe_auth_v10';
 const USERS = {
   'martin':                    { pass:'padel2026', name:'Martin Cordoba',  av:'MC' },
@@ -2318,7 +2318,7 @@ function persistSession() {
   const data = {
     sessionId, sessionStatus, sessionSubstatus, sessionIsOpen, sessionSaved,
     sessionOpenedAt, activePlayers, guestPlayers, matches,
-    cfgNum: document.getElementById('cfg-num')?.value,
+    cfgNum: document.getElementById('cfg-num')?.textContent?.trim(),
     cfgDate: document.getElementById('cfg-date')?.value,
     cfgLocal: document.getElementById('cfg-local')?.value,
     cfgFormat: document.getElementById('cfg-format')?.value,
@@ -2367,7 +2367,7 @@ function _bootApp() {
       sessionSaved = d.sessionSaved; sessionOpenedAt = d.sessionOpenedAt;
       activePlayers = d.activePlayers || []; guestPlayers = d.guestPlayers || [];
       matches = d.matches || [];
-      if (d.cfgNum)   { const el = document.getElementById('cfg-num');   if(el) el.value=d.cfgNum; }
+      if (d.cfgNum)   { const el = document.getElementById('cfg-num');   if(el) el.textContent=d.cfgNum; }
       if (d.cfgDate)  { const el = document.getElementById('cfg-date');  if(el) el.value=d.cfgDate; }
       if (d.cfgLocal) { const el = document.getElementById('cfg-local'); if(el) el.value=d.cfgLocal; }
       if (d.cfgFormat){ const el = document.getElementById('cfg-format');if(el) el.value=d.cfgFormat; }
@@ -2394,7 +2394,7 @@ async function fetchNextSessionNumber() {
     const el = document.getElementById('cfg-num');
     const disp = document.getElementById('cfg-num-display');
     const load = document.getElementById('cfg-num-loading');
-    if (el) el.value = next;
+    if (el) el.textContent = next;
     if (disp) { disp.textContent = 'S' + next; disp.style.display='inline'; }
     if (load) load.style.display = 'none';
     const heroNum = document.getElementById('hero-num');
@@ -2637,7 +2637,7 @@ async function saveSession() {
   const { ranked, stats } = calcMVP();
   const mvp = ranked[0]?.[0] || '';
   const allP = [...activePlayers, ...guestPlayers];
-  const serial = document.getElementById('cfg-num')?.value || '';
+  const serial = document.getElementById('cfg-num')?.textContent?.trim() || '';
   const date   = document.getElementById('cfg-date')?.value || new Date().toISOString().slice(0,10);
   const venue  = document.getElementById('cfg-local')?.value || '';
   const fmt    = document.getElementById('cfg-format')?.value || '';
