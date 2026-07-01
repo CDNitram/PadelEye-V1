@@ -589,7 +589,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
           <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">SESSION #</label>
-          <div id="cfg-num-display" style="background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:8px;padding:8px 12px;font-family:'Bebas Neue';font-size:20px;color:#C9933A;letter-spacing:2px;display:flex;align-items:center;gap:8px;">
+          <div id="cfg-num-display" style="background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:8px;padding:8px 12px;font-family:'Bebas Neue';font-size:16px;color:#C9933A;letter-spacing:1px;display:flex;align-items:center;gap:6px;">
             <span id="cfg-num">—</span>
             <span id="cfg-num-loading" style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;letter-spacing:1px">LOADING...</span>
           </div>
@@ -2315,6 +2315,11 @@ function _bootApp() {
   }
   loadCadastro();
   fetchNextSessionNumber();
+  // Pre-fill date with today if not already set
+  const _dateEl = document.getElementById('cfg-date');
+  if (_dateEl && !_dateEl.value) {
+    _dateEl.value = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+  }
   showTab('cadastro', document.getElementById('tab-cadastro'));
 }
 
