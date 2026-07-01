@@ -552,10 +552,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <button class="tab disabled" id="tab-scoreboard" onclick="showTab('scoreboard',this)"><span class="sb-ic" style="background:#ede9fe">🏆</span> Placar &amp; MVP</button>
     <button class="tab disabled" id="tab-save" onclick="showTab('save',this)"><span class="sb-ic" style="background:#ffedd5">💾</span> Salvar</button>
     <div class="sb-divider"></div>
-    <div class="sb-section-label">Análise</div>
+    <div class="sb-section-label">Análise e Performance</div>
     <button class="tab" id="tab-ranking" onclick="showTab('ranking',this);loadRanking()"><span class="sb-ic" style="background:#ccfbf1">📊</span> Ranking</button>
     <button class="tab" id="tab-consistency" onclick="showTab('consistency',this);loadConsistency()"><span class="sb-ic" style="background:#dcfce7">📈</span> Score de Consistência</button>
     <button class="tab" id="tab-progression" onclick="showTab('progression',this);loadProgression()"><span class="sb-ic" style="background:#ede9fe">🔢</span> Progressão · 10 Part.</button>
+
+    <div class="sb-divider"></div>
+    <div class="sb-section-label">Histórico</div>
     <button class="tab" id="tab-history" onclick="showTab('history',this);loadHistory()"><span class="sb-ic" style="background:#e0e7ff">📋</span> Histórico de Sessões</button>
     <div class="sb-divider"></div>
     <div class="sb-section-label">Em Andamento</div>
@@ -1112,6 +1115,17 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   </div>
 </div>
 <script>let SESSION_MANAGER_URL = localStorage.getItem('pe_session_url') || 'https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec';
+// ── Analysis state ───────────────────────────────────────────────
+let rkSessData      = [];   // Ranking_Sessions rows
+let sessionsData    = [];   // Sessions_Sessions rows
+let matchesSessData = [];   // Matches_Sessions rows
+let rkFilterMode    = 'all';
+let rkSortCol       = 'win_rate';
+let rkMvpMap        = {};   // player → mvp count
+let rkData          = [];   // alias — populated by loadRanking
+let rkDataFiltered  = null; // filtered subset for display
+let rkAllSessions   = [];   // alias for sessionsData
+
 
 
 // ══════════════════════════════════════════════════════════════════
@@ -1686,6 +1700,92 @@ function rkSetFilter(mode, el) {
 }
 
 /** Apply the active filter and re-render */
+// ── rkUpdateKPIs ─────────────────────────────────────────────────
+function rkUpdateKPIs(rows) {
+  const players  = rows.length;
+  const sessions = rkSessData.length;
+  const matches  = rows.reduce((a,r) => a + (+r.matches||0), 0);
+  const leader   = rows.length ? rows[0] : null;
+
+  const _set = (id, v) => { const el=document.getElementById(id); if(el) el.textContent=v; };
+  _set('rk-k-players', players);
+  _set('rk-k-sess',    sessions);
+  _set('rk-k-matches', matches);
+  _set('rk-k-leader',  leader ? (leader.player||'—').split(' ')[0] : '—');
+  _set('rk-k-leader-sub', leader ? Math.round((+leader.wins||0)/(+leader.matches||1)*100)+'% WR' : '—');
+
+  if (sessions > 0) {
+    const dates = rkSessData
+      .map(s => s.session_date||'')
+      .filter(Boolean)
+      .sort();
+    _set('rk-k-span', dates.length >= 2
+      ? dates[0].slice(0,7) + ' → ' + dates[dates.length-1].slice(0,7)
+      : dates[0] || '—');
+  }
+}
+
+// ── rkRenderTable ─────────────────────────────────────────────────
+function rkRenderTable(rows) {
+  const body = document.getElementById('rk-body');
+  if (!body) return;
+
+  // Sort
+  const sortKey = rkSortCol || 'win_rate';
+  const sorted  = [...rows].sort((a, b) => {
+    const av = sortKey === 'win_rate'
+      ? (+a.wins||0) / Math.max(+a.matches||1, 1)
+      : (+a[sortKey]||0);
+    const bv = sortKey === 'win_rate'
+      ? (+b.wins||0) / Math.max(+b.matches||1, 1)
+      : (+b[sortKey]||0);
+    if (bv !== av) return bv - av;
+    // tiebreak: win rate
+    return (+b.wins||0)/Math.max(+b.matches||1,1) - (+a.wins||0)/Math.max(+a.matches||1,1);
+  });
+
+  if (!sorted.length) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:\'DM Mono\';font-size:11px">Sem dados de ranking.</div>';
+    return;
+  }
+
+  const mvpMap = rkMvpMap || {};
+  body.innerHTML = sorted.map((p, i) => {
+    const w   = +p.wins   || 0;
+    const m   = +p.matches|| 0;
+    const l   = +p.losses || 0;
+    const pf  = +p.points_for || 0;
+    const pa  = +p.points_against || 0;
+    const gd  = pf - pa;
+    const wr  = m > 0 ? Math.round(w / m * 100) : 0;
+    const sess= +p.sessions || 0;
+    const mvp = +p.mvp_count || mvpMap[p.player] || 0;
+    const name= p.player || '—';
+    const ini = name.split(' ').map(n=>n[0]||'').join('').toUpperCase().slice(0,2);
+    const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : '';
+    const wrCol = wr>=60?'#1a7a44' : wr<30?'#c0392b' : '#0a1628';
+    const gdCol = gd>=0?'#1a7a44' : '#c0392b';
+
+    return `<div class="rk-row">
+      <div class="rk-td">${medal||`<span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">${i+1}</span>`}</div>
+      <div class="rk-td rk-player">
+        <div class="rk-av" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0a1628,#1a3052);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${ini}</div>
+        <div>
+          <div style="font-weight:700;font-size:12px">${name}</div>
+          <div style="font-size:9px;color:#9ab0c8;font-family:'DM Mono'">${sess}S · ${m}P${mvp>0?` · 🏅${mvp}`:''}</div>
+        </div>
+      </div>
+      <div class="rk-td r rk-hide">${sess}</div>
+      <div class="rk-td r rk-hide">${m}</div>
+      <div class="rk-td r rk-hide" style="color:#1a7a44;font-weight:700">${w}</div>
+      <div class="rk-td r rk-hide" style="color:#9ab0c8">${l}</div>
+      <div class="rk-td r" style="font-weight:800;color:${wrCol}">${wr}%</div>
+      <div class="rk-td r" style="font-weight:700;color:${gdCol}">${gd>=0?'+':''}${gd}</div>
+      <div class="rk-td r">${mvp>0?`<span style="font-size:13px">🏅</span><span style="font-size:10px;font-family:'DM Mono'">×${mvp}</span>`:''}</div>
+    </div>`;
+  }).join('');
+}
+
 function applyRkFilter() {
   const yr = new Date().getFullYear();
 
@@ -2736,9 +2836,13 @@ async function loadRanking() {
       PadelEyeDB._fetch('get_sessions', {}),
       PadelEyeDB._fetch('get_session_matches', {}),
     ]);
-    rkSessData    = rkRes?.rows   || [];
-    sessionsData  = sessRes?.rows || [];
+    rkSessData      = rkRes?.rows   || [];
+    sessionsData    = sessRes?.rows || [];
     matchesSessData = matchRes?.rows || [];
+    rkData          = rkSessData;      // alias
+    rkAllSessions   = sessionsData;    // alias
+    rkDataFiltered  = null;            // reset filter
+    rkMvpMap        = {};
     rkRecomputeMVPs();
     applyRkFilter();
     if (dot)  dot.style.background  = '#27AE60';
