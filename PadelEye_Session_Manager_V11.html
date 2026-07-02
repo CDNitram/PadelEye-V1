@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V11</title>
+<title>PadelEye · Session Manager · V11.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -175,7 +175,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rk-ptab:hover{border-color:#C9933A;color:#C9933A;}
 .rk-ptab.on{background:#0a1628;color:#fff;border-color:#0a1628;}
 .rk-crows{display:flex;flex-direction:column;gap:6px;}
-.rk-crow{display:grid;grid-template-columns:130px 1fr 70px 65px;align-items:center;gap:10px;}
+.rk-crow{display:grid;grid-template-columns:140px 1fr 60px 68px 52px;align-items:center;gap:8px;}
+.rk-chd{display:grid;grid-template-columns:140px 1fr 60px 68px 52px;align-items:center;gap:8px;padding:0 0 6px;font-family:'DM Mono';font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#b0c4d8;}
+.rk-chd .r{text-align:right;}
 .rk-cname{font-size:12px;font-weight:600;color:#0d1e3a;display:flex;align-items:center;gap:6px;}
 .rk-bar-wrap{position:relative;height:7px;background:#f0f5fb;border-radius:4px;overflow:visible;}
 .rk-bar-avg{position:absolute;top:-3px;width:2px;height:13px;background:#0a1628;border-radius:1px;z-index:2;}
@@ -196,6 +198,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rk-prow{display:grid;grid-template-columns:40px 1fr 44px 44px 44px 44px 64px 52px 64px;padding:10px 14px;border-bottom:1px solid #eaf0f8;align-items:center;transition:background .12s;animation:rowIn .25s ease both;}
 .rk-prow:last-child{border-bottom:none;}
 .rk-prow:hover{background:#f8fafd;}
+.rk-td{min-width:0;}
+.rk-td.r{text-align:right;}
 .rk-rank{font-family:'Bebas Neue';font-size:18px;color:#9ab0c8;}
 .rk-rank.g{color:#d4a017;}.rk-rank.s{color:#8a9ab0;}.rk-rank.b{color:#b07040;}
 .rk-player{display:flex;align-items:center;gap:8px;}
@@ -225,7 +229,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .rk-kpi-grid{grid-template-columns:repeat(2,1fr);}
   .rk-thd,.rk-prow{grid-template-columns:32px 1fr 48px 52px 56px;}
   .rk-hide{display:none;}
-  .rk-crow{grid-template-columns:110px 1fr 55px;}
+  .rk-crow{grid-template-columns:100px 1fr 50px;}
   .rk-cscore{display:none;}
 }
 
@@ -525,7 +529,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <button class="btn-login" onclick="doLogin()">Abrir Sessão →</button>
   </div>
-  <div class="login-footer">PADELEYE · SESSION MANAGER · V11 · BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.1 · BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -535,7 +539,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <span></span><span></span><span></span>
     </button>
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.1</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
       <button class="btn-out" onclick="doLogout()">Sair</button>
@@ -1121,6 +1125,7 @@ let sessionsData    = [];   // Sessions_Sessions rows
 let matchesSessData = [];   // Matches_Sessions rows
 let rkFilterMode    = 'all';
 let rkSortCol       = 'win_rate';
+let rkValidSessNums = null; // null = todas as sessões; Set = filtro ativo (usado por renderHistPairs)
 let rkMvpMap        = {};   // player → mvp count
 let rkData          = [];   // alias — populated by loadRanking
 let rkDataFiltered  = null; // filtered subset for display
@@ -1308,6 +1313,11 @@ function flagTextCol(nat) {
 function rkIni(name) {
   if (!name || typeof name !== 'string') return '??';
   return name.trim().split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '??';
+}
+
+function getPlayerNat(name) {
+  const p = PLAYER_REGISTRY.find(p => displayNameV10(p) === name);
+  return p ? (p.player_nationality || p.nacionalidade || '') : '';
 }
 
 
@@ -1768,7 +1778,7 @@ function rkRenderTable(rows) {
     const wrCol = wr>=60?'#1a7a44' : wr<30?'#c0392b' : '#0a1628';
     const gdCol = gd>=0?'#1a7a44' : '#c0392b';
 
-    return `<div class="rk-row">
+    return `<div class="rk-prow">
       <div class="rk-td">${medal||`<span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">${i+1}</span>`}</div>
       <div class="rk-td rk-player">
         <div class="rk-av" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0a1628,#1a3052);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${ini}</div>
@@ -1795,7 +1805,8 @@ function applyRkFilter() {
   if (rkFilterMode === 'all') {
     document.getElementById('rk-season-label').textContent = 'Todas as Temporadas';
     rkDataFiltered = null;
-    rkRenderTable(); rkUpdateKPIs(rkData); return;
+    rkValidSessNums = null;
+    rkRenderTable(); rkUpdateKPIs(rkData); renderHistPairs(); return;
   }
 
   // Year filter: '2026', '2025', '2024', or 'year' (current)
@@ -1821,7 +1832,8 @@ function applyRkFilter() {
     const toVal   = document.getElementById('rk-date-to')?.value;
     if (!fromVal && !toVal) {
       rkDataFiltered = null;
-      rkRenderTable(); rkUpdateKPIs(rkData); return;
+      rkValidSessNums = null;
+      rkRenderTable(); rkUpdateKPIs(rkData); renderHistPairs(); return;
     }
     filterStart = fromVal ? new Date(fromVal) : null;
     filterEnd   = toVal   ? new Date(toVal + 'T23:59:59') : null;
@@ -1844,7 +1856,8 @@ function applyRkFilter() {
   if (!validSessNums.size) {
     if (fc) fc.textContent = '(sem dados de datas — a mostrar tudo)';
     rkDataFiltered = null;
-    rkRenderTable(); rkUpdateKPIs(rkData); return;
+    rkValidSessNums = null;
+    rkRenderTable(); rkUpdateKPIs(rkData); renderHistPairs(); return;
   }
   if (fc) fc.textContent = `${validSessNums.size} sessões`;
 
@@ -1858,6 +1871,7 @@ function applyRkFilter() {
   if (!filteredStats.length) {
     // Re-aggregate from rkData using rkAllSessions MVP data
     const filtSessSet = validSessNums;
+    rkValidSessNums = filtSessSet;
     const mvpMap = {};
     rkAllSessions.forEach(s => {
       const sn  = String(s.session_serial_number || s.numero || '').replace(/^S/i,'').trim();
@@ -1869,7 +1883,7 @@ function applyRkFilter() {
       const p = String(r.player || r.jogador || '');
       return { ...r, mvp_count: mvpMap[p] || 0 };
     });
-    rkRenderTable(); rkUpdateKPIs(rkDataFiltered, filtSessSet); return;
+    rkRenderTable(); rkUpdateKPIs(rkDataFiltered, filtSessSet); renderHistPairs(); return;
   }
 
   // Aggregate per player from Stats_Sessions
@@ -1913,6 +1927,7 @@ function applyRkFilter() {
     win_rate:          p.matches > 0 ? (((p.wins/p.matches)*100).toFixed(0)+'%') : '0%',
   }));
 
+  rkValidSessNums = validSessNums;
   rkRenderTable(); rkUpdateKPIs(rkDataFiltered, validSessNums);
   renderHistPairs();
 }
@@ -1935,6 +1950,89 @@ async function loadConsistency() {
     `${rkSessData.length} linhas de stats · ${rkAllSessions.length} sessões`;
 
   rkRenderConsistency();
+}
+
+// ── rkRenderConsistency — Score de Consistência ────────────────────
+function rkRenderConsistency() {
+  const container = document.getElementById('rk-crows');
+  if (!container) return;
+
+  const months = rkConsPeriod || 6;
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - months);
+
+  // Map session serial → date
+  const sessDateMap = {};
+  rkAllSessions.forEach(s => {
+    const num = String(s.session_serial_number || s.numero || s.number || '').replace(/^S/i,'').trim();
+    const raw = s.session_date || s.date || s.data || '';
+    if (!num || !raw) return;
+    const d = /^\d{4}-\d{2}-\d{2}/.test(raw) ? new Date(raw.slice(0,10)+'T12:00:00') : new Date(raw);
+    if (!isNaN(d)) sessDateMap[num] = d;
+  });
+  const validSessNums = new Set(
+    Object.entries(sessDateMap).filter(([, d]) => d >= cutoff).map(([num]) => num)
+  );
+
+  // Aggregate wins/matches per player within the period
+  const pMap = {};
+  rkSessData.forEach(r => {
+    const sn = String(r.session_serial_number || r.sessao || r.session || '').replace(/^S/i,'').trim();
+    if (!validSessNums.has(sn)) return;
+    const player = String(r.player || r.jogador || '').trim();
+    if (!player) return;
+    if (!pMap[player]) pMap[player] = { player, wins: 0, matches: 0 };
+    pMap[player].wins    += +(r.wins    || r.vitorias || 0);
+    pMap[player].matches += +(r.matches || r.partidas  || 0);
+  });
+
+  const players = Object.values(pMap)
+    .filter(p => p.matches > 0)
+    .map(p => ({ ...p, wr: (p.wins / p.matches) * 100 }));
+
+  if (!players.length) {
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:\'DM Mono\';font-size:11px">Sem dados neste período.</div>';
+    return;
+  }
+
+  const groupAvg = players.reduce((s, p) => s + p.wr, 0) / players.length;
+  players.sort((a, b) => b.wr - a.wr);
+
+  const header = `<div class="rk-chd">
+      <div>JOGADOR</div>
+      <div>WIN RATE · MÉDIA DO GRUPO</div>
+      <div class="r">WR%</div>
+      <div class="r">VS MÉDIA</div>
+      <div class="r">SCORE</div>
+    </div>`;
+
+  const rows = players.map((p, i) => {
+    const medal = i===0 ? '🥇 ' : i===1 ? '🥈 ' : i===2 ? '🥉 ' : '';
+    const vsAvg = p.wr - groupAvg;
+    const score = Math.max(0, Math.round(100 - Math.abs(vsAvg)));
+    const above = vsAvg >= 0;
+    const barCol = above ? '#1a7a44' : '#c0392b';
+    const scoreCol = score >= 90 ? '#1a7a44' : score >= 70 ? '#C9933A' : '#c0392b';
+    const scoreBg  = score >= 90 ? '#E8F8EE' : score >= 70 ? '#FFF8E0' : 'rgba(192,57,43,.08)';
+    return `<div class="rk-crow">
+      <div class="rk-cname">${medal}${p.player}</div>
+      <div class="rk-bar-wrap">
+        <div class="rk-bar-fill" style="width:${Math.min(100,p.wr).toFixed(1)}%;background:${barCol}"></div>
+        <div class="rk-bar-avg" style="left:${Math.min(100,groupAvg).toFixed(1)}%"></div>
+      </div>
+      <div class="rk-cwr" style="line-height:1.3">
+        <div style="font-weight:700;color:#0d1e3a">${p.wr.toFixed(0)}%</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">${p.matches} part.</div>
+      </div>
+      <div class="r" style="line-height:1.3">
+        <div style="font-weight:700;color:${barCol}">${above?'+':''}${vsAvg.toFixed(1)}%</div>
+        <div style="font-family:'DM Mono';font-size:9px;color:#9ab0c8">${above?'acima':'abaixo'}</div>
+      </div>
+      <div class="rk-cscore" style="background:${scoreBg};color:${scoreCol};text-align:center;justify-self:end">${score}</div>
+    </div>`;
+  }).join('');
+
+  container.innerHTML = header + rows;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -2216,6 +2314,63 @@ _progTogglePlayer = function(name) {
 };
 
 // ── Duplas Históricas ─────────────────────────────────────────────────
+function renderHistPairs() {
+  const body  = document.getElementById('hist-pairs-body');
+  const card  = document.getElementById('hist-pairs-card');
+  const label = document.getElementById('hist-pairs-filter-label');
+  if (!body || !card) return;
+
+  if (label) label.textContent = rkValidSessNums
+    ? `${rkValidSessNums.size} SESSÕES FILTRADAS`
+    : 'TODAS AS SESSÕES';
+
+  const matches = matchesSessData.filter(m => {
+    if (!rkValidSessNums) return true;
+    const sn = String(m.session_serial_number || m.sessao || m.session || '').replace(/^S/i,'').trim();
+    return rkValidSessNums.has(sn);
+  });
+
+  const pairMap = {};
+  matches.forEach(m => {
+    const ta = (m.team_a || '').split('/').map(n => n.trim()).filter(Boolean);
+    const tb = (m.team_b || '').split('/').map(n => n.trim()).filter(Boolean);
+    const sa = +(m.score_a || 0), sb = +(m.score_b || 0);
+    [[ta, sa, sb], [tb, sb, sa]].forEach(([team, pf, pa]) => {
+      if (team.length !== 2) return;
+      const sortedTeam = [...team].sort();
+      const key = sortedTeam.join(' & ');
+      if (!pairMap[key]) pairMap[key] = { players: sortedTeam, matches: 0, wins: 0 };
+      pairMap[key].matches++;
+      if (pf > pa) pairMap[key].wins++;
+    });
+  });
+
+  const pairs = Object.values(pairMap)
+    .filter(p => p.matches >= 2)
+    .map(p => ({ ...p, wr: p.matches ? (p.wins / p.matches) * 100 : 0 }))
+    .sort((a, b) => b.wr - a.wr || b.matches - a.matches);
+
+  if (!pairs.length) { card.style.display = 'none'; return; }
+  card.style.display = '';
+
+  body.innerHTML = pairs.slice(0, 12).map(p => {
+    const wrCol = p.wr >= 60 ? '#1a7a44' : p.wr < 40 ? '#c0392b' : '#0a1628';
+    return `<div class="rk-prow" style="grid-template-columns:1fr 64px 76px">
+      <div class="rk-player">
+        <div style="display:flex">
+          <div class="rk-av" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#0a1628,#1a3052);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${rkIni(p.players[0])}</div>
+          <div class="rk-av" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#1a3052,#3a5a8a);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;font-family:'DM Mono';flex-shrink:0;margin-left:-8px;border:2px solid #fff">${rkIni(p.players[1])}</div>
+        </div>
+        <div>
+          <div style="font-weight:700;font-size:12px">${p.players.join(' & ')}</div>
+          <div style="font-size:9px;color:#9ab0c8;font-family:'DM Mono'">${p.matches} partidas juntos</div>
+        </div>
+      </div>
+      <div class="rk-td r" style="font-weight:800;color:${wrCol}">${p.wr.toFixed(0)}%</div>
+      <div class="rk-td r" style="color:#9ab0c8;font-family:'DM Mono';font-size:11px">${p.wins}V ${p.matches - p.wins}D</div>
+    </div>`;
+  }).join('');
+}
 
 function openAddPlayer() {
   const modal = document.getElementById('add-player-modal');
@@ -2759,20 +2914,20 @@ function closeSession() {
 }
 
 // ── RANKING ──────────────────────────────────────────────────────────
-function rkSetPeriod(period) {
-  document.querySelectorAll('#rk-filter-bar button').forEach(b=>b.classList.remove('active'));
-  const btn = document.getElementById('rk-f-'+period);
-  if (btn) btn.classList.add('active');
-  const custom = document.getElementById('rk-date-range');
-  if (custom) custom.style.display = period==='custom' ? 'flex':'none';
-  applyRkFilter();
+let rkConsPeriod = 6; // months window for Score de Consistência
+
+function rkSetPeriod(months, el) {
+  rkConsPeriod = months;
+  document.querySelectorAll('#p-consistency .rk-ptab').forEach(b => b.classList.remove('on'));
+  if (el) el.classList.add('on');
+  rkRenderConsistency();
 }
 
-function rkSetSort(col) {
-  document.querySelectorAll('[id^="rk-sb-"]').forEach(b=>b.classList.remove('active'));
-  const btn = document.getElementById('rk-sb-'+col);
-  if (btn) btn.classList.add('active');
-  applyRkFilter();
+function rkSetSort(col, el) {
+  rkSortCol = col;
+  document.querySelectorAll('#p-ranking .rk-sort-bar .rk-sbtn').forEach(b => b.classList.remove('on'));
+  if (el) el.classList.add('on');
+  rkRenderTable();
 }
 
 // ── HISTORY ─────────────────────────────────────────────────────────
