@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V11.2</title>
+<title>PadelEye · Session Manager · V11.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -529,7 +529,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <button class="btn-login" onclick="doLogin()">Abrir Sessão →</button>
   </div>
-  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.2 · BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.3 · BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -539,7 +539,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <span></span><span></span><span></span>
     </button>
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.2</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.3</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
       <button class="btn-out" onclick="doLogout()">Sair</button>
@@ -1317,7 +1317,14 @@ function rkIni(name) {
 }
 
 function getPlayerNat(name) {
-  const p = PLAYER_REGISTRY.find(p => displayNameV10(p) === name);
+  if (!name) return '';
+  const target = name.trim().toLowerCase();
+  const p = PLAYER_REGISTRY.find(p => {
+    const disp = displayNameV10(p).trim().toLowerCase();
+    const nick = (p.player_nickname || p.nickname || '').trim().toLowerCase();
+    const full = ((p.player_name || p.nome || '') + ' ' + (p.player_surname || p.sobrenome || '')).trim().toLowerCase();
+    return disp === target || nick === target || full === target;
+  });
   return p ? (p.player_nationality || p.nacionalidade || '') : '';
 }
 
@@ -1965,20 +1972,24 @@ function rkRenderConsistency() {
   // Map session serial → date
   const sessDateMap = {};
   rkAllSessions.forEach(s => {
-    const num = String(s.session_serial_number || s.numero || s.number || '').replace(/^S/i,'').trim();
+    const num = String(s.session_serial_number || s.numero || s.number || '').replace(/\D/g,'').trim();
     const raw = s.session_date || s.date || s.data || '';
     if (!num || !raw) return;
     const d = /^\d{4}-\d{2}-\d{2}/.test(raw) ? new Date(raw.slice(0,10)+'T12:00:00') : new Date(raw);
     if (!isNaN(d)) sessDateMap[num] = d;
   });
-  const validSessNums = new Set(
-    Object.entries(sessDateMap).filter(([, d]) => d >= cutoff).map(([num]) => num)
-  );
+  // If dates failed to parse for every session, don't silently show zero data —
+  // fall back to treating all sessions as in-period.
+  const validSessNums = Object.keys(sessDateMap).length
+    ? new Set(Object.entries(sessDateMap).filter(([, d]) => d >= cutoff).map(([num]) => num))
+    : new Set(rkAllSessions.map(s =>
+        String(s.session_serial_number || s.numero || s.number || '').replace(/\D/g,'').trim()
+      ).filter(Boolean));
 
   // Aggregate wins/matches per player within the period
   const pMap = {};
   rkSessData.forEach(r => {
-    const sn = String(r.session_serial_number || r.sessao || r.session || '').replace(/^S/i,'').trim();
+    const sn = String(r.session_serial_number || r.sessao || r.session || '').replace(/\D/g,'').trim();
     if (!validSessNums.has(sn)) return;
     const player = String(r.player || r.jogador || '').trim();
     if (!player) return;
@@ -2044,11 +2055,39 @@ let _progSeries = [];       // all computed series
 let _progSelected = new Set(); // names of selected players
 let _progSessDateMap = {};  // shared date map
 
-function _progRankSession(rows) {
-  // DEBUG — remove after confirming player_mvp values
-  const s23check = rows.filter(r => String(r.session_serial_number||r.session||'').includes('23'));
-  if (s23check.length) console.log('[PROG DEBUG S23]', s23check.map(r=>({player:r.player||r.jogador, mvp:r.player_mvp, type:typeof r.player_mvp})));
+function _loadScriptWithFallback(urls, timeoutMs) {
+  function tryOne(i) {
+    return new Promise((resolve, reject) => {
+      if (i >= urls.length) { reject(new Error('Todas as fontes CDN falharam')); return; }
+      const sc = document.createElement('script');
+      let done = false;
+      const timer = setTimeout(() => {
+        if (done) return;
+        done = true;
+        sc.remove();
+        tryOne(i + 1).then(resolve, reject);
+      }, timeoutMs);
+      sc.onload = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve();
+      };
+      sc.onerror = () => {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        sc.remove();
+        tryOne(i + 1).then(resolve, reject);
+      };
+      sc.src = urls[i];
+      document.head.appendChild(sc);
+    });
+  }
+  return tryOne(0);
+}
 
+function _progRankSession(rows) {
   // Canonical sort — mirrors mvpSort: WR% → Vitórias → SP → GF → MVP flag
   const sorted = [...rows].sort((a, b) => {
     const mA = +(a.matches||a.partidas||0),    mB = +(b.matches||b.partidas||0);
@@ -2219,17 +2258,27 @@ async function loadProgression() {
       .map(s => s.name)
   );
 
-  // ── Load Chart.js if needed ──────────────────────────────────────────────
+  // ── Load Chart.js if needed (CDN fallback + timeout — never hangs) ────────
+  let chartLoadFailed = false;
   if (!window.Chart) {
-    await new Promise(res => {
-      const sc = document.createElement('script');
-      sc.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
-      sc.onload = res; document.head.appendChild(sc);
-    });
+    try {
+      await _loadScriptWithFallback([
+        'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js',
+        'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js',
+      ], 8000);
+    } catch (e) {
+      console.warn('[Progressão] Chart.js falhou ao carregar:', e);
+      chartLoadFailed = true;
+    }
   }
 
   // ── Build chart with selected players ────────────────────────────────────
-  _progRebuildChart();
+  if (!chartLoadFailed) {
+    _progRebuildChart();
+  } else {
+    const wrap = document.getElementById('prog-chart')?.parentElement;
+    if (wrap) wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;text-align:center;padding:0 20px;color:#9ab0c8;font-family:\'DM Mono\';font-size:11px">Não foi possível carregar o gráfico (CDN indisponível). Os cards abaixo continuam disponíveis — clique em ↻ para tentar de novo.</div>';
+  }
 
   // ── Player cards — all players, selected highlighted ─────────────────────
   const T = {
@@ -2327,7 +2376,7 @@ function renderHistPairs() {
 
   const matches = matchesSessData.filter(m => {
     if (!rkValidSessNums) return true;
-    const sn = String(m.session_serial_number || m.sessao || m.session || '').replace(/^S/i,'').trim();
+    const sn = String(m.session_serial_number || m.sessao || m.session || '').replace(/\D/g,'').trim();
     return rkValidSessNums.has(sn);
   });
 
