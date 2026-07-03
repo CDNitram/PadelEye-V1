@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V11.4</title>
+<title>PadelEye · Session Manager · V11.5</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -529,7 +529,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <button class="btn-login" onclick="doLogin()">Abrir Sessão →</button>
   </div>
-  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.4 · BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.5 · BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -539,7 +539,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <span></span><span></span><span></span>
     </button>
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.4</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.5</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
       <button class="btn-out" onclick="doLogout()">Sair</button>
@@ -595,11 +595,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="card-title">Configuração da Sessão</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
-          <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">Nº DA SESSÃO</label>
-          <div id="cfg-num-display" style="background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:8px;padding:8px 12px;font-family:'Bebas Neue';font-size:16px;color:#C9933A;letter-spacing:1px;display:flex;align-items:center;gap:6px;">
-            <span id="cfg-num">—</span>
+          <label style="font-size:10px;visibility:hidden;display:block;margin-bottom:4px;font-weight:600">.</label>
+          <div id="cfg-num-display" style="background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;height:37px;box-sizing:border-box">
+            <span style="font-size:10px;color:#9ab0c8;font-weight:600;white-space:nowrap">Nº DA SESSÃO</span>
+            <span id="cfg-num" style="font-family:'Bebas Neue';font-size:16px;color:#C9933A;letter-spacing:1px">—</span>
             <span id="cfg-num-loading" style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;letter-spacing:1px">CARREGANDO...</span>
           </div>
+        </div>
         </div>
         <div>
           <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">DATA</label>
@@ -1143,7 +1145,7 @@ const PadelEyeDB = (() => {
   async function send(action, data) {
     const res = await fetch(SESSION_MANAGER_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, data }),
     });
     return res.json();
@@ -2648,10 +2650,8 @@ async function fetchNextSessionNumber() {
     const serials = rows.map(r => parseInt((r.session_serial_number||r.numero||'0').toString().replace(/\D/g,''))).filter(n=>!isNaN(n));
     const next = serials.length ? Math.max(...serials) + 1 : 1;
     const el = document.getElementById('cfg-num');
-    const disp = document.getElementById('cfg-num-display');
     const load = document.getElementById('cfg-num-loading');
-    if (el) el.textContent = next;
-    if (disp) { disp.textContent = 'S' + next; disp.style.display='inline'; }
+    if (el) el.textContent = 'S' + next;
     if (load) load.style.display = 'none';
     const heroNum = document.getElementById('hero-num');
     if (heroNum && !sessionIsOpen) heroNum.textContent = 'S' + next;
@@ -3326,7 +3326,7 @@ async function resumeSession(sid) {
     const cfgLocal = document.getElementById('cfg-local');
     const cfgFmt = document.getElementById('cfg-format');
     const serial = (sessRow.session_serial_number || '').toString().replace(/^S/i,'');
-    if (cfgNum) cfgNum.value = serial;
+    if (cfgNum) cfgNum.textContent = serial ? 'S' + serial : '—';
     if (cfgDate) cfgDate.value = sessRow.session_date || '';
     if (cfgLocal) cfgLocal.value = sessRow.session_venue || '';
     if (cfgFmt) cfgFmt.value = sessRow.session_format || '';
@@ -3726,7 +3726,7 @@ function discardSession() {
 </script>
 
 <!-- VIEW MODAL — perfil do jogador -->
-<div id="view-modal-v10" onclick="closeViewModalV10(event)"
+<div id="view-modal-v10"
   style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:700;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:20px;padding:28px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
