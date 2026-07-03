@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V11.1</title>
+<title>PadelEye · Session Manager · V11.2</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -529,7 +529,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <button class="btn-login" onclick="doLogin()">Abrir Sessão →</button>
   </div>
-  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.1 · BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.2 · BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -539,7 +539,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <span></span><span></span><span></span>
     </button>
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.1</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.2</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
       <button class="btn-out" onclick="doLogout()">Sair</button>
@@ -1280,8 +1280,9 @@ async function loadPlayersFromDB() {
 async function loadCadastro() {
   const roster = document.getElementById('player-roster');
   if (roster) roster.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8"><div style="font-size:32px">⏳</div><div style="margin-top:8px;font-size:13px">A carregar jogadores…</div></div>';
-  await loadPlayersFromDB();
+  await Promise.all([loadPlayersFromDB(), loadFrequentPlayers()]);
   renderRoster();
+  renderPlayerGrid();
 }
 
 // ── Player card helpers ────────────────────────────────────────────
@@ -1781,7 +1782,7 @@ function rkRenderTable(rows) {
     return `<div class="rk-prow">
       <div class="rk-td">${medal||`<span style="font-family:'DM Mono';font-size:10px;color:#9ab0c8">${i+1}</span>`}</div>
       <div class="rk-td rk-player">
-        <div class="rk-av" style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#0a1628,#1a3052);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${ini}</div>
+        <div class="rk-av" style="width:30px;height:30px;border-radius:50%;background:${flagGrad(getPlayerNat(name))};display:inline-flex;align-items:center;justify-content:center;color:${flagTextCol(getPlayerNat(name))};text-shadow:0 1px 3px rgba(0,0,0,.35);font-size:9px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${ini}</div>
         <div>
           <div style="font-weight:700;font-size:12px">${name}</div>
           <div style="font-size:9px;color:#9ab0c8;font-family:'DM Mono'">${sess}S · ${m}P${mvp>0?` · 🏅${mvp}`:''}</div>
@@ -2358,8 +2359,8 @@ function renderHistPairs() {
     return `<div class="rk-prow" style="grid-template-columns:1fr 64px 76px">
       <div class="rk-player">
         <div style="display:flex">
-          <div class="rk-av" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#0a1628,#1a3052);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${rkIni(p.players[0])}</div>
-          <div class="rk-av" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#1a3052,#3a5a8a);display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:8px;font-weight:700;font-family:'DM Mono';flex-shrink:0;margin-left:-8px;border:2px solid #fff">${rkIni(p.players[1])}</div>
+          <div class="rk-av" style="width:26px;height:26px;border-radius:50%;background:${flagGrad(getPlayerNat(p.players[0]))};display:inline-flex;align-items:center;justify-content:center;color:${flagTextCol(getPlayerNat(p.players[0]))};text-shadow:0 1px 3px rgba(0,0,0,.35);font-size:8px;font-weight:700;font-family:'DM Mono';flex-shrink:0">${rkIni(p.players[0])}</div>
+          <div class="rk-av" style="width:26px;height:26px;border-radius:50%;background:${flagGrad(getPlayerNat(p.players[1]))};display:inline-flex;align-items:center;justify-content:center;color:${flagTextCol(getPlayerNat(p.players[1]))};text-shadow:0 1px 3px rgba(0,0,0,.35);font-size:8px;font-weight:700;font-family:'DM Mono';flex-shrink:0;margin-left:-8px;border:2px solid #fff">${rkIni(p.players[1])}</div>
         </div>
         <div>
           <div style="font-weight:700;font-size:12px">${p.players.join(' & ')}</div>
@@ -2603,6 +2604,84 @@ function quickSelectPlayers(n) {
     const btn = document.getElementById('qbtn-' + i);
     if (btn) btn.classList.toggle('active', i === n);
   });
+  const pool = topFrequentPlayers.length ? topFrequentPlayers : [...BASE_PLAYERS];
+  activePlayers = pool.slice(0, n);
+  renderPlayerGrid();
+  updateMatchSelects();
+  if (activePlayers.length >= 2) stampStatus('open','players_confirmed');
+}
+
+// ── Player picker ("Quem Joga Hoje?") ──────────────────────────────
+let topFrequentPlayers = [];
+
+async function loadFrequentPlayers() {
+  try {
+    const res = await PadelEyeDB._fetch('get_session_stats', {});
+    const rows = (res && res.rows) || [];
+    const agg = {};
+    rows.forEach(r => {
+      const player = String(r.player || r.jogador || '').trim();
+      if (!player) return;
+      agg[player] = (agg[player] || 0) + (+(r.matches || r.partidas || 0));
+    });
+    topFrequentPlayers = Object.entries(agg)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([player]) => player);
+  } catch (e) {
+    console.warn('[SM] loadFrequentPlayers error:', e);
+    topFrequentPlayers = [];
+  }
+}
+
+function _playerChipHTML(name) {
+  const nat = getPlayerNat(name);
+  const active = activePlayers.includes(name);
+  const safeName = name.replace(/'/g, "\\'");
+  return `<div class="player-chip${active ? ' active' : ''}" data-name="${name}" onclick="togglePlayerChip('${safeName}')">
+    <div class="player-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div class="player-chip-av" style="background:${flagGrad(nat)};color:${flagTextCol(nat)};text-shadow:0 1px 3px rgba(0,0,0,.35)">${rkIni(name)}</div>
+    <div class="player-chip-name">${name}</div>
+  </div>`;
+}
+
+function togglePlayerChip(name) {
+  const idx = activePlayers.indexOf(name);
+  if (idx >= 0) activePlayers.splice(idx, 1);
+  else activePlayers.push(name);
+  renderPlayerGrid();
+  updateMatchSelects();
+  if (activePlayers.length >= 2) stampStatus('open','players_confirmed');
+}
+
+function renderPlayerGrid() {
+  const grid = document.getElementById('player-grid');
+  if (!grid) return;
+  const q = (document.getElementById('player-search-cfg')?.value || '').toLowerCase().trim();
+
+  const names = [...BASE_PLAYERS].sort((a, b) => a.localeCompare(b, 'pt', { sensitivity: 'base' }));
+  const filtered = q ? names.filter(n => n.toLowerCase().includes(q)) : names;
+
+  grid.innerHTML = filtered.map(n => _playerChipHTML(n)).join('') ||
+    '<div style="grid-column:1/-1;text-align:center;padding:20px;color:#9ab0c8;font-size:12px">Nenhum jogador encontrado.</div>';
+
+  const favBlock = document.getElementById('fav-players-block');
+  const favGrid  = document.getElementById('fav-players-grid');
+  if (favBlock && favGrid) {
+    if (!q && topFrequentPlayers.length) {
+      favBlock.style.display = 'block';
+      favGrid.innerHTML = topFrequentPlayers.map(n => _playerChipHTML(n)).join('');
+    } else {
+      favBlock.style.display = 'none';
+    }
+  }
+
+  const badge = document.getElementById('player-count-badge');
+  if (badge) badge.textContent = `${activePlayers.length} selecionados`;
+}
+
+function filterPlayerGrid() {
+  renderPlayerGrid();
 }
 
 function addGuest() {
