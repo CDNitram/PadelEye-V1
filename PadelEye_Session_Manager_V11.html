@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Session Manager · V11.3</title>
+<title>PadelEye · Session Manager · V11.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -529,7 +529,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <button class="btn-login" onclick="doLogin()">Abrir Sessão →</button>
   </div>
-  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.3 · BY TECHNIGMA AI LAB</div>
+  <div class="login-footer">PADELEYE · SESSION MANAGER · V11.4 · BY TECHNIGMA AI LAB</div>
 </div>
 
 <!-- ═══════════ SESSION APP ═══════════ -->
@@ -539,7 +539,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <span></span><span></span><span></span>
     </button>
     <div class="topbar-logo">PADEL<em>EYE</em></div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.3</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">SESSION MANAGER · V11.4</div>
     <div class="topbar-right">
       <div class="topbar-av" id="tb-av">?</div>
       <button class="btn-out" onclick="doLogout()">Sair</button>
@@ -592,26 +592,26 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
     </div>
     <div class="card">
-      <div class="card-title">Session Config</div>
+      <div class="card-title">Configuração da Sessão</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div>
-          <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">SESSION #</label>
+          <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">Nº DA SESSÃO</label>
           <div id="cfg-num-display" style="background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:8px;padding:8px 12px;font-family:'Bebas Neue';font-size:16px;color:#C9933A;letter-spacing:1px;display:flex;align-items:center;gap:6px;">
             <span id="cfg-num">—</span>
-            <span id="cfg-num-loading" style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;letter-spacing:1px">LOADING...</span>
+            <span id="cfg-num-loading" style="font-family:'DM Mono';font-size:9px;color:#b0c4d8;letter-spacing:1px">CARREGANDO...</span>
           </div>
         </div>
         <div>
-          <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">DATE</label>
+          <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">DATA</label>
           <input type="date" class="team-select" id="cfg-date">
         </div>
       </div>
       <div style="margin-bottom:10px">
-        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">VENUE</label>
+        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">LOCAL</label>
         <input class="team-select" id="cfg-local" placeholder="ex: EcoTenis · Quadra Outdoor">
       </div>
       <div>
-        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">FORMAT</label>
+        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">FORMATO</label>
         <select class="team-select" id="cfg-format">
           <option>Duplas · Rotativo</option>
           <option>Duplas · Pares Fixos</option>
@@ -622,7 +622,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
       <div>
-        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">SCORE MAX</label>
+        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">PONTUAÇÃO MÁXIMA</label>
         <select class="team-select" id="cfg-max-score">
           <option value="3">3 games</option><option value="4" selected>4 games</option>
           <option value="5">5 games</option><option value="6">6 games</option>
@@ -630,7 +630,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </select>
       </div>
       <div>
-        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">TIE-BREAK AT</label>
+        <label style="font-size:10px;color:#9ab0c8;display:block;margin-bottom:4px;font-weight:600">TIE-BREAK EM</label>
         <select class="team-select" id="cfg-tb-at">
           <option value="3">3×3</option><option value="4" selected>4×4</option>
           <option value="5">5×5</option><option value="6">6×6</option>
@@ -1076,7 +1076,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
 </div><!-- /s-app -->
 <!-- ADD PLAYER MODAL -->
-<div id="add-player-modal" onclick="closeAddPlayer(event)">
+<div id="add-player-modal">
   <div class="ap-box" onclick="event.stopPropagation()">
     <div class="ap-title">Novo Jogador</div>
     <div class="ap-sub">Preencha os dados. Campos com * são obrigatórios.</div>
@@ -1762,10 +1762,10 @@ function rkRenderTable(rows) {
     if (bv !== av) return bv - av;
     // tiebreak: win rate
     return (+b.wins||0)/Math.max(+b.matches||1,1) - (+a.wins||0)/Math.max(+a.matches||1,1);
-  });
+  }).filter(p => (+p.sessions || 0) >= 3);
 
   if (!sorted.length) {
-    body.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:\'DM Mono\';font-size:11px">Sem dados de ranking.</div>';
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:#9ab0c8;font-family:\'DM Mono\';font-size:11px">Nenhum jogador atingiu o mínimo de 3 sessões neste período.</div>';
     return;
   }
 
@@ -1852,7 +1852,8 @@ function applyRkFilter() {
   // Collect sessions in date range
   const validSessNums = new Set();
   Object.entries(sessDateMap).forEach(([num, dateStr]) => {
-    const d = formatDateBR.__parse ? formatDateBR.__parse(dateStr) : new Date(dateStr.includes('/') ? dateStr.split('/').reverse().join('-') : dateStr);
+    const ds = String(dateStr);
+    const d = new Date(ds.includes('/') ? ds.split('/').reverse().join('-') : ds);
     if (filterStart && d < filterStart) return;
     if (filterEnd   && d > filterEnd)   return;
     validSessNums.add(num);
@@ -1969,28 +1970,27 @@ function rkRenderConsistency() {
   const cutoff = new Date();
   cutoff.setMonth(cutoff.getMonth() - months);
 
-  // Map session serial → date
-  const sessDateMap = {};
-  rkAllSessions.forEach(s => {
-    const num = String(s.session_serial_number || s.numero || s.number || '').replace(/\D/g,'').trim();
-    const raw = s.session_date || s.date || s.data || '';
-    if (!num || !raw) return;
-    const d = /^\d{4}-\d{2}-\d{2}/.test(raw) ? new Date(raw.slice(0,10)+'T12:00:00') : new Date(raw);
-    if (!isNaN(d)) sessDateMap[num] = d;
-  });
-  // If dates failed to parse for every session, don't silently show zero data —
-  // fall back to treating all sessions as in-period.
-  const validSessNums = Object.keys(sessDateMap).length
-    ? new Set(Object.entries(sessDateMap).filter(([, d]) => d >= cutoff).map(([num]) => num))
-    : new Set(rkAllSessions.map(s =>
-        String(s.session_serial_number || s.numero || s.number || '').replace(/\D/g,'').trim()
-      ).filter(Boolean));
+  function parseRowDate(r) {
+    const raw = r.date || r.session_date || r.data || '';
+    if (!raw) return null;
+    const ds = String(raw);
+    const d = /^\d{4}-\d{2}-\d{2}/.test(ds)
+      ? new Date(ds.slice(0,10)+'T12:00:00')
+      : new Date(ds.includes('/') ? ds.split('/').reverse().join('-') : ds);
+    return isNaN(d) ? null : d;
+  }
+
+  // If no row anywhere has a parseable date, don't silently show zero data —
+  // fall back to using all rows rather than filtering by an unreadable period.
+  const anyParseable = rkSessData.some(r => parseRowDate(r) !== null);
 
   // Aggregate wins/matches per player within the period
   const pMap = {};
   rkSessData.forEach(r => {
-    const sn = String(r.session_serial_number || r.sessao || r.session || '').replace(/\D/g,'').trim();
-    if (!validSessNums.has(sn)) return;
+    if (anyParseable) {
+      const d = parseRowDate(r);
+      if (!d || d < cutoff) return;
+    }
     const player = String(r.player || r.jogador || '').trim();
     if (!player) return;
     if (!pMap[player]) pMap[player] = { player, wins: 0, matches: 0 };
@@ -2207,22 +2207,33 @@ async function loadProgression() {
   if (stxt) stxt.textContent = 'Carregando...';
   if (!rkSessData.length || !rkAllSessions.length) await loadRanking();
 
-  // Session → Date map
-  _progSessDateMap = {};
-  rkAllSessions.forEach(s => {
-    const num = String(s.session_serial_number||s.numero||'').replace(/\D/g,'').trim();
-    const raw = s.session_date||s.date||s.data||'';
-    if (!num||!raw) return;
-    const d = /^\d{4}-\d{2}-\d{2}/.test(raw) ? new Date(raw.slice(0,10)+'T12:00:00') : new Date(raw);
-    if (!isNaN(d)) _progSessDateMap[num] = d;
-  });
+  // Group stats by session — prefer serial number, fall back to the row's
+  // own date (1 session/day) so this no longer depends on a join against
+  // Sessions_Sessions succeeding.
+  function _progParseDate(raw) {
+    if (!raw) return null;
+    const ds = String(raw);
+    const d = /^\d{4}-\d{2}-\d{2}/.test(ds)
+      ? new Date(ds.slice(0,10)+'T12:00:00')
+      : new Date(ds.includes('/') ? ds.split('/').reverse().join('-') : ds);
+    return isNaN(d) ? null : d;
+  }
 
-  // Group stats by session
   const bySession = {};
   rkSessData.forEach(r => {
-    const sn = String(r.session_serial_number||r.sessao||r.session||'').replace(/\D/g,'').trim();
-    if (!sn) return;
-    (bySession[sn] = bySession[sn]||[]).push(r);
+    const serial  = String(r.session_serial_number || r.sessao || r.session || '').replace(/\D/g,'').trim();
+    const dateKey = String(r.date || r.data || '').trim();
+    const key = serial || dateKey;
+    if (!key) return;
+    (bySession[key] = bySession[key]||[]).push(r);
+  });
+
+  // Date per session group — used only for chronological ordering + tooltips
+  _progSessDateMap = {};
+  Object.entries(bySession).forEach(([key, rows]) => {
+    const rowWithDate = rows.find(r => r.date || r.data);
+    const parsed = rowWithDate ? _progParseDate(rowWithDate.date || rowWithDate.data) : null;
+    if (parsed) _progSessDateMap[key] = parsed;
   });
 
   // All sessions sorted by date
@@ -3069,9 +3080,42 @@ function shareSession() {
 
 function shareHistSession() { shareSession(); }
 
-function openViewModalV10(sid) {
+function openViewModalV10(pid) {
   const modal = document.getElementById('view-modal-v10');
+  const body  = document.getElementById('vm-body-v10');
   if (!modal) return;
+  const _n = s => (s || '').toString().replace(/^#+/, '');
+  const p = PLAYER_REGISTRY.find(x => _n(x.player_id || x.id || '') === _n(pid));
+  if (body) {
+    if (!p) {
+      body.innerHTML = '<div style="text-align:center;padding:24px;color:#9ab0c8;font-size:12px">Jogador não encontrado.</div>';
+    } else {
+      const dname = displayNameV10(p);
+      const fname = p.player_name    || p.nome      || '';
+      const lname = p.player_surname || p.sobrenome || '';
+      const cat   = p.player_category    || p.categoria    || '—';
+      const city  = p.player_city        || p.cidade       || '—';
+      const nat   = p.player_nationality || p.nacionalidade || '';
+      body.innerHTML = `
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+          <div style="width:54px;height:54px;border-radius:50%;background:${flagGrad(nat)};color:${flagTextCol(nat)};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:20px;text-shadow:0 1px 3px rgba(0,0,0,.35);flex-shrink:0">${rkIni(dname)}</div>
+          <div>
+            <div style="font-size:17px;font-weight:700;color:#0d1e3a">${fname} <span style="font-weight:500;color:#5a7090">${lname}</span></div>
+            ${p.player_nickname ? `<div style="font-size:12px;color:#9ab0c8">"${p.player_nickname}"</div>` : ''}
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f0f5fb">
+            <span style="font-size:12px;color:#9ab0c8">Categoria</span>
+            <span style="font-size:13px;font-weight:600;color:#0d1e3a">${cat}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:10px 0;border-top:1px solid #f0f5fb">
+            <span style="font-size:12px;color:#9ab0c8">Cidade</span>
+            <span style="font-size:13px;font-weight:600;color:#0d1e3a">${city}</span>
+          </div>
+        </div>`;
+    }
+  }
   modal.style.display='flex';
 }
 
