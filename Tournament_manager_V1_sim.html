@@ -395,6 +395,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <div class="card-title">1. Selecionar Jogadores</div>
             <div class="card-badge" id="db-badge">0 / 16 vagas</div>
           </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;border:1.5px dashed #e08080;border-radius:10px;background:#fff8f8">
+            <div style="font-size:11px;color:#7a1f1f;font-weight:700;flex-basis:100%">🧪 Simulação — selecionar jogadores fictícios:</div>
+            <button class="btn btn-sm" style="background:#7a1f1f;color:#fff" onclick="simSelectPlayers(8)">🧪 8 Jogadores</button>
+            <button class="btn btn-sm" style="background:#7a1f1f;color:#fff" onclick="simSelectPlayers(12)">🧪 12 Jogadores</button>
+            <button class="btn btn-sm" style="background:#7a1f1f;color:#fff" onclick="simSelectPlayers(16)">🧪 16 Jogadores</button>
+          </div>
           <div class="vagas-bar-wrap">
             <div class="vagas-bar-track"><div class="vagas-bar-fill" id="vagas-bar"></div></div>
             <div style="font-family:'DM Mono';font-size:12px;font-weight:700;color:#0d1e3a" id="vagas-cur">0</div>
@@ -442,6 +448,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
       <div class="panel" id="p-rodadas">
         <div class="alert" id="alert-game"></div>
+        <div class="card" style="border:1.5px dashed #e08080;background:#fff8f8">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px">
+              <div style="font-size:12px;font-weight:700;color:#7a1f1f">🧪 Simular esta etapa</div>
+              <div style="font-size:11px;color:#9ab0c8">Preenche e salva todas as partidas pendentes da fase atual com dado fictício (grupo A força um empate de propósito)</div>
+            </div>
+            <button class="btn" style="background:#7a1f1f;color:#fff;flex-shrink:0" onclick="simFillCurrentPhase()">🧪 Simular Fase Atual</button>
+          </div>
+        </div>
         <div id="rounds-container"></div>
       </div>
 
@@ -540,6 +555,34 @@ let playerIdMap   = {};
 let selectedPlayers = [];
 let extraPlayers    = [];
 let seedList        = [];
+
+// ══════════════════════════════════════════════════════════════════
+// DADOS FICTÍCIOS DE SIMULAÇÃO
+// Como o sorteio dos grupos é aleatório, os templates abaixo descrevem
+// PADRÕES de placar por posição (g[0],g[1],g[2],g[3] dentro do grupo),
+// não nomes fixos — funcionam com qualquer composição real de grupo.
+// ══════════════════════════════════════════════════════════════════
+const SIM_PLAYER_POOL = [
+  'Teste 01','Teste 02','Teste 03','Teste 04','Teste 05','Teste 06','Teste 07','Teste 08',
+  'Teste 09','Teste 10','Teste 11','Teste 12','Teste 13','Teste 14','Teste 15','Teste 16',
+];
+
+// Ranking limpo (1>0>2>3, sem empates) + 1 partida com tie-break (6x5 + TB 7x5).
+// [sa, sb, temTB, tbA, tbB] por partida, na ordem de groupMatches().
+const SIM_TEMPLATE_CLEAN_TB = [
+  [6, 1, false],
+  [6, 5, true, 7, 5],
+  [2, 6, false],
+];
+
+// Empate forçado de propósito: jogador 0 vence tudo (isolado em 1o),
+// jogadores 1, 2 e 3 empatam exatamente em vitorias E saldo — aciona
+// o banner de empate pro organizador escolher manualmente.
+const SIM_TEMPLATE_TIE = [
+  [6, 2, false],
+  [6, 2, false],
+  [6, 2, false],
+];
 
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url_SIM') ||
   "COLE_AQUI_A_URL_DO_GAS_DE_SIMULACAO";
@@ -706,6 +749,59 @@ function generateTorneiId() {
   const date = d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
   const rand = Math.random().toString(36).substr(2,5).toUpperCase();
   return 'TRN-' + date + '-' + rand;
+}
+
+// ── SIMULAÇÃO: seleciona N jogadores fictícios + seeds automaticamente ──
+function simSelectPlayers(n) {
+  if (T.started) { safeAlert('O torneio já foi iniciado — não é possível trocar os jogadores agora.', 'warn'); return; }
+  const pool = SIM_PLAYER_POOL.slice(0, n);
+  pool.forEach(p => { if (!extraPlayers.includes(p)) extraPlayers.push(p); });
+  selectedPlayers = [...pool];
+  const numSeeds = Math.max(1, Math.floor(n / 4));
+  seedList = pool.slice(0, numSeeds);
+  applyCanonical(n);
+  renderDB();
+  renderSeedPicker();
+  updateVagas();
+  updateSummary();
+  safeAlert('🧪 ' + n + ' jogadores fictícios selecionados (' + numSeeds + ' seed(s)).', 'ok');
+}
+
+// ── SIMULAÇÃO: preenche e salva a fase atual com o dado fictício ──
+// Usa os MESMOS caminhos de um preenchimento manual (seta o .value dos
+// inputs reais e chama saveMatch()), então passa pela validação de
+// placar e grava de verdade no Google Sheets de simulação.
+function simFillCurrentPhase() {
+  if (!T.started) { safeAlert('Inicie o torneio primeiro (aba Configuração).', 'warn'); return; }
+  const phIdx = T.currentPhase;
+  const ph = T.phases[phIdx];
+  if (!ph) return;
+  if (isPhaseComplete(phIdx)) { safeAlert('Esta fase já está completa — avance ou vá para a próxima etapa.', 'ok'); return; }
+
+  ph.groups.forEach((g, gi) => {
+    const template = (gi === 0) ? SIM_TEMPLATE_TIE : SIM_TEMPLATE_CLEAN_TB;
+    const matches = groupMatches(g);
+    matches.forEach((m, mi) => {
+      const key = phIdx + '-' + gi + '-' + mi;
+      if (ph.results[key]?.saved) return;
+      const t = template[mi] || SIM_TEMPLATE_CLEAN_TB[mi];
+      const sa = t[0], sb = t[1], hasTB = t[2], tba = t[3], tbb = t[4];
+      const inA = document.getElementById('sc-' + key + '-a');
+      const inB = document.getElementById('sc-' + key + '-b');
+      if (inA) inA.value = sa;
+      if (inB) inB.value = sb;
+      if (hasTB) {
+        const tbBtn = document.getElementById('tb-btn-' + key);
+        if (tbBtn && tbBtn.dataset.active !== '1') toggleTB(key);
+        const tbInA = document.getElementById('tb-' + key + '-a');
+        const tbInB = document.getElementById('tb-' + key + '-b');
+        if (tbInA) tbInA.value = tba;
+        if (tbInB) tbInB.value = tbb;
+      }
+      saveMatch(phIdx, gi, mi);
+    });
+  });
+  gameAlert('🧪 Fase preenchida com dado fictício (grupo A com empate de propósito).', 'ok');
 }
 
 function applyCanonical(n) {
