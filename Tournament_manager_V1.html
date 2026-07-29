@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Tournament Manager · V1</title>
+<title>PadelEye · Tournament Manager · V1.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -267,7 +267,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </button>
       <div class="topbar-logo">PADEL<em>EYE</em></div>
     </div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px" id="trn-status-badge">TOURNAMENT MANAGER . V1</div>
+    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px" id="trn-status-badge">TOURNAMENT MANAGER . V1.3</div>
     <div class="topbar-right">
       <div class="topbar-user">
         <div class="topbar-name" id="tb-name">-</div>
@@ -903,6 +903,10 @@ function openTournament() {
 }
 
 function launch() {
+  if (T.started) {
+    const ok = confirm('O torneio JA foi iniciado. Clicar em Iniciar de novo vai APAGAR todos os placares salvos localmente nesta tela (o que ja foi enviado ao Google Sheets nao e afetado). Tem certeza?');
+    if (!ok) return;
+  }
   const n = selectedPlayers.length;
   if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para iniciar.','err'); return; }
   if (!T.id) T.id = generateTorneiId();
@@ -950,6 +954,16 @@ function launch() {
   const panel = document.getElementById('p-grupos');
   if (panel) panel.classList.add('on');
   renderGrupos();
+  lockLaunchButton();
+}
+
+function lockLaunchButton() {
+  const lb = document.getElementById('launch-btn');
+  if (!lb) return;
+  lb.textContent = '✅ Torneio em andamento — ver Rodadas';
+  lb.style.background = '#0a1628';
+  lb.style.color = '#1db954';
+  lb.onclick = () => showTab('rodadas', document.querySelector('[onclick*="rodadas"]'));
 }
 
 function persistT() { try { localStorage.setItem('padeleye_T_v1', JSON.stringify(T)); } catch(e) {} }
@@ -1091,6 +1105,48 @@ function resetTieOverride(phIdx, gi) {
   renderRounds(); renderGrupos(); renderRanking();
 }
 
+// Compara duas partidas possiveis: menos conflitos primeiro, depois menos "acertos no campeao"
+// (prefere que o reencontro forcado envolva o 2 colocado, nao o 1 colocado do grupo).
+function _evalSplit(groupsArr, sourceOf, rankOf) {
+  let conflicts = 0, winnerHits = 0;
+  groupsArr.forEach(g => {
+    const bySource = {};
+    g.forEach(p => { const s = sourceOf[p]; (bySource[s] = bySource[s] || []).push(p); });
+    Object.values(bySource).forEach(arr => {
+      if (arr.length > 1) {
+        conflicts += arr.length - 1;
+        if (arr.some(p => rankOf[p] === 0)) winnerHits++;
+      }
+    });
+  });
+  return { conflicts, winnerHits };
+}
+
+// Busca exaustiva: testa todas as formas de dividir o pool em 2 grupos do tamanho pedido
+// e devolve a que tem o MENOR numero de conflitos possivel (garantido, nao so "geralmente bom"),
+// com preferencia secundaria por poupar o 1 colocado de cada grupo de origem.
+// Só cobre o caso de 2 grupos de destino (unico caso real do sistema); acima de 10 jogadores
+// no pool, ou mais de 2 grupos de destino, cai no metodo anterior por seguranca de performance.
+function bestF2Split(pool, groupSize, sourceOf, rankOf) {
+  const n = pool.length;
+  if (n > 10 || n !== groupSize * 2) return null;
+  let bestGroups = null, bestConflicts = Infinity, bestWinnerHits = Infinity;
+  for (let mask = 1; mask < (1 << n); mask++) {
+    if (!(mask & 1)) continue; // fixa pool[0] no grupo A, evita contar A/B e B/A como duas soluçoes
+    let bits = 0, m = mask;
+    while (m) { bits += m & 1; m >>= 1; }
+    if (bits !== groupSize) continue;
+    const groupA = [], groupB = [];
+    for (let i = 0; i < n; i++) ((mask >> i) & 1) ? groupA.push(pool[i]) : groupB.push(pool[i]);
+    if (groupB.length !== groupSize) continue;
+    const { conflicts, winnerHits } = _evalSplit([groupA, groupB], sourceOf, rankOf);
+    if (conflicts < bestConflicts || (conflicts === bestConflicts && winnerHits < bestWinnerHits)) {
+      bestConflicts = conflicts; bestWinnerHits = winnerHits; bestGroups = [groupA, groupB];
+    }
+  }
+  return bestGroups;
+}
+
 function advancePhase() {
   const phIdx = T.currentPhase;
   if (!isPhaseComplete(phIdx)) return;
@@ -1101,10 +1157,13 @@ function advancePhase() {
   const nextPPG = nextCfg.playersPerGroup ?? 4;
 
   const qualifiers = T.phases[phIdx].groups.map((g,gi) => groupStandings(g,phIdx,gi).slice(0,advPer).map(s=>s.name));
+  // Candidatos a wildcard agora comparados pela hierarquia completa (V > Saldo > Games a Favor > Saldo TB),
+  // nao so pelo saldo de games isolado — evita empates caindo silenciosamente por ordem do grupo.
   const wcCandidates = T.phases[phIdx].groups.map((g,gi) => {
     const st = groupStandings(g,phIdx,gi);
-    return st[advPer] ? { name: st[advPer].name, gd: st[advPer].gw - st[advPer].gl } : null;
-  }).filter(Boolean).sort((a,b)=>b.gd-a.gd);
+    const s = st[advPer];
+    return s ? { name: s.name, gi, w: s.w, gd: s.gw - s.gl, gw: s.gw, tbsaldo: s.tbw - s.tbl } : null;
+  }).filter(Boolean).sort((a,b) => (b.w - a.w) || (b.gd - a.gd) || (b.gw - a.gw) || (b.tbsaldo - a.tbsaldo));
   const wildcardPlayers = wcCandidates.slice(0,wc).map(w=>w.name);
 
   const nextPhaseIdx_ = phIdx+1;
@@ -1119,22 +1178,36 @@ function advancePhase() {
     if (numNextGroups <= 1) {
       nextGroups = [pool];
     } else {
-      nextGroups = Array.from({length:numNextGroups}, () => []);
+      // Mapa jogador -> grupo de origem e rank dentro do grupo (0=1o, 1=2o, 2=wildcard/3o)
+      const sourceOf = {}, rankOf = {};
       qualifiers.forEach((srcGroup, gi) => {
-        srcGroup.forEach((player, rank) => {
-          const destIdx = (gi+rank) % numNextGroups;
-          nextGroups[destIdx].push(player);
+        srcGroup.forEach((player, rank) => { sourceOf[player] = gi; rankOf[player] = rank; });
+      });
+      wcCandidates.slice(0,wc).forEach(w => { sourceOf[w.name] = w.gi; rankOf[w.name] = advPer; });
+
+      const optimal = (numNextGroups === 2) ? bestF2Split(pool, nextPPG, sourceOf, rankOf) : null;
+
+      if (optimal) {
+        nextGroups = optimal;
+      } else {
+        // Fallback: metodo anterior (cross-pairing + encaixe guloso de wildcard),
+        // usado só se o pool for grande demais pra busca exaustiva ou houver >2 grupos de destino.
+        nextGroups = Array.from({length:numNextGroups}, () => []);
+        qualifiers.forEach((srcGroup, gi) => {
+          srcGroup.forEach((player, rank) => {
+            const destIdx = (gi+rank) % numNextGroups;
+            nextGroups[destIdx].push(player);
+          });
         });
-      });
-      wcCandidates.slice(0,wc).forEach((wcEntry, wci) => {
-        const player = wildcardPlayers[wci];
-        if (!player) return;
-        const srcGi = T.phases[phIdx].groups.findIndex(g=>g.includes(wcEntry.name));
-        const srcGroup = srcGi>=0 ? T.phases[phIdx].groups[srcGi] : [];
-        const ranked = nextGroups.map((g,di)=>({di, conflicts:g.filter(p=>srcGroup.includes(p)).length, len:g.length}))
-          .sort((a,b)=>a.conflicts-b.conflicts || a.len-b.len);
-        nextGroups[ranked[0].di].push(player);
-      });
+        wcCandidates.slice(0,wc).forEach((wcEntry) => {
+          const player = wcEntry.name;
+          if (!wildcardPlayers.includes(player)) return;
+          const srcGroup = T.phases[phIdx].groups[wcEntry.gi] || [];
+          const ranked = nextGroups.map((g,di)=>({di, conflicts:g.filter(p=>srcGroup.includes(p)).length, len:g.length}))
+            .sort((a,b)=>a.conflicts-b.conflicts || a.len-b.len);
+          nextGroups[ranked[0].di].push(player);
+        });
+      }
       nextGroups = nextGroups.filter(g=>g.length>0);
     }
   }
@@ -1191,6 +1264,10 @@ function showSaveWarning(key, phIdx, gi, mi, msg) {
   gameAlert(msg, 'warn');
 }
 function unsaveMatch(key, phIdx, gi, mi) {
+  if (T.phases[phIdx]?.complete) {
+    safeAlert('Esta fase já foi encerrada — não é possível editar resultados que já avançaram para a próxima fase.', 'err');
+    return;
+  }
   if (T.phases[phIdx]?.results[key]) {
     delete T.phases[phIdx].results[key];
     renderRounds(); renderRanking(); renderHistorico();
@@ -1211,6 +1288,10 @@ function moveMatch(phIdx, gi, fromIdx, toIdx) {
 }
 
 function saveMatch(phaseIdx, groupIdx, matchIdx) {
+  if (T.phases[phaseIdx]?.complete) {
+    gameAlert('Esta fase já foi encerrada — não é possível registrar ou alterar resultados nela.', 'err');
+    return;
+  }
   const key = phaseIdx+'-'+groupIdx+'-'+matchIdx;
   const inA = document.getElementById('sc-'+key+'-a'), inB = document.getElementById('sc-'+key+'-b');
   if (!inA || !inB) return;
@@ -1364,7 +1445,9 @@ function renderRounds() {
               + '<button onclick="saveMatch('+phIdx+','+gi+','+mi+')" style="flex:2;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#5a7090;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Salvar Partida no DB</button>'
               + '</div>'
               + '<div id="warn-'+key+'" style="display:none;margin:0 12px 10px;border-radius:8px;overflow:hidden;border:1.5px solid #e8c870"></div>')
-            : ('<div style="padding:0 12px 10px"><button onclick="unsaveMatch(\''+key+'\','+phIdx+','+gi+','+mi+')" style="width:100%;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#9ab0c8;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Corrigir</button></div>'))
+            : (ph.complete
+                ? '<div style="padding:0 12px 10px"><div style="width:100%;padding:5px 0;border-radius:6px;background:#f4f7fc;color:#9ab0c8;font-family:\'DM Mono\';font-size:9px;text-align:center">🔒 Fase encerrada — resultado não pode mais ser alterado</div></div>'
+                : '<div style="padding:0 12px 10px"><button onclick="unsaveMatch(\''+key+'\','+phIdx+','+gi+','+mi+')" style="width:100%;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#9ab0c8;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Corrigir</button></div>'))
           + '</div>';
       });
 
@@ -1737,6 +1820,23 @@ async function dbtTestAll() {
 }
 
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
+function restoreT() {
+  try {
+    const saved = localStorage.getItem('padeleye_T_v1');
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    if (!parsed || !parsed.started) return false;
+    T = parsed;
+    if (T.phases && T.phases[0]) T_groups = T.phases[0].groups.map(g => [...g]);
+    selectedPlayers = [...(T.players || [])];
+    _canonicalSelected = [8, 12, 16].includes(T.players?.length) ? T.players.length : 0;
+    return true;
+  } catch(e) {
+    console.warn('[Tournament Manager] T restore error:', e);
+    return false;
+  }
+}
+
 (function init() {
   try {
     const saved = localStorage.getItem('pe_auth_tournament_v1');
@@ -1750,7 +1850,19 @@ document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
         document.getElementById('tb-club').textContent = currentUser.club;
         document.getElementById('tb-av').textContent = currentUser.name[0];
         loadPlayersFromDB();
-        if (!_canonicalSelected) setTimeout(() => applyCanonical(16), 100);
+        const restored = restoreT();
+        if (restored) {
+          document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+          const nav = document.querySelector('.tab-btn[onclick*="rodadas"]');
+          if (nav) nav.classList.add('on');
+          const panel = document.getElementById('p-rodadas');
+          if (panel) panel.classList.add('on');
+          lockLaunchButton();
+          renderRounds(); renderGrupos(); renderRanking(); renderHistorico(); renderScorecard();
+        } else if (!_canonicalSelected) {
+          setTimeout(() => applyCanonical(16), 100);
+        }
         return;
       }
     }
