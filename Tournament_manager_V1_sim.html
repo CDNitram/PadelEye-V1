@@ -1364,6 +1364,10 @@ function showSaveWarning(key, phIdx, gi, mi, msg) {
   gameAlert(msg, 'warn');
 }
 function unsaveMatch(key, phIdx, gi, mi) {
+  if (T.phases[phIdx]?.complete) {
+    safeAlert('Esta fase já foi encerrada — não é possível editar resultados que já avançaram para a próxima fase.', 'err');
+    return;
+  }
   if (T.phases[phIdx]?.results[key]) {
     delete T.phases[phIdx].results[key];
     renderRounds(); renderRanking(); renderHistorico();
@@ -1384,6 +1388,10 @@ function moveMatch(phIdx, gi, fromIdx, toIdx) {
 }
 
 function saveMatch(phaseIdx, groupIdx, matchIdx) {
+  if (T.phases[phaseIdx]?.complete) {
+    gameAlert('Esta fase já foi encerrada — não é possível registrar ou alterar resultados nela.', 'err');
+    return;
+  }
   const key = phaseIdx+'-'+groupIdx+'-'+matchIdx;
   const inA = document.getElementById('sc-'+key+'-a'), inB = document.getElementById('sc-'+key+'-b');
   if (!inA || !inB) return;
@@ -1537,7 +1545,9 @@ function renderRounds() {
               + '<button onclick="saveMatch('+phIdx+','+gi+','+mi+')" style="flex:2;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#5a7090;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Salvar Partida no DB</button>'
               + '</div>'
               + '<div id="warn-'+key+'" style="display:none;margin:0 12px 10px;border-radius:8px;overflow:hidden;border:1.5px solid #e8c870"></div>')
-            : ('<div style="padding:0 12px 10px"><button onclick="unsaveMatch(\''+key+'\','+phIdx+','+gi+','+mi+')" style="width:100%;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#9ab0c8;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Corrigir</button></div>'))
+            : (ph.complete
+                ? '<div style="padding:0 12px 10px"><div style="width:100%;padding:5px 0;border-radius:6px;background:#f4f7fc;color:#9ab0c8;font-family:\'DM Mono\';font-size:9px;text-align:center">🔒 Fase encerrada — resultado não pode mais ser alterado</div></div>'
+                : '<div style="padding:0 12px 10px"><button onclick="unsaveMatch(\''+key+'\','+phIdx+','+gi+','+mi+')" style="width:100%;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#9ab0c8;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Corrigir</button></div>'))
           + '</div>';
       });
 
