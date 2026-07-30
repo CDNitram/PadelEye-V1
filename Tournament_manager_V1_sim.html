@@ -2319,11 +2319,16 @@ async function dbtTestAll() {
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
 function bootstrapTournamentState() {
   // Só retoma automaticamente um torneio que ja tinha realmente comecado
-  // (grupos formados / partidas em jogo, T.started). Uma configuracao
-  // ainda incompleta (Etapas 1 a 3) NUNCA e retomada sozinha -- toda
-  // sessao nova comeca do zero na Etapa 1, sem memoria do torneio anterior.
+  // (grupos formados / partidas em jogo). Não basta a flag T.started --
+  // dados salvos por uma versão anterior do app podem ter essa flag sem
+  // os campos mais novos (playersConfirmed, seeds, etc.), então exigimos
+  // evidência estrutural real: pelo menos uma fase com grupos formados.
+  // Sem isso, toda sessão nova começa do zero na Etapa 1.
   const restored = restoreT();
-  if (restored && T.started) {
+  const genuinelyStarted = restored && T.started
+    && Array.isArray(T.phases) && T.phases.length > 0
+    && T.phases[0] && Array.isArray(T.phases[0].groups) && T.phases[0].groups.length > 0;
+  if (genuinelyStarted) {
     renderSeedPicker(); updateVagas(); updateSummary();
     refreshStepNav();
     goToStep(getMaxStep());
@@ -2340,6 +2345,15 @@ function restoreT() {
     const parsed = JSON.parse(saved);
     if (!parsed) return false;
     T = parsed;
+    // Back-fill de campos que podem não existir em dados salvos por uma
+    // versão anterior do app (schema antigo) -- evita estados inconsistentes.
+    if (T.phases === undefined) T.phases = [];
+    if (T.seeds === undefined) T.seeds = [];
+    if (T.groupFormationType === undefined) T.groupFormationType = null;
+    if (T.finalized === undefined) T.finalized = false;
+    if (T.started && Array.isArray(T.players) && T.players.length >= 4 && T.playersConfirmed === undefined) {
+      T.playersConfirmed = true;
+    }
     if (T.phases && T.phases[0]) T_groups = T.phases[0].groups.map(g => [...g]);
     selectedPlayers = [...(T.players || [])];
     seedList = [...(T.seeds || [])];
