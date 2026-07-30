@@ -716,7 +716,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <tr><th style="width:36px">#</th><th>Critério</th><th>Como é calculado</th></tr>
             <tr><td><div class="tb-num">1</div></td><td><b>Vitórias</b></td><td>Número de partidas vencidas dentro do grupo.</td></tr>
             <tr><td><div class="tb-num">2</div></td><td><b>Saldo de Games</b></td><td>Games ganhos menos games perdidos, somando todas as partidas do grupo.</td></tr>
-            <tr><td><div class="tb-num">3</div></td><td><b>Confronto Direto (H2H)</b></td><td>Resultado da partida jogada diretamente entre os dois jogadores empatados.</td></tr>
+            <tr><td><div class="tb-num">3</div></td><td><b>Mini-Tabela entre Empatados</b></td><td>Quando 3 ou mais jogadores empatam, recalcula-se uma mini-tabela só com os jogos entre eles mesmos (soma do confronto direto contra cada um dos outros empatados). Evita ciclos tipo "A bate B, B bate C, C bate A".</td></tr>
             <tr><td><div class="tb-num">4</div></td><td><b>Games Ganhos</b></td><td>Total de games vencidos (valor absoluto, não é saldo).</td></tr>
             <tr><td><div class="tb-num">5</div></td><td><b>Saldo de Tie-Break</b></td><td>Tie-breaks vencidos menos tie-breaks perdidos.</td></tr>
             <tr><td><div class="tb-num tb-manual">✋</div></td><td><b>Decisão do Organizador</b></td><td>Se o empate persistir após os 5 critérios acima, o organizador escolhe manualmente quem fica na frente, direto na tela de Jogos & Rodadas.</td></tr>
@@ -1895,16 +1895,62 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     }); });
   });
 
-  function h2hCmp(a, b) {
-    const ab = h2h[a]?.[b];
-    if (!ab || (ab.gw===0 && ab.gl===0)) return 0;
-    const ba = h2h[b][a];
-    return (ab.gw-ab.gl) - (ba.gw-ba.gl);
+  // ── Critério 3: Mini-Tabela entre empatados ──────────────────────────
+  // Quando 3+ jogadores empatam em Vitórias+Saldo de Games, o confronto
+  // direto par-a-par pode formar um ciclo (A bate B, B bate C, C bate A)
+  // sem ordem confiável. A mini-tabela soma o saldo de confronto direto
+  // de cada jogador contra TODOS os outros empatados de uma vez só —
+  // elimina o ciclo e reflete o que realmente aconteceu em quadra entre
+  // eles. Reduz a um H2H simples quando só 2 jogadores empatam.
+  function computeMiniLeague(names) {
+    const mini = {};
+    names.forEach(p => { mini[p] = { miniW:0, miniGD:0 }; });
+    names.forEach(p => {
+      names.forEach(q => {
+        if (p===q) return;
+        const pq = h2h[p]?.[q];
+        if (!pq || (pq.gw===0 && pq.gl===0)) return;
+        const gd = pq.gw - pq.gl;
+        mini[p].miniGD += gd;
+        if (gd > 0) mini[p].miniW++;
+      });
+    });
+    return mini;
   }
-  function cmpCore(a, b) {
-    return (b.w-a.w) || (b.gd-a.gd) || h2hCmp(b.name,a.name) || (b.gw-a.gw) || (b.tbsaldo-a.tbsaldo);
+  function partitionBy(arr, eq) {
+    const tiers = []; let i = 0;
+    while (i < arr.length) {
+      let j = i+1;
+      while (j < arr.length && eq(arr[i], arr[j])) j++;
+      tiers.push(arr.slice(i, j));
+      i = j;
+    }
+    return tiers;
   }
-  const sorted = Object.values(stats).map(s => ({...s, gd:s.gw-s.gl, tbsaldo:s.tbw-s.tbl})).sort(cmpCore);
+
+  let _bucket = 0;
+  const finalOrder = [];
+  const tier1 = partitionBy(
+    Object.values(stats).map(s => ({...s, gd:s.gw-s.gl, tbsaldo:s.tbw-s.tbl})).sort((a,b) => (b.w-a.w) || (b.gd-a.gd)),
+    (a,b) => a.w===b.w && a.gd===b.gd
+  );
+  tier1.forEach(t1 => {
+    if (t1.length === 1) { t1[0]._bucket = _bucket++; finalOrder.push(t1[0]); return; }
+    const mini = computeMiniLeague(t1.map(s => s.name));
+    const tier2 = partitionBy(
+      [...t1].sort((a,b) => (mini[b.name].miniW-mini[a.name].miniW) || (mini[b.name].miniGD-mini[a.name].miniGD)),
+      (a,b) => mini[a.name].miniW===mini[b.name].miniW && mini[a.name].miniGD===mini[b.name].miniGD
+    );
+    tier2.forEach(t2 => {
+      if (t2.length === 1) { t2[0]._bucket = _bucket++; finalOrder.push(t2[0]); return; }
+      const tier3 = partitionBy(
+        [...t2].sort((a,b) => (b.gw-a.gw) || (b.tbsaldo-a.tbsaldo)),
+        (a,b) => a.gw===b.gw && a.tbsaldo===b.tbsaldo
+      );
+      tier3.forEach(t3 => { const bk = _bucket++; t3.forEach(s => s._bucket = bk); finalOrder.push(...t3); });
+    });
+  });
+  const sorted = finalOrder;
 
   const isLastPhase = (phaseIdx === (T.phases?.length-1));
   const cutoff = 2;
@@ -1914,10 +1960,10 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   let tieAtCutoff = null;
   if (allSaved) {
     if (isLastPhase) {
-      for (let i=0;i<sorted.length-1;i++) if (cmpCore(sorted[i],sorted[i+1])===0) { tieAtCutoff=[sorted[i].name,sorted[i+1].name,i]; break; }
+      for (let i=0;i<sorted.length-1;i++) if (sorted[i]._bucket===sorted[i+1]._bucket) { tieAtCutoff=[sorted[i].name,sorted[i+1].name,i]; break; }
     } else if (sorted.length > cutoff) {
       const p1=sorted[cutoff-1], p2=sorted[cutoff];
-      if (cmpCore(p1,p2)===0) tieAtCutoff = [p1.name,p2.name,cutoff-1];
+      if (p1._bucket===p2._bucket) tieAtCutoff = [p1.name,p2.name,cutoff-1];
     }
   }
 
@@ -2364,13 +2410,20 @@ function renderFinalizeStep() {
   const winners = groupStandings(T.phases[finalIdx].groups[0], finalIdx, 0);
   const btnHtml = T.finalized
     ? '<div style="width:100%;padding:11px 0;border-radius:10px;background:#0a1628;color:#1db954;font-weight:700;font-size:14px;text-align:center;margin-bottom:10px">✅ Torneio salvo no Database — encerrado</div>'
-      + '<button class="btn btn-gold btn-full" onclick="startNewTournament()">🔄 Iniciar Novo Torneio</button>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+      + '<button class="btn btn-primary" style="flex:1;min-width:200px" onclick="goToHistoricoFromFinalize()">📋 Ir para Histórico do Torneio</button>'
+      + '<button class="btn btn-gold" style="flex:1;min-width:200px" onclick="startNewTournament()">🔄 Iniciar Novo Torneio</button>'
+      + '</div>'
     : '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>';
   c.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
     + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:8px">Torneio Concluido!</div>'
     + '<div style="font-size:13px;color:#865a10;margin-bottom:12px">1o '+(winners[0]&&winners[0].name)+' . 2o '+(winners[1]&&winners[1].name)+' . 3o '+(winners[2]&&winners[2].name)+'</div>'
     + btnHtml
     + '</div>';
+}
+function goToHistoricoFromFinalize() {
+  const btn = document.querySelector('.tab-btn[onclick^="showTab(\'historico\'"]');
+  showTab('historico', btn);
 }
 
 function renderRanking() {
@@ -2560,13 +2613,17 @@ async function finalizeTournament() {
   const scoreData = computeScorecard();
   const org = (currentUser && currentUser.name) || '-';
   const result = await PadelEyeDB.saveTournament(T, org, scoreData);
-  if (btn) {
-    const ok = result?.results?.torneio?.ok !== false && result?.results?.torneio?.status !== 'error';
-    btn.textContent = ok ? 'Salvo no Database' : 'Erro - tente novamente';
-    btn.style.background = ok ? '#1a7a44' : '#c0392b'; btn.style.color = '#fff';
-    btn.onclick = ok ? null : () => finalizeTournament();
-    btn.disabled = ok;
-    if (ok) { T.finalized = true; persistT(); refreshStepNav(); }
+  const ok = result?.results?.torneio?.ok !== false && result?.results?.torneio?.status !== 'error';
+  if (ok) {
+    T.finalized = true;
+    persistT();
+    refreshStepNav();
+    renderFinalizeStep();
+  } else if (btn) {
+    btn.textContent = 'Erro - tente novamente';
+    btn.style.background = '#c0392b'; btn.style.color = '#fff';
+    btn.onclick = () => finalizeTournament();
+    btn.disabled = false;
   }
 }
 
