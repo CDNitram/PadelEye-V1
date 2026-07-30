@@ -290,7 +290,46 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .splash-bar-b{height:100%;width:0;background:linear-gradient(90deg,rgba(255,255,255,.6),#fff);animation:splashBar 2.8s cubic-bezier(.4,0,.2,1) .2s forwards}
 @keyframes splashBar{0%{width:0}30%{width:45%}70%{width:75%}90%{width:92%}100%{width:100%}}
 #s-splash.splash-exit{animation:splashOut .5s ease forwards}
-@keyframes splashOut{to{opacity:0;transform:scale(1.03)}}
+@keyframes splashOut{to{opacity:0;transform:scale(1.03)}}/* ═══ SORTEIO ANIMADO (adaptado de PadelEye_Americano_V40_Prod.html) ═══ */
+#s-raffle{position:fixed;inset:0;z-index:9999;background:#f0f5fb;display:none;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:24px 16px 40px;}
+#s-raffle.show{display:flex;}
+.raffle-cancel-link{align-self:flex-end;background:none;border:none;color:#9ab0c8;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:8px;text-transform:uppercase;}
+.raffle-cancel-link:hover{color:#c0392b;}
+.raffle-title{font-family:'Bebas Neue';font-size:28px;letter-spacing:3px;color:#0a1628;text-align:center;margin-bottom:2px;}
+.raffle-sub{font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase;margin-bottom:28px;text-align:center;}
+.raffle-stage{width:100%;max-width:420px;height:220px;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:24px;}
+.raffle-ball-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.raffle-ball{width:160px;height:160px;border-radius:50%;background:#fff;border:3px solid #C9933A;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 4px 24px rgba(201,147,58,.2);transition:transform .2s;position:relative;overflow:hidden;}
+.raffle-ball.pop{animation:ballpop .5s cubic-bezier(.36,2,.6,1) forwards;}
+@keyframes ballpop{0%{transform:scale(0) rotate(-20deg);opacity:0;}60%{transform:scale(1.12) rotate(3deg);opacity:1;}100%{transform:scale(1) rotate(0);opacity:1;}}
+.raffle-ball-name{font-family:'Bebas Neue';font-size:26px;letter-spacing:2px;color:#0a1628;text-align:center;line-height:1;padding:0 12px;}
+.raffle-ball-group{font-family:'DM Mono';font-size:10px;letter-spacing:2px;color:#C9933A;margin-top:4px;}
+.raffle-ball-seed{font-size:18px;margin-bottom:2px;}
+.raffle-ball-idle{font-family:'DM Mono';font-size:11px;color:#9ab0c8;letter-spacing:1px;text-align:center;}
+.raffle-countdown-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.raffle-countdown{font-family:'Bebas Neue';font-size:20px;color:#9ab0c8;letter-spacing:2px;}
+.raffle-countdown.urgent{color:#C9933A;}
+.raffle-prog-bar{width:160px;height:3px;background:#dde6f0;border-radius:99px;overflow:hidden;}
+.raffle-prog-fill{height:100%;background:linear-gradient(90deg,#C9933A,#e0a840);border-radius:99px;transition:width .1s linear;}
+.raffle-groups{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:420px;margin-bottom:20px;}
+.raffle-group-card{background:#f8fafd;border:1.5px solid #dde6f0;border-radius:12px;padding:10px 12px;min-height:80px;transition:border-color .3s;}
+.raffle-group-card.lit{border-color:#C9933A;}
+.raffle-group-header{font-family:'Bebas Neue';font-size:16px;letter-spacing:2px;margin-bottom:6px;}
+.raffle-group-player{font-size:11px;font-weight:600;color:#0d1e3a;padding:2px 0;display:flex;align-items:center;gap:5px;animation:fadein .35s ease forwards;}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.raffle-seed-star{font-size:10px;}
+.raffle-queue-label{font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase;margin-bottom:8px;width:100%;max-width:420px;}
+.raffle-queue{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-width:420px;margin-bottom:24px;}
+.raffle-chip{font-family:'DM Mono';font-size:9px;padding:3px 8px;border-radius:99px;background:#f0f5fb;border:1px solid #dde6f0;color:#9ab0c8;transition:all .3s;}
+.raffle-chip.drawn{background:#e8f5ee;border-color:#c8e0d0;color:#8ab0a0;text-decoration:line-through;opacity:.5;}
+.raffle-controls{display:flex;gap:10px;width:100%;max-width:420px;flex-wrap:wrap;}
+.raffle-btn{flex:1;padding:12px;border:none;border-radius:10px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-weight:700;}
+.raffle-btn-primary{background:#C9933A;color:#0a1628;}
+.raffle-btn-primary:hover{background:#e0a840;}
+.raffle-btn-secondary{background:#fff;color:#5a8aaa;border:1px solid #dde6f0;}
+.raffle-btn-secondary:hover{border-color:#C9933A;color:#C9933A;}
+.raffle-btn-start{background:linear-gradient(135deg,#1a7a44,#2a9a54);color:#fff;display:none;}
+.raffle-btn-start.show{display:block;}
 </style>
 </head>
 <body>
@@ -323,6 +362,41 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="splash-by-loc">Foz do Iguaçu · 2026</div>
   </div>
   <div class="splash-bar-wrap-b"><div class="splash-bar-b"></div></div>
+</div>
+
+<div id="s-raffle">
+  <button class="raffle-cancel-link" onclick="raffleCancel()">✕ Cancelar e voltar</button>
+  <div class="raffle-title">SORTEIO DE GRUPOS</div>
+  <div class="raffle-sub" id="raffle-sub">Preparando sorteio...</div>
+
+  <div class="raffle-stage">
+    <div class="raffle-ball-wrap">
+      <div class="raffle-ball" id="raffle-ball">
+        <div class="raffle-ball-idle" id="raffle-idle">Aguardando<br>sorteio...</div>
+        <div id="raffle-ball-content" style="display:none;flex-direction:column;align-items:center">
+          <div class="raffle-ball-seed" id="raffle-ball-seed"></div>
+          <div class="raffle-ball-name" id="raffle-ball-name"></div>
+          <div class="raffle-ball-group" id="raffle-ball-grp"></div>
+        </div>
+      </div>
+      <div class="raffle-countdown-wrap">
+        <div class="raffle-prog-bar"><div class="raffle-prog-fill" id="raffle-prog" style="width:100%"></div></div>
+        <div class="raffle-countdown" id="raffle-countdown"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="raffle-groups" id="raffle-groups"></div>
+
+  <div class="raffle-queue-label">Fila de sorteio</div>
+  <div class="raffle-queue" id="raffle-queue"></div>
+
+  <div class="raffle-controls">
+    <button class="raffle-btn raffle-btn-secondary" onclick="raffleSkip()">⏭ Pular para o fim</button>
+    <button class="raffle-btn raffle-btn-primary" id="raffle-next-btn" onclick="raffleNext()">▶ Sortear agora</button>
+    <button class="raffle-btn raffle-btn-secondary" id="raffle-restart-btn" style="display:none" onclick="raffleRestart()">🔀 Sortear Novamente</button>
+    <button class="raffle-btn raffle-btn-start" id="raffle-start-btn" onclick="raffleFinish()">🏆 Iniciar Torneio</button>
+  </div>
 </div>
 
 <div class="screen active" id="s-login">
@@ -409,6 +483,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
         </div>
 
+        <div id="step1-gate"></div>
+
+        <div id="step1-config-form">
         <div class="step-info">
           <div class="step-info-title">📖 Sobre esta etapa</div>
           O que é: a etapa inicial, onde você define os dados básicos do torneio (nome, data, local, categoria), quantos jogadores vão participar e as regras de placar/tie-break de cada fase.<br>
@@ -501,6 +578,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
         <div class="card" id="trn-open-btn">
           <button class="btn btn-primary btn-full" onclick="openTournament()" style="font-size:15px">📋 Confirmar Configuração e Abrir Torneio →</button>
+        </div>
         </div>
       </div>
 
@@ -741,6 +819,7 @@ const USERS = {
   'admin':                      {pass:'admin123', name:'Administrador',   club:'PadelEye Admin',                role:'admin'},
 };
 let currentUser = null;
+let _showResumeGate = false; // true só logo após o carregamento da pagina, quando há algo salvo pra decidir
 
 let REGISTRY      = [];
 let playerNormMap = {};
@@ -891,6 +970,37 @@ function refreshStepNav() {
   }
   refreshCancelButton();
   updateLockBanners();
+  renderStep1Gate();
+}
+function renderStep1Gate() {
+  const gate = document.getElementById('step1-gate');
+  const formWrap = document.getElementById('step1-config-form');
+  if (!gate || !formWrap) return;
+  if (_showResumeGate && T.status === 'open') {
+    const stepNames = {1:'Abertura & Configuração',2:'Jogadores & Seeds',3:'Formação dos Grupos',4:'Jogos & Rodadas',5:'Finalização'};
+    const cur = getMaxStep();
+    const nome = (T.name || 'Torneio sem nome').replace(/</g,'&lt;');
+    gate.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
+      + '<div class="card-hd"><div class="card-title">Torneio em Andamento</div><div class="card-badge gold">Etapa '+cur+'</div></div>'
+      + '<div style="font-size:13px;color:#5a4520;margin-bottom:14px">Encontramos uma configuração salva neste navegador: <b>"'+nome+'"</b> — parada na Etapa '+cur+' ('+stepNames[cur]+'). O que você quer fazer?</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+      + '<button class="btn btn-primary" style="flex:1;min-width:200px" onclick="_showResumeGate=false;goToStep('+cur+')">▶️ Continuar este Torneio</button>'
+      + '<button class="btn btn-gold" style="flex:1;min-width:200px" onclick="startNewTournamentFromGate()">🎾 Abrir Novo Torneio</button>'
+      + '</div></div>';
+    gate.style.display = 'block';
+    formWrap.style.display = 'none';
+  } else {
+    gate.innerHTML = '';
+    gate.style.display = 'none';
+    formWrap.style.display = 'block';
+  }
+}
+function startNewTournamentFromGate() {
+  const ok = confirm('Isso vai apagar a configuração/torneio salvo neste navegador e abrir um totalmente novo, do zero. Continuar?');
+  if (!ok) return;
+  _showResumeGate = false;
+  resetTournamentState();
+  safeAlert('Pronto! Configure o novo torneio abaixo.', 'ok');
 }
 function refreshCancelButton() {
   const btn = document.getElementById('btn-cancel-trn');
@@ -902,6 +1012,7 @@ function updateLockBanners() {
   const b2 = document.getElementById('step2-lock-banner'); if (b2) b2.style.display = T.playersConfirmed ? 'block' : 'none';
 }
 function goToStep(n, el) {
+  if (el) _showResumeGate = false;
   const max = getMaxStep();
   if (n > max) { safeAlert('Complete a etapa '+max+' antes de avançar para a etapa '+n+'.', 'warn'); return; }
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
@@ -948,6 +1059,7 @@ function resetTournamentState() {
   [8,12,16].forEach(v => { const b = document.getElementById('canonical-btn-'+v); if (b) b.classList.remove('sel'); });
   renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
   refreshStepNav();
+  setTimeout(() => applyCanonical(16), 100);
 }
 function cancelTournament() {
   const ok = confirm('Isso vai CANCELAR o torneio atual e apagar todo o progresso nesta tela (jogadores, grupos, placares). O que já foi enviado ao Google Sheets não é apagado lá, só marcado como cancelado. Essa ação não pode ser desfeita. Tem certeza?');
@@ -1335,7 +1447,7 @@ function renderFormationStep() {
   document.getElementById('formation-card-manual').classList.toggle('active', T.groupFormationType==='manual');
   document.getElementById('formation-sorteio-view').style.display = T.groupFormationType==='sorteio' ? 'block' : 'none';
   document.getElementById('formation-manual-view').style.display  = T.groupFormationType==='manual'  ? 'block' : 'none';
-  if (T.groupFormationType === 'sorteio') renderSorteioPreview();
+  if (T.groupFormationType === 'sorteio') renderSorteioReopenCard();
   if (T.groupFormationType === 'manual' && manualGroups.length === 0) initManualGroups();
   if (T.groupFormationType === 'manual') renderManualBuilder();
 }
@@ -1358,35 +1470,240 @@ function renderFormationReadOnly() {
   document.getElementById('formation-sorteio-view').innerHTML = html;
 }
 
+function renderSorteioReopenCard() {
+  const el = document.getElementById('formation-sorteio-view');
+  if (!el) return;
+  el.innerHTML = '<div class="card"><div style="font-size:12px;color:#9ab0c8;margin-bottom:12px">🎱 Sorteio animado selecionado.</div>'
+    + '<button class="btn btn-gold btn-full" onclick="startRaffleAnimation()">🎱 Abrir Tela de Sorteio</button></div>';
+}
 function selectSorteioGroups() {
   T.groupFormationType = 'sorteio';
-  buildGroups();
+  document.getElementById('formation-choice').style.display = '';
+  document.getElementById('formation-card-sorteio').classList.add('active');
+  document.getElementById('formation-card-manual').classList.remove('active');
+  document.getElementById('formation-sorteio-view').style.display = 'block';
+  document.getElementById('formation-manual-view').style.display = 'none';
+  document.getElementById('formation-sorteio-view').innerHTML =
+    '<div class="card"><div style="font-size:12px;color:#9ab0c8">🎱 Abrindo o sorteio animado...</div>'
+    + '<button class="btn btn-gold btn-full" style="margin-top:12px" onclick="startRaffleAnimation()">🎱 Reabrir Tela de Sorteio</button></div>';
+  startRaffleAnimation();
+}
+
+// ══ SORTEIO ANIMADO (adaptado de PadelEye_Americano_V40_Prod.html) ══
+// Reaproveita selectedPlayers/seedList (já confirmados na Etapa 2) e, ao
+// final, entrega T_groups pronto para finalizeLaunch() — mesma lógica de
+// negócio de sempre, só a formação dos grupos ganhou o visual cinemático.
+let _raffleQueue = [];
+let _raffleGroups = [];
+let _raffleIdx = 0;
+let _raffleTimer = null;
+let _raffleCountdown = 3;
+const RAFFLE_LETTERS = ['A','B','C','D','E','F','G','H'];
+const RAFFLE_COLORS  = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63'];
+
+function playerCardFull(name, isSeed) {
+  const p = getPlayerReg(name);
+  const cat = p.categoria || '';
+  const hdrCol = catColor(cat);
+  const grad = flagGrad(p.nacionalidade);
+  const txtCol = flagTextCol(p.nacionalidade);
+  const ini = _init(name);
+  const catNum = cat.replace(/[^0-9]/g,'');
+  const cidade = p.cidade || '';
+  return '<div style="border-radius:12px;overflow:hidden;border:0.5px solid #dde6f0;animation:fadein .35s ease forwards">'
+    + '<div style="background:'+hdrCol+';padding:10px 12px 0">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    + '<span style="font-size:10px;color:#fff;letter-spacing:2px;font-weight:700">PADEL<span style="color:#fde68a">EYE</span></span>'
+    + '<span style="font-size:9px;font-weight:700;color:#fde68a;background:rgba(0,0,0,0.2);padding:1px 6px;border-radius:99px">'+(catNum?catNum+'ª Cat.':'—')+'</span>'
+    + '</div>'
+    + (isSeed ? '<div style="display:flex;justify-content:center;margin-bottom:4px"><span style="font-size:8px;font-weight:700;color:#fde68a;background:rgba(0,0,0,0.2);padding:2px 10px;border-radius:99px;letter-spacing:1px">🌱 SEED</span></div>' : '')
+    + '<div style="display:flex;justify-content:center;margin-bottom:-20px">'
+    + '<div style="width:44px;height:44px;border-radius:50%;border:2.5px solid #fff;background:'+grad+';display:flex;align-items:center;justify-content:center">'
+    + '<span style="font-size:11px;font-weight:700;color:'+txtCol+';text-shadow:0 1px 3px rgba(0,0,0,0.4)">'+ini+'</span>'
+    + '</div></div></div>'
+    + '<div style="background:#fff;padding:24px 10px 10px;text-align:center">'
+    + '<div style="font-size:14px;font-weight:700;color:#0a1628;line-height:1.2">'+(p.nome||name)+(p.sobrenome?' <span style="font-weight:500;color:#5a7090">'+p.sobrenome+'</span>':'')+'</div>'
+    + '<div style="font-size:9px;font-weight:600;color:'+hdrCol+';margin-top:4px">Atleta de Padel</div>'
+    + (cidade ? '<div style="font-size:8px;color:#9ab0c8;margin-top:2px">'+cidade+'</div>' : '')
+    + '<div style="margin:7px 0;height:0.5px;background:#eef1f5"></div>'
+    + '<div style="font-size:9px;color:#c0cdd8;font-family:\'DM Mono\',monospace">#'+(p.id||'—')+'</div>'
+    + '</div></div>';
+}
+
+function startRaffleAnimation() {
+  const seeds = [...seedList];
+  const nonSeeds = selectedPlayers.filter(p => !seedList.includes(p)).sort(() => Math.random()-0.5);
+  _raffleQueue = [...seeds, ...nonSeeds];
+  _raffleIdx = 0;
+  const numG = Math.max(1, Math.floor(selectedPlayers.length / 4));
+  _raffleGroups = Array.from({length: numG}, () => []);
+
+  const gc = document.getElementById('raffle-groups');
+  gc.style.gridTemplateColumns = numG <= 2 ? '1fr 1fr' : numG <= 4 ? '1fr 1fr' : 'repeat(auto-fill,minmax(160px,1fr))';
+  gc.innerHTML = RAFFLE_LETTERS.slice(0, numG).map((l,i) =>
+    '<div class="raffle-group-card" id="rg-'+l+'" style="border-color:'+RAFFLE_COLORS[i]+'22">'
+    + '<div class="raffle-group-header" style="color:'+RAFFLE_COLORS[i]+'">GRUPO '+l+'</div>'
+    + '<div id="rg-players-'+l+'"></div></div>'
+  ).join('');
+
+  _raffleRenderQueue();
+
+  document.getElementById('raffle-sub').textContent = _raffleQueue.length + ' jogadores · ' + seeds.length + ' seeds';
+  document.getElementById('raffle-idle').style.display = 'block';
+  document.getElementById('raffle-ball-content').style.display = 'none';
+  document.getElementById('raffle-countdown').textContent = '';
+  document.getElementById('raffle-prog').style.width = '100%';
+  document.getElementById('raffle-next-btn').style.display = 'block';
+  document.getElementById('raffle-restart-btn').style.display = 'none';
+  document.getElementById('raffle-start-btn').classList.remove('show');
+  document.getElementById('raffle-ball').style.borderColor = '#C9933A';
+  document.getElementById('raffle-ball').style.boxShadow = '0 4px 24px rgba(201,147,58,.2)';
+
+  document.getElementById('s-raffle').classList.add('show');
+
+  clearInterval(_raffleTimer);
+  setTimeout(() => raffleDrawOne(), 1800);
+}
+
+function _raffleRenderQueue() {
+  const wrap = document.getElementById('raffle-queue');
+  wrap.innerHTML = _raffleQueue.map((name, i) => {
+    const drawn = i < _raffleIdx;
+    const isSeed = seedList.includes(name);
+    return '<div class="raffle-chip'+(drawn?' drawn':'')+'" id="rchip-'+i+'">'+(isSeed?'🌱 ':'')+name+'</div>';
+  }).join('');
+}
+
+function raffleDrawOne() {
+  clearInterval(_raffleTimer);
+  if (_raffleIdx >= _raffleQueue.length) { raffleAllDone(); return; }
+
+  const name = _raffleQueue[_raffleIdx];
+  const isSeed = seedList.includes(name);
+  let groupIdx;
+  if (isSeed) {
+    groupIdx = seedList.indexOf(name);
+  } else {
+    const sizes = _raffleGroups.map(g => g.length);
+    groupIdx = sizes.indexOf(Math.min(...sizes));
+  }
+  _raffleGroups[groupIdx].push({ name, seed: isSeed });
+  _raffleIdx++;
+
+  const ball = document.getElementById('raffle-ball');
+  ball.classList.remove('pop');
+  void ball.offsetWidth;
+  ball.classList.add('pop');
+
+  document.getElementById('raffle-idle').style.display = 'none';
+  document.getElementById('raffle-ball-content').style.display = 'flex';
+  document.getElementById('raffle-ball-seed').textContent = isSeed ? '🌱 SEED' : '';
+  document.getElementById('raffle-ball-name').textContent = name;
+  document.getElementById('raffle-ball-grp').textContent = '→ GRUPO ' + RAFFLE_LETTERS[groupIdx];
+  document.getElementById('raffle-ball').style.borderColor = RAFFLE_COLORS[groupIdx];
+  document.getElementById('raffle-ball').style.boxShadow = '0 0 40px '+RAFFLE_COLORS[groupIdx]+'55, 0 0 80px '+RAFFLE_COLORS[groupIdx]+'22';
+
+  const grpEl = document.getElementById('rg-players-' + RAFFLE_LETTERS[groupIdx]);
+  const div = document.createElement('div');
+  div.style.marginBottom = '6px';
+  div.innerHTML = playerCardFull(name, isSeed);
+  grpEl.appendChild(div);
+  const card = document.getElementById('rg-' + RAFFLE_LETTERS[groupIdx]);
+  card.classList.add('lit');
+  setTimeout(() => card.classList.remove('lit'), 800);
+
+  _raffleRenderQueue();
+  const chip = document.getElementById('rchip-' + (_raffleIdx - 1));
+  chip?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+
+  document.getElementById('raffle-sub').textContent = _raffleIdx + ' / ' + _raffleQueue.length + ' sorteados';
+
+  if (_raffleIdx >= _raffleQueue.length) {
+    setTimeout(raffleAllDone, 800);
+    return;
+  }
+
+  _raffleCountdown = 3;
+  _raffleUpdateCountdown();
+  _raffleTimer = setInterval(() => {
+    _raffleCountdown--;
+    _raffleUpdateCountdown();
+    if (_raffleCountdown <= 0) {
+      clearInterval(_raffleTimer);
+      raffleDrawOne();
+    }
+  }, 1000);
+}
+
+function _raffleUpdateCountdown() {
+  const el = document.getElementById('raffle-countdown');
+  const prog = document.getElementById('raffle-prog');
+  el.textContent = _raffleCountdown + 's';
+  el.className = 'raffle-countdown' + (_raffleCountdown <= 1 ? ' urgent' : '');
+  prog.style.width = (_raffleCountdown / 3 * 100) + '%';
+}
+
+function raffleNext() {
+  clearInterval(_raffleTimer);
+  raffleDrawOne();
+}
+
+function raffleSkip() {
+  clearInterval(_raffleTimer);
+  while (_raffleIdx < _raffleQueue.length) {
+    const name = _raffleQueue[_raffleIdx];
+    const isSeed = seedList.includes(name);
+    let groupIdx;
+    if (isSeed) groupIdx = seedList.indexOf(name);
+    else { const sizes = _raffleGroups.map(g => g.length); groupIdx = sizes.indexOf(Math.min(...sizes)); }
+    _raffleGroups[groupIdx].push({ name, seed: isSeed });
+    _raffleIdx++;
+  }
+  _raffleRenderQueue();
+  RAFFLE_LETTERS.forEach((l, gi) => {
+    const el = document.getElementById('rg-players-' + l);
+    if (!el || !_raffleGroups[gi]) return;
+    el.innerHTML = _raffleGroups[gi].map(p => '<div style="margin-bottom:6px">'+playerCardFull(p.name, p.seed)+'</div>').join('');
+  });
+  document.getElementById('raffle-idle').style.display = 'none';
+  document.getElementById('raffle-ball-content').style.display = 'flex';
+  document.getElementById('raffle-ball-seed').textContent = '';
+  document.getElementById('raffle-ball-name').textContent = '✅';
+  document.getElementById('raffle-ball-grp').textContent = 'COMPLETO';
+  document.getElementById('raffle-countdown').textContent = '';
+  document.getElementById('raffle-prog').style.width = '0%';
+  raffleAllDone();
+}
+
+function raffleAllDone() {
+  clearInterval(_raffleTimer);
+  document.getElementById('raffle-countdown').textContent = '';
+  document.getElementById('raffle-prog').style.width = '0%';
+  document.getElementById('raffle-next-btn').style.display = 'none';
+  document.getElementById('raffle-restart-btn').style.display = 'block';
+  document.getElementById('raffle-start-btn').classList.add('show');
+  document.getElementById('raffle-sub').textContent = '✅ Sorteio concluído!';
+}
+
+function raffleRestart() {
+  clearInterval(_raffleTimer);
+  startRaffleAnimation();
+}
+
+function raffleCancel() {
+  clearInterval(_raffleTimer);
+  document.getElementById('s-raffle').classList.remove('show');
+  T.groupFormationType = null;
   renderFormationStep();
 }
-function reshuffleSorteioGroups() {
-  const f1HasResults = Object.keys(T.phases?.[0]?.results||{}).length > 0;
-  if (T.started && f1HasResults) { safeAlert('Nao e possivel sortear novamente apos guardar resultados da Fase 1.','warn'); return; }
-  buildGroups();
-  renderSorteioPreview();
+
+function raffleFinish() {
+  clearInterval(_raffleTimer);
+  document.getElementById('s-raffle').classList.remove('show');
+  T_groups = _raffleGroups.map(g => g.map(p => p.name));
+  finalizeLaunch();
 }
-function renderSorteioPreview() {
-  let html = '<div class="card"><div class="card-hd"><div class="card-title">Pré-visualização do Sorteio</div><div class="card-badge gold">Automático</div></div>'
-    + '<div class="grupos-info"><strong>Cada grupo joga 3 partidas:</strong><br>Partida 1: A+B vs C+D . Partida 2: A+C vs B+D . Partida 3: A+D vs B+C</div>'
-    + '<div class="grupos-grid">';
-  T_groups.forEach((group,gi) => {
-    const color = GROUP_COLORS[gi%GROUP_COLORS.length], letter = GROUP_LETTERS[gi];
-    html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div><div class="grupo-body">'
-      + group.map(name => { const reg=getPlayerReg(name); const isSeed=seedList.includes(name); return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' (seed)':'')+'</div></div>'; }).join('')
-      + '</div></div>';
-  });
-  html += '</div>'
-    + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
-    + '<button class="btn-reshuffle" onclick="reshuffleSorteioGroups()">Sortear novamente</button>'
-    + '<button class="btn btn-gold btn-full" style="flex:1;min-width:200px" onclick="confirmSorteioGroups()">Confirmar Grupos e Iniciar Torneio →</button>'
-    + '</div></div>';
-  document.getElementById('formation-sorteio-view').innerHTML = html;
-}
-function confirmSorteioGroups() { finalizeLaunch(); }
+
 
 // ── Seleção manual (drag & drop, com toque como alternativa) ──
 let manualPool = [];
@@ -2318,24 +2635,16 @@ async function dbtTestAll() {
 
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
 function bootstrapTournamentState() {
-  // Só retoma automaticamente um torneio que ja tinha realmente comecado
-  // (grupos formados / partidas em jogo). Não basta a flag T.started --
-  // dados salvos por uma versão anterior do app podem ter essa flag sem
-  // os campos mais novos (playersConfirmed, seeds, etc.), então exigimos
-  // evidência estrutural real: pelo menos uma fase com grupos formados.
-  // Sem isso, toda sessão nova começa do zero na Etapa 1.
-  const restored = restoreT();
-  const genuinelyStarted = restored && T.started
-    && Array.isArray(T.phases) && T.phases.length > 0
-    && T.phases[0] && Array.isArray(T.phases[0].groups) && T.phases[0].groups.length > 0;
-  if (genuinelyStarted) {
-    renderSeedPicker(); updateVagas(); updateSummary();
-    refreshStepNav();
-    goToStep(getMaxStep());
-  } else {
-    resetTournamentState();
-    setTimeout(() => applyCanonical(16), 100);
-  }
+  // NUNCA decide sozinho e NUNCA pousa fora da Etapa 1 automaticamente.
+  // Se houver uma configuração/torneio salvo neste navegador, a Etapa 1
+  // mostra um portal explícito ("Continuar" ou "Abrir Novo Torneio") --
+  // o usuário escolhe, em vez do app decidir por conta própria.
+  restoreT();
+  _showResumeGate = (T.status === 'open');
+  renderSeedPicker(); updateVagas(); updateSummary();
+  refreshStepNav();
+  goToStep(1);
+  if (!_canonicalSelected) setTimeout(() => applyCanonical(16), 100);
 }
 
 function restoreT() {
