@@ -977,9 +977,21 @@ function renderStep1Gate() {
   const formWrap = document.getElementById('step1-config-form');
   if (!gate || !formWrap) return;
   if (_showResumeGate && T.status === 'open') {
+    const nome = (T.name || 'Torneio sem nome').replace(/</g,'&lt;');
+    if (T.finalized) {
+      // Torneio já encerrado e salvo -- não existe "continuar" um torneio
+      // finalizado, a única opção logicamente possível é abrir um novo.
+      gate.innerHTML = '<div class="card" style="border-color:#1a7a44;background:linear-gradient(135deg,#eafaf0,#e0f5e8)">'
+        + '<div class="card-hd"><div class="card-title">Torneio Finalizado</div><div class="card-badge green">✅ Encerrado</div></div>'
+        + '<div style="font-size:13px;color:#1a5c33;margin-bottom:14px">O torneio <b>"'+nome+'"</b> já foi salvo no Google Sheets e está encerrado. Não é possível continuar um torneio finalizado — configure um novo torneio abaixo.</div>'
+        + '<button class="btn btn-gold btn-full" onclick="startNewTournamentFromGate()">🎾 Abrir Novo Torneio</button>'
+        + '</div>';
+      gate.style.display = 'block';
+      formWrap.style.display = 'none';
+      return;
+    }
     const stepNames = {1:'Abertura & Configuração',2:'Jogadores & Seeds',3:'Formação dos Grupos',4:'Jogos & Rodadas',5:'Finalização'};
     const cur = getMaxStep();
-    const nome = (T.name || 'Torneio sem nome').replace(/</g,'&lt;');
     gate.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
       + '<div class="card-hd"><div class="card-title">Torneio em Andamento</div><div class="card-badge gold">Etapa '+cur+'</div></div>'
       + '<div style="font-size:13px;color:#5a4520;margin-bottom:14px">Encontramos uma configuração salva neste navegador: <b>"'+nome+'"</b> — parada na Etapa '+cur+' ('+stepNames[cur]+'). O que você quer fazer?</div>'
