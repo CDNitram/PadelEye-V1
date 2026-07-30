@@ -304,12 +304,14 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .raffle-reveal-info{flex:1;min-width:0;}
 .raffle-reveal-name{font-family:'Bebas Neue';font-size:19px;letter-spacing:.5px;color:#0a1628;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .raffle-reveal-grp{font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#C9933A;margin-top:1px;}
-.raffle-countdown-wrap{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;}
-.raffle-countdown{font-family:'Bebas Neue';font-size:15px;color:#9ab0c8;letter-spacing:1px;}
-.raffle-countdown.urgent{color:#C9933A;}
-.raffle-prog-bar{width:80px;height:3px;background:#dde6f0;border-radius:99px;overflow:hidden;}
-.raffle-prog-fill{height:100%;background:linear-gradient(90deg,#C9933A,#e0a840);border-radius:99px;transition:width .1s linear;}
-.raffle-groups{width:100%;max-width:600px;margin-bottom:10px;max-height:38vh;overflow-y:auto;}
+.raffle-countdown-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+.raffle-countdown-ring{position:relative;width:44px;height:44px;border-radius:50%;background:conic-gradient(#C9933A calc(var(--pct,100)*1%), #dde6f0 0);display:flex;align-items:center;justify-content:center;transition:background .15s linear;}
+.raffle-countdown-ring::before{content:'';position:absolute;inset:4px;background:#fff;border-radius:50%;}
+.raffle-countdown{position:relative;z-index:1;font-family:'Bebas Neue';font-size:15px;color:#0a1628;letter-spacing:0;}
+.raffle-countdown.urgent{color:#c0392b;}
+.raffle-countdown-ring.urgent{background:conic-gradient(#c0392b calc(var(--pct,100)*1%), #dde6f0 0);}
+.raffle-groups{width:100%;max-width:600px;margin-bottom:10px;}
+.raffle-queue{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-width:600px;margin-bottom:12px;}
 .grupo-card.lit{border-color:#C9933A;}
 .raffle-queue-label{font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase;margin-bottom:6px;width:100%;max-width:600px;}
 .raffle-queue{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-width:600px;margin-bottom:12px;max-height:9vh;overflow-y:auto;}
@@ -369,8 +371,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="raffle-reveal-grp" id="raffle-reveal-grp"></div>
     </div>
     <div class="raffle-countdown-wrap">
-      <div class="raffle-prog-bar"><div class="raffle-prog-fill" id="raffle-prog" style="width:100%"></div></div>
-      <div class="raffle-countdown" id="raffle-countdown"></div>
+      <div class="raffle-countdown-ring" id="raffle-ring"><div class="raffle-countdown" id="raffle-countdown"></div></div>
     </div>
   </div>
 
@@ -1528,7 +1529,8 @@ function startRaffleAnimation() {
   document.getElementById('raffle-reveal-name').textContent = 'Aguardando sorteio...';
   document.getElementById('raffle-reveal-grp').textContent = '';
   document.getElementById('raffle-countdown').textContent = '';
-  document.getElementById('raffle-prog').style.width = '100%';
+  document.getElementById('raffle-ring').style.setProperty('--pct', 100);
+  document.getElementById('raffle-ring').className = 'raffle-countdown-ring';
   document.getElementById('raffle-next-btn').style.display = 'block';
   document.getElementById('raffle-restart-btn').style.display = 'none';
   document.getElementById('raffle-start-btn').classList.remove('show');
@@ -1612,10 +1614,12 @@ function raffleDrawOne() {
 
 function _raffleUpdateCountdown() {
   const el = document.getElementById('raffle-countdown');
-  const prog = document.getElementById('raffle-prog');
-  el.textContent = _raffleCountdown + 's';
-  el.className = 'raffle-countdown' + (_raffleCountdown <= 1 ? ' urgent' : '');
-  prog.style.width = (_raffleCountdown / 3 * 100) + '%';
+  const ring = document.getElementById('raffle-ring');
+  const urgent = _raffleCountdown <= 1;
+  el.textContent = _raffleCountdown;
+  el.className = 'raffle-countdown' + (urgent ? ' urgent' : '');
+  ring.className = 'raffle-countdown-ring' + (urgent ? ' urgent' : '');
+  ring.style.setProperty('--pct', (_raffleCountdown / 3 * 100));
 }
 
 function raffleNext() {
@@ -1647,14 +1651,14 @@ function raffleSkip() {
   document.getElementById('raffle-reveal-name').textContent = 'Sorteio completo';
   document.getElementById('raffle-reveal-grp').textContent = '';
   document.getElementById('raffle-countdown').textContent = '';
-  document.getElementById('raffle-prog').style.width = '0%';
+  document.getElementById('raffle-ring').style.setProperty('--pct', 0);
   raffleAllDone();
 }
 
 function raffleAllDone() {
   clearInterval(_raffleTimer);
   document.getElementById('raffle-countdown').textContent = '';
-  document.getElementById('raffle-prog').style.width = '0%';
+  document.getElementById('raffle-ring').style.setProperty('--pct', 0);
   document.getElementById('raffle-next-btn').style.display = 'none';
   document.getElementById('raffle-restart-btn').style.display = 'block';
   document.getElementById('raffle-start-btn').classList.add('show');
