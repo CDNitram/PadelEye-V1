@@ -75,6 +75,19 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .manual-chip.sel{border-color:#C9933A;background:#fffbf0;box-shadow:0 0 0 2px rgba(201,147,58,.3);}
 .manual-chip-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:10px;color:#fff;flex-shrink:0;}
 .manual-group-body{min-height:96px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;}
+.step-info{background:#f0f8ff;border:1px solid rgba(58,123,213,.25);border-radius:12px;padding:14px 16px;margin-bottom:16px;font-size:11.5px;color:#3a5570;line-height:1.65;}
+.step-info-title{font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#3a7bd5;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.step-info b{color:#0d1e3a;}
+.tb-link-btn{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:6px 12px;border-radius:8px;border:1px solid rgba(58,123,213,.35);background:#fff;color:#3a7bd5;font-size:11px;font-weight:700;cursor:pointer;font-family:'DM Sans';}
+.tb-link-btn:hover{background:#eaf3ff;}
+.btn-cancel-trn{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#c0392b;font-size:11px;font-weight:700;padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'DM Sans';display:none;}
+.btn-cancel-trn:hover{background:rgba(231,76,60,.22);}
+.tiebreak-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
+.tiebreak-table th{text-align:left;padding:9px 10px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9ab0c8;border-bottom:1.5px solid #dde6f0;}
+.tiebreak-table td{padding:10px;border-bottom:1px solid #f0f5fb;vertical-align:top;}
+.tiebreak-table tr:last-child td{border-bottom:none;}
+.tb-num{width:26px;height:26px;border-radius:50%;background:#0a1628;color:#C9933A;font-family:'Bebas Neue';font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tb-num.tb-manual{background:#C9933A;color:#0a1628;}
 .sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
 .main-content{flex:1;overflow-y:auto;padding:20px;}
 
@@ -296,6 +309,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="topbar-club" id="tb-club">-</div>
       </div>
       <div class="topbar-av" id="tb-av">?</div>
+      <button class="btn-cancel-trn" id="btn-cancel-trn" onclick="cancelTournament()">🗑 Cancelar Torneio</button>
       <button class="btn-out" onclick="doLogout()">Sair</button>
     </div>
   </div>
@@ -314,6 +328,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn step-btn locked" id="stepbtn-3" onclick="goToStep(3,this)"><span class="step-num">3</span> Formação dos Grupos</button>
       <button class="tab-btn step-btn locked" id="stepbtn-4" onclick="goToStep(4,this)"><span class="step-num">4</span> Jogos &amp; Rodadas</button>
       <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
+      <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
@@ -338,6 +353,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <div class="welcome-dm" id="w-dm">-</div>
           </div>
         </div>
+
+        <div class="step-info">
+          <div class="step-info-title">📖 Sobre esta etapa</div>
+          O que é: a etapa inicial, onde você define os dados básicos do torneio (nome, data, local, categoria), quantos jogadores vão participar e as regras de placar/tie-break de cada fase.<br>
+          Como funciona: preencha os campos, escolha 8, 12 ou 16 jogadores (a estrutura de fases é montada automaticamente) e ajuste o placar máximo e o tie-break se quiser.<br>
+          <b>O que se espera de você:</b> confirme só quando tiver certeza — depois de avançar, esta etapa fica travada; pra mudar algo aqui, é preciso cancelar o torneio (botão no topo da tela).
+          <button class="tb-link-btn" onclick="showTiebreakInfo()">⚖️ Ver critérios de desempate</button>
+        </div>
+
+        <div class="alert warn" id="step1-lock-banner" style="display:none">🔒 Configuração já confirmada — o torneio está em andamento. Para alterar, cancele o torneio no topo da tela.</div>
 
         <div class="alert" id="alert-setup"></div>
 
@@ -400,27 +425,27 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd">
               <div class="phase-cfg-label">Fase 1</div>
               <div class="phase-cfg-sub" id="f1-cfg-sub">grupos . partidas</div>
-              <div class="field"><label>Score max.</label><select class="finput" id="cfg-max-f1" onchange="syncMaxTb('cfg-max-f1','cfg-tb-f1')"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div>
-              <div class="field" style="margin-bottom:0"><label>TB a partir</label><select class="finput" id="cfg-tb-f1"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
+              <div class="field"><label>Score máximo</label><select class="finput" id="cfg-max-f1" onchange="syncMaxTb('cfg-max-f1','cfg-tb-f1')"><option value="4">4 games</option><option value="5">5 games</option><option value="6" selected>6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9">9 games</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Tie-Break a partir de</label><select class="finput" id="cfg-tb-f1"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
             </div>
             <div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd">
               <div class="phase-cfg-label">Fase 2</div>
               <div class="phase-cfg-sub" id="f2-cfg-sub">grupos . partidas</div>
-              <div class="field"><label>Score max.</label><select class="finput" id="cfg-max-f2" onchange="syncMaxTb('cfg-max-f2','cfg-tb-f2')"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div>
-              <div class="field" style="margin-bottom:0"><label>TB a partir</label><select class="finput" id="cfg-tb-f2"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
+              <div class="field"><label>Score máximo</label><select class="finput" id="cfg-max-f2" onchange="syncMaxTb('cfg-max-f2','cfg-tb-f2')"><option value="4">4 games</option><option value="5">5 games</option><option value="6" selected>6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9">9 games</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Tie-Break a partir de</label><select class="finput" id="cfg-tb-f2"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
             </div>
             <div class="phase-cfg-card" style="border-color:rgba(201,147,58,.3);background:#fffbf0">
               <div class="phase-cfg-label">Final</div>
               <div class="phase-cfg-sub">1 grupo . 3 partidas</div>
-              <div class="field"><label>Score max.</label><select class="finput" id="cfg-max-final" onchange="syncMaxTb('cfg-max-final','cfg-tb-final')"><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option></select></div>
-              <div class="field" style="margin-bottom:0"><label>TB a partir</label><select class="finput" id="cfg-tb-final"><option value="5">5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8" selected>8x8</option></select></div>
+              <div class="field"><label>Score máximo</label><select class="finput" id="cfg-max-final" onchange="syncMaxTb('cfg-max-final','cfg-tb-final')"><option value="6">6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9" selected>9 games</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Tie-Break a partir de</label><select class="finput" id="cfg-tb-final"><option value="5">5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8" selected>8x8</option></select></div>
             </div>
           </div>
           <input type="hidden" id="cfg-vagas" value="16"><input type="hidden" id="cfg-num-fases" value="3">
         </div>
 
         <div class="card" id="trn-open-btn">
-          <button class="btn btn-primary btn-full" onclick="openTournament()" style="font-size:15px">📋 Confirmar Configuração e Avançar →</button>
+          <button class="btn btn-primary btn-full" onclick="openTournament()" style="font-size:15px">📋 Confirmar Configuração e Abrir Torneio →</button>
         </div>
       </div>
 
@@ -428,6 +453,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
           <div><div class="welcome-title" style="font-size:22px">SELEÇÃO DE <em>JOGADORES</em></div><div class="welcome-sub">Etapa 2 de 5 — jogadores e cabeças de chave.</div></div>
         </div>
+
+        <div class="step-info">
+          <div class="step-info-title">📖 Sobre esta etapa</div>
+          O que é: aqui você seleciona quem vai jogar e define as cabeças de chave (seeds), que espalham os jogadores mais fortes entre os grupos.<br>
+          Como funciona: marque os jogadores na lista (mínimo 4). Depois, marque 1 seed por grupo esperado — o sistema distribui 1 seed por grupo automaticamente no sorteio.<br>
+          <b>O que se espera de você:</b> confira a lista com atenção antes de confirmar — depois de avançar, a seleção fica travada; pra mudar, é preciso cancelar o torneio.
+        </div>
+
+        <div class="alert warn" id="step2-lock-banner" style="display:none">🔒 Jogadores já confirmados — o torneio está em andamento. Para alterar, cancele o torneio no topo da tela.</div>
 
         <div class="card" id="trn-player-section">
           <div class="card-hd">
@@ -486,6 +520,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
           <div><div class="welcome-title" style="font-size:22px">FORMAÇÃO DOS <em>GRUPOS</em></div><div class="welcome-sub">Etapa 3 de 5 — escolha como montar os grupos.</div></div>
         </div>
+        <div class="step-info">
+          <div class="step-info-title">📖 Sobre esta etapa</div>
+          O que é: aqui os grupos são formados de verdade — a etapa mais crítica, porque define os confrontos do torneio inteiro.<br>
+          Como funciona: escolha <b>Sorteio Automático</b> (grupos aleatórios respeitando os seeds) ou <b>Seleção Manual</b> (você monta os grupos arrastando os jogadores, com liberdade total e opção de trocar depois).<br>
+          <b>O que se espera de você:</b> revise os grupos com calma. Depois de confirmar, o torneio começa de verdade e os grupos ficam travados — não dá pra voltar aqui e remontar; só cancelando o torneio inteiro.
+        </div>
+
         <div class="card" id="formation-choice">
           <div class="card-hd"><div class="card-title">Tipo de Formação</div></div>
           <div class="formation-grid">
@@ -506,6 +547,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </div>
 
       <div class="panel" id="p-rodadas">
+        <div class="step-info">
+          <div class="step-info-title">📖 Sobre esta etapa</div>
+          O que é: o coração do torneio — aqui você registra os placares de cada partida, fase por fase.<br>
+          Como funciona: preencha o placar de cada partida e salve. Quando todas as partidas de uma fase estiverem salvas, um botão libera o avanço pra próxima fase. Em empate total na classificação, você escolhe manualmente quem avança.<br>
+          <b>O que se espera de você:</b> registre os placares assim que as partidas terminarem. Depois que uma fase avança, os resultados dela não podem mais ser editados.
+          <button class="tb-link-btn" onclick="showTiebreakInfo()">⚖️ Ver critérios de desempate</button>
+        </div>
         <div class="alert" id="alert-game"></div>
         <div class="card" style="border:1.5px dashed #e08080;background:#fff8f8">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -523,7 +571,35 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
           <div><div class="welcome-title" style="font-size:22px">COMPUTAÇÃO &amp; <em>FINALIZAÇÃO</em></div><div class="welcome-sub">Etapa 5 de 5 — resultado final e gravação no banco.</div></div>
         </div>
+        <div class="step-info">
+          <div class="step-info-title">📖 Sobre esta etapa</div>
+          O que é: a etapa final — depois que a Fase Final termina, aqui você confirma os vencedores e grava o torneio definitivamente no banco de dados.<br>
+          Como funciona: quando a Fase Final estiver 100% completa, os 3 primeiros colocados aparecem aqui. Clique em "Guardar Torneio" para enviar tudo ao Google Sheets.<br>
+          <b>O que se espera de você:</b> confira os vencedores antes de guardar — depois de salvo, o torneio é considerado encerrado e não pode mais ser alterado.
+        </div>
         <div id="finalize-container"></div>
+      </div>
+
+      <div class="panel" id="p-tiebreak">
+        <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
+          <div><div class="welcome-title" style="font-size:22px">CRITÉRIOS DE <em>DESEMPATE</em></div><div class="welcome-sub">Hierarquia usada pra decidir a classificação dentro de cada grupo.</div></div>
+        </div>
+        <div class="step-info">
+          <div class="step-info-title">📖 Como funciona</div>
+          Quando dois ou mais jogadores terminam um grupo empatados, o sistema aplica os critérios abaixo em ordem, um de cada vez, até o empate ser resolvido. Se persistir empate em <b>todos</b> os critérios, o organizador decide manualmente quem fica na frente (isso aparece como um aviso de empate na tela de Jogos & Rodadas).
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Hierarquia de Critérios</div><div class="card-badge gold">5 critérios + decisão manual</div></div>
+          <table class="tiebreak-table">
+            <tr><th style="width:36px">#</th><th>Critério</th><th>Como é calculado</th></tr>
+            <tr><td><div class="tb-num">1</div></td><td><b>Vitórias</b></td><td>Número de partidas vencidas dentro do grupo.</td></tr>
+            <tr><td><div class="tb-num">2</div></td><td><b>Saldo de Games</b></td><td>Games ganhos menos games perdidos, somando todas as partidas do grupo.</td></tr>
+            <tr><td><div class="tb-num">3</div></td><td><b>Confronto Direto (H2H)</b></td><td>Resultado da partida jogada diretamente entre os dois jogadores empatados.</td></tr>
+            <tr><td><div class="tb-num">4</div></td><td><b>Games Ganhos</b></td><td>Total de games vencidos (valor absoluto, não é saldo).</td></tr>
+            <tr><td><div class="tb-num">5</div></td><td><b>Saldo de Tie-Break</b></td><td>Tie-breaks vencidos menos tie-breaks perdidos.</td></tr>
+            <tr><td><div class="tb-num tb-manual">✋</div></td><td><b>Decisão do Organizador</b></td><td>Se o empate persistir após os 5 critérios acima, o organizador escolhe manualmente quem fica na frente, direto na tela de Jogos & Rodadas.</td></tr>
+          </table>
+        </div>
       </div>
 
       <div class="panel" id="p-ranking">
@@ -649,18 +725,21 @@ const SIM_TEMPLATE_TIE = [
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url_SIM') ||
   "COLE_AQUI_A_URL_DO_GAS_DE_SIMULACAO";
 
-let T = {
-  id: '', started: false, status: '',
-  name: '', date: '', local: '', categoria: '', courts: 2,
-  players: [], seeds: [], phases: [], currentPhase: 0,
-  playersConfirmed: false, groupFormationType: null,
-  tieOverrides: {}, matchOrder: {},
-  phaseConfig: [
-    { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 },
-    { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 },
-    { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 },
-  ],
-};
+function freshT() {
+  return {
+    id: '', started: false, status: '', finalized: false,
+    name: '', date: '', local: '', categoria: '', courts: 2,
+    players: [], seeds: [], phases: [], currentPhase: 0,
+    playersConfirmed: false, groupFormationType: null,
+    tieOverrides: {}, matchOrder: {},
+    phaseConfig: [
+      { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 },
+      { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 },
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 },
+    ],
+  };
+}
+let T = freshT();
 let T_groups = [];
 
 const GROUP_COLORS  = ['#0a1628','#1a5276','#155432','#6e2a00'];
@@ -756,6 +835,17 @@ function refreshStepNav() {
     if (i < max) btn.classList.add('step-done');
     if (i > max) btn.classList.add('locked');
   }
+  refreshCancelButton();
+  updateLockBanners();
+}
+function refreshCancelButton() {
+  const btn = document.getElementById('btn-cancel-trn');
+  if (!btn) return;
+  btn.style.display = (T.status === 'open' && !T.finalized) ? 'inline-block' : 'none';
+}
+function updateLockBanners() {
+  const b1 = document.getElementById('step1-lock-banner'); if (b1) b1.style.display = (T.status === 'open') ? 'block' : 'none';
+  const b2 = document.getElementById('step2-lock-banner'); if (b2) b2.style.display = T.playersConfirmed ? 'block' : 'none';
 }
 function goToStep(n, el) {
   const max = getMaxStep();
@@ -771,6 +861,39 @@ function goToStep(n, el) {
   if (n === 3) renderFormationStep();
   if (n === 4) renderRounds();
   if (n === 5) renderFinalizeStep();
+}
+function showTiebreakInfo() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const navBtn = document.querySelector('.tab-btn[onclick^="showTiebreakInfo"]');
+  if (navBtn) navBtn.classList.add('on');
+  const panel = document.getElementById('p-tiebreak');
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+}
+
+function cancelTournament() {
+  const ok = confirm('Isso vai CANCELAR o torneio atual e apagar todo o progresso nesta tela (jogadores, grupos, placares). O que já foi enviado ao Google Sheets não é apagado lá, só marcado como cancelado. Essa ação não pode ser desfeita. Tem certeza?');
+  if (!ok) return;
+  if (T.id && T.status === 'open') {
+    PadelEyeDB.send('update_tournament_status', { tournament_id: T.id, status: 'Cancelado' })
+      .catch(e => console.warn('[cancelTournament]', e.message));
+  }
+  try { localStorage.removeItem('padeleye_T_v1_SIM'); } catch(e) {}
+  T = freshT();
+  T_groups = [];
+  selectedPlayers = []; seedList = []; extraPlayers = [];
+  manualPool = []; manualGroups = []; _dragPlayer = null;
+  _canonicalSelected = 0;
+  const openBadge = document.getElementById('trn-open-badge');
+  if (openBadge) { openBadge.textContent = 'Novo'; openBadge.className = 'card-badge gold'; }
+  const canBadge = document.getElementById('canonical-badge');
+  if (canBadge) { canBadge.textContent = 'Selecione'; canBadge.className = 'card-badge gold'; }
+  [8,12,16].forEach(v => { const b = document.getElementById('canonical-btn-'+v); if (b) b.classList.remove('sel'); });
+  renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
+  refreshStepNav();
+  goToStep(1);
+  safeAlert('Torneio cancelado. Configure um novo torneio quando quiser.', 'ok');
 }
 
 function normStr(s) { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
@@ -1097,12 +1220,14 @@ function openTournament() {
 }
 
 function confirmPlayersStep() {
+  if (T.started) { safeAlert('O torneio já foi iniciado — os jogadores não podem mais ser alterados. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const n = selectedPlayers.length;
   if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para avançar.', 'err'); return; }
   T.playersConfirmed = true;
   T.players = [...selectedPlayers];
   T.seeds = [...seedList];
   persistT();
+  refreshStepNav();
   safeAlert('Jogadores confirmados. Escolha a formação dos grupos.', 'ok');
   goToStep(3);
 }
@@ -1124,6 +1249,8 @@ function buildGroups() { T_groups = autoDistributeGroups(T.players, seedList); }
 
 // ── ETAPA 3 · FORMAÇÃO DOS GRUPOS ──────────────────────────────────────
 function renderFormationStep() {
+  if (T.started) { renderFormationReadOnly(); return; }
+  document.getElementById('formation-choice').style.display = '';
   document.getElementById('formation-card-sorteio').classList.toggle('active', T.groupFormationType==='sorteio');
   document.getElementById('formation-card-manual').classList.toggle('active', T.groupFormationType==='manual');
   document.getElementById('formation-sorteio-view').style.display = T.groupFormationType==='sorteio' ? 'block' : 'none';
@@ -1131,6 +1258,24 @@ function renderFormationStep() {
   if (T.groupFormationType === 'sorteio') renderSorteioPreview();
   if (T.groupFormationType === 'manual' && manualGroups.length === 0) initManualGroups();
   if (T.groupFormationType === 'manual') renderManualBuilder();
+}
+function renderFormationReadOnly() {
+  document.getElementById('formation-choice').style.display = 'none';
+  document.getElementById('formation-manual-view').style.display = 'none';
+  document.getElementById('formation-sorteio-view').style.display = 'block';
+  let html = '<div class="card"><div class="card-hd"><div class="card-title">Grupos Confirmados</div><div class="card-badge green">🔒 Torneio em andamento</div></div>'
+    + '<div style="font-size:11px;color:#9ab0c8;margin-bottom:14px">Formação escolhida: '+(T.groupFormationType==='manual'?'Seleção Manual':'Sorteio Automático')+'. Para remontar os grupos, cancele o torneio no topo da tela.</div>'
+    + '<div class="grupos-grid">';
+  (T.phases[0]?.groups||[]).forEach((group,gi) => {
+    const color = GROUP_COLORS[gi%GROUP_COLORS.length], letter = GROUP_LETTERS[gi];
+    html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div><div class="grupo-body">'
+      + group.map(name => { const reg=getPlayerReg(name); const isSeed=(T.seeds||[]).includes(name); return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' (seed)':'')+'</div></div>'; }).join('')
+      + '</div></div>';
+  });
+  html += '</div>'
+    + '<button class="btn btn-gold btn-full" style="margin-top:14px" onclick="goToStep(4)">Ir para Jogos & Rodadas →</button>'
+    + '</div>';
+  document.getElementById('formation-sorteio-view').innerHTML = html;
 }
 
 function selectSorteioGroups() {
@@ -1279,10 +1424,7 @@ function confirmManualGroups() {
 
 // ── Confirmação final da Etapa 3 → cria Fase 1 e libera a Etapa 4 ──
 function finalizeLaunch() {
-  if (T.started) {
-    const ok = confirm('O torneio JA foi iniciado. Confirmar novamente vai APAGAR todos os placares salvos localmente nesta tela (o que ja foi enviado ao Google Sheets nao e afetado). Tem certeza?');
-    if (!ok) return;
-  }
+  if (T.started) { safeAlert('O torneio já foi iniciado — grupos e jogadores não podem mais ser alterados. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const n = selectedPlayers.length;
   if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para iniciar.','err'); return; }
   if (!T.id) T.id = generateTorneiId();
@@ -1593,6 +1735,7 @@ function showSaveWarning(key, phIdx, gi, mi, msg) {
   gameAlert(msg, 'warn');
 }
 function unsaveMatch(key, phIdx, gi, mi) {
+  if (T.finalized) { safeAlert('O torneio já foi finalizado e salvo — não é possível alterar resultados. Cancele o torneio para recomeçar.', 'err'); return; }
   if (T.phases[phIdx]?.complete) {
     safeAlert('Esta fase já foi encerrada — não é possível editar resultados que já avançaram para a próxima fase.', 'err');
     return;
@@ -1617,6 +1760,7 @@ function moveMatch(phIdx, gi, fromIdx, toIdx) {
 }
 
 function saveMatch(phaseIdx, groupIdx, matchIdx) {
+  if (T.finalized) { gameAlert('O torneio já foi finalizado e salvo — não é possível registrar novos resultados. Cancele o torneio para recomeçar.', 'err'); return; }
   if (T.phases[phaseIdx]?.complete) {
     gameAlert('Esta fase já foi encerrada — não é possível registrar ou alterar resultados nela.', 'err');
     return;
@@ -1841,10 +1985,13 @@ function renderFinalizeStep() {
     return;
   }
   const winners = groupStandings(T.phases[finalIdx].groups[0], finalIdx, 0);
+  const btnHtml = T.finalized
+    ? '<div style="width:100%;padding:11px 0;border-radius:10px;background:#0a1628;color:#1db954;font-weight:700;font-size:14px;text-align:center">✅ Torneio salvo no Database — encerrado</div>'
+    : '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>';
   c.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
     + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:8px">Torneio Concluido!</div>'
     + '<div style="font-size:13px;color:#865a10;margin-bottom:12px">1o '+(winners[0]&&winners[0].name)+' . 2o '+(winners[1]&&winners[1].name)+' . 3o '+(winners[2]&&winners[2].name)+'</div>'
-    + '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>'
+    + btnHtml
     + '</div>';
 }
 
@@ -2029,6 +2176,7 @@ const PadelEyeDB = (() => {
 
 async function finalizeTournament() {
   if (!T.started || !T.phases.length) return;
+  if (T.finalized) { safeAlert('Este torneio já foi finalizado.', 'ok'); return; }
   const btn = document.getElementById('btn-finalize');
   if (btn) { btn.disabled = true; btn.textContent = 'A guardar...'; btn.style.background = '#475569'; }
   const scoreData = computeScorecard();
@@ -2040,6 +2188,7 @@ async function finalizeTournament() {
     btn.style.background = ok ? '#1a7a44' : '#c0392b'; btn.style.color = '#fff';
     btn.onclick = ok ? null : () => finalizeTournament();
     btn.disabled = ok;
+    if (ok) { T.finalized = true; persistT(); refreshStepNav(); }
   }
 }
 
