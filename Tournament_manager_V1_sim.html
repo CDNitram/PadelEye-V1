@@ -437,8 +437,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <div class="phase-cfg-card" style="border-color:rgba(201,147,58,.3);background:#fffbf0">
               <div class="phase-cfg-label">Final</div>
               <div class="phase-cfg-sub">1 grupo . 3 partidas</div>
-              <div class="field"><label>Score máximo</label><select class="finput" id="cfg-max-final" onchange="syncMaxTb('cfg-max-final','cfg-tb-final')"><option value="6">6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9" selected>9 games</option></select></div>
-              <div class="field" style="margin-bottom:0"><label>Tie-Break a partir de</label><select class="finput" id="cfg-tb-final"><option value="5">5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8" selected>8x8</option></select></div>
+              <div class="field"><label>Score máximo</label><select class="finput" id="cfg-max-final" onchange="syncMaxTb('cfg-max-final','cfg-tb-final')"><option value="4">4 games</option><option value="5">5 games</option><option value="6" selected>6 games</option><option value="7">7 games</option><option value="8">8 games</option><option value="9">9 games</option></select></div>
+              <div class="field" style="margin-bottom:0"><label>Tie-Break a partir de</label><select class="finput" id="cfg-tb-final"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
             </div>
           </div>
           <input type="hidden" id="cfg-vagas" value="16"><input type="hidden" id="cfg-num-fases" value="3">
@@ -735,7 +735,7 @@ function freshT() {
     phaseConfig: [
       { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 },
       { playersPerGroup:4, advancePerGroup:2, wildcards:0, maxScore:6, tbAt:5 },
-      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:9, tbAt:8 },
+      { playersPerGroup:4, advancePerGroup:0, wildcards:0, maxScore:6, tbAt:5 },
     ],
   };
 }
@@ -775,8 +775,7 @@ function doLogin() {
   document.getElementById('tb-av').textContent   = currentUser.name[0];
   document.getElementById('w-hi').textContent    = 'Bem-vindo, ' + currentUser.name.split(' ')[0] + '!';
   loadPlayersFromDB();
-  refreshStepNav();
-  if (!_canonicalSelected) setTimeout(() => applyCanonical(16), 100);
+  bootstrapTournamentState();
 }
 function doLogout() {
   localStorage.removeItem('pe_auth_tournament_v1_SIM');
@@ -2263,6 +2262,22 @@ async function dbtTestAll() {
 }
 
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
+function bootstrapTournamentState() {
+  // Só retoma automaticamente um torneio que ja tinha realmente comecado
+  // (grupos formados / partidas em jogo, T.started). Uma configuracao
+  // ainda incompleta (Etapas 1 a 3) NUNCA e retomada sozinha -- toda
+  // sessao nova comeca do zero na Etapa 1, sem memoria do torneio anterior.
+  const restored = restoreT();
+  if (restored && T.started) {
+    renderSeedPicker(); updateVagas(); updateSummary();
+    refreshStepNav();
+    goToStep(getMaxStep());
+  } else {
+    resetTournamentState();
+    setTimeout(() => applyCanonical(16), 100);
+  }
+}
+
 function restoreT() {
   try {
     const saved = localStorage.getItem('padeleye_T_v1_SIM');
@@ -2295,14 +2310,7 @@ function restoreT() {
         document.getElementById('tb-club').textContent = currentUser.club;
         document.getElementById('tb-av').textContent = currentUser.name[0];
         loadPlayersFromDB();
-        const restored = restoreT();
-        refreshStepNav();
-        if (restored) {
-          renderSeedPicker(); updateVagas(); updateSummary();
-          goToStep(getMaxStep());
-        } else if (!_canonicalSelected) {
-          setTimeout(() => applyCanonical(16), 100);
-        }
+        bootstrapTournamentState();
         return;
       }
     }
