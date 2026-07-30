@@ -858,6 +858,14 @@ function goToStep(n, el) {
   if (panel) panel.classList.add('on');
   closeMobMenu();
   refreshStepNav();
+  if (n === 2 && !T.playersConfirmed) {
+    // Segurança: nunca deixar sobras de seleção de uma exploração anterior
+    // (ex.: botões de simulação clicados e não confirmados) vazarem pra cá.
+    // A lista so pode refletir o que ja esta de fato confirmado em T.
+    selectedPlayers = [...(T.players || [])];
+    seedList = [...(T.seeds || [])];
+    renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
+  }
   if (n === 3) renderFormationStep();
   if (n === 4) renderRounds();
   if (n === 5) renderFinalizeStep();
@@ -872,13 +880,7 @@ function showTiebreakInfo() {
   closeMobMenu();
 }
 
-function cancelTournament() {
-  const ok = confirm('Isso vai CANCELAR o torneio atual e apagar todo o progresso nesta tela (jogadores, grupos, placares). O que já foi enviado ao Google Sheets não é apagado lá, só marcado como cancelado. Essa ação não pode ser desfeita. Tem certeza?');
-  if (!ok) return;
-  if (T.id && T.status === 'open') {
-    PadelEyeDB.send('update_tournament_status', { tournament_id: T.id, status: 'Cancelado' })
-      .catch(e => console.warn('[cancelTournament]', e.message));
-  }
+function resetTournamentState() {
   try { localStorage.removeItem('padeleye_T_v1_SIM'); } catch(e) {}
   T = freshT();
   T_groups = [];
@@ -892,8 +894,24 @@ function cancelTournament() {
   [8,12,16].forEach(v => { const b = document.getElementById('canonical-btn-'+v); if (b) b.classList.remove('sel'); });
   renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
   refreshStepNav();
+}
+function cancelTournament() {
+  const ok = confirm('Isso vai CANCELAR o torneio atual e apagar todo o progresso nesta tela (jogadores, grupos, placares). O que já foi enviado ao Google Sheets não é apagado lá, só marcado como cancelado. Essa ação não pode ser desfeita. Tem certeza?');
+  if (!ok) return;
+  if (T.id && T.status === 'open') {
+    PadelEyeDB.send('update_tournament_status', { tournament_id: T.id, status: 'Cancelado' })
+      .catch(e => console.warn('[cancelTournament]', e.message));
+  }
+  resetTournamentState();
   goToStep(1);
   safeAlert('Torneio cancelado. Configure um novo torneio quando quiser.', 'ok');
+}
+function startNewTournament() {
+  const ok = confirm('Isso vai limpar a tela para configurar um novo torneio. O torneio anterior já está salvo no Google Sheets e não será afetado. Continuar?');
+  if (!ok) return;
+  resetTournamentState();
+  goToStep(1);
+  safeAlert('Pronto! Configure o novo torneio.', 'ok');
 }
 
 function normStr(s) { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
@@ -1190,7 +1208,7 @@ function updateSummary() {
 }
 
 function openTournament() {
-  if (T.status === 'open') { goToStep(2); return; }
+  if (T.started) { safeAlert('O torneio já foi iniciado — a configuração não pode mais ser alterada. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const _name = document.getElementById('cfg-name')?.value?.trim();
   const _date = document.getElementById('cfg-date-raw')?.value?.trim();
   const _venue = document.getElementById('cfg-venue')?.value?.trim();
@@ -1201,6 +1219,7 @@ function openTournament() {
   if (!_cat)   { safeAlert('Selecione a categoria antes de abrir.','warn'); return; }
   if (!_canonicalSelected) { safeAlert('Selecione o numero de jogadores (8, 12 ou 16) antes de abrir.','warn'); return; }
 
+  const alreadyOpen = (T.status === 'open');
   if (!T.id) T.id = generateTorneiId();
   T.local = _venue + (document.getElementById('cfg-city')?.value?.trim() ? ' - '+document.getElementById('cfg-city').value.trim() : '');
   T.categoria = _cat;
@@ -1209,13 +1228,15 @@ function openTournament() {
   const badge = document.getElementById('trn-open-badge');
   if (badge) { badge.textContent = 'Aberto'; badge.className = 'card-badge green'; }
 
-  PadelEyeDB.send('create_tournament', { row: {
-    tournament_id: T.id, tournament_name: _name, date: getCfgDate(), venue: T.local,
-    tournament_format: 'Americano - Modelo Brasileiro', tournament_category: _cat,
-    status: 'Iniciado', created_at: new Date().toISOString(),
-  }}).catch(e => console.warn('[openTournament]', e.message));
+  if (!alreadyOpen) {
+    PadelEyeDB.send('create_tournament', { row: {
+      tournament_id: T.id, tournament_name: _name, date: getCfgDate(), venue: T.local,
+      tournament_format: 'Americano - Modelo Brasileiro', tournament_category: _cat,
+      status: 'Iniciado', created_at: new Date().toISOString(),
+    }}).catch(e => console.warn('[openTournament]', e.message));
+  }
   persistT();
-  safeAlert('Torneio aberto. Selecione os jogadores.', 'ok');
+  safeAlert(alreadyOpen ? 'Configuração atualizada.' : 'Torneio aberto. Selecione os jogadores.', 'ok');
   goToStep(2);
 }
 
@@ -1226,6 +1247,11 @@ function confirmPlayersStep() {
   T.playersConfirmed = true;
   T.players = [...selectedPlayers];
   T.seeds = [...seedList];
+  // A lista de jogadores mudou (ou foi confirmada agora) — qualquer formação de
+  // grupos explorada antes (sorteio ou manual) não é mais válida.
+  T.groupFormationType = null;
+  T_groups = [];
+  manualPool = []; manualGroups = []; _dragPlayer = null;
   persistT();
   refreshStepNav();
   safeAlert('Jogadores confirmados. Escolha a formação dos grupos.', 'ok');
@@ -1986,7 +2012,8 @@ function renderFinalizeStep() {
   }
   const winners = groupStandings(T.phases[finalIdx].groups[0], finalIdx, 0);
   const btnHtml = T.finalized
-    ? '<div style="width:100%;padding:11px 0;border-radius:10px;background:#0a1628;color:#1db954;font-weight:700;font-size:14px;text-align:center">✅ Torneio salvo no Database — encerrado</div>'
+    ? '<div style="width:100%;padding:11px 0;border-radius:10px;background:#0a1628;color:#1db954;font-weight:700;font-size:14px;text-align:center;margin-bottom:10px">✅ Torneio salvo no Database — encerrado</div>'
+      + '<button class="btn btn-gold btn-full" onclick="startNewTournament()">🔄 Iniciar Novo Torneio</button>'
     : '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>';
   c.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
     + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:8px">Torneio Concluido!</div>'
