@@ -57,6 +57,24 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tab-btn.on{color:#0a1628;border-left-color:#1a8a45;background:linear-gradient(90deg,rgba(26,138,69,.08),transparent);font-weight:700;}
 .tab-btn.on .sb-ic{transform:scale(1.1);}
 .tab-btn:hover:not(.on){color:#0d1e3a;background:#f8fafd;}
+.step-num{width:20px;height:20px;border-radius:50%;background:#dde6f0;color:#5a7090;font-family:'DM Mono';font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.step-btn.on .step-num{background:#1a8a45;color:#fff;}
+.step-btn.step-done:not(.on) .step-num{background:#1a7a44;color:#fff;}
+.step-btn.locked{opacity:.4;cursor:not-allowed;}
+.step-btn.locked .step-num{background:#f0f5fb;color:#b0c4d8;}
+.formation-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.formation-card{background:#f8fafd;border:2px solid #dde6f0;border-radius:14px;padding:18px 16px;text-align:center;cursor:pointer;transition:all .18s;}
+.formation-card:hover{border-color:#3a7bd5;background:#f0f8ff;}
+.formation-card.active{border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0);}
+.formation-card .fc-icon{font-size:28px;margin-bottom:8px;}
+.formation-card .fc-title{font-family:'Bebas Neue';font-size:17px;letter-spacing:.5px;color:#0a1628;}
+.formation-card .fc-desc{font-size:10.5px;color:#7090b0;margin-top:4px;line-height:1.5;}
+.manual-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:12px;border:1.5px dashed #b0c4d8;border-radius:10px;background:#f8fafd;margin-bottom:4px;}
+.manual-chip{display:flex;align-items:center;gap:6px;padding:5px 11px 5px 5px;border-radius:99px;background:#fff;border:1.5px solid #dde6f0;cursor:grab;font-size:12px;font-weight:600;color:#0d1e3a;user-select:none;transition:all .15s;}
+.manual-chip:active{cursor:grabbing;}
+.manual-chip.sel{border-color:#C9933A;background:#fffbf0;box-shadow:0 0 0 2px rgba(201,147,58,.3);}
+.manual-chip-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:10px;color:#fff;flex-shrink:0;}
+.manual-group-body{min-height:96px;padding:10px 12px;display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;}
 .sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
 .main-content{flex:1;overflow-y:auto;padding:20px;}
 
@@ -291,9 +309,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="app-body">
     <div class="sidebar-nav" id="sidebar-nav">
       <div class="sb-section-label">Torneio Atual</div>
-      <button class="tab-btn on" onclick="showTab('setup',this)"><span class="sb-ic" style="background:#fef3c7">⚙️</span> Configuração</button>
-      <button class="tab-btn" onclick="showTab('rodadas',this)"><span class="sb-ic" style="background:#dcfce7">🏸</span> Rodadas</button>
-      <button class="tab-btn" onclick="showTab('grupos',this)"><span class="sb-ic" style="background:#ccfbf1">🗂</span> Grupos</button>
+      <button class="tab-btn step-btn on" id="stepbtn-1" onclick="goToStep(1,this)"><span class="step-num">1</span> Abertura &amp; Config.</button>
+      <button class="tab-btn step-btn locked" id="stepbtn-2" onclick="goToStep(2,this)"><span class="step-num">2</span> Jogadores &amp; Seeds</button>
+      <button class="tab-btn step-btn locked" id="stepbtn-3" onclick="goToStep(3,this)"><span class="step-num">3</span> Formação dos Grupos</button>
+      <button class="tab-btn step-btn locked" id="stepbtn-4" onclick="goToStep(4,this)"><span class="step-num">4</span> Jogos &amp; Rodadas</button>
+      <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
+      <div class="sb-divider"></div>
+      <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
       <button class="tab-btn" onclick="showTab('historico',this)"><span class="sb-ic" style="background:#ffedd5">📋</span> Histórico</button>
       <button class="tab-btn" onclick="showTab('scorecard',this)"><span class="sb-ic" style="background:#fef9c3">🏅</span> Scorecard</button>
@@ -304,12 +326,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
     <div class="main-content">
 
-      <div class="panel on" id="p-setup">
+      <div class="panel on" id="p-step1">
         <div class="welcome">
           <div>
             <div style="font-size:11px;color:#93C5FD" id="w-hi">Bem-vindo,</div>
             <div class="welcome-title">TORNEIO <em>AMERICANO</em></div>
-            <div class="welcome-sub">Configure, selecione jogadores e inicie o torneio.</div>
+            <div class="welcome-sub">Etapa 1 de 5 — Abertura e configuração do torneio.</div>
           </div>
           <div class="welcome-date">
             <div class="welcome-dd" id="w-dd">-</div>
@@ -397,9 +419,19 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <input type="hidden" id="cfg-vagas" value="16"><input type="hidden" id="cfg-num-fases" value="3">
         </div>
 
-        <div class="card" id="trn-player-section" style="opacity:.4;pointer-events:none;transition:opacity .3s">
+        <div class="card" id="trn-open-btn">
+          <button class="btn btn-primary btn-full" onclick="openTournament()" style="font-size:15px">📋 Confirmar Configuração e Avançar →</button>
+        </div>
+      </div>
+
+      <div class="panel" id="p-step2">
+        <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
+          <div><div class="welcome-title" style="font-size:22px">SELEÇÃO DE <em>JOGADORES</em></div><div class="welcome-sub">Etapa 2 de 5 — jogadores e cabeças de chave.</div></div>
+        </div>
+
+        <div class="card" id="trn-player-section">
           <div class="card-hd">
-            <div class="card-title">1. Selecionar Jogadores</div>
+            <div class="card-title">Selecionar Jogadores</div>
             <div class="card-badge" id="db-badge">0 / 16 vagas</div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;border:1.5px dashed #e08080;border-radius:10px;background:#fff8f8">
@@ -431,26 +463,46 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <div class="sel-strip" id="sel-strip"></div>
         </div>
 
-        <div class="card" style="opacity:.4;pointer-events:none;transition:opacity .3s" id="trn-seed-section">
+        <div class="card" id="trn-seed-section">
           <div class="card-hd">
-            <div class="card-title">2. Cabecas de Chave (Seeds)</div>
+            <div class="card-title">Cabecas de Chave (Seeds)</div>
             <div class="card-badge seed" id="seed-badge">Nenhum designado</div>
           </div>
           <div style="font-size:11px;color:#9ab0c8;margin-bottom:12px">1 seed por grupo - distribuidos automaticamente no sorteio (Seed 1 -> Grupo A, etc.)</div>
-          <div class="seed-picker-wrap" id="seed-picker"><span class="seed-empty">Selecione jogadores no passo 1 primeiro.</span></div>
+          <div class="seed-picker-wrap" id="seed-picker"><span class="seed-empty">Selecione jogadores acima primeiro.</span></div>
         </div>
 
-        <div class="card" id="trn-open-btn">
-          <button class="btn btn-primary btn-full" onclick="openTournament()">📋 Abrir Torneio</button>
-        </div>
         <div class="card">
           <div class="kpi-row">
             <div class="kpi"><div class="kpi-v" id="s-players">-</div><div class="kpi-l">Jogadores</div></div>
             <div class="kpi"><div class="kpi-v" id="s-rounds">-</div><div class="kpi-l">Grupos F1</div></div>
             <div class="kpi"><div class="kpi-v" id="s-matches">-</div><div class="kpi-l">Partidas</div></div>
           </div>
-          <button class="btn btn-gold btn-full" onclick="launch()" id="launch-btn" style="font-size:15px">🎾 Iniciar Torneio →</button>
+          <button class="btn btn-gold btn-full" onclick="confirmPlayersStep()" id="confirm-players-btn" style="font-size:15px">👥 Confirmar Jogadores e Avançar →</button>
         </div>
+      </div>
+
+      <div class="panel" id="p-step3">
+        <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
+          <div><div class="welcome-title" style="font-size:22px">FORMAÇÃO DOS <em>GRUPOS</em></div><div class="welcome-sub">Etapa 3 de 5 — escolha como montar os grupos.</div></div>
+        </div>
+        <div class="card" id="formation-choice">
+          <div class="card-hd"><div class="card-title">Tipo de Formação</div></div>
+          <div class="formation-grid">
+            <div class="formation-card" id="formation-card-sorteio" onclick="selectSorteioGroups()">
+              <div class="fc-icon">🎲</div>
+              <div class="fc-title">Sorteio Automático</div>
+              <div class="fc-desc">Grupos sorteados automaticamente, respeitando as cabeças de chave.</div>
+            </div>
+            <div class="formation-card" id="formation-card-manual" onclick="selectManualGroups()">
+              <div class="fc-icon">✋</div>
+              <div class="fc-title">Seleção Manual</div>
+              <div class="fc-desc">Monte os grupos do zero, arrastando jogadores, com opção de trocar depois.</div>
+            </div>
+          </div>
+        </div>
+        <div id="formation-sorteio-view" style="display:none"></div>
+        <div id="formation-manual-view" style="display:none"></div>
       </div>
 
       <div class="panel" id="p-rodadas">
@@ -467,8 +519,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div id="rounds-container"></div>
       </div>
 
-      <div class="panel" id="p-grupos">
-        <div id="grupos-container"></div>
+      <div class="panel" id="p-step5">
+        <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
+          <div><div class="welcome-title" style="font-size:22px">COMPUTAÇÃO &amp; <em>FINALIZAÇÃO</em></div><div class="welcome-sub">Etapa 5 de 5 — resultado final e gravação no banco.</div></div>
+        </div>
+        <div id="finalize-container"></div>
       </div>
 
       <div class="panel" id="p-ranking">
@@ -595,9 +650,10 @@ let WEB_APP_URL = localStorage.getItem('pe_web_app_url_SIM') ||
   "COLE_AQUI_A_URL_DO_GAS_DE_SIMULACAO";
 
 let T = {
-  id: '', started: false,
+  id: '', started: false, status: '',
   name: '', date: '', local: '', categoria: '', courts: 2,
-  players: [], phases: [], currentPhase: 0,
+  players: [], seeds: [], phases: [], currentPhase: 0,
+  playersConfirmed: false, groupFormationType: null,
   tieOverrides: {}, matchOrder: {},
   phaseConfig: [
     { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 },
@@ -640,6 +696,7 @@ function doLogin() {
   document.getElementById('tb-av').textContent   = currentUser.name[0];
   document.getElementById('w-hi').textContent    = 'Bem-vindo, ' + currentUser.name.split(' ')[0] + '!';
   loadPlayersFromDB();
+  refreshStepNav();
   if (!_canonicalSelected) setTimeout(() => applyCanonical(16), 100);
 }
 function doLogout() {
@@ -675,11 +732,45 @@ function showTab(id, el) {
   const panel = document.getElementById('p-' + id);
   if (panel) panel.classList.add('on');
   closeMobMenu();
-  if (id === 'rodadas')   renderRounds();
   if (id === 'ranking')   renderRanking();
   if (id === 'historico') renderHistorico();
-  if (id === 'grupos')    renderGrupos();
   if (id === 'scorecard') renderScorecard();
+}
+
+// ── PIPELINE: 5 etapas do Torneio Atual, navegacao travada em sequencia ──
+const STEP_PANEL = { 1:'step1', 2:'step2', 3:'step3', 4:'rodadas', 5:'step5' };
+function getMaxStep() {
+  if (T.status !== 'open') return 1;
+  if (!T.playersConfirmed) return 2;
+  if (!T.started) return 3;
+  const finalIdx = (T.numFases||3)-1;
+  if (T.phases && isPhaseComplete(finalIdx)) return 5;
+  return 4;
+}
+function refreshStepNav() {
+  const max = getMaxStep();
+  for (let i=1;i<=5;i++) {
+    const btn = document.getElementById('stepbtn-'+i);
+    if (!btn) continue;
+    btn.classList.remove('locked','step-done');
+    if (i < max) btn.classList.add('step-done');
+    if (i > max) btn.classList.add('locked');
+  }
+}
+function goToStep(n, el) {
+  const max = getMaxStep();
+  if (n > max) { safeAlert('Complete a etapa '+max+' antes de avançar para a etapa '+n+'.', 'warn'); return; }
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const btn = el || document.getElementById('stepbtn-'+n);
+  if (btn) btn.classList.add('on');
+  const panel = document.getElementById('p-' + STEP_PANEL[n]);
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+  refreshStepNav();
+  if (n === 3) renderFormationStep();
+  if (n === 4) renderRounds();
+  if (n === 5) renderFinalizeStep();
 }
 
 function normStr(s) { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
@@ -976,7 +1067,7 @@ function updateSummary() {
 }
 
 function openTournament() {
-  if (T.status === 'Iniciado' || T.status === 'open') return;
+  if (T.status === 'open') { goToStep(2); return; }
   const _name = document.getElementById('cfg-name')?.value?.trim();
   const _date = document.getElementById('cfg-date-raw')?.value?.trim();
   const _venue = document.getElementById('cfg-venue')?.value?.trim();
@@ -992,12 +1083,6 @@ function openTournament() {
   T.categoria = _cat;
   T.status = 'open';
 
-  ['trn-player-section','trn-seed-section'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) { el.style.opacity='1'; el.style.pointerEvents='auto'; }
-  });
-  const ob = document.getElementById('trn-open-btn');
-  if (ob) ob.style.display = 'none';
   const badge = document.getElementById('trn-open-badge');
   if (badge) { badge.textContent = 'Aberto'; badge.className = 'card-badge green'; }
 
@@ -1006,12 +1091,196 @@ function openTournament() {
     tournament_format: 'Americano - Modelo Brasileiro', tournament_category: _cat,
     status: 'Iniciado', created_at: new Date().toISOString(),
   }}).catch(e => console.warn('[openTournament]', e.message));
+  persistT();
   safeAlert('Torneio aberto. Selecione os jogadores.', 'ok');
+  goToStep(2);
 }
 
-function launch() {
+function confirmPlayersStep() {
+  const n = selectedPlayers.length;
+  if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para avançar.', 'err'); return; }
+  T.playersConfirmed = true;
+  T.players = [...selectedPlayers];
+  T.seeds = [...seedList];
+  persistT();
+  safeAlert('Jogadores confirmados. Escolha a formação dos grupos.', 'ok');
+  goToStep(3);
+}
+
+function persistT() { try { localStorage.setItem('padeleye_T_v1_SIM', JSON.stringify(T)); } catch(e) {} }
+
+function autoDistributeGroups(players, seeds) {
+  const numG = Math.max(1, Math.floor(players.length / 4));
+  const seeded = seeds.filter(s=>players.includes(s)).slice(0, numG);
+  const nonSeeds = players.filter(p=>!seeded.includes(p)).sort(()=>Math.random()-.5);
+  const groups = Array.from({length:numG},(_,i)=>seeded[i]?[seeded[i]]:[]);
+  nonSeeds.forEach(p => {
+    const min = groups.reduce((m,g,i)=>g.length<groups[m].length?i:m,0);
+    groups[min].push(p);
+  });
+  return groups;
+}
+function buildGroups() { T_groups = autoDistributeGroups(T.players, seedList); }
+
+// ── ETAPA 3 · FORMAÇÃO DOS GRUPOS ──────────────────────────────────────
+function renderFormationStep() {
+  document.getElementById('formation-card-sorteio').classList.toggle('active', T.groupFormationType==='sorteio');
+  document.getElementById('formation-card-manual').classList.toggle('active', T.groupFormationType==='manual');
+  document.getElementById('formation-sorteio-view').style.display = T.groupFormationType==='sorteio' ? 'block' : 'none';
+  document.getElementById('formation-manual-view').style.display  = T.groupFormationType==='manual'  ? 'block' : 'none';
+  if (T.groupFormationType === 'sorteio') renderSorteioPreview();
+  if (T.groupFormationType === 'manual' && manualGroups.length === 0) initManualGroups();
+  if (T.groupFormationType === 'manual') renderManualBuilder();
+}
+
+function selectSorteioGroups() {
+  T.groupFormationType = 'sorteio';
+  buildGroups();
+  renderFormationStep();
+}
+function reshuffleSorteioGroups() {
+  const f1HasResults = Object.keys(T.phases?.[0]?.results||{}).length > 0;
+  if (T.started && f1HasResults) { safeAlert('Nao e possivel sortear novamente apos guardar resultados da Fase 1.','warn'); return; }
+  buildGroups();
+  renderSorteioPreview();
+}
+function renderSorteioPreview() {
+  let html = '<div class="card"><div class="card-hd"><div class="card-title">Pré-visualização do Sorteio</div><div class="card-badge gold">Automático</div></div>'
+    + '<div class="grupos-info"><strong>Cada grupo joga 3 partidas:</strong><br>Partida 1: A+B vs C+D . Partida 2: A+C vs B+D . Partida 3: A+D vs B+C</div>'
+    + '<div class="grupos-grid">';
+  T_groups.forEach((group,gi) => {
+    const color = GROUP_COLORS[gi%GROUP_COLORS.length], letter = GROUP_LETTERS[gi];
+    html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div><div class="grupo-body">'
+      + group.map(name => { const reg=getPlayerReg(name); const isSeed=seedList.includes(name); return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' (seed)':'')+'</div></div>'; }).join('')
+      + '</div></div>';
+  });
+  html += '</div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+    + '<button class="btn-reshuffle" onclick="reshuffleSorteioGroups()">Sortear novamente</button>'
+    + '<button class="btn btn-gold btn-full" style="flex:1;min-width:200px" onclick="confirmSorteioGroups()">Confirmar Grupos e Iniciar Torneio →</button>'
+    + '</div></div>';
+  document.getElementById('formation-sorteio-view').innerHTML = html;
+}
+function confirmSorteioGroups() { finalizeLaunch(); }
+
+// ── Seleção manual (drag & drop, com toque como alternativa) ──
+let manualPool = [];
+let manualGroups = [];
+let _dragPlayer = null; // {name, from:'pool'|indice do grupo}
+
+function selectManualGroups() {
+  T.groupFormationType = 'manual';
+  if (manualGroups.length === 0) initManualGroups();
+  renderFormationStep();
+}
+function manualGroupCapacity() { return manualGroups.length ? Math.ceil(selectedPlayers.length / manualGroups.length) : 4; }
+function initManualGroups() {
+  const numG = Math.max(1, Math.floor(selectedPlayers.length / 4));
+  manualPool = [...selectedPlayers];
+  manualGroups = Array.from({length:numG}, () => []);
+  _dragPlayer = null;
+}
+function resetManualGroups() { initManualGroups(); renderManualBuilder(); }
+
+function _manualRemoveFromOrigin(p, from) {
+  if (from === 'pool') manualPool = manualPool.filter(x=>x!==p);
+  else manualGroups[from] = manualGroups[from].filter(x=>x!==p);
+}
+function manualMoveToGroup(gi) {
+  if (!_dragPlayer) return;
+  const { name, from } = _dragPlayer;
+  if (from === gi) { _dragPlayer=null; renderManualBuilder(); return; }
+  const cap = manualGroupCapacity();
+  if (manualGroups[gi].length >= cap) { safeAlert('Grupo já tem '+cap+' jogadores — solte sobre um jogador do grupo pra trocar.', 'warn'); _dragPlayer=null; renderManualBuilder(); return; }
+  _manualRemoveFromOrigin(name, from);
+  manualGroups[gi].push(name);
+  _dragPlayer = null;
+  renderManualBuilder();
+}
+function manualMoveToPool() {
+  if (!_dragPlayer) return;
+  const { name, from } = _dragPlayer;
+  if (from === 'pool') { _dragPlayer=null; renderManualBuilder(); return; }
+  _manualRemoveFromOrigin(name, from);
+  manualPool.push(name);
+  _dragPlayer = null;
+  renderManualBuilder();
+}
+function manualSwapWith(targetName, targetFrom) {
+  if (!_dragPlayer) return;
+  const { name, from } = _dragPlayer;
+  if (name === targetName) { _dragPlayer=null; renderManualBuilder(); return; }
+  _manualRemoveFromOrigin(name, from);
+  _manualRemoveFromOrigin(targetName, targetFrom);
+  if (from === 'pool') manualPool.push(targetName); else manualGroups[from].push(targetName);
+  if (targetFrom === 'pool') manualPool.push(name); else manualGroups[targetFrom].push(name);
+  _dragPlayer = null;
+  renderManualBuilder();
+}
+function dragStartPlayer(ev, name, from) {
+  _dragPlayer = { name, from };
+  try { ev.dataTransfer.setData('text/plain', name); } catch(e) {}
+  ev.dataTransfer.effectAllowed = 'move';
+}
+function allowDrop(ev) { ev.preventDefault(); }
+function dropOnPool(ev) { ev.preventDefault(); manualMoveToPool(); }
+function dropOnGroup(ev, gi) { ev.preventDefault(); manualMoveToGroup(gi); }
+function dropOnPlayerChip(ev, name, from) { ev.preventDefault(); ev.stopPropagation(); manualSwapWith(name, from); }
+function tapPlayerChip(name, from) {
+  if (_dragPlayer && _dragPlayer.name===name && _dragPlayer.from===from) { _dragPlayer=null; renderManualBuilder(); return; }
+  if (!_dragPlayer) { _dragPlayer = {name, from}; renderManualBuilder(); return; }
+  manualSwapWith(name, from);
+}
+function tapGroupArea(gi) { if (_dragPlayer) manualMoveToGroup(gi); }
+function tapPoolArea() { if (_dragPlayer) manualMoveToPool(); }
+
+function renderManualBuilder() {
+  const cap = manualGroupCapacity();
+  const chip = (name, from) => {
+    const reg = getPlayerReg(name);
+    const nEsc = name.replace(/'/g,"\\'");
+    const sel = (_dragPlayer && _dragPlayer.name===name && String(_dragPlayer.from)===String(from));
+    const fromArg = (from==='pool') ? "'pool'" : from;
+    return '<div class="manual-chip'+(sel?' sel':'')+'" draggable="true"'
+      + ' ondragstart="dragStartPlayer(event,\''+nEsc+'\','+fromArg+')"'
+      + ' ondrop="dropOnPlayerChip(event,\''+nEsc+'\','+fromArg+')" ondragover="allowDrop(event)"'
+      + ' onclick="event.stopPropagation();tapPlayerChip(\''+nEsc+'\','+fromArg+')">'
+      + '<div class="manual-chip-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div>'
+      + '<span>'+name+'</span></div>';
+  };
+
+  let html = '<div class="card"><div class="card-hd"><div class="card-title">Jogadores Disponíveis</div><div class="card-badge" id="manual-pool-badge">'+manualPool.length+' restantes</div></div>'
+    + '<div style="font-size:11px;color:#9ab0c8;margin-bottom:12px">Arraste um jogador para um grupo (ou toque nele e depois toque no destino). Toque/arraste sobre outro jogador para trocá-los de grupo.</div>'
+    + '<div class="manual-pool" ondragover="allowDrop(event)" ondrop="dropOnPool(event)" onclick="if(event.target===this) tapPoolArea()">'
+    + (manualPool.length ? manualPool.map(name=>chip(name,'pool')).join('') : '<span class="seed-empty">Todos os jogadores já foram distribuídos.</span>')
+    + '</div></div>';
+
+  html += '<div class="grupos-grid" id="manual-groups-grid">';
+  manualGroups.forEach((group, gi) => {
+    const color = GROUP_COLORS[gi % GROUP_COLORS.length], letter = GROUP_LETTERS[gi];
+    html += '<div class="grupo-card" ondragover="allowDrop(event)" ondrop="dropOnGroup(event,'+gi+')">'
+      + '<div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' / '+cap+' jogadores</div></div></div>'
+      + '<div class="grupo-body manual-group-body" ondragover="allowDrop(event)" ondrop="dropOnGroup(event,'+gi+')" onclick="if(event.target===this) tapGroupArea('+gi+')">'
+      + (group.length ? group.map(name=>chip(name,gi)).join('') : '<span class="seed-empty">Arraste jogadores aqui</span>')
+      + '</div></div>';
+  });
+  html += '</div>';
+
+  const allAssigned = manualPool.length===0 && manualGroups.every(g=>g.length>0);
+  html += '<button class="btn btn-secondary btn-full" style="margin-bottom:8px" onclick="resetManualGroups()">↺ Recomeçar do zero</button>';
+  html += '<button class="btn btn-gold btn-full" id="manual-confirm-btn" onclick="confirmManualGroups()"'+(allAssigned?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Confirmar Grupos e Iniciar Torneio →</button>';
+  document.getElementById('formation-manual-view').innerHTML = html;
+}
+function confirmManualGroups() {
+  if (manualPool.length>0 || manualGroups.some(g=>g.length===0)) { safeAlert('Distribua todos os jogadores nos grupos antes de confirmar.','warn'); return; }
+  T_groups = manualGroups.map(g=>[...g]);
+  finalizeLaunch();
+}
+
+// ── Confirmação final da Etapa 3 → cria Fase 1 e libera a Etapa 4 ──
+function finalizeLaunch() {
   if (T.started) {
-    const ok = confirm('O torneio JA foi iniciado. Clicar em Iniciar de novo vai APAGAR todos os placares salvos localmente nesta tela (o que ja foi enviado ao Google Sheets nao e afetado). Tem certeza?');
+    const ok = confirm('O torneio JA foi iniciado. Confirmar novamente vai APAGAR todos os placares salvos localmente nesta tela (o que ja foi enviado ao Google Sheets nao e afetado). Tem certeza?');
     if (!ok) return;
   }
   const n = selectedPlayers.length;
@@ -1034,7 +1303,6 @@ function launch() {
     tbAt:     parseInt(document.getElementById(i===2?'cfg-tb-final' :('cfg-tb-f'+(i+1)))?.value  || pc.tbAt),
   }));
 
-  buildGroups();
   T.phases = [{ name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }];
   persistT();
 
@@ -1046,61 +1314,15 @@ function launch() {
       tournament_format: 'Americano - Modelo Brasileiro', group_number: numGrupos, players_per_group: jogPorGrupo,
       advance_per_group: T.phaseConfig[0].advancePerGroup, wildcards: T.phaseConfig[0].wildcards,
       num_phases: T.numFases, tournament_category: T.categoria, status: 'Em Curso', created_at: new Date().toISOString(),
-    }}).catch(e => console.warn('[launch]', e.message));
+    }}).catch(e => console.warn('[finalizeLaunch]', e.message));
   }
 
-  try { renderGrupos(); } catch(e) { console.warn('[launch] renderGrupos:', e.message); }
-  try { renderRounds(); } catch(e) { console.warn('[launch] renderRounds:', e.message); }
-  try { renderRanking(); } catch(e) { console.warn('[launch] renderRanking:', e.message); }
-  try { renderHistorico(); } catch(e) { console.warn('[launch] renderHistorico:', e.message); }
+  try { renderRounds(); } catch(e) { console.warn('[finalizeLaunch] renderRounds:', e.message); }
+  try { renderRanking(); } catch(e) { console.warn('[finalizeLaunch] renderRanking:', e.message); }
+  try { renderHistorico(); } catch(e) { console.warn('[finalizeLaunch] renderHistorico:', e.message); }
 
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  const nav = document.querySelector('.tab-btn[onclick*="grupos"]');
-  if (nav) nav.classList.add('on');
-  const panel = document.getElementById('p-grupos');
-  if (panel) panel.classList.add('on');
-  renderGrupos();
-  lockLaunchButton();
-}
-
-function lockLaunchButton() {
-  const lb = document.getElementById('launch-btn');
-  if (!lb) return;
-  lb.textContent = '✅ Torneio em andamento — ver Rodadas';
-  lb.style.background = '#0a1628';
-  lb.style.color = '#1db954';
-  lb.onclick = () => showTab('rodadas', document.querySelector('[onclick*="rodadas"]'));
-}
-
-function persistT() { try { localStorage.setItem('padeleye_T_v1_SIM', JSON.stringify(T)); } catch(e) {} }
-
-function autoDistributeGroups(players, seeds) {
-  const numG = Math.max(1, Math.floor(players.length / 4));
-  const seeded = seeds.filter(s=>players.includes(s)).slice(0, numG);
-  const nonSeeds = players.filter(p=>!seeded.includes(p)).sort(()=>Math.random()-.5);
-  const groups = Array.from({length:numG},(_,i)=>seeded[i]?[seeded[i]]:[]);
-  nonSeeds.forEach(p => {
-    const min = groups.reduce((m,g,i)=>g.length<groups[m].length?i:m,0);
-    groups[min].push(p);
-  });
-  return groups;
-}
-function buildGroups() { T_groups = autoDistributeGroups(T.players, seedList); }
-
-function reshuffleGroups() {
-  const f1HasResults = Object.keys(T.phases[0]?.results||{}).length > 0;
-  if (T.started && f1HasResults) { safeAlert('Nao e possivel sortear novamente apos guardar resultados da Fase 1.','warn'); return; }
-  buildGroups();
-  if (T.started && T.phases.length>0) T.phases[0] = { name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false };
-  renderGrupos();
-}
-
-function approveTournamentGroups() {
-  T.substatus = 'fase_1_em_curso';
-  persistT();
-  safeAlert('Grupos aprovados - Fase 1 iniciada.', 'ok');
-  showTab('rodadas', document.querySelector('[onclick*="rodadas"]'));
+  safeAlert('Torneio iniciado! Fase 1 pronta para os jogos.', 'ok');
+  goToStep(4);
 }
 
 function getPhaseConfig(phaseIdx) {
@@ -1205,11 +1427,11 @@ function chooseTieWinner(phIdx, gi, winner, loser) {
   if (!T.tieOverrides) T.tieOverrides = {};
   T.tieOverrides[phIdx+'-'+gi] = { winner, loser };
   persistT();
-  renderRounds(); renderGrupos(); renderRanking();
+  renderRounds(); renderRanking(); refreshStepNav();
 }
 function resetTieOverride(phIdx, gi) {
   if (T.tieOverrides) delete T.tieOverrides[phIdx+'-'+gi];
-  renderRounds(); renderGrupos(); renderRanking();
+  renderRounds(); renderRanking(); refreshStepNav();
 }
 
 // Compara duas partidas possiveis: menos conflitos primeiro, depois menos "acertos no campeao"
@@ -1325,7 +1547,7 @@ function advancePhase() {
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
   persistT();
-  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
 }
 
 function liveScore(key) {
@@ -1377,7 +1599,7 @@ function unsaveMatch(key, phIdx, gi, mi) {
   }
   if (T.phases[phIdx]?.results[key]) {
     delete T.phases[phIdx].results[key];
-    renderRounds(); renderRanking(); renderHistorico();
+    renderRounds(); renderRanking(); renderHistorico(); refreshStepNav();
   }
 }
 function getMatchOrder(phIdx, gi) {
@@ -1455,7 +1677,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
       saved_at: new Date().toISOString(), created_at: new Date().toISOString(),
     }).then(r => { if (!r?.ok) console.warn('[saveMatch] upsertPartida failed:', r); });
   }
-  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); renderGrupos();
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
   gameAlert(sa+'x'+sb+' guardado.', 'ok');
 }
 
@@ -1598,11 +1820,9 @@ function renderRounds() {
     }
     const finalIdx = (T.numFases||3)-1;
     if (isPhaseComplete(finalIdx)) {
-      const winners = groupStandings(T.phases[finalIdx].groups[0], finalIdx, 0);
       html += '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
-        + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:8px">Torneio Concluido!</div>'
-        + '<div style="font-size:13px;color:#865a10;margin-bottom:12px">1o '+(winners[0]&&winners[0].name)+' . 2o '+(winners[1]&&winners[1].name)+' . 3o '+(winners[2]&&winners[2].name)+'</div>'
-        + '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>'
+        + '<div style="font-size:12px;color:#865a10;margin-bottom:12px;font-weight:600">🏁 Fase Final concluída! Vá para a Etapa 5 para computar e finalizar o torneio.</div>'
+        + '<button class="btn btn-gold btn-full" onclick="goToStep(5)">Ir para Finalização →</button>'
         + '</div>';
     }
   } catch(e) {
@@ -1613,79 +1833,19 @@ function renderRounds() {
   c.innerHTML = html;
 }
 
-function renderGrupos() {
-  const c = document.getElementById('grupos-container');
-  if (!T.started) { c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🗂</div><div>Os grupos aparecem apos iniciar o torneio.</div></div>'; return; }
-
-  let html = '<div style="display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap">';
-  T.phases.forEach((ph,pi) => {
-    const done = isPhaseComplete(pi);
-    html += '<button onclick="switchGrupoPhase('+pi+')" id="gtab-'+pi+'" style="padding:5px 14px;border-radius:20px;font-family:\'DM Mono\';font-size:9px;cursor:pointer;border:1px solid #dde6f0;background:'+(pi===0?'#0a1628':'#f4f7fc')+';color:'+(pi===0?'#fff':'#9ab0c8')+'">'+ph.name+(done?' (concl.)':'')+'</button>';
-  });
-  html += '</div>';
-
-  T.phases.forEach((ph,pi) => {
-    const hasResults = Object.values(ph.results||{}).some(r=>r.saved);
-    const complete = isPhaseComplete(pi);
-    const qualify = pi<2 ? 2 : (ph.groups[0]?.length||4);
-    html += '<div id="gphase-'+pi+'" style="display:'+(pi===0?'block':'none')+'">';
-
-    if (pi===0) {
-      html += '<div class="card" style="background:linear-gradient(135deg,#0a1628,#1a3052);margin-bottom:14px">'
-        + '<div style="font-family:\'Bebas Neue\';font-size:22px;color:#C9933A;margin-bottom:4px">'+T.name+' - Fase 1</div>'
-        + '<div style="font-size:12px;color:#93C5FD">'+T.date+' . '+T.players.length+' jogadores . '+T_groups.length+' grupos</div>'
-        + '</div>';
-      if (!hasResults) {
-        html += '<div class="grupos-info"><strong>Cada grupo joga 3 partidas:</strong><br>Partida 1: A+B vs C+D . Partida 2: A+C vs B+D . Partida 3: A+D vs B+C</div>'
-          + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">'
-          + '<button class="btn-reshuffle" onclick="reshuffleGroups()">Sortear novamente</button>'
-          + '<button onclick="approveTournamentGroups()" style="flex:1;min-width:200px;padding:12px;background:linear-gradient(135deg,#1a7a44,#27AE60);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer">Aprovar Grupos -&gt; Iniciar Fase 1</button>'
-          + '</div>';
-      }
-    }
-
-    html += '<div class="grupos-grid">';
-    ph.groups.forEach((group, gi) => {
-      const color = GROUP_COLORS[gi % GROUP_COLORS.length];
-      const isFinalGrupo = (pi === (T.numFases||3)-1);
-      const letter = isFinalGrupo ? 'Z' : GROUP_LETTERS[gi];
-      const stds = groupStandings(group, pi, gi);
-
-      html += '<div class="grupo-card">'
-        + '<div class="grupo-header" style="background:'+color+'">'
-        + '<div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div>'
-        + (complete?'<div style="font-size:10px;color:rgba(255,255,255,.8)">Completo</div>':'')
-        + '</div>'
-        + '<div class="grupo-body">';
-      stds.forEach((s,i) => {
-        const isSeed = seedList.includes(s.name);
-        const advances = i < qualify;
-        const reg = getPlayerReg(s.name);
-        html += '<div class="grupo-player">'
-          + '<div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+';text-shadow:0 1px 3px rgba(0,0,0,.35)">'+_init(s.name)+'</div>'
-          + '<div class="grupo-name">'+s.name+(isSeed?' (seed)':'')+'</div>'
-          + (hasResults ? ('<span style="font-size:9px;color:'+(advances?'#1a7a44':'#9ab0c8')+';font-weight:700">'+(i+1)+'o'+(advances&&complete?' avanca':'')+'</span>') : '')
-          + '</div>';
-      });
-      html += '</div></div>';
-    });
-    html += '</div>';
-
-    if (pi===0 && hasResults) {
-      html += '<div class="card" style="border-color:rgba(58,123,213,.2);background:#f0f8ff">'
-        + '<button class="btn btn-gold btn-full" onclick="showTab(\'rodadas\', document.querySelector(\'[onclick*=rodadas]\'))">Ver Rodadas da Fase 1 -&gt;</button>'
-        + '</div>';
-    }
-    html += '</div>';
-  });
-  c.innerHTML = html;
-}
-function switchGrupoPhase(pi) {
-  document.querySelectorAll('[id^="gphase-"]').forEach(el=>el.style.display='none');
-  document.querySelectorAll('[id^="gtab-"]').forEach(el=>{el.style.background='#f4f7fc';el.style.color='#9ab0c8';});
-  const ph = document.getElementById('gphase-'+pi), tb = document.getElementById('gtab-'+pi);
-  if (ph) ph.style.display='block';
-  if (tb) { tb.style.background='#0a1628'; tb.style.color='#fff'; }
+function renderFinalizeStep() {
+  const c = document.getElementById('finalize-container');
+  const finalIdx = (T.numFases||3)-1;
+  if (!T.started || !T.phases || !isPhaseComplete(finalIdx)) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🏁</div><div>Complete todas as partidas da Fase Final na Etapa 4 para liberar a finalização.</div></div>';
+    return;
+  }
+  const winners = groupStandings(T.phases[finalIdx].groups[0], finalIdx, 0);
+  c.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
+    + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:8px">Torneio Concluido!</div>'
+    + '<div style="font-size:13px;color:#865a10;margin-bottom:12px">1o '+(winners[0]&&winners[0].name)+' . 2o '+(winners[1]&&winners[1].name)+' . 3o '+(winners[2]&&winners[2].name)+'</div>'
+    + '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>'
+    + '</div>';
 }
 
 function renderRanking() {
@@ -1932,11 +2092,13 @@ function restoreT() {
     const saved = localStorage.getItem('padeleye_T_v1_SIM');
     if (!saved) return false;
     const parsed = JSON.parse(saved);
-    if (!parsed || !parsed.started) return false;
+    if (!parsed) return false;
     T = parsed;
     if (T.phases && T.phases[0]) T_groups = T.phases[0].groups.map(g => [...g]);
     selectedPlayers = [...(T.players || [])];
+    seedList = [...(T.seeds || [])];
     _canonicalSelected = [8, 12, 16].includes(T.players?.length) ? T.players.length : 0;
+    if (T.groupFormationType === 'manual' && !T.started) initManualGroups();
     return true;
   } catch(e) {
     console.warn('[Tournament Manager] T restore error:', e);
@@ -1958,15 +2120,10 @@ function restoreT() {
         document.getElementById('tb-av').textContent = currentUser.name[0];
         loadPlayersFromDB();
         const restored = restoreT();
+        refreshStepNav();
         if (restored) {
-          document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
-          document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-          const nav = document.querySelector('.tab-btn[onclick*="rodadas"]');
-          if (nav) nav.classList.add('on');
-          const panel = document.getElementById('p-rodadas');
-          if (panel) panel.classList.add('on');
-          lockLaunchButton();
-          renderRounds(); renderGrupos(); renderRanking(); renderHistorico(); renderScorecard();
+          renderSeedPicker(); updateVagas(); updateSummary();
+          goToStep(getMaxStep());
         } else if (!_canonicalSelected) {
           setTimeout(() => applyCanonical(16), 100);
         }
