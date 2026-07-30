@@ -79,6 +79,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .card-badge.gold{background:#FFF8E0;border-color:#e8c870;color:#865a10;}
 
 .field{margin-bottom:12px;}
+.phase-cfg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.phase-cfg-card{background:#f8fafd;border:1px solid #dde6f0;border-radius:10px;padding:12px;}
+.phase-cfg-label{font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;color:#0a1628;margin-bottom:6px;}
+.phase-cfg-sub{font-size:9px;color:#9ab0c8;margin-bottom:8px;font-family:'DM Mono';}
 .field label{font-size:11px;font-weight:600;color:#5a7090;display:block;margin-bottom:5px;}
 .finput{width:100%;background:#f4f7fc;border:1px solid #dde6f0;border-radius:9px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:10px 13px;outline:none;transition:border-color .2s;}
 .finput:focus{border-color:#3a7bd5;background:#fff;}
@@ -370,19 +374,22 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <strong style="color:#0d1e3a">Score maximo</strong> - quem chegar primeiro a este numero de games vence.<br>
             <strong style="color:#0d1e3a">TB a partir de</strong> - se o placar empatar aqui, vai a Tie-Break.
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:#0a1628;margin-bottom:6px">Fase 1</div>
+          <div class="phase-cfg-grid">
+            <div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd">
+              <div class="phase-cfg-label">Fase 1</div>
+              <div class="phase-cfg-sub" id="f1-cfg-sub">grupos . partidas</div>
               <div class="field"><label>Score max.</label><select class="finput" id="cfg-max-f1" onchange="syncMaxTb('cfg-max-f1','cfg-tb-f1')"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div>
               <div class="field" style="margin-bottom:0"><label>TB a partir</label><select class="finput" id="cfg-tb-f1"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
             </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:#0a1628;margin-bottom:6px">Fase 2</div>
+            <div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd">
+              <div class="phase-cfg-label">Fase 2</div>
+              <div class="phase-cfg-sub" id="f2-cfg-sub">grupos . partidas</div>
               <div class="field"><label>Score max.</label><select class="finput" id="cfg-max-f2" onchange="syncMaxTb('cfg-max-f2','cfg-tb-f2')"><option value="4">4</option><option value="5">5</option><option value="6" selected>6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option></select></div>
               <div class="field" style="margin-bottom:0"><label>TB a partir</label><select class="finput" id="cfg-tb-f2"><option value="3">3x3</option><option value="4">4x4</option><option value="5" selected>5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8">8x8</option></select></div>
             </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:#C9933A;margin-bottom:6px">Final</div>
+            <div class="phase-cfg-card" style="border-color:rgba(201,147,58,.3);background:#fffbf0">
+              <div class="phase-cfg-label">Final</div>
+              <div class="phase-cfg-sub">1 grupo . 3 partidas</div>
               <div class="field"><label>Score max.</label><select class="finput" id="cfg-max-final" onchange="syncMaxTb('cfg-max-final','cfg-tb-final')"><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9" selected>9</option></select></div>
               <div class="field" style="margin-bottom:0"><label>TB a partir</label><select class="finput" id="cfg-tb-final"><option value="5">5x5</option><option value="6">6x6</option><option value="7">7x7</option><option value="8" selected>8x8</option></select></div>
             </div>
