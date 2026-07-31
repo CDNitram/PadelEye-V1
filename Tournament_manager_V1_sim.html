@@ -2365,13 +2365,14 @@ function renderRounds() {
 
       html += '<div style="margin-top:10px;border-top:1px solid #f0f5fb;padding-top:10px">'
         + '<div style="font-family:\'DM Mono\';font-size:8px;color:#b0c4d8;margin-bottom:6px">CLASSIFICACAO</div>'
-        + '<div style="overflow-x:auto"><table style="width:100%;min-width:420px;font-size:11px;border-collapse:collapse">'
+        + '<div style="overflow-x:auto"><table style="width:100%;min-width:520px;font-size:11px;border-collapse:collapse">'
         + '<tr style="color:#9ab0c8"><td style="padding:3px 6px 3px 0">#</td><td style="padding:3px 6px">Jogador</td>'
           + '<td style="padding:3px 6px;text-align:right">J</td>'
           + '<td style="padding:3px 6px;text-align:right">V</td>'
           + '<td style="padding:3px 6px;text-align:right">D</td>'
+          + '<td style="padding:3px 6px;text-align:right">Games Ganhos</td>'
+          + '<td style="padding:3px 6px;text-align:right">Games Perdidos</td>'
           + '<td style="padding:3px 6px;text-align:right">Saldo Games</td>'
-          + '<td style="padding:3px 6px;text-align:right">GG</td>'
           + '<td style="padding:3px 0 3px 6px;text-align:right">Saldo TB</td></tr>'
         + standings.map((s,i)=>'<tr style="'+(i<2?'font-weight:700;color:#0d1e3a':'color:#9ab0c8')+'">'
             + '<td style="padding:3px 6px 3px 0">'+(i+1)+'</td>'
@@ -2379,8 +2380,9 @@ function renderRounds() {
             + '<td style="padding:3px 6px;text-align:right">'+s.m+'</td>'
             + '<td style="padding:3px 6px;text-align:right">'+s.w+'</td>'
             + '<td style="padding:3px 6px;text-align:right">'+s.l+'</td>'
-            + '<td style="padding:3px 6px;text-align:right;'+(s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':'')+'">'+(s.gd>0?'+':'')+s.gd+'</td>'
             + '<td style="padding:3px 6px;text-align:right">'+s.gw+'</td>'
+            + '<td style="padding:3px 6px;text-align:right">'+s.gl+'</td>'
+            + '<td style="padding:3px 6px;text-align:right;'+(s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':'')+'">'+(s.gd>0?'+':'')+s.gd+'</td>'
             + '<td style="padding:3px 0 3px 6px;text-align:right;'+(s.tbsaldo>0?'color:#27AE60':s.tbsaldo<0?'color:#E74C3C':'')+'">'+(s.tbsaldo>0?'+':'')+s.tbsaldo+'</td>'
             + '</tr>').join('')
         + '</table></div>';
