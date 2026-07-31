@@ -108,6 +108,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .card-badge{background:#f0f5fb;border:1px solid #dde6f0;border-radius:6px;padding:3px 10px;font-size:10px;color:#5a7090;font-weight:600;}
 .card-badge.green{background:#E8F8EE;border-color:#c8e8d0;color:#1a7a44;}
 .card-badge.gold{background:#FFF8E0;border-color:#e8c870;color:#865a10;}
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:8px 0 18px;}
+.podium-slot{display:flex;flex-direction:column;align-items:center;flex:1;max-width:140px;}
+.podium-medal{font-size:20px;margin-bottom:2px;}
+.podium-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';color:#fff;margin-bottom:8px;box-shadow:0 3px 10px rgba(0,0,0,.15);flex-shrink:0;}
+.podium-name{font-size:12px;font-weight:700;color:#0d1e3a;text-align:center;line-height:1.25;margin-bottom:8px;word-break:break-word;}
+.podium-bar{width:100%;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-family:'Bebas Neue';font-size:22px;color:#fff;}
+.podium-bar.gold-bar{background:linear-gradient(180deg,#e0a840,#C9933A);height:90px;}
+.podium-bar.silver-bar{background:linear-gradient(180deg,#c8d0da,#9aa8b8);height:65px;}
+.podium-bar.bronze-bar{background:linear-gradient(180deg,#d69a6a,#b5703a);height:45px;}
 
 .field{margin-bottom:12px;}
 .phase-cfg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
@@ -697,7 +706,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="step-info">
           <div class="step-info-title">📖 Sobre esta etapa</div>
           O que é: a etapa final — depois que a Fase Final termina, aqui você confirma os vencedores e grava o torneio definitivamente no banco de dados.<br>
-          Como funciona: quando a Fase Final estiver 100% completa, os 3 primeiros colocados aparecem aqui. Clique em "Guardar Torneio" para enviar tudo ao Google Sheets.<br>
+          Como funciona: quando a Fase Final estiver 100% completa, os 3 primeiros colocados aparecem aqui, num pódio. Clique em "Guardar Torneio no Banco de Dados" para salvar tudo definitivamente.<br>
           <b>O que se espera de você:</b> confira os vencedores antes de guardar — depois de salvo, o torneio é considerado encerrado e não pode mais ser alterado.
         </div>
         <div id="finalize-container"></div>
@@ -2428,6 +2437,21 @@ function renderRounds() {
   c.innerHTML = html;
 }
 
+function podiumHTML(winners) {
+  const slot = (w, place) => {
+    if (!w) return '<div class="podium-slot"></div>';
+    const size = place===1 ? 56 : 44;
+    const barClass = place===1?'gold-bar':place===2?'silver-bar':'bronze-bar';
+    const medal = place===1?'🥇':place===2?'🥈':'🥉';
+    return '<div class="podium-slot">'
+      + '<div class="podium-medal">'+medal+'</div>'
+      + '<div class="podium-av" style="width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*0.36)+'px;background:'+_pc(w.name)+'">'+_init(w.name)+'</div>'
+      + '<div class="podium-name">'+w.name+'</div>'
+      + '<div class="podium-bar '+barClass+'">'+place+'º</div>'
+      + '</div>';
+  };
+  return '<div class="podium-wrap">' + slot(winners[1],2) + slot(winners[0],1) + slot(winners[2],3) + '</div>';
+}
 function renderFinalizeStep() {
   const c = document.getElementById('finalize-container');
   const finalIdx = (T.numFases||3)-1;
@@ -2442,10 +2466,10 @@ function renderFinalizeStep() {
       + '<button class="btn btn-primary" style="flex:1;min-width:200px" onclick="goToHistoricoFromFinalize()">📋 Ir para Histórico do Torneio</button>'
       + '<button class="btn btn-gold" style="flex:1;min-width:200px" onclick="startNewTournament()">🔄 Iniciar Novo Torneio</button>'
       + '</div>'
-    : '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Google Sheets</button>';
+    : '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Banco de Dados</button>';
   c.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
-    + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:8px">Torneio Concluido!</div>'
-    + '<div style="font-size:13px;color:#865a10;margin-bottom:12px">1o '+(winners[0]&&winners[0].name)+' . 2o '+(winners[1]&&winners[1].name)+' . 3o '+(winners[2]&&winners[2].name)+'</div>'
+    + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:4px;text-align:center">Torneio Concluido!</div>'
+    + podiumHTML(winners)
     + btnHtml
     + '</div>';
 }
