@@ -1163,14 +1163,20 @@ function reconstructTournamentFromBackend(row, matchRows) {
       phases[pIdx].groups[gIdx] = [...teamA, ...teamB];
     }
 
-    phases[pIdx].results[pIdx+'-'+gIdx+'-'+mi] = {
-      saved: true,
-      sa: parseInt(m.score_a, 10) || 0,
-      sb: parseInt(m.score_b, 10) || 0,
-      tb: m.tie_break === 'Sim',
-      tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
-      tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
-    };
+    // Só registra resultado se a partida foi de facto salva (saved_at preenchido).
+    // Skeleton matches (saved_at='') existem apenas pra reconstruir grupos —
+    // não são resultados; deixá-los como saved quebraria a renderização das Rodadas.
+    const _hasSavedScore = !!(m.saved_at && String(m.saved_at).trim() !== '');
+    if (_hasSavedScore) {
+      phases[pIdx].results[pIdx+'-'+gIdx+'-'+mi] = {
+        saved: true,
+        sa: parseInt(m.score_a, 10) || 0,
+        sb: parseInt(m.score_b, 10) || 0,
+        tb: m.tie_break === 'Sim',
+        tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
+        tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
+      };
+    }
   });
 
   if (phases.length) {
@@ -2076,8 +2082,57 @@ function finalizeLaunch() {
   try { renderRanking(); } catch(e) { console.warn('[finalizeLaunch] renderRanking:', e.message); }
   try { renderHistorico(); } catch(e) { console.warn('[finalizeLaunch] renderHistorico:', e.message); }
 
+  // ── Persist group structure to DB immediately (skeleton matches) ──
+  // Outros dispositivos só conseguem reconstruir os grupos se as
+  // partidas existirem na tabela Matches_Tournaments — mesmo sem
+  // placares. Gravamos todos os confrontos da Fase 1 agora, com
+  // scores vazios, para que fetchAndOpenTournament reconstrua
+  // corretamente grupos e fase em qualquer aparelho.
+  _persistPhaseSkeletons(0);
+
   safeAlert('Torneio iniciado! Fase 1 pronta para os jogos.', 'ok');
   goToStep(4);
+}
+
+// ── Grava os confrontos de uma fase como "skeleton matches" no banco ──
+// Skeleton = partida com equipes definidas mas sem placar ainda.
+// Permite que qualquer dispositivo reconstrua grupos e fases mesmo
+// antes de qualquer resultado ser registrado.
+function _persistPhaseSkeletons(phaseIdx) {
+  const ph = T.phases[phaseIdx];
+  if (!ph || !T.id) return;
+  // Se já existem resultados desta fase no T local, os skeletons já
+  // foram enviados anteriormente — não duplicar.
+  if (Object.keys(ph.results||{}).length > 0) return;
+  const isFinal = phaseIdx === (T.numFases||3)-1;
+  const rows = [];
+  const now  = new Date().toISOString();
+  ph.groups.forEach((group, gi) => {
+    const grpLetter = isFinal ? 'Z' : GROUP_LETTERS[gi];
+    groupMatches(group).forEach((match, mi) => {
+      rows.push({
+        match_id:            T.id+'-'+phaseIdx+'-'+gi+'-'+mi,
+        tournament_id:       T.id,
+        phase:               ph.name,
+        group:               grpLetter,
+        team_a:              (match.a||[]).filter(Boolean).join(' / '),
+        score_a:             '',
+        score_b:             '',
+        team_b:              (match.b||[]).filter(Boolean).join(' / '),
+        winner_team:         '',
+        match_serial_number: mi + 1,
+        tie_break:           '',
+        tb_a:                '',
+        tb_b:                '',
+        saved_at:            '',          // vazio = skeleton, não é resultado salvo
+        created_at:          now,
+      });
+    });
+  });
+  if (rows.length) {
+    PadelEyeDB.send('insert_matches', { rows })
+      .catch(e => console.warn('[_persistPhaseSkeletons] phase '+phaseIdx+':', e.message));
+  }
 }
 
 function getPhaseConfig(phaseIdx) {
@@ -2347,6 +2402,11 @@ function advancePhase() {
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
   persistT();
+
+  // Persiste skeleton matches da nova fase para que outros dispositivos
+  // possam reconstruir grupos e confrontos antes de qualquer placar ser salvo.
+  _persistPhaseSkeletons(nextPhaseIdx);
+
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
 }
 
@@ -3014,272 +3074,6 @@ document.addEventListener('click', (ev) => {
   const isInsidePop = ev.target.closest('.switcher-popover');
   if (!isSwitchBtn && !isInsidePop) pop.classList.remove('show');
 });
-
-
-// ══════════════════════════════════════════════════════════════════
-// PadelEye · Live Sync Engine · V1.1
-// Permite que qualquer dispositivo logado veja e opere o torneio
-// ao vivo, puxando atualizações do banco a cada N segundos.
-//
-// Funcionalidades adicionadas:
-//   · Auto-refresh do estado T a partir do banco (polling)
-//   · Badge "AO VIVO" na topbar com indicador de último sync
-//   · Botão "↻ Sincronizar" manual para forçar refresh imediato
-//   · Detecção inteligente: só faz merge se houver mudança real
-//   · Não interrompe edição em andamento (input com foco)
-//   · Intervalo configurável (padrão: 20s, mínimo: 10s)
-//   · Para automaticamente se o torneio for finalizado
-// ══════════════════════════════════════════════════════════════════
-
-(function() {
-'use strict';
-
-// ── Config ────────────────────────────────────────────────────────
-const SYNC_INTERVAL_MS  = 20000;  // polling interval (20s)
-const SYNC_MIN_MS       = 10000;  // minimum allowed interval
-const SYNC_BADGE_ID     = 'live-sync-badge';
-const SYNC_BTN_ID       = 'live-sync-btn';
-
-// ── State ─────────────────────────────────────────────────────────
-let _syncTimer       = null;
-let _syncRunning     = false;
-let _lastSyncHash    = '';
-let _syncErrorCount  = 0;
-const MAX_ERRORS     = 3;  // stop after 3 consecutive failures
-
-// ── Hash: detects real changes without deep comparison ────────────
-function _hashMatches(matchRows) {
-  return matchRows.map(m =>
-    [m.tournament_id, m.phase, m.group, m.match_serial_number,
-     m.score_a, m.score_b, m.tie_break, m.tb_a, m.tb_b].join('|')
-  ).sort().join('§');
-}
-
-// ── Check if user is actively typing in a score field ────────────
-function _userIsEditing() {
-  const active = document.activeElement;
-  if (!active) return false;
-  const tag = active.tagName;
-  return (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT');
-}
-
-// ── Core sync: fetch + merge if changed ──────────────────────────
-async function _doSync() {
-  if (_syncRunning) return;
-  if (!window.T || !T.id || !T.started) return;
-  if (T.finalized) { stopLiveSync(); return; }
-
-  _syncRunning = true;
-  _setBadge('syncing');
-
-  try {
-    const [tRes, mRes] = await Promise.all([
-      PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id }),
-      PadelEyeDB.send('get_matches_tournaments', { tournament_id: T.id }),
-    ]);
-
-    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
-      throw new Error('Torneio não encontrado no banco');
-    }
-
-    const matchRows  = (mRes && mRes.ok && mRes.rows) ? mRes.rows : [];
-    const newHash    = _hashMatches(matchRows);
-    const hasChanged = (newHash !== _lastSyncHash);
-
-    if (hasChanged) {
-      _lastSyncHash = newHash;
-
-      // Reconstruct full tournament state from DB
-      const T2 = reconstructTournamentFromBackend(tRes.rows[0], matchRows);
-
-      // Preserve local fields that don't come from the DB
-      T2.courts          = T.courts;
-      T2.groupFormationType = T2.groupFormationType || T.groupFormationType;
-
-      // Only update if NOT currently editing a score field
-      if (!_userIsEditing()) {
-        Object.assign(T, T2);
-        T_groups = (T.phases[0] && T.phases[0].groups) ? T.phases[0].groups.map(g=>[...g]) : [];
-        selectedPlayers = [...(T.players||[])];
-        seedList        = [...(T.seeds||[])];
-        persistT();
-
-        // Refresh current visible panel
-        _refreshCurrentView();
-      }
-    }
-
-    _syncErrorCount = 0;
-    _setBadge('ok', hasChanged);
-
-  } catch(e) {
-    _syncErrorCount++;
-    console.warn('[LiveSync] erro #'+_syncErrorCount+':', e.message);
-    _setBadge('error');
-    if (_syncErrorCount >= MAX_ERRORS) {
-      stopLiveSync();
-      _setBadge('stopped');
-    }
-  } finally {
-    _syncRunning = false;
-  }
-}
-
-// ── Refresh whichever panel is currently visible ──────────────────
-function _refreshCurrentView() {
-  try {
-    const active = document.querySelector('.panel.on');
-    if (!active) return;
-    const id = active.id;
-    if (id === 'p-rodadas')   renderRounds();
-    if (id === 'p-ranking')   renderRanking();
-    if (id === 'p-historico') renderHistorico();
-    if (id === 'p-scorecard') renderScorecard();
-    if (id === 'p-step5')     renderFinalizeStep();
-    refreshStepNav();
-  } catch(e) { console.warn('[LiveSync] refresh view:', e.message); }
-}
-
-// ── Badge UI ──────────────────────────────────────────────────────
-function _setBadge(state, changed) {
-  const badge = document.getElementById(SYNC_BADGE_ID);
-  const btn   = document.getElementById(SYNC_BTN_ID);
-  if (!badge) return;
-  const now = new Date().toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-  const states = {
-    ok:      { dot:'#1db954', text: changed ? '↑ '+now : '✓ '+now, title: changed ? 'Sincronizado — novos dados' : 'Sem mudanças — '+now },
-    syncing: { dot:'#C9933A', text:'...', title:'Sincronizando...' },
-    error:   { dot:'#e74c3c', text:'⚠ erro', title:'Erro de sincronização' },
-    stopped: { dot:'#9ab0c8', text:'■ parado', title:'Sync parado após erros consecutivos. Clique ↻ para tentar novamente.' },
-    off:     { dot:'#dde6f0', text:'■ off', title:'Sync desativado' },
-  };
-  const s = states[state] || states.off;
-  badge.style.cssText = 'display:inline-flex;align-items:center;gap:5px;font-family:\'DM Mono\',monospace;font-size:9px;color:#5a7090;padding:3px 8px;border-radius:99px;background:#f4f7fc;border:1px solid #dde6f0;';
-  badge.innerHTML = '<span style="width:7px;height:7px;border-radius:50%;background:'+s.dot+';flex-shrink:0'+(state==='syncing'?';animation:livepulse 1s infinite':'')+'"></span> AO VIVO &nbsp;'+s.text;
-  badge.title = s.title;
-  if (btn) btn.title = s.title;
-}
-
-// ── Start / Stop ──────────────────────────────────────────────────
-function startLiveSync(intervalMs) {
-  stopLiveSync();
-  const ms = Math.max(intervalMs || SYNC_INTERVAL_MS, SYNC_MIN_MS);
-  _syncErrorCount = 0;
-  _doSync(); // immediate first sync
-  _syncTimer = setInterval(_doSync, ms);
-  _setBadge('ok');
-  console.log('[LiveSync] iniciado — intervalo:', ms+'ms');
-}
-
-function stopLiveSync() {
-  if (_syncTimer) { clearInterval(_syncTimer); _syncTimer = null; }
-  _syncRunning = false;
-}
-
-// ── Manual force-refresh ─────────────────────────────────────────
-async function forceSyncNow() {
-  _syncErrorCount = 0;
-  if (_syncTimer === null) startLiveSync(); // restart if stopped
-  await _doSync();
-}
-
-// ── Inject UI into topbar ─────────────────────────────────────────
-function _injectSyncUI() {
-  const topbarRight = document.querySelector('.topbar-right');
-  if (!topbarRight || document.getElementById(SYNC_BADGE_ID)) return;
-
-  const style = document.createElement('style');
-  style.textContent = '@keyframes livepulse{0%,100%{opacity:1}50%{opacity:.3}}';
-  document.head.appendChild(style);
-
-  // Badge
-  const badge = document.createElement('span');
-  badge.id = SYNC_BADGE_ID;
-  badge.style.cssText = 'display:none;align-items:center;gap:5px;font-family:\'DM Mono\',monospace;font-size:9px;color:#5a7090;padding:3px 8px;border-radius:99px;background:#f4f7fc;border:1px solid #dde6f0;cursor:default;';
-  badge.title = 'Sincronização ao vivo';
-
-  // Sync button
-  const btn = document.createElement('button');
-  btn.id    = SYNC_BTN_ID;
-  btn.textContent = '↻';
-  btn.title = 'Sincronizar agora';
-  btn.style.cssText = 'display:none;width:28px;height:28px;border-radius:50%;border:1px solid #dde6f0;background:#f4f7fc;color:#5a7090;font-size:14px;cursor:pointer;flex-shrink:0;transition:all .2s;';
-  btn.onmouseover = () => { btn.style.background='#eaf0f8'; btn.style.color='#0a1628'; };
-  btn.onmouseout  = () => { btn.style.background='#f4f7fc'; btn.style.color='#5a7090'; };
-  btn.onclick = () => forceSyncNow();
-
-  // Insert before the logout button
-  const logoutBtn = topbarRight.querySelector('.btn-out');
-  if (logoutBtn) {
-    topbarRight.insertBefore(btn,   logoutBtn);
-    topbarRight.insertBefore(badge, btn);
-  } else {
-    topbarRight.appendChild(badge);
-    topbarRight.appendChild(btn);
-  }
-}
-
-// ── Show/hide sync UI depending on whether a live tournament is open ─
-function _updateSyncVisibility() {
-  const badge = document.getElementById(SYNC_BADGE_ID);
-  const btn   = document.getElementById(SYNC_BTN_ID);
-  const show  = !!(window.T && T.id && T.started && !T.finalized);
-  if (badge) badge.style.display = show ? 'inline-flex' : 'none';
-  if (btn)   btn.style.display   = show ? 'flex'        : 'none';
-  if (show && !_syncTimer) startLiveSync();
-  if (!show) stopLiveSync();
-}
-
-// ── Patch key functions to trigger sync visibility updates ────────
-const _origGoToStep = window.goToStep;
-window.goToStep = function(n, el) {
-  _origGoToStep && _origGoToStep(n, el);
-  _updateSyncVisibility();
-};
-
-const _origFetchAndOpen = window.fetchAndOpenTournament;
-window.fetchAndOpenTournament = async function(tid) {
-  const ok = await _origFetchAndOpen(tid);
-  if (ok) {
-    _lastSyncHash = ''; // force refresh on next cycle
-    _updateSyncVisibility();
-    startLiveSync();
-  }
-  return ok;
-};
-
-const _origDoLogout = window.doLogout;
-window.doLogout = function() {
-  stopLiveSync();
-  _origDoLogout && _origDoLogout();
-};
-
-const _origFinalize = window.finalizeTournament;
-window.finalizeTournament = async function() {
-  await _origFinalize();
-  stopLiveSync();
-  _updateSyncVisibility();
-};
-
-// ── Export to global scope for console debugging ──────────────────
-window.LiveSync = { start: startLiveSync, stop: stopLiveSync, force: forceSyncNow };
-
-// ── Bootstrap on DOM ready ────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  _injectSyncUI();
-  // Also hook login to start sync after auth
-  const _origDoLogin = window.doLogin;
-  window.doLogin = function() {
-    _origDoLogin && _origDoLogin();
-    setTimeout(_updateSyncVisibility, 800);
-  };
-});
-
-// If already logged in (session restore), check after short delay
-setTimeout(() => { _injectSyncUI(); _updateSyncVisibility(); }, 1200);
-
-})(); // end IIFE
-
 </script>
 </body>
 </html>
