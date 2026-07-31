@@ -150,6 +150,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .db-btn:hover{border-color:#3a7bd5;color:#0d1e3a;}
 .db-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
 .db-card{position:relative;background:#f8fafd;border:2px solid #e8edf4;border-radius:12px;padding:12px 8px 10px;text-align:center;cursor:pointer;transition:all .18s;user-select:none;}
+.db-card.maxed{opacity:.4;cursor:not-allowed;}
 .db-card:hover{border-color:#3a7bd5;background:#eef4fb;}
 .db-card.selected{background:linear-gradient(135deg,#0a1628,#1a2d52);border-color:#3a7bd5;}
 .db-card.hidden{display:none;}
@@ -681,7 +682,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
             <div style="flex:1;min-width:200px">
               <div style="font-size:12px;font-weight:700;color:#7a1f1f">🧪 Simular esta etapa</div>
-              <div style="font-size:11px;color:#9ab0c8">Preenche e salva todas as partidas pendentes da fase atual com dado fictício (grupo A força um empate de propósito)</div>
+              <div style="font-size:11px;color:#9ab0c8">Preenche e salva todas as partidas pendentes da fase atual com placares aleatórios (sem empate forçado — inclusive testa o critério de desempate quando calha)</div>
             </div>
             <button class="btn" style="background:#7a1f1f;color:#fff;flex-shrink:0" onclick="simFillCurrentPhase()">🧪 Simular Fase Atual</button>
           </div>
@@ -829,21 +830,21 @@ const SIM_PLAYER_POOL = [
 ];
 
 // Ranking limpo (1>0>2>3, sem empates) + 1 partida com tie-break (6x5 + TB 7x5).
-// [sa, sb, temTB, tbA, tbB] por partida, na ordem de groupMatches().
-const SIM_TEMPLATE_CLEAN_TB = [
-  [6, 1, false],
-  [6, 5, true, 7, 5],
-  [2, 6, false],
-];
-
-// Empate forçado de propósito: jogador 0 vence tudo (isolado em 1o),
-// jogadores 1, 2 e 3 empatam exatamente em vitorias E saldo — aciona
-// o banner de empate pro organizador escolher manualmente.
-const SIM_TEMPLATE_TIE = [
-  [6, 2, false],
-  [6, 2, false],
-  [6, 2, false],
-];
+// Gera um placar aleatório válido, respeitando o maxScore/tbAt configurado
+// pra fase (mesmas regras que saveMatch() exige). Sem viés de lado nem
+// empate forçado -- cada partida decide por conta própria quem ganha.
+function simRandomMatchScore(maxSc, tbAt) {
+  const loser = Math.floor(Math.random() * (tbAt + 1)); // 0..tbAt
+  let sa = maxSc, sb = loser, tb = false, tba = null, tbb = null;
+  if (loser === tbAt) {
+    tb = true;
+    const tbLoser = Math.floor(Math.random() * 6); // 0..5
+    const tbWinner = Math.max(7, tbLoser + 2);      // vencedor 7+, margem 2+
+    tba = tbWinner; tbb = tbLoser;
+  }
+  if (Math.random() < 0.5) { [sa, sb] = [sb, sa]; if (tb) [tba, tbb] = [tbb, tba]; }
+  return { sa, sb, tb, tba, tbb };
+}
 
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url_SIM') ||
   "COLE_AQUI_A_URL_DO_GAS_DE_SIMULACAO";
@@ -1184,14 +1185,15 @@ function simFillCurrentPhase() {
   if (!ph) return;
   if (isPhaseComplete(phIdx)) { safeAlert('Esta fase já está completa — avance ou vá para a próxima etapa.', 'ok'); return; }
 
+  const cfg = getPhaseConfig(phIdx) || { maxScore:6, tbAt:5 };
+  const maxSc = cfg.maxScore ?? 6, tbAt = cfg.tbAt ?? 5;
+
   ph.groups.forEach((g, gi) => {
-    const template = (gi === 0) ? SIM_TEMPLATE_TIE : SIM_TEMPLATE_CLEAN_TB;
     const matches = groupMatches(g);
     matches.forEach((m, mi) => {
       const key = phIdx + '-' + gi + '-' + mi;
       if (ph.results[key]?.saved) return;
-      const t = template[mi] || SIM_TEMPLATE_CLEAN_TB[mi];
-      const sa = t[0], sb = t[1], hasTB = t[2], tba = t[3], tbb = t[4];
+      const { sa, sb, tb:hasTB, tba, tbb } = simRandomMatchScore(maxSc, tbAt);
       const inA = document.getElementById('sc-' + key + '-a');
       const inB = document.getElementById('sc-' + key + '-b');
       if (inA) inA.value = sa;
@@ -1207,7 +1209,7 @@ function simFillCurrentPhase() {
       saveMatch(phIdx, gi, mi);
     });
   });
-  gameAlert('🧪 Fase preenchida com dado fictício (grupo A com empate de propósito).', 'ok');
+  gameAlert('🧪 Fase preenchida com placares aleatórios (sem empate forçado).', 'ok');
 }
 
 function applyCanonical(n) {
@@ -1276,8 +1278,9 @@ function renderDB() {
   grid.innerHTML = all.map(name => {
     const sel = selectedPlayers.includes(name);
     const hidden = q && !normStr(name).includes(q);
+    const atMax = !sel && selectedPlayers.length >= (_canonicalSelected || 16);
     const reg = getPlayerReg(name);
-    return '<div class="db-card '+(sel?'selected':'')+' '+(hidden?'hidden':'')+'" onclick="togglePlayer(\''+name.replace(/'/g,"\\'")+'\')">'
+    return '<div class="db-card '+(sel?'selected':'')+' '+(hidden?'hidden':'')+' '+(atMax?'maxed':'')+'" onclick="togglePlayer(\''+name.replace(/'/g,"\\'")+'\')">'
       + '<div class="db-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'
       + '<div class="db-avatar" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+';text-shadow:0 1px 3px rgba(0,0,0,.35)">'+_init(name)+'</div>'
       + '<div class="db-name">'+name+'</div>'
@@ -1300,7 +1303,14 @@ function togglePlayer(name) {
   if (selectedPlayers.includes(name)) {
     selectedPlayers = selectedPlayers.filter(p=>p!==name);
     seedList = seedList.filter(s=>s!==name);
-  } else selectedPlayers.push(name);
+  } else {
+    const max = _canonicalSelected || 16;
+    if (selectedPlayers.length >= max) {
+      safeAlert('Máximo de '+max+' jogadores atingido para esta configuração — desmarque alguém antes de adicionar outro.', 'warn');
+      return;
+    }
+    selectedPlayers.push(name);
+  }
   renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
 }
 function removePlayer(name) {
@@ -1308,7 +1318,14 @@ function removePlayer(name) {
   seedList = seedList.filter(s=>s!==name);
   renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
 }
-function selectAllDB() { selectedPlayers = [...allPlayers()]; renderDB(); renderSeedPicker(); updateVagas(); updateSummary(); }
+function selectAllDB() {
+  const max = _canonicalSelected || 16;
+  const pool = allPlayers();
+  selectedPlayers = pool.slice(0, max);
+  seedList = seedList.filter(s => selectedPlayers.includes(s));
+  if (pool.length > max) safeAlert('Selecionados os primeiros '+max+' jogadores — esse é o máximo para esta configuração.', 'ok');
+  renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
+}
 function clearDB() { selectedPlayers = []; seedList = []; renderDB(); renderSeedPicker(); updateVagas(); updateSummary(); }
 function filterDB() { renderDB(); }
 
