@@ -70,7 +70,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .formation-card .fc-title{font-family:'Bebas Neue';font-size:17px;letter-spacing:.5px;color:#0a1628;}
 .formation-card .fc-desc{font-size:10.5px;color:#7090b0;margin-top:4px;line-height:1.5;}
 .manual-pool{display:flex;flex-wrap:wrap;gap:8px;min-height:52px;padding:12px;border:1.5px dashed #b0c4d8;border-radius:10px;background:#f8fafd;margin-bottom:4px;}
-.manual-chip{display:flex;align-items:center;gap:6px;padding:5px 11px 5px 5px;border-radius:99px;background:#fff;border:1.5px solid #dde6f0;cursor:grab;font-size:12px;font-weight:600;color:#0d1e3a;user-select:none;transition:all .15s;}
+.manual-chip{display:flex;align-items:center;gap:6px;padding:9px 13px 9px 6px;border-radius:99px;background:#fff;border:1.5px solid #dde6f0;cursor:grab;font-size:12px;font-weight:600;color:#0d1e3a;user-select:none;transition:all .15s;}
 .manual-chip:active{cursor:grabbing;}
 .manual-chip.sel{border-color:#C9933A;background:#fffbf0;box-shadow:0 0 0 2px rgba(201,147,58,.3);}
 .manual-chip-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:10px;color:#fff;flex-shrink:0;}
@@ -82,6 +82,18 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tb-link-btn:hover{background:#eaf3ff;}
 .btn-cancel-trn{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#c0392b;font-size:11px;font-weight:700;padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'DM Sans';display:none;}
 .btn-cancel-trn:hover{background:rgba(231,76,60,.22);}
+.torneio-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #dde6f0;border-radius:10px;margin-bottom:8px;background:#f8fafd;}
+.torneio-row-info{flex:1;min-width:0;}
+.torneio-row-name{font-size:13px;font-weight:700;color:#0d1e3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.torneio-row-meta{font-size:10px;color:#9ab0c8;font-family:'DM Mono';margin-top:2px;}
+.torneio-badge{font-family:'DM Mono';font-size:8px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
+.torneio-badge.aberto{background:#EBF4FF;color:#185FA5;}
+.torneio-badge.andamento{background:#FFF8E0;color:#865a10;}
+.torneio-badge.finalizado{background:#E8F8EE;color:#1a7a44;}
+.btn-switch-trn{background:#f4f7fc;border:1px solid #dde6f0;color:#5a7090;font-size:14px;width:34px;height:34px;border-radius:8px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.btn-switch-trn:hover{background:#eaf0f8;}
+.switcher-popover{position:absolute;top:52px;right:16px;width:290px;background:#fff;border:1px solid #dde6f0;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.15);z-index:400;padding:12px;display:none;max-height:400px;overflow-y:auto;}
+.switcher-popover.show{display:block;}
 .tiebreak-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px;}
 .tiebreak-table th{text-align:left;padding:9px 10px;font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#9ab0c8;border-bottom:1.5px solid #dde6f0;}
 .tiebreak-table td{padding:10px;border-bottom:1px solid #f0f5fb;vertical-align:top;}
@@ -275,6 +287,14 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .sidebar-nav.mob-open{transform:translateX(0);}
   .grupos-grid,.row2,.kpi-row{grid-template-columns:1fr;}
   .sc-kpis{grid-template-columns:repeat(2,1fr);}
+  .topbar{padding:0 10px;gap:6px;}
+  .topbar-user{display:none;}
+  #trn-status-badge{display:none;}
+  .btn-cancel-label{display:none;}
+  .btn-cancel-trn{padding:6px 9px;}
+  .topbar-right{gap:6px;}
+  .col-gg,.col-gp{display:none;}
+  .classif-table{min-width:0 !important;}
 }/* ══ SPLASH SCREEN (adaptado de PadelEye_Americano_V40_Prod.html) ══ */
 #s-splash{background:linear-gradient(160deg,#0d5c2e 0%,#1a8a45 40%,#22a855 70%,#1db954 100%);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
 #s-splash::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:36px 36px;animation:splashGrid 1s ease forwards}
@@ -437,7 +457,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         <div class="topbar-club" id="tb-club">-</div>
       </div>
       <div class="topbar-av" id="tb-av">?</div>
-      <button class="btn-cancel-trn" id="btn-cancel-trn" onclick="cancelTournament()">🗑 Cancelar Torneio</button>
+      <button class="btn-switch-trn" onclick="toggleTournamentSwitcher()" title="Trocar de Torneio">🔀</button>
+      <div class="switcher-popover" id="tournament-switcher-pop"></div>
+      <button class="btn-cancel-trn" id="btn-cancel-trn" onclick="cancelTournament()" title="Cancelar Torneio">🗑 <span class="btn-cancel-label">Cancelar Torneio</span></button>
       <button class="btn-out" onclick="doLogout()">Sair</button>
     </div>
   </div>
@@ -457,6 +479,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn step-btn locked" id="stepbtn-4" onclick="goToStep(4,this)"><span class="step-num">4</span> Jogos &amp; Rodadas</button>
       <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
       <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
+      <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
@@ -710,6 +733,39 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <b>O que se espera de você:</b> confira os vencedores antes de guardar — depois de salvo, o torneio é considerado encerrado e não pode mais ser alterado.
         </div>
         <div id="finalize-container"></div>
+      </div>
+
+      <div class="panel" id="p-meus-torneios">
+        <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
+          <div><div class="welcome-title" style="font-size:22px">MEUS <em>TORNEIOS</em></div><div class="welcome-sub">Troque de torneio, ou continue um em outro aparelho pelo ID.</div></div>
+        </div>
+        <div class="step-info">
+          <div class="step-info-title">📖 Como funciona</div>
+          Todo torneio salvo tem um ID único. Abrir um torneio aqui sempre busca os dados mais atuais direto do banco de dados — não usa cache antigo, mesmo se você já tinha aberto ele antes neste navegador. Assim, dois organizadores em aparelhos diferentes, logados no mesmo torneio, sempre veem o placar mais recente.
+        </div>
+
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div></div>
+          <div id="meus-torneios-local-list"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd"><div class="card-title">Buscar por ID</div></div>
+          <div style="font-size:11px;color:#9ab0c8;margin-bottom:12px">Digite o ID do torneio (aparece na Etapa 1 depois de aberto) pra continuar em outro aparelho.</div>
+          <div class="row2" style="align-items:end">
+            <div class="field" style="margin-bottom:0"><label>ID do Torneio</label><input class="finput" id="search-tid-input" placeholder="ex: 2026042" onkeydown="if(event.key==='Enter')searchTournamentById()"></div>
+            <button class="btn btn-primary" onclick="searchTournamentById()">Buscar</button>
+          </div>
+          <div id="search-tid-result" style="margin-top:12px"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-hd">
+            <div class="card-title">Todos os Torneios no Banco de Dados</div>
+            <button class="db-btn" onclick="listAllTournamentsFromBackend()">🔄 Listar Todos</button>
+          </div>
+          <div id="meus-torneios-backend-list"><div style="font-size:11px;color:#b0c4d8">Clique em "Listar Todos" pra buscar.</div></div>
+        </div>
       </div>
 
       <div class="panel" id="p-tiebreak">
@@ -993,7 +1049,7 @@ function renderStep1Gate() {
     const cur = getMaxStep();
     gate.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
       + '<div class="card-hd"><div class="card-title">Torneio em Andamento</div><div class="card-badge gold">Etapa '+cur+'</div></div>'
-      + '<div style="font-size:13px;color:#5a4520;margin-bottom:14px">Encontramos uma configuração salva neste navegador: <b>"'+nome+'"</b> — parada na Etapa '+cur+' ('+stepNames[cur]+'). O que você quer fazer?</div>'
+      + '<div style="font-size:13px;color:#5a4520;margin-bottom:14px">Encontramos uma configuração salva neste navegador: <b>"'+nome+'"</b> (ID <span style="font-family:\'DM Mono\'">'+(T.id||'—')+'</span>) — parada na Etapa '+cur+' ('+stepNames[cur]+'). O que você quer fazer?</div>'
       + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
       + '<button class="btn btn-primary" style="flex:1;min-width:200px" onclick="_showResumeGate=false;goToStep('+cur+')">▶️ Continuar este Torneio</button>'
       + '<button class="btn btn-gold" style="flex:1;min-width:200px" onclick="startNewTournamentFromGate()">🎾 Abrir Novo Torneio</button>'
@@ -1019,7 +1075,14 @@ function refreshCancelButton() {
   btn.style.display = (T.status === 'open' && !T.finalized) ? 'inline-block' : 'none';
 }
 function updateLockBanners() {
-  const b1 = document.getElementById('step1-lock-banner'); if (b1) b1.style.display = (T.status === 'open') ? 'block' : 'none';
+  const b1 = document.getElementById('step1-lock-banner');
+  if (b1) {
+    b1.style.display = (T.status === 'open') ? 'block' : 'none';
+    if (T.status === 'open' && T.id) {
+      b1.innerHTML = '🔒 Configuração já confirmada — o torneio está em andamento. Para alterar, cancele o torneio no topo da tela.<br>'
+        + '<span style="font-family:\'DM Mono\';font-size:10px">ID deste torneio (use pra continuar em outro aparelho, em Meus Torneios → Buscar por ID): <b>'+T.id+'</b></span>';
+    }
+  }
   const b2 = document.getElementById('step2-lock-banner'); if (b2) b2.style.display = T.playersConfirmed ? 'block' : 'none';
 }
 function goToStep(n, el) {
@@ -1078,6 +1141,7 @@ function cancelTournament() {
   if (T.id && T.status === 'open') {
     PadelEyeDB.send('update_tournament_status', { tournament_id: T.id, status: 'Cancelado' })
       .catch(e => console.warn('[cancelTournament]', e.message));
+    removeFromTournamentRegistry(T.id);
   }
   resetTournamentState();
   goToStep(1);
@@ -1089,6 +1153,195 @@ function startNewTournament() {
   resetTournamentState();
   goToStep(1);
   safeAlert('Pronto! Configure o novo torneio.', 'ok');
+}
+
+// ══ MULTI-TORNEIO: reconstrução a partir do banco + navegação ══════
+// Reconstrói um objeto T completo a partir da linha da planilha
+// Tournaments + das partidas salvas em Matches_Tournaments. Usado
+// sempre que o organizador troca de torneio (mesmo navegador ou
+// aparelho novo) -- nunca confia em cache local pra esse momento.
+function reconstructTournamentFromBackend(row, matchRows) {
+  const T2 = freshT();
+  T2.id = row.tournament_id;
+  T2.name = row.tournament_name || 'Torneio';
+  T2.date = row.date || '';
+  T2.local = row.venue || '';
+  T2.categoria = row.tournament_category || '';
+  T2.numFases = parseInt(row.num_phases, 10) || 3;
+  T2.status = 'open';
+  T2.playersConfirmed = true;
+  T2.finalized = String(row.status||'').toLowerCase().indexOf('final') >= 0 || !!row.finalized_at;
+
+  try { T2.players = JSON.parse(row.players_json || '[]'); } catch(e) { T2.players = []; }
+  try { T2.seeds = JSON.parse(row.seeds_json || '[]'); } catch(e) { T2.seeds = []; }
+  try {
+    const pc = JSON.parse(row.phase_config_json || '[]');
+    if (pc && pc.length) T2.phaseConfig = pc;
+  } catch(e) {}
+
+  // Torneios salvos antes dessa versão podem não ter players_json --
+  // nesse caso, infere a lista de jogadores a partir das próprias partidas.
+  if (!T2.players.length && matchRows.length) {
+    const set = new Set();
+    matchRows.forEach(m => {
+      (m.team_a||'').split(' / ').forEach(p => p && set.add(p.trim()));
+      (m.team_b||'').split(' / ').forEach(p => p && set.add(p.trim()));
+    });
+    T2.players = [...set];
+  }
+
+  // Reconstrói fases/grupos/resultados a partir das partidas salvas.
+  // Fase Final é gravada com group='Z' na planilha -- cai no fallback
+  // gIdx=0 abaixo, que é sempre correto pra ela (1 grupo só).
+  const phases = [];
+  const phaseIndexByName = {};
+  matchRows.forEach(m => {
+    const phaseName = m.phase || 'Fase 1';
+    if (!(phaseName in phaseIndexByName)) {
+      phaseIndexByName[phaseName] = phases.length;
+      phases.push({ name: phaseName, groups: [], results: {}, complete: false });
+    }
+    const pIdx = phaseIndexByName[phaseName];
+    let gIdx = GROUP_LETTERS.indexOf(m.group);
+    if (gIdx < 0) gIdx = 0;
+    const mi = (parseInt(m.match_serial_number, 10) || 1) - 1;
+
+    if (!phases[pIdx].groups[gIdx]) {
+      const teamA = (m.team_a||'').split(' / ').map(s=>s.trim()).filter(Boolean);
+      const teamB = (m.team_b||'').split(' / ').map(s=>s.trim()).filter(Boolean);
+      phases[pIdx].groups[gIdx] = [...teamA, ...teamB];
+    }
+
+    phases[pIdx].results[pIdx+'-'+gIdx+'-'+mi] = {
+      saved: true,
+      sa: parseInt(m.score_a, 10) || 0,
+      sb: parseInt(m.score_b, 10) || 0,
+      tb: m.tie_break === 'Sim',
+      tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
+      tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
+    };
+  });
+
+  if (phases.length) {
+    T2.started = true;
+    T2.groupFormationType = 'sorteio';
+    for (let i=0;i<phases.length-1;i++) phases[i].complete = true;
+    T2.phases = phases;
+    let cur = phases.length - 1;
+    for (let i=0;i<phases.length;i++) {
+      const allDone = phases[i].groups.every((g,gi) => groupMatches(g).every((_,mi2) => phases[i].results[i+'-'+gi+'-'+mi2]?.saved));
+      if (!allDone) { cur = i; break; }
+    }
+    T2.currentPhase = cur;
+  }
+
+  return T2;
+}
+
+async function fetchAndOpenTournament(tid) {
+  if (!tid) return false;
+  safeAlert('Buscando torneio '+tid+' no banco de dados...', 'ok');
+  try {
+    const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
+    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
+      safeAlert('Torneio não encontrado no banco: '+tid, 'err');
+      return false;
+    }
+    const row = tRes.rows[0];
+    const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: tid });
+    const matchRows = (mRes && mRes.ok && mRes.rows) ? mRes.rows : [];
+
+    T = reconstructTournamentFromBackend(row, matchRows);
+    T_groups = (T.phases[T.currentPhase] && T.phases[T.currentPhase].groups) ? T.phases[T.currentPhase].groups.map(g=>[...g]) : [];
+    selectedPlayers = [...(T.players||[])];
+    seedList = [...(T.seeds||[])];
+    manualPool = []; manualGroups = []; _dragPlayer = null;
+    _canonicalSelected = [8,12,16].includes(T.players.length) ? T.players.length : 0;
+    _showResumeGate = false;
+    persistT();
+    renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
+    refreshStepNav();
+    goToStep(getMaxStep());
+    safeAlert('Torneio "'+T.name+'" carregado com sucesso.', 'ok');
+    return true;
+  } catch(e) {
+    safeAlert('Erro ao buscar torneio: '+e.message, 'err');
+    return false;
+  }
+}
+
+// ── Portal rápido (topbar) e tela "Meus Torneios" ───────────────────
+function toggleTournamentSwitcher() {
+  const pop = document.getElementById('tournament-switcher-pop');
+  if (!pop) return;
+  if (pop.classList.contains('show')) { pop.classList.remove('show'); return; }
+  renderTournamentSwitcher();
+  pop.classList.add('show');
+}
+const TORNEIO_STATUS_LABEL = { aberto:'Configuração', andamento:'Em Andamento', finalizado:'Finalizado' };
+function renderTournamentSwitcher() {
+  const reg = getTournamentRegistry();
+  const list = Object.values(reg).sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||'')).slice(0,5);
+  const pop = document.getElementById('tournament-switcher-pop');
+  pop.innerHTML = '<div style="font-family:\'DM Mono\';font-size:9px;color:#9ab0c8;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase">Torneios recentes neste navegador</div>'
+    + (list.length ? list.map(t => '<div class="torneio-row" style="cursor:pointer" onclick="toggleTournamentSwitcher();fetchAndOpenTournament(\''+String(t.id).replace(/'/g,"\\'")+'\')">'
+        + '<div class="torneio-row-info"><div class="torneio-row-name">'+t.name+'</div><div class="torneio-row-meta">'+(t.date||'—')+' · '+t.id+'</div></div>'
+        + '<div class="torneio-badge '+t.status+'">'+(TORNEIO_STATUS_LABEL[t.status]||t.status)+'</div>'
+        + '</div>').join('') : '<div style="font-size:11px;color:#b0c4d8;padding:8px 0">Nenhum torneio recente.</div>')
+    + '<button class="btn btn-secondary btn-full" style="margin-top:6px" onclick="toggleTournamentSwitcher();showMeusTorneios()">Ver todos / Buscar por ID →</button>';
+}
+function showMeusTorneios() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const navBtn = document.querySelector('.tab-btn[onclick^="showMeusTorneios"]');
+  if (navBtn) navBtn.classList.add('on');
+  const panel = document.getElementById('p-meus-torneios');
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+  renderMeusTorneiosLocal();
+  const backendEl = document.getElementById('meus-torneios-backend-list');
+  if (backendEl) backendEl.innerHTML = '<div style="font-size:11px;color:#b0c4d8">Clique em "Listar Todos" pra buscar.</div>';
+  const searchEl = document.getElementById('search-tid-result');
+  if (searchEl) searchEl.innerHTML = '';
+}
+function renderMeusTorneiosLocal() {
+  const reg = getTournamentRegistry();
+  const list = Object.values(reg).sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||''));
+  const el = document.getElementById('meus-torneios-local-list');
+  if (!el) return;
+  el.innerHTML = list.length ? list.map(t => '<div class="torneio-row">'
+      + '<div class="torneio-row-info"><div class="torneio-row-name">'+t.name+'</div><div class="torneio-row-meta">'+(t.date||'—')+' · ID '+t.id+'</div></div>'
+      + '<div class="torneio-badge '+t.status+'">'+(TORNEIO_STATUS_LABEL[t.status]||t.status)+'</div>'
+      + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(t.id).replace(/'/g,"\\'")+'\')">Abrir</button>'
+      + '</div>').join('') : '<div class="empty-panel"><div class="empty-icon">🗂</div><div>Nenhum torneio tocado neste navegador ainda.</div></div>';
+}
+async function searchTournamentById() {
+  const input = document.getElementById('search-tid-input');
+  const tid = (input?.value || '').trim();
+  const resultEl = document.getElementById('search-tid-result');
+  if (!tid) { safeAlert('Digite um ID de torneio.', 'warn'); return; }
+  resultEl.innerHTML = '<div style="font-size:12px;color:#9ab0c8">Buscando...</div>';
+  const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
+  if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
+    resultEl.innerHTML = '<div class="alert err" style="display:block">Torneio não encontrado: '+tid+'</div>';
+    return;
+  }
+  const row = tRes.rows[0];
+  resultEl.innerHTML = '<div class="torneio-row">'
+    + '<div class="torneio-row-info"><div class="torneio-row-name">'+(row.tournament_name||'Sem nome')+'</div><div class="torneio-row-meta">'+(row.date||'—')+' · '+(row.tournament_category||'')+'</div></div>'
+    + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+tid.replace(/'/g,"\\'")+'\')">Abrir</button>'
+    + '</div>';
+}
+async function listAllTournamentsFromBackend() {
+  const el = document.getElementById('meus-torneios-backend-list');
+  el.innerHTML = '<div style="font-size:12px;color:#9ab0c8">Buscando no banco de dados...</div>';
+  const res = await PadelEyeDB.send('get_tournaments', {});
+  if (!res || !res.ok) { el.innerHTML = '<div class="alert err" style="display:block">Erro ao buscar torneios no banco.</div>'; return; }
+  const rows = (res.rows||[]).slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  el.innerHTML = rows.length ? rows.map(r => '<div class="torneio-row">'
+      + '<div class="torneio-row-info"><div class="torneio-row-name">'+(r.tournament_name||'Sem nome')+'</div><div class="torneio-row-meta">'+(r.date||'—')+' · ID '+r.tournament_id+'</div></div>'
+      + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(r.tournament_id).replace(/'/g,"\\'")+'\')">Abrir</button>'
+      + '</div>').join('') : '<div style="font-size:12px;color:#b0c4d8">Nenhum torneio encontrado no banco.</div>';
 }
 
 function normStr(s) { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
@@ -1414,6 +1667,8 @@ function openTournament() {
 
   const alreadyOpen = (T.status === 'open');
   if (!T.id) T.id = generateTorneiId();
+  T.name = _name;
+  T.date = getCfgDate();
   T.local = _venue + (document.getElementById('cfg-city')?.value?.trim() ? ' - '+document.getElementById('cfg-city').value.trim() : '');
   T.categoria = _cat;
   T.status = 'open';
@@ -1451,7 +1706,41 @@ function confirmPlayersStep() {
   goToStep(3);
 }
 
-function persistT() { try { localStorage.setItem('padeleye_T_v1_SIM', JSON.stringify(T)); } catch(e) {} }
+function persistT() {
+  try { localStorage.setItem('padeleye_T_v1_SIM', JSON.stringify(T)); } catch(e) {}
+  updateTournamentRegistry(T);
+}
+
+// ── REGISTRO LOCAL DE TORNEIOS (multi-torneio) ──────────────────────
+// Só guarda metadados leves (nome/data/status) pra montar a lista rápida
+// de "torneios recentes neste navegador". Os dados completos NUNCA são
+// lidos daqui na hora de abrir um torneio — sempre buscamos fresco do
+// banco (get_tournament_by_id + get_matches_tournaments), pra garantir
+// que você sempre veja o estado mais atual, inclusive vindo de outro
+// aparelho.
+function getTournamentRegistry() {
+  try { return JSON.parse(localStorage.getItem('padeleye_tournaments_registry_v1_SIM') || '{}'); }
+  catch(e) { return {}; }
+}
+function updateTournamentRegistry(t) {
+  if (!t || !t.id) return;
+  try {
+    const reg = getTournamentRegistry();
+    reg[t.id] = {
+      id: t.id, name: t.name || 'Torneio sem nome', date: t.date || '', categoria: t.categoria || '',
+      status: t.finalized ? 'finalizado' : (t.started ? 'andamento' : 'aberto'),
+      updatedAt: new Date().toISOString()
+    };
+    localStorage.setItem('padeleye_tournaments_registry_v1_SIM', JSON.stringify(reg));
+  } catch(e) {}
+}
+function removeFromTournamentRegistry(tid) {
+  try {
+    const reg = getTournamentRegistry();
+    delete reg[tid];
+    localStorage.setItem('padeleye_tournaments_registry_v1_SIM', JSON.stringify(reg));
+  } catch(e) {}
+}
 
 function autoDistributeGroups(players, seeds) {
   const numG = Math.max(1, Math.floor(players.length / 4));
@@ -1854,11 +2143,13 @@ function finalizeLaunch() {
   if (T.id) {
     const numGrupos = T_groups.length;
     const jogPorGrupo = numGrupos>0 ? Math.ceil(T.players.length/numGrupos) : 4;
-    PadelEyeDB.send('create_tournament', { row: {
+    PadelEyeDB.send('upsert_tournament', { row: {
       tournament_id: T.id, tournament_name: T.name, date: T.date, venue: T.local || (currentUser && currentUser.club) || '',
       tournament_format: 'Americano - Modelo Brasileiro', group_number: numGrupos, players_per_group: jogPorGrupo,
       advance_per_group: T.phaseConfig[0].advancePerGroup, wildcards: T.phaseConfig[0].wildcards,
-      num_phases: T.numFases, tournament_category: T.categoria, status: 'Em Curso', created_at: new Date().toISOString(),
+      num_phases: T.numFases, tournament_category: T.categoria, status: 'Em Curso',
+      players_json: JSON.stringify(T.players), seeds_json: JSON.stringify(T.seeds),
+      phase_config_json: JSON.stringify(T.phaseConfig), created_at: new Date().toISOString(),
     }}).catch(e => console.warn('[finalizeLaunch]', e.message));
   }
 
@@ -2374,13 +2665,13 @@ function renderRounds() {
 
       html += '<div style="margin-top:10px;border-top:1px solid #f0f5fb;padding-top:10px">'
         + '<div style="font-family:\'DM Mono\';font-size:8px;color:#b0c4d8;margin-bottom:6px">CLASSIFICACAO</div>'
-        + '<div style="overflow-x:auto"><table style="width:100%;min-width:520px;font-size:11px;border-collapse:collapse">'
+        + '<div style="overflow-x:auto"><table class="classif-table" style="width:100%;min-width:520px;font-size:11px;border-collapse:collapse">'
         + '<tr style="color:#9ab0c8"><td style="padding:3px 6px 3px 0">#</td><td style="padding:3px 6px">Jogador</td>'
           + '<td style="padding:3px 6px;text-align:right">J</td>'
           + '<td style="padding:3px 6px;text-align:right">V</td>'
           + '<td style="padding:3px 6px;text-align:right">D</td>'
-          + '<td style="padding:3px 6px;text-align:right">Games Ganhos</td>'
-          + '<td style="padding:3px 6px;text-align:right">Games Perdidos</td>'
+          + '<td class="col-gg" style="padding:3px 6px;text-align:right">Games Ganhos</td>'
+          + '<td class="col-gp" style="padding:3px 6px;text-align:right">Games Perdidos</td>'
           + '<td style="padding:3px 6px;text-align:right">Saldo Games</td>'
           + '<td style="padding:3px 0 3px 6px;text-align:right">Saldo TB</td></tr>'
         + standings.map((s,i)=>'<tr style="'+(i<2?'font-weight:700;color:#0d1e3a':'color:#9ab0c8')+'">'
@@ -2389,8 +2680,8 @@ function renderRounds() {
             + '<td style="padding:3px 6px;text-align:right">'+s.m+'</td>'
             + '<td style="padding:3px 6px;text-align:right">'+s.w+'</td>'
             + '<td style="padding:3px 6px;text-align:right">'+s.l+'</td>'
-            + '<td style="padding:3px 6px;text-align:right">'+s.gw+'</td>'
-            + '<td style="padding:3px 6px;text-align:right">'+s.gl+'</td>'
+            + '<td class="col-gg" style="padding:3px 6px;text-align:right">'+s.gw+'</td>'
+            + '<td class="col-gp" style="padding:3px 6px;text-align:right">'+s.gl+'</td>'
             + '<td style="padding:3px 6px;text-align:right;'+(s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':'')+'">'+(s.gd>0?'+':'')+s.gd+'</td>'
             + '<td style="padding:3px 0 3px 6px;text-align:right;'+(s.tbsaldo>0?'color:#27AE60':s.tbsaldo<0?'color:#E74C3C':'')+'">'+(s.tbsaldo>0?'+':'')+s.tbsaldo+'</td>'
             + '</tr>').join('')
@@ -2605,7 +2896,9 @@ const PadelEyeDB = (() => {
     const jogPorGrupo = numGrupos>0 ? Math.ceil((Tobj.players?.length||0)/numGrupos) : 4;
     return { tournament_id:Tobj.id||uid(), tournament_name:Tobj.name||'Torneio Americano', date:Tobj.date||now().slice(0,10),
       venue:Tobj.local||'', tournament_format:'Americano - Modelo Brasileiro', group_number:numGrupos, players_per_group:jogPorGrupo,
-      num_phases:Tobj.numFases||3, tournament_category:Tobj.categoria||'', status:'Finalizado', created_at: now() };
+      num_phases:Tobj.numFases||3, tournament_category:Tobj.categoria||'', status:'Finalizado',
+      players_json: JSON.stringify(Tobj.players||[]), seeds_json: JSON.stringify(Tobj.seeds||[]),
+      phase_config_json: JSON.stringify(Tobj.phaseConfig||[]), created_at: now() };
   }
   function mapPartidas(Tobj, torneioId) {
     const rows = [];
@@ -2794,6 +3087,13 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { _splash.style.display = 'none'; }, 480);
     }, 2800);
   }
+});
+document.addEventListener('click', (ev) => {
+  const pop = document.getElementById('tournament-switcher-pop');
+  if (!pop || !pop.classList.contains('show')) return;
+  const isSwitchBtn = ev.target.closest('.btn-switch-trn');
+  const isInsidePop = ev.target.closest('.switcher-popover');
+  if (!isSwitchBtn && !isInsidePop) pop.classList.remove('show');
 });
 </script>
 </body>
