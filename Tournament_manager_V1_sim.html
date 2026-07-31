@@ -719,7 +719,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <tr><td><div class="tb-num">2</div></td><td><b>Saldo de Games</b></td><td>Games ganhos menos games perdidos, somando todas as partidas do grupo.</td></tr>
             <tr><td><div class="tb-num">3</div></td><td><b>Mini-Tabela entre Empatados</b></td><td>Quando 3 ou mais jogadores empatam, recalcula-se uma mini-tabela só com os jogos entre eles mesmos (soma do confronto direto contra cada um dos outros empatados). Evita ciclos tipo "A bate B, B bate C, C bate A".</td></tr>
             <tr><td><div class="tb-num">4</div></td><td><b>Games Ganhos</b></td><td>Total de games vencidos (valor absoluto, não é saldo).</td></tr>
-            <tr><td><div class="tb-num">5</div></td><td><b>Saldo de Tie-Break</b></td><td>Tie-breaks vencidos menos tie-breaks perdidos.</td></tr>
+            <tr><td><div class="tb-num">5</div></td><td><b>Saldo de Tie-Break</b></td><td>Pontos ganhos menos pontos perdidos nos mini-jogos de tie-break (ex.: vencer 7x0 pesa mais que vencer 7x6) — não é só contagem de tie-breaks vencidos.</td></tr>
             <tr><td><div class="tb-num tb-manual">✋</div></td><td><b>Decisão do Organizador</b></td><td>Se o empate persistir após os 5 critérios acima, o organizador escolhe manualmente quem fica na frente, direto na tela de Jogos & Rodadas.</td></tr>
           </table>
         </div>
@@ -1902,9 +1902,8 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     match.a.forEach(p => { if(stats[p]){ stats[p].gw+=sa; stats[p].gl+=sb; stats[p].m++; aWin?stats[p].w++:stats[p].l++; }});
     match.b.forEach(p => { if(stats[p]){ stats[p].gw+=sb; stats[p].gl+=sa; stats[p].m++; !aWin?stats[p].w++:stats[p].l++; }});
     if (res.tb && res.tba!=null && res.tbb!=null) {
-      const tbWinA = res.tba > res.tbb;
-      match.a.forEach(p => { if(stats[p]){ tbWinA?stats[p].tbw++:stats[p].tbl++; }});
-      match.b.forEach(p => { if(stats[p]){ tbWinA?stats[p].tbl++:stats[p].tbw++; }});
+      match.a.forEach(p => { if(stats[p]){ stats[p].tbw += res.tba; stats[p].tbl += res.tbb; }});
+      match.b.forEach(p => { if(stats[p]){ stats[p].tbw += res.tbb; stats[p].tbl += res.tba; }});
     }
     match.a.forEach(pa => { match.b.forEach(pb => {
       if (h2h[pa]?.[pb]) { h2h[pa][pb].gw+=sa; h2h[pa][pb].gl+=sb; }
@@ -2366,15 +2365,25 @@ function renderRounds() {
 
       html += '<div style="margin-top:10px;border-top:1px solid #f0f5fb;padding-top:10px">'
         + '<div style="font-family:\'DM Mono\';font-size:8px;color:#b0c4d8;margin-bottom:6px">CLASSIFICACAO</div>'
-        + '<table style="width:100%;font-size:11px;border-collapse:collapse">'
-        + '<tr style="color:#9ab0c8"><td>#</td><td>Jogador</td><td style="text-align:right">V</td><td style="text-align:right">Saldo</td></tr>'
+        + '<div style="overflow-x:auto"><table style="width:100%;min-width:420px;font-size:11px;border-collapse:collapse">'
+        + '<tr style="color:#9ab0c8"><td style="padding:3px 6px 3px 0">#</td><td style="padding:3px 6px">Jogador</td>'
+          + '<td style="padding:3px 6px;text-align:right">J</td>'
+          + '<td style="padding:3px 6px;text-align:right">V</td>'
+          + '<td style="padding:3px 6px;text-align:right">D</td>'
+          + '<td style="padding:3px 6px;text-align:right">Saldo</td>'
+          + '<td style="padding:3px 6px;text-align:right">GG</td>'
+          + '<td style="padding:3px 0 3px 6px;text-align:right">Saldo TB</td></tr>'
         + standings.map((s,i)=>'<tr style="'+(i<2?'font-weight:700;color:#0d1e3a':'color:#9ab0c8')+'">'
-            + '<td>'+(i+1)+'</td>'
-            + '<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+_pc(s.name)+';margin-right:5px"></span>'+s.name+'</td>'
-            + '<td style="text-align:right">'+s.w+'</td>'
-            + '<td style="text-align:right;'+(s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':'')+'">'+(s.gd>0?'+':'')+s.gd+'</td>'
+            + '<td style="padding:3px 6px 3px 0">'+(i+1)+'</td>'
+            + '<td style="padding:3px 6px"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+_pc(s.name)+';margin-right:5px"></span>'+s.name+'</td>'
+            + '<td style="padding:3px 6px;text-align:right">'+s.m+'</td>'
+            + '<td style="padding:3px 6px;text-align:right">'+s.w+'</td>'
+            + '<td style="padding:3px 6px;text-align:right">'+s.l+'</td>'
+            + '<td style="padding:3px 6px;text-align:right;'+(s.gd>0?'color:#27AE60':s.gd<0?'color:#E74C3C':'')+'">'+(s.gd>0?'+':'')+s.gd+'</td>'
+            + '<td style="padding:3px 6px;text-align:right">'+s.gw+'</td>'
+            + '<td style="padding:3px 0 3px 6px;text-align:right;'+(s.tbsaldo>0?'color:#27AE60':s.tbsaldo<0?'color:#E74C3C':'')+'">'+(s.tbsaldo>0?'+':'')+s.tbsaldo+'</td>'
             + '</tr>').join('')
-        + '</table>';
+        + '</table></div>';
 
       if (standings.tieAtCutoff) {
         const ta = standings.tieAtCutoff[0], tb2 = standings.tieAtCutoff[1];
