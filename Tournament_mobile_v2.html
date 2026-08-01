@@ -1288,14 +1288,29 @@ function reconstructTournamentFromBackend(row, matchRows) {
       phases[pIdx].groups[gIdx] = [...teamA, ...teamB];
     }
 
-    phases[pIdx].results[pIdx+'-'+gIdx+'-'+mi] = {
-      saved: true,
-      sa: parseInt(m.score_a, 10) || 0,
-      sb: parseInt(m.score_b, 10) || 0,
-      tb: m.tie_break === 'Sim',
-      tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
-      tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
-    };
+    // Só registra o resultado se a partida foi de fato jogada (saved_at
+    // preenchido). Linhas "esqueleto" (gravadas assim que a fase é
+    // formada, antes de qualquer placar real) têm saved_at vazio --
+    // servem só pra reconstruir a composição do grupo acima, nunca
+    // contam como partida jogada. Sem essa checagem, uma fase recém
+    // criada (grupos formados, zero placares) aparecia como "completa"
+    // com todo mundo 0x0, fazendo o torneio parecer encerrado antes da
+    // hora.
+    const hasSavedScore = !!(m.saved_at && String(m.saved_at).trim() !== '');
+    if (hasSavedScore) {
+      const key = pIdx+'-'+gIdx+'-'+mi;
+      const existing = phases[pIdx].results[key];
+      if (!existing || !existing.saved) {
+        phases[pIdx].results[key] = {
+          saved: true,
+          sa: parseInt(m.score_a, 10) || 0,
+          sb: parseInt(m.score_b, 10) || 0,
+          tb: m.tie_break === 'Sim',
+          tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
+          tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
+        };
+      }
+    }
   });
 
   if (phases.length) {
