@@ -43,6 +43,22 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .topbar-club{font-size:10px;color:#9ab0c8;}
 .topbar-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#1a8a45,#22a355);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:15px;color:#fff;flex-shrink:0;}
 .btn-out{background:#f4f7fc;border:1px solid #dde6f0;color:#5a7090;font-size:11px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
+.sub-modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:16px;}
+.sub-modal-overlay.show{display:flex;}
+.sub-modal-box{background:#fff;border-radius:18px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+.sub-modal-title{font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:4px;}
+.sub-modal-sub{font-size:11px;color:#9ab0c8;margin-bottom:18px;font-family:'DM Mono';}
+.sub-field{margin-bottom:14px;}
+.sub-field label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
+.sub-select{width:100%;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:9px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:10px 13px;outline:none;}
+.sub-select:focus{border-color:#C9933A;}
+.sub-divider{text-align:center;font-size:10px;color:#b0c4d8;margin:10px 0;font-family:'DM Mono';}
+.sub-actions{display:flex;gap:10px;margin-top:18px;}
+.sub-btn-confirm{flex:2;padding:12px;border-radius:10px;background:linear-gradient(135deg,#C9933A,#e0a840);border:none;color:#0a1628;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans';}
+.sub-btn-cancel{flex:1;padding:12px;border-radius:10px;background:#f0f5fb;border:none;color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans';}
+.sub-warning{background:#fffbf0;border:1px solid #e8c870;border-radius:8px;padding:9px 12px;font-size:11px;color:#865a10;margin-top:10px;display:none;}
+.btn-sub-group{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans';transition:all .15s;white-space:nowrap;}
+.btn-sub-group:hover{background:rgba(255,255,255,.3);}
 .btn-sync{background:linear-gradient(135deg,#1a8a45,#22a355);border:none;color:#fff;font-size:13px;font-weight:700;padding:0;width:38px;height:38px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(26,138,69,.35);transition:all .2s;position:relative;}
 .btn-sync:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(26,138,69,.45);}
 .btn-sync:active{transform:scale(.96);}
@@ -470,6 +486,43 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </button>
       <button class="btn-out" onclick="doLogout()">Sair</button>
 <div class="sync-toast" id="sync-toast"></div>
+
+<!-- SUBSTITUIÇÃO DE JOGADOR -->
+<div class="sub-modal-overlay" id="sub-modal" onclick="if(event.target===this)closeSubModal()">
+  <div class="sub-modal-box">
+    <div class="sub-modal-title">Substituir Jogador</div>
+    <div class="sub-modal-sub" id="sub-modal-context">Grupo — · Fase —</div>
+
+    <div class="sub-field">
+      <label>Fase</label>
+      <select class="sub-select" id="sub-phase-sel" onchange="renderSubGroupSel()"></select>
+    </div>
+    <div class="sub-field">
+      <label>Grupo</label>
+      <select class="sub-select" id="sub-group-sel" onchange="renderSubOutSel()"></select>
+    </div>
+    <div class="sub-field">
+      <label>Jogador que sai (no-show)</label>
+      <select class="sub-select" id="sub-out-sel"></select>
+    </div>
+    <div class="sub-field">
+      <label>Jogador que entra — da base de dados</label>
+      <select class="sub-select" id="sub-in-db" onchange="document.getElementById('sub-in-manual').value=''">
+        <option value="">— Selecionar da base —</option>
+      </select>
+    </div>
+    <div class="sub-divider">— ou —</div>
+    <div class="sub-field">
+      <label>Nome livre (se não estiver na base)</label>
+      <input class="sub-select" id="sub-in-manual" placeholder="Digite o nome..." oninput="document.getElementById('sub-in-db').value=''">
+    </div>
+    <div class="sub-warning" id="sub-warning"></div>
+    <div class="sub-actions">
+      <button class="sub-btn-cancel" onclick="closeSubModal()">Cancelar</button>
+      <button class="sub-btn-confirm" onclick="confirmSub()">✅ Confirmar Substituição</button>
+    </div>
+  </div>
+</div>
     </div>
   </div>
 
@@ -2596,13 +2649,17 @@ function renderRounds() {
       const allSaved = matches.every((_,mi) => ph.results[phIdx+'-'+gi+'-'+mi]?.saved);
       const standings = groupStandings(group, phIdx, gi);
 
+      const phaseComplete = T.phases[phIdx]?.complete || false;
       html += '<div class="round-card">'
         + '<div class="round-hd">'
         + '<div style="display:flex;align-items:center;gap:10px">'
         + '<div style="width:32px;height:32px;border-radius:8px;background:'+color+';display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\';font-size:18px;color:#C9933A">'+letter+'</div>'
         + '<div><div class="round-label">Grupo '+letter+'</div><div style="font-size:10px;color:#9ab0c8">'+group.join(' . ')+'</div></div>'
         + '</div>'
-        + '<div class="round-status '+(allSaved?'done':'')+'">'+(allSaved?'Concluido':'3 partidas . max '+getPhaseConfig(phIdx).maxScore)+'</div>'
+        + '<div style="display:flex;align-items:center;gap:8px">'
+        + (!phaseComplete && !T.finalized ? '<button class="btn-sub-group" style="background:'+color+'" onclick="openSubModal('+phIdx+','+gi+')">🔄 Sub</button>' : '')
+        + '<div class="round-status '+(allSaved?'done':'')+'">'+(allSaved?'Concluido':'max '+getPhaseConfig(phIdx).maxScore)+'</div>'
+        + '</div>'
         + '</div>';
 
       const mOrder = getMatchOrder(phIdx, gi);
@@ -3190,6 +3247,168 @@ window.fetchAndOpenTournament = async function(tid) {
   return ok;
 };
 setTimeout(_updateSyncBtnVisibility, 1200);
+
+
+// ══════════════════════════════════════════════════════════════════
+// SUBSTITUIÇÃO DE JOGADOR EM GRUPO
+// Permite trocar um jogador por no-show em qualquer grupo/fase
+// que ainda não esteja concluída. Atualiza T local, localStorage
+// e re-grava todas as partidas do grupo no banco (skeletons + saves).
+// ══════════════════════════════════════════════════════════════════
+function openSubModal(phaseIdx, groupIdx) {
+  const modal = document.getElementById('sub-modal');
+  if (!modal || !T.started) return;
+
+  // Populate phase selector
+  const phSel = document.getElementById('sub-phase-sel');
+  phSel.innerHTML = T.phases.map((p,i) =>
+    '<option value="'+i+'"'+(i===phaseIdx?' selected':'')+'>'+p.name+'</option>'
+  ).join('');
+
+  renderSubGroupSel(phaseIdx, groupIdx);
+  renderSubInDB();
+
+  const ctx = document.getElementById('sub-modal-context');
+  if (ctx) ctx.textContent = T.phases[phaseIdx]?.name + ' · Grupo ' + GROUP_LETTERS[groupIdx];
+
+  modal.classList.add('show');
+}
+
+function closeSubModal() {
+  const modal = document.getElementById('sub-modal');
+  if (modal) modal.classList.remove('show');
+  const w = document.getElementById('sub-warning');
+  if (w) w.style.display = 'none';
+}
+
+function renderSubGroupSel(phaseIdx, groupIdx) {
+  const phSel   = document.getElementById('sub-phase-sel');
+  const grpSel  = document.getElementById('sub-group-sel');
+  const pi      = phaseIdx !== undefined ? phaseIdx : parseInt(phSel.value);
+  const ph      = T.phases[pi];
+  if (!ph) return;
+  grpSel.innerHTML = ph.groups.map((g,i) =>
+    '<option value="'+i+'"'+(i===(groupIdx||0)?' selected':'')+'>'
+    + 'Grupo ' + GROUP_LETTERS[i] + ' — ' + g.join(', ')
+    + '</option>'
+  ).join('');
+  renderSubOutSel();
+}
+
+function renderSubOutSel() {
+  const pi     = parseInt(document.getElementById('sub-phase-sel').value);
+  const gi     = parseInt(document.getElementById('sub-group-sel').value);
+  const group  = T.phases[pi]?.groups[gi] || [];
+  const outSel = document.getElementById('sub-out-sel');
+  outSel.innerHTML = '<option value="">— Selecionar —</option>'
+    + group.map(p => '<option value="'+p+'">'+p+'</option>').join('');
+}
+
+function renderSubInDB() {
+  const inSel = document.getElementById('sub-in-db');
+  const allInTournament = new Set(T.players);
+  // Show registry players NOT already in tournament, plus all registry
+  const opts = REGISTRY
+    .map(r => ({ id: r.id, name: (r.nome||'') + (r.sobrenome?' '+r.sobrenome:''), nick: r.nickname||'' }))
+    .filter(r => r.name.trim())
+    .sort((a,b) => a.name.localeCompare(b.name));
+  inSel.innerHTML = '<option value="">— Selecionar da base —</option>'
+    + opts.map(r => {
+        const inUse = allInTournament.has(r.name);
+        return '<option value="'+r.name+'"'+(inUse?' style="color:#b0c4d8"':'')+'>'+r.name+(inUse?' (já no torneio)':'')+'</option>';
+      }).join('');
+}
+
+async function confirmSub() {
+  const pi      = parseInt(document.getElementById('sub-phase-sel').value);
+  const gi      = parseInt(document.getElementById('sub-group-sel').value);
+  const outP    = document.getElementById('sub-out-sel').value.trim();
+  const inDB    = document.getElementById('sub-in-db').value.trim();
+  const inMan   = document.getElementById('sub-in-manual').value.trim();
+  const inP     = inDB || inMan;
+  const warn    = document.getElementById('sub-warning');
+
+  const showWarn = msg => { warn.textContent = msg; warn.style.display='block'; };
+
+  if (!outP)      { showWarn('Selecione o jogador que sai.'); return; }
+  if (!inP)       { showWarn('Selecione ou digite o jogador que entra.'); return; }
+  if (outP===inP) { showWarn('Os dois jogadores são iguais.'); return; }
+
+  const group = T.phases[pi]?.groups[gi];
+  if (!group) { showWarn('Grupo não encontrado.'); return; }
+
+  const idx = group.indexOf(outP);
+  if (idx === -1) { showWarn(outP+' não encontrado neste grupo.'); return; }
+
+  // ── Aplica substituição no estado T ──
+  group[idx] = inP;
+
+  // Atualiza T.players
+  const pIdx = T.players.indexOf(outP);
+  if (pIdx !== -1) T.players[pIdx] = inP;
+  else T.players.push(inP);
+
+  // Atualiza selectedPlayers
+  const spIdx = selectedPlayers.indexOf(outP);
+  if (spIdx !== -1) selectedPlayers[spIdx] = inP;
+
+  // Atualiza seeds
+  const sIdx = seedList.indexOf(outP);
+  if (sIdx !== -1) seedList[sIdx] = inP;
+
+  // Atualiza T_groups se for Fase 1
+  if (pi === 0 && T_groups[gi]) {
+    const tgIdx = T_groups[gi].indexOf(outP);
+    if (tgIdx !== -1) T_groups[gi][tgIdx] = inP;
+  }
+
+  // Atualiza resultados salvos que referenciam o jogador sainte
+  // (os resultados guardam só scores, não nomes — não há nada a mudar em T.phases[pi].results)
+
+  persistT();
+
+  // ── Re-grava todos os confrontos deste grupo no banco ──
+  // (skeletons e resultados já salvos, com os nomes corretos)
+  const ph      = T.phases[pi];
+  const matches = groupMatches(group);
+  const isFinal = pi === (T.numFases||3)-1;
+  const grpLetter = isFinal ? 'Z' : GROUP_LETTERS[gi];
+  const now = new Date().toISOString();
+
+  const upserts = matches.map((match, mi) => {
+    const key = pi+'-'+gi+'-'+mi;
+    const res = ph.results[key];
+    const hasSaved = res?.saved;
+    return PadelEyeDB.upsertPartida({
+      match_id:            T.id+'-'+key,
+      tournament_id:       T.id,
+      phase:               ph.name,
+      group:               grpLetter,
+      team_a:              (match.a||[]).filter(Boolean).join(' / '),
+      score_a:             hasSaved ? res.sa : '',
+      score_b:             hasSaved ? res.sb : '',
+      team_b:              (match.b||[]).filter(Boolean).join(' / '),
+      winner_team:         hasSaved ? (res.sa>res.sb?(match.a||[]).join(' / '):(match.b||[]).join(' / ')) : '',
+      match_serial_number: mi+1,
+      tie_break:           hasSaved ? (res.tb?'Sim':'Nao') : '',
+      tb_a:                hasSaved ? (res.tba??'') : '',
+      tb_b:                hasSaved ? (res.tbb??'') : '',
+      saved_at:            hasSaved ? now : '',
+      created_at:          now,
+    });
+  });
+
+  closeSubModal();
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
+
+  try {
+    await Promise.all(upserts);
+    _showSyncToast('✓ '+outP+' → '+inP+' · DB atualizado', true);
+  } catch(e) {
+    _showSyncToast('Sub local ok · erro no DB: '+e.message.slice(0,30), false);
+    console.warn('[confirmSub] DB error:', e.message);
+  }
+}
 
 </script>
 </body>
