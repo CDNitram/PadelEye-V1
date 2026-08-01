@@ -43,29 +43,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .topbar-club{font-size:10px;color:#9ab0c8;}
 .topbar-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#1a8a45,#22a355);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:15px;color:#fff;flex-shrink:0;}
 .btn-out{background:#f4f7fc;border:1px solid #dde6f0;color:#5a7090;font-size:11px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
-.sub-modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:16px;}
-.sub-modal-overlay.show{display:flex;}
-.sub-modal-box{background:#fff;border-radius:18px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
-.sub-modal-title{font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:4px;}
-.sub-modal-sub{font-size:11px;color:#9ab0c8;margin-bottom:18px;font-family:'DM Mono';}
-.sub-field{margin-bottom:14px;}
-.sub-field label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
-.sub-select{width:100%;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:9px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:10px 13px;outline:none;}
-.sub-select:focus{border-color:#C9933A;}
-.sub-divider{text-align:center;font-size:10px;color:#b0c4d8;margin:10px 0;font-family:'DM Mono';}
-.sub-actions{display:flex;gap:10px;margin-top:18px;}
-.sub-btn-confirm{flex:2;padding:12px;border-radius:10px;background:linear-gradient(135deg,#C9933A,#e0a840);border:none;color:#0a1628;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans';}
-.sub-btn-cancel{flex:1;padding:12px;border-radius:10px;background:#f0f5fb;border:none;color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans';}
-.sub-warning{background:#fffbf0;border:1px solid #e8c870;border-radius:8px;padding:9px 12px;font-size:11px;color:#865a10;margin-top:10px;display:none;}
-.btn-sub-group{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans';transition:all .15s;white-space:nowrap;}
-.btn-sub-group:hover{background:rgba(255,255,255,.3);}
-.btn-sync{background:linear-gradient(135deg,#1a8a45,#22a355);border:none;color:#fff;font-size:13px;font-weight:700;padding:0;width:38px;height:38px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(26,138,69,.35);transition:all .2s;position:relative;}
-.btn-sync:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(26,138,69,.45);}
-.btn-sync:active{transform:scale(.96);}
-.btn-sync.spinning svg{animation:spin360 .7s linear infinite;}
-@keyframes spin360{to{transform:rotate(360deg)}}
-.sync-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0a1628;color:#fff;font-family:'DM Sans';font-size:13px;font-weight:600;padding:10px 20px;border-radius:99px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
-.sync-toast.show{opacity:1;}
 .btn-out:hover{background:#eaf0f8;}
 .mob-menu-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid #dde6f0;background:#f4f7fc;cursor:pointer;flex-shrink:0;}
 .mob-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(10,22,40,.4);z-index:350;opacity:0;pointer-events:none;transition:opacity .25s ease;}
@@ -105,6 +82,29 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tb-link-btn:hover{background:#eaf3ff;}
 .btn-cancel-trn{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#c0392b;font-size:11px;font-weight:700;padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'DM Sans';display:none;}
 .btn-cancel-trn:hover{background:rgba(231,76,60,.22);}
+.sub-modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:16px;}
+.sub-modal-overlay.show{display:flex;}
+.sub-modal-box{background:#fff;border-radius:18px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+.sub-modal-title{font-family:'Bebas Neue';font-size:22px;color:#0a1628;letter-spacing:1px;margin-bottom:4px;}
+.sub-modal-sub{font-size:11px;color:#9ab0c8;margin-bottom:18px;font-family:'DM Mono';}
+.sub-field{margin-bottom:14px;}
+.sub-field label{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;display:block;margin-bottom:5px;}
+.sub-select{width:100%;background:#f4f7fc;border:1.5px solid #dde6f0;border-radius:9px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:10px 13px;outline:none;}
+.sub-select:focus{border-color:#C9933A;}
+.sub-divider{text-align:center;font-size:10px;color:#b0c4d8;margin:10px 0;font-family:'DM Mono';}
+.sub-actions{display:flex;gap:10px;margin-top:18px;}
+.sub-btn-confirm{flex:2;padding:12px;border-radius:10px;background:linear-gradient(135deg,#C9933A,#e0a840);border:none;color:#0a1628;font-size:14px;font-weight:700;cursor:pointer;font-family:'DM Sans';}
+.sub-btn-cancel{flex:1;padding:12px;border-radius:10px;background:#f0f5fb;border:none;color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans';}
+.sub-warning{background:#fffbf0;border:1px solid #e8c870;border-radius:8px;padding:9px 12px;font-size:11px;color:#865a10;margin-top:10px;display:none;}
+.btn-sub-group{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;font-size:10px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'DM Sans';transition:all .15s;white-space:nowrap;}
+.btn-sub-group:hover{background:rgba(255,255,255,.3);}
+.btn-sync{background:linear-gradient(135deg,#1a8a45,#22a355);border:none;color:#fff;font-size:13px;font-weight:700;padding:0;width:38px;height:38px;border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(26,138,69,.35);transition:all .2s;position:relative;}
+.btn-sync:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(26,138,69,.45);}
+.btn-sync:active{transform:scale(.96);}
+.btn-sync.spinning svg{animation:spin360 .7s linear infinite;}
+@keyframes spin360{to{transform:rotate(360deg)}}
+.sync-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0a1628;color:#fff;font-family:'DM Sans';font-size:13px;font-weight:600;padding:10px 20px;border-radius:99px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;}
+.sync-toast.show{opacity:1;}
 .torneio-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #dde6f0;border-radius:10px;margin-bottom:8px;background:#f8fafd;}
 .torneio-row-info{flex:1;min-width:0;}
 .torneio-row-name{font-size:13px;font-weight:700;color:#0d1e3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -486,11 +486,13 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </button>
       <button class="btn-out" onclick="doLogout()">Sair</button>
 <div class="sync-toast" id="sync-toast"></div>
+    </div>
+  </div>
 
-<!-- SUBSTITUIÇÃO DE JOGADOR -->
+<!-- SUBSTITUIÇÃO DE JOGADOR (no-show) -->
 <div class="sub-modal-overlay" id="sub-modal" onclick="if(event.target===this)closeSubModal()">
   <div class="sub-modal-box">
-    <div class="sub-modal-title">Substituir Jogador</div>
+    <div class="sub-modal-title">🚫 No-Show · Substituição</div>
     <div class="sub-modal-sub" id="sub-modal-context">Grupo — · Fase —</div>
 
     <div class="sub-field">
@@ -502,30 +504,62 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <select class="sub-select" id="sub-group-sel" onchange="renderSubOutSel()"></select>
     </div>
     <div class="sub-field">
-      <label>Jogador que sai (no-show)</label>
+      <label>Jogador que deu no-show</label>
       <select class="sub-select" id="sub-out-sel"></select>
     </div>
-    <div class="sub-field">
-      <label>Jogador que entra — da base de dados</label>
-      <select class="sub-select" id="sub-in-db" onchange="document.getElementById('sub-in-manual').value=''">
-        <option value="">— Selecionar da base —</option>
-      </select>
+
+    <div style="margin:16px 0 14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;margin-bottom:10px">Quem entra no lugar?</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div id="mode-card-db" onclick="setSubMode('db')" style="border:2px solid #C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0);border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:22px;margin-bottom:6px">👤</div>
+          <div style="font-size:12px;font-weight:700;color:#865a10">Da base de dados</div>
+          <div style="font-size:10px;color:#b0a080;margin-top:3px">Jogador externo cadastrado</div>
+        </div>
+        <div id="mode-card-trn" onclick="setSubMode('trn')" style="border:2px solid #dde6f0;background:#f8fafd;border-radius:12px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .15s">
+          <div style="font-size:22px;margin-bottom:6px">🔄</div>
+          <div style="font-size:12px;font-weight:700;color:#0d1e3a">Eliminado de outro grupo</div>
+          <div style="font-size:10px;color:#9ab0c8;margin-top:3px">Joga esse grupo do zero</div>
+        </div>
+      </div>
     </div>
-    <div class="sub-divider">— ou —</div>
-    <div class="sub-field">
-      <label>Nome livre (se não estiver na base)</label>
-      <input class="sub-select" id="sub-in-manual" placeholder="Digite o nome..." oninput="document.getElementById('sub-in-db').value=''">
+
+    <div id="sub-mode-db">
+      <div class="sub-field">
+        <label>Jogador da base</label>
+        <select class="sub-select" id="sub-in-db" onchange="document.getElementById('sub-in-manual').value=''">
+          <option value="">— Selecionar —</option>
+        </select>
+      </div>
+      <div class="sub-divider">— ou nome livre —</div>
+      <div class="sub-field">
+        <label>Nome livre</label>
+        <input class="sub-select" id="sub-in-manual" placeholder="Digite o nome..." oninput="document.getElementById('sub-in-db').value=''">
+      </div>
+      <div style="background:#f0f5fb;border:1px solid #dde6f0;border-radius:8px;padding:10px 12px;font-size:11px;color:#5a7090;margin-top:4px">
+        ℹ️ Se o grupo <strong>ainda não tem nenhuma partida jogada</strong> (no-show desde o início), quem entra começa do zero. Se o grupo <strong>já tem partida(s) jogada(s)</strong> (jogador abandonou no meio), o placar já registrado é mantido e passa a valer pra quem entra — só as partidas que ainda faltam ficam em aberto.
+      </div>
     </div>
+
+    <div id="sub-mode-trn" style="display:none">
+      <div class="sub-field">
+        <label>Jogador do torneio que entra</label>
+        <select class="sub-select" id="sub-in-trn">
+          <option value="">— Selecionar —</option>
+        </select>
+      </div>
+      <div style="background:#EBF4FF;border:1px solid #bee3f8;border-radius:8px;padding:10px 12px;font-size:11px;color:#1a5276;margin-top:4px">
+        ℹ️ Este jogador já foi eliminado do grupo original — o histórico de lá <strong>não é apagado</strong> (fica registrado como aconteceu), mas <strong>só o desempenho neste grupo novo</strong> conta pro avanço e pro ranking do torneio. Ele joga as 3 partidas daqui do zero.
+      </div>
+    </div>
+
     <div class="sub-warning" id="sub-warning"></div>
     <div class="sub-actions">
       <button class="sub-btn-cancel" onclick="closeSubModal()">Cancelar</button>
-      <button class="sub-btn-confirm" onclick="confirmSub()">✅ Confirmar Substituição</button>
+      <button class="sub-btn-confirm" onclick="confirmSub()">✅ Confirmar</button>
     </div>
   </div>
 </div>
-    </div>
-  </div>
-
 
   <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
 
@@ -789,8 +823,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
 
         <div class="card">
-          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div></div>
-          <div id="meus-torneios-local-list"></div>
+          <div class="card-hd">
+            <div class="card-title">Todos os Torneios no Banco de Dados</div>
+            <button class="db-btn" onclick="listAllTournamentsFromBackend()">🔄 Atualizar</button>
+          </div>
+          <div id="meus-torneios-backend-list"><div style="font-size:11px;color:#b0c4d8">Carregando os torneios mais recentes...</div></div>
         </div>
 
         <div class="card">
@@ -804,11 +841,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
 
         <div class="card">
-          <div class="card-hd">
-            <div class="card-title">Todos os Torneios no Banco de Dados</div>
-            <button class="db-btn" onclick="listAllTournamentsFromBackend()">🔄 Listar Todos</button>
-          </div>
-          <div id="meus-torneios-backend-list"><div style="font-size:11px;color:#b0c4d8">Clique em "Listar Todos" pra buscar.</div></div>
+          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div></div>
+          <div id="meus-torneios-local-list"></div>
         </div>
       </div>
 
@@ -1041,6 +1075,7 @@ function refreshStepNav() {
   }
   refreshCancelButton();
   updateLockBanners();
+  _updateSyncBtnVisibility();
   renderStep1Gate();
 }
 function renderStep1Gate() {
@@ -1205,55 +1240,62 @@ function reconstructTournamentFromBackend(row, matchRows) {
     T2.players = [...set];
   }
 
-  // Dedup: se a mesma partida tiver linha skeleton (saved_at vazio) E linha
-  // com resultado real (saved_at preenchido), prefere sempre a real.
-  // Isso protege contra skeletons inseridos depois de resultados já gravados,
-  // que de outra forma sobrescreveriam os placares corretos durante a reconstrução.
-  const _dedupRows = {};
-  matchRows.forEach(r => {
-    const k = (r.phase||'') + '|' + (r.group||'') + '|' + (r.match_serial_number||'');
-    const hasSaved = !!(r.saved_at && String(r.saved_at).trim() !== '');
-    const prevHasSaved = !!(_dedupRows[k]?.saved_at && String(_dedupRows[k].saved_at).trim() !== '');
-    if (!_dedupRows[k] || (hasSaved && !prevHasSaved)) _dedupRows[k] = r;
-  });
-  const _matchRows = Object.values(_dedupRows);
+  function phaseNameForIndex(idx) {
+    if (idx === 0) return 'Fase 1';
+    if (idx === T2.numFases - 1) return 'Final';
+    return 'Fase ' + (idx + 1);
+  }
 
-  // Reconstrói fases/grupos/resultados a partir das partidas (dedupadas).
+  // Fonte principal da estrutura de fases/grupos: groups_json. O app manda
+  // isso pro banco toda vez que uma fase é criada (sorteio da Etapa 3 ou
+  // avanço de fase), mesmo ANTES de qualquer placar ser salvo -- garante
+  // que outro aparelho sempre veja os grupos mais atuais, e não só o que
+  // já tem resultado registrado (essa era a causa do estado "atrasado").
+  let groupsData = [];
+  try { groupsData = JSON.parse(row.groups_json || '[]'); } catch(e) { groupsData = []; }
+
+  let phases = [];
+  if (groupsData && groupsData.length) {
+    phases = groupsData.map((groups, idx) => ({
+      name: phaseNameForIndex(idx), groups: (groups||[]).map(g=>[...g]), results: {}, complete: false
+    }));
+  }
+
+  // Overlay: preenche os placares reais de cada partida já salva, por
+  // cima do esqueleto de fases/grupos acima. Se groups_json estiver
+  // vazio (torneio salvo antes dessa versão), deriva a estrutura só a
+  // partir das próprias partidas, como fallback.
   // Fase Final é gravada com group='Z' na planilha -- cai no fallback
-  // gIdx=0 abaixo, que é sempre correto pra ela (1 grupo só).
-  const phases = [];
+  // gIdx=0, que é sempre correto pra ela (1 grupo só).
   const phaseIndexByName = {};
-  _matchRows.forEach(m => {
+  phases.forEach((p,i) => { phaseIndexByName[p.name] = i; });
+
+  matchRows.forEach(m => {
     const phaseName = m.phase || 'Fase 1';
-    if (!(phaseName in phaseIndexByName)) {
-      phaseIndexByName[phaseName] = phases.length;
+    let pIdx = phaseIndexByName[phaseName];
+    if (pIdx === undefined) {
+      pIdx = phases.length;
+      phaseIndexByName[phaseName] = pIdx;
       phases.push({ name: phaseName, groups: [], results: {}, complete: false });
     }
-    const pIdx = phaseIndexByName[phaseName];
     let gIdx = GROUP_LETTERS.indexOf(m.group);
     if (gIdx < 0) gIdx = 0;
     const mi = (parseInt(m.match_serial_number, 10) || 1) - 1;
 
-    if (!phases[pIdx].groups[gIdx]) {
+    if (!phases[pIdx].groups[gIdx] || !phases[pIdx].groups[gIdx].length) {
       const teamA = (m.team_a||'').split(' / ').map(s=>s.trim()).filter(Boolean);
       const teamB = (m.team_b||'').split(' / ').map(s=>s.trim()).filter(Boolean);
       phases[pIdx].groups[gIdx] = [...teamA, ...teamB];
     }
 
-    // Só registra resultado se a partida foi de facto salva (saved_at preenchido).
-    // Skeleton matches (saved_at='') existem apenas pra reconstruir grupos —
-    // não são resultados; deixá-los como saved quebraria a renderização das Rodadas.
-    const _hasSavedScore = !!(m.saved_at && String(m.saved_at).trim() !== '');
-    if (_hasSavedScore) {
-      phases[pIdx].results[pIdx+'-'+gIdx+'-'+mi] = {
-        saved: true,
-        sa: parseInt(m.score_a, 10) || 0,
-        sb: parseInt(m.score_b, 10) || 0,
-        tb: m.tie_break === 'Sim',
-        tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
-        tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
-      };
-    }
+    phases[pIdx].results[pIdx+'-'+gIdx+'-'+mi] = {
+      saved: true,
+      sa: parseInt(m.score_a, 10) || 0,
+      sb: parseInt(m.score_b, 10) || 0,
+      tb: m.tie_break === 'Sim',
+      tba: (m.tb_a !== '' && m.tb_a != null) ? parseInt(m.tb_a, 10) : null,
+      tbb: (m.tb_b !== '' && m.tb_b != null) ? parseInt(m.tb_b, 10) : null,
+    };
   });
 
   if (phases.length) {
@@ -1263,7 +1305,7 @@ function reconstructTournamentFromBackend(row, matchRows) {
     T2.phases = phases;
     let cur = phases.length - 1;
     for (let i=0;i<phases.length;i++) {
-      const allDone = phases[i].groups.every((g,gi) => groupMatches(g).every((_,mi2) => phases[i].results[i+'-'+gi+'-'+mi2]?.saved));
+      const allDone = phases[i].groups.length > 0 && phases[i].groups.every((g,gi) => groupMatches(g).every((_,mi2) => phases[i].results[i+'-'+gi+'-'+mi2]?.saved));
       if (!allDone) { cur = i; break; }
     }
     T2.currentPhase = cur;
@@ -1333,8 +1375,7 @@ function showMeusTorneios() {
   if (panel) panel.classList.add('on');
   closeMobMenu();
   renderMeusTorneiosLocal();
-  const backendEl = document.getElementById('meus-torneios-backend-list');
-  if (backendEl) backendEl.innerHTML = '<div style="font-size:11px;color:#b0c4d8">Clique em "Listar Todos" pra buscar.</div>';
+  listAllTournamentsFromBackend(10);
   const searchEl = document.getElementById('search-tid-result');
   if (searchEl) searchEl.innerHTML = '';
 }
@@ -1366,16 +1407,19 @@ async function searchTournamentById() {
     + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+tid.replace(/'/g,"\\'")+'\')">Abrir</button>'
     + '</div>';
 }
-async function listAllTournamentsFromBackend() {
+async function listAllTournamentsFromBackend(limit) {
   const el = document.getElementById('meus-torneios-backend-list');
   el.innerHTML = '<div style="font-size:12px;color:#9ab0c8">Buscando no banco de dados...</div>';
   const res = await PadelEyeDB.send('get_tournaments', {});
   if (!res || !res.ok) { el.innerHTML = '<div class="alert err" style="display:block">Erro ao buscar torneios no banco.</div>'; return; }
-  const rows = (res.rows||[]).slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
-  el.innerHTML = rows.length ? rows.map(r => '<div class="torneio-row">'
+  const allRows = (res.rows||[]).slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  const rows = limit ? allRows.slice(0, limit) : allRows;
+  const hasMore = !!limit && allRows.length > limit;
+  el.innerHTML = (rows.length ? rows.map(r => '<div class="torneio-row">'
       + '<div class="torneio-row-info"><div class="torneio-row-name">'+(r.tournament_name||'Sem nome')+'</div><div class="torneio-row-meta">'+tournamentDisplayId(r.tournament_id,r.date,r.tournament_category)+'</div></div>'
       + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(r.tournament_id).replace(/'/g,"\\'")+'\')">Abrir</button>'
-      + '</div>').join('') : '<div style="font-size:12px;color:#b0c4d8">Nenhum torneio encontrado no banco.</div>';
+      + '</div>').join('') : '<div style="font-size:12px;color:#b0c4d8">Nenhum torneio encontrado no banco.</div>')
+    + (hasMore ? '<button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="listAllTournamentsFromBackend()">Carregar todos ('+allRows.length+' no total)</button>' : '');
 }
 
 function normStr(s) { return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase(); }
@@ -2151,65 +2195,19 @@ function finalizeLaunch() {
       advance_per_group: T.phaseConfig[0].advancePerGroup, wildcards: T.phaseConfig[0].wildcards,
       num_phases: T.numFases, tournament_category: T.categoria, status: 'Em Curso',
       players_json: JSON.stringify(T.players), seeds_json: JSON.stringify(T.seeds),
-      phase_config_json: JSON.stringify(T.phaseConfig), created_at: new Date().toISOString(),
+      phase_config_json: JSON.stringify(T.phaseConfig), groups_json: JSON.stringify(T.phases.map(p=>p.groups)),
+      created_at: new Date().toISOString(),
     }}).catch(e => console.warn('[finalizeLaunch]', e.message));
+    _persistPhaseSkeletons(0);
+    _updateSyncBtnVisibility();
   }
 
   try { renderRounds(); } catch(e) { console.warn('[finalizeLaunch] renderRounds:', e.message); }
   try { renderRanking(); } catch(e) { console.warn('[finalizeLaunch] renderRanking:', e.message); }
   try { renderHistorico(); } catch(e) { console.warn('[finalizeLaunch] renderHistorico:', e.message); }
 
-  // ── Persist group structure to DB immediately (skeleton matches) ──
-  // Outros dispositivos só conseguem reconstruir os grupos se as
-  // partidas existirem na tabela Matches_Tournaments — mesmo sem
-  // placares. Gravamos todos os confrontos da Fase 1 agora, com
-  // scores vazios, para que fetchAndOpenTournament reconstrua
-  // corretamente grupos e fase em qualquer aparelho.
-  _persistPhaseSkeletons(0);
-
   safeAlert('Torneio iniciado! Fase 1 pronta para os jogos.', 'ok');
   goToStep(4);
-}
-
-// ── Grava os confrontos de uma fase como "skeleton matches" no banco ──
-// Skeleton = partida com equipes definidas mas sem placar ainda.
-// Permite que qualquer dispositivo reconstrua grupos e fases mesmo
-// antes de qualquer resultado ser registrado.
-function _persistPhaseSkeletons(phaseIdx) {
-  const ph = T.phases[phaseIdx];
-  if (!ph || !T.id) return;
-  // Se já existem resultados desta fase no T local, os skeletons já
-  // foram enviados anteriormente — não duplicar.
-  if (Object.keys(ph.results||{}).length > 0) return;
-  const isFinal = phaseIdx === (T.numFases||3)-1;
-  const rows = [];
-  const now  = new Date().toISOString();
-  ph.groups.forEach((group, gi) => {
-    const grpLetter = isFinal ? 'Z' : GROUP_LETTERS[gi];
-    groupMatches(group).forEach((match, mi) => {
-      rows.push({
-        match_id:            T.id+'-'+phaseIdx+'-'+gi+'-'+mi,
-        tournament_id:       T.id,
-        phase:               ph.name,
-        group:               grpLetter,
-        team_a:              (match.a||[]).filter(Boolean).join(' / '),
-        score_a:             '',
-        score_b:             '',
-        team_b:              (match.b||[]).filter(Boolean).join(' / '),
-        winner_team:         '',
-        match_serial_number: mi + 1,
-        tie_break:           '',
-        tb_a:                '',
-        tb_b:                '',
-        saved_at:            '',          // vazio = skeleton, não é resultado salvo
-        created_at:          now,
-      });
-    });
-  });
-  if (rows.length) {
-    PadelEyeDB.send('insert_matches', { rows })
-      .catch(e => console.warn('[_persistPhaseSkeletons] phase '+phaseIdx+':', e.message));
-  }
 }
 
 function getPhaseConfig(phaseIdx) {
@@ -2324,24 +2322,40 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const totalGroupMatches = 3;
   const allSaved = Array.from({length:totalGroupMatches},(_,mi) => phase.results?.[phaseIdx+'-'+groupIdx+'-'+mi]?.saved===true).every(Boolean);
 
-  let tieAtCutoff = null;
-  if (allSaved) {
+  // Encontra o GRUPO COMPLETO de empatados (pode ser 2, 3 ou mais jogadores,
+  // não só um par) -- buckets são sempre contíguos por construção, então
+  // basta filtrar todo mundo que compartilha o bucket do primeiro empate
+  // encontrado.
+  function findTieGroup() {
     if (isLastPhase) {
-      for (let i=0;i<sorted.length-1;i++) if (sorted[i]._bucket===sorted[i+1]._bucket) { tieAtCutoff=[sorted[i].name,sorted[i+1].name,i]; break; }
-    } else if (sorted.length > cutoff) {
-      const p1=sorted[cutoff-1], p2=sorted[cutoff];
-      if (p1._bucket===p2._bucket) tieAtCutoff = [p1.name,p2.name,cutoff-1];
+      for (let i=0;i<sorted.length;i++) {
+        const bucket = sorted[i]._bucket;
+        const grp = sorted.filter(s => s._bucket === bucket);
+        if (grp.length > 1) return { names: grp.map(s=>s.name), startIdx: i };
+      }
+      return null;
     }
+    if (sorted.length <= cutoff) return null;
+    const b1 = sorted[cutoff-1]._bucket, b2 = sorted[cutoff]._bucket;
+    if (b1 !== b2) return null;
+    const grp = sorted.filter(s => s._bucket === b1);
+    const startIdx = sorted.findIndex(s => s._bucket === b1);
+    return { names: grp.map(s=>s.name), startIdx };
   }
+
+  let tieGroup = allSaved ? findTieGroup() : null;
 
   const overrideKey = phaseIdx+'-'+groupIdx;
   const override = (T.tieOverrides||{})[overrideKey];
-  if (override && tieAtCutoff) {
-    const wi = sorted.findIndex(s=>s.name===override.winner), li = sorted.findIndex(s=>s.name===override.loser);
-    if (wi > li && wi!==-1 && li!==-1) { const arr = sorted.splice(wi,1); sorted.splice(li,0,arr[0]); }
-    tieAtCutoff = null;
+  if (override && override.order && tieGroup) {
+    const orderNames = override.order;
+    if (orderNames.length === tieGroup.names.length && orderNames.every(n => tieGroup.names.includes(n))) {
+      const reordered = orderNames.map(name => sorted.find(s => s.name === name));
+      for (let k=0;k<reordered.length;k++) sorted[tieGroup.startIdx+k] = reordered[k];
+    }
+    tieGroup = null;
   }
-  sorted.tieAtCutoff = tieAtCutoff;
+  sorted.tieGroup = tieGroup;
   sorted.isLastPhase = isLastPhase;
   return sorted;
 }
@@ -2355,15 +2369,29 @@ function resetTieMode(phIdx, gi) {
   if (T.tieOverrides) delete T.tieOverrides[phIdx+'-'+gi+'_mode'];
   renderRounds();
 }
-function chooseTieWinner(phIdx, gi, winner, loser) {
-  if (!T.tieOverrides) T.tieOverrides = {};
-  T.tieOverrides[phIdx+'-'+gi] = { winner, loser };
-  persistT();
-  renderRounds(); renderRanking(); refreshStepNav();
+let _tiePickProgress = null; // { key, order: [...nomes já escolhidos, do melhor pro pior] }
+function pickTieOrder(phIdx, gi, name) {
+  const key = phIdx+'-'+gi;
+  if (!_tiePickProgress || _tiePickProgress.key !== key) _tiePickProgress = { key, order: [] };
+  if (!_tiePickProgress.order.includes(name)) _tiePickProgress.order.push(name);
+  const standings = groupStandings(T.phases[phIdx].groups[gi], phIdx, gi);
+  const tieGroup = standings.tieGroup;
+  if (tieGroup && _tiePickProgress.order.length >= tieGroup.names.length) {
+    const order = [..._tiePickProgress.order];
+    _tiePickProgress = null;
+    if (!T.tieOverrides) T.tieOverrides = {};
+    T.tieOverrides[key] = { order };
+    persistT();
+    renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
+  } else {
+    renderRounds();
+  }
 }
 function resetTieOverride(phIdx, gi) {
   if (T.tieOverrides) delete T.tieOverrides[phIdx+'-'+gi];
-  renderRounds(); renderRanking(); refreshStepNav();
+  if (_tiePickProgress && _tiePickProgress.key === phIdx+'-'+gi) _tiePickProgress = null;
+  persistT();
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
 }
 
 // Compara duas partidas possiveis: menos conflitos primeiro, depois menos "acertos no campeao"
@@ -2479,11 +2507,16 @@ function advancePhase() {
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
   persistT();
-
-  // Persiste skeleton matches da nova fase para que outros dispositivos
-  // possam reconstruir grupos e confrontos antes de qualquer placar ser salvo.
-  _persistPhaseSkeletons(nextPhaseIdx);
-
+  if (T.id) {
+    PadelEyeDB.send('upsert_tournament', { row: {
+      tournament_id: T.id, tournament_name: T.name, date: T.date, venue: T.local || '',
+      tournament_format: 'Americano - Modelo Brasileiro', num_phases: T.numFases, tournament_category: T.categoria,
+      status: 'Em Curso', players_json: JSON.stringify(T.players), seeds_json: JSON.stringify(T.seeds),
+      phase_config_json: JSON.stringify(T.phaseConfig), groups_json: JSON.stringify(T.phases.map(p=>p.groups)),
+      created_at: new Date().toISOString(),
+    }}).catch(e => console.warn('[advancePhase]', e.message));
+    _persistPhaseSkeletons(nextPhaseIdx);
+  }
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
 }
 
@@ -2649,7 +2682,7 @@ function renderRounds() {
       const allSaved = matches.every((_,mi) => ph.results[phIdx+'-'+gi+'-'+mi]?.saved);
       const standings = groupStandings(group, phIdx, gi);
 
-      const phaseComplete = T.phases[phIdx]?.complete || false;
+      const phaseComplete2 = T.phases[phIdx]?.complete || false;
       html += '<div class="round-card">'
         + '<div class="round-hd">'
         + '<div style="display:flex;align-items:center;gap:10px">'
@@ -2657,8 +2690,8 @@ function renderRounds() {
         + '<div><div class="round-label">Grupo '+letter+'</div><div style="font-size:10px;color:#9ab0c8">'+group.join(' . ')+'</div></div>'
         + '</div>'
         + '<div style="display:flex;align-items:center;gap:8px">'
-        + (!phaseComplete && !T.finalized ? '<button class="btn-sub-group" style="background:'+color+'" onclick="openSubModal('+phIdx+','+gi+')">🔄 Sub</button>' : '')
-        + '<div class="round-status '+(allSaved?'done':'')+'">'+(allSaved?'Concluido':'max '+getPhaseConfig(phIdx).maxScore)+'</div>'
+        + (!phaseComplete2 && !T.finalized ? '<button class="btn-sub-group" style="background:'+color+'" onclick="openSubModal('+phIdx+','+gi+')">🔄 Sub</button>' : '')
+        + '<div class="round-status '+(allSaved?'done':'')+'">'+(allSaved?'Concluido':'3 partidas . max '+getPhaseConfig(phIdx).maxScore)+'</div>'
         + '</div>'
         + '</div>';
 
@@ -2747,20 +2780,23 @@ function renderRounds() {
             + '</tr>').join('')
         + '</table></div>';
 
-      if (standings.tieAtCutoff) {
-        const ta = standings.tieAtCutoff[0], tb2 = standings.tieAtCutoff[1];
+      if (standings.tieGroup) {
+        const tg = standings.tieGroup;
         const isFinal = standings.isLastPhase;
+        const key = phIdx+'-'+gi;
+        const progress = (_tiePickProgress && _tiePickProgress.key === key) ? _tiePickProgress.order : [];
+        const remaining = tg.names.filter(n => !progress.includes(n));
         html += '<div class="tie-banner">'
-          + '<div class="tie-banner-head">EMPATE - '+ta+' e '+tb2+'</div>'
+          + '<div class="tie-banner-head">EMPATE - '+tg.names.join(', ')+'</div>'
           + '<div class="tie-banner-body">'
-          + '<div style="font-size:11px;color:#5a3a00;margin-bottom:8px">Empatados em todos os criterios. O organizador decide quem '+(isFinal?'fica melhor colocado':'avanca')+'.</div>'
+          + '<div style="font-size:11px;color:#5a3a00;margin-bottom:8px">Empatados em todos os critérios. Clique nos jogadores '+(isFinal?'na ordem de colocação (1º primeiro)':'na ordem de prioridade pra avançar (1º primeiro)')+'.</div>'
+          + (progress.length ? '<div style="font-size:10px;color:#865a10;margin-bottom:8px;font-family:\'DM Mono\'">Ordem escolhida até agora: '+progress.map((n,i)=>(i+1)+'º '+n).join(' · ')+'</div>' : '')
           + '<div class="tie-pick-btns">'
-          + '<button class="tie-pick-btn" onclick="chooseTieWinner('+phIdx+','+gi+',\''+ta.replace(/'/g,"\\'")+'\',\''+tb2.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(ta)+'">'+_init(ta)+'</div>'+(isFinal?ta+' fica melhor':ta+' avanca')+'</button>'
-          + '<button class="tie-pick-btn" onclick="chooseTieWinner('+phIdx+','+gi+',\''+tb2.replace(/'/g,"\\'")+'\',\''+ta.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(tb2)+'">'+_init(tb2)+'</div>'+(isFinal?tb2+' fica melhor':tb2+' avanca')+'</button>'
+          + remaining.map(name => '<button class="tie-pick-btn" onclick="pickTieOrder('+phIdx+','+gi+',\''+name.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(name)+'">'+_init(name)+'</div>'+name+'</button>').join('')
           + '</div></div></div>';
       } else {
         const existingOverride = (T.tieOverrides||{})[phIdx+'-'+gi];
-        if (existingOverride) html += '<div class="tie-override-done">Escolha do organizador: <strong>'+existingOverride.winner+'</strong> '+(standings.isLastPhase?'fica em melhor posicao':'avanca')+'<button class="tie-reset-btn" onclick="resetTieOverride('+phIdx+','+gi+')">Refazer</button></div>';
+        if (existingOverride) html += '<div class="tie-override-done">Ordem escolhida pelo organizador: <strong>'+existingOverride.order.map((n,i)=>(i+1)+'º '+n).join(' · ')+'</strong><button class="tie-reset-btn" onclick="resetTieOverride('+phIdx+','+gi+')">Refazer</button></div>';
       }
       html += '</div></div>';
     });
@@ -2958,7 +2994,8 @@ const PadelEyeDB = (() => {
       venue:Tobj.local||'', tournament_format:'Americano - Modelo Brasileiro', group_number:numGrupos, players_per_group:jogPorGrupo,
       num_phases:Tobj.numFases||3, tournament_category:Tobj.categoria||'', status:'Finalizado',
       players_json: JSON.stringify(Tobj.players||[]), seeds_json: JSON.stringify(Tobj.seeds||[]),
-      phase_config_json: JSON.stringify(Tobj.phaseConfig||[]), created_at: now() };
+      phase_config_json: JSON.stringify(Tobj.phaseConfig||[]), groups_json: JSON.stringify((Tobj.phases||[]).map(p=>p.groups)),
+      created_at: now() };
   }
   function mapPartidas(Tobj, torneioId) {
     const rows = [];
@@ -3139,27 +3176,11 @@ function restoreT() {
 // Splash dismiss (adaptado de PadelEye_Americano_V40_Prod.html) — some tempo depois
 // direciona para a tela de login e, apos autenticar, para a Etapa 1 (ja garantido
 // pelo bootstrapTournamentState()).
-document.addEventListener('DOMContentLoaded', () => {
-  const _splash = document.getElementById('s-splash');
-  if (_splash) {
-    setTimeout(() => {
-      _splash.classList.add('splash-exit');
-      setTimeout(() => { _splash.style.display = 'none'; }, 480);
-    }, 2800);
-  }
-});
-document.addEventListener('click', (ev) => {
-  const pop = document.getElementById('tournament-switcher-pop');
-  if (!pop || !pop.classList.contains('show')) return;
-  const isSwitchBtn = ev.target.closest('.btn-switch-trn');
-  const isInsidePop = ev.target.closest('.switcher-popover');
-  if (!isSwitchBtn && !isInsidePop) pop.classList.remove('show');
-});
-
-// ── Sync Button: puxar estado mais recente do banco ───────────────
-// Botão verde circular na topbar — visível sempre que há torneio
-// aberto. Ao tocar, refaz fetchAndOpenTournament com dedup completo
-// e mostra toast de confirmação. Ideal para mobile sem console.
+// ══ SINCRONIZAÇÃO MANUAL (botão 🔄 no topbar) ══════════════════════
+// Complementa o groups_json: puxa o estado mais atual do banco pra
+// ESTE torneio já aberto na tela, sem precisar sair e voltar por
+// Meus Torneios. Útil quando outro organizador, em outro aparelho,
+// acabou de salvar algo e você quer ver na hora.
 function _showSyncToast(msg, ok) {
   const t = document.getElementById('sync-toast');
   if (!t) return;
@@ -3168,207 +3189,230 @@ function _showSyncToast(msg, ok) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
-
 async function syncFromDB() {
   const btn = document.getElementById('btn-sync-db');
   if (!btn) return;
-  if (!T || !T.id) {
-    _showSyncToast('Nenhum torneio aberto', false);
-    return;
-  }
+  if (!T || !T.id) { _showSyncToast('Nenhum torneio aberto', false); return; }
   btn.classList.add('spinning');
   btn.disabled = true;
-
   try {
     const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
-    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
-      _showSyncToast('Torneio não encontrado no banco', false);
-      return;
-    }
+    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) { _showSyncToast('Torneio não encontrado no banco', false); return; }
     const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: T.id });
-    const allRows = (mRes && mRes.ok && mRes.rows) ? mRes.rows : [];
+    const matchRows = (mRes && mRes.ok && mRes.rows) ? mRes.rows : [];
 
-    // Dedup: prefere linha com resultado real sobre skeleton
-    const byKey = {};
-    allRows.forEach(r => {
-      const k = (r.phase||'') + '|' + (r.group||'') + '|' + (r.match_serial_number||'');
-      const hasSaved = !!(r.saved_at && String(r.saved_at).trim() !== '');
-      const prevHasSaved = !!(byKey[k]?.saved_at && String(byKey[k]?.saved_at).trim() !== '');
-      if (!byKey[k] || (hasSaved && !prevHasSaved)) byKey[k] = r;
-    });
-    const dedupRows = Object.values(byKey);
-
-    const T2 = reconstructTournamentFromBackend(tRes.rows[0], dedupRows);
+    const T2 = reconstructTournamentFromBackend(tRes.rows[0], matchRows);
     T2.courts = T.courts || 2;
-
     Object.assign(T, T2);
-    T_groups = T.phases[0]?.groups?.map(g=>[...g]) || [];
+    T_groups = T.phases[T.currentPhase]?.groups?.map(g=>[...g]) || [];
     selectedPlayers = [...(T.players||[])];
     seedList        = [...(T.seeds||[])];
     persistT();
 
-    // Refresh view
     const step = getMaxStep();
     refreshStepNav();
     renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
     if (step >= 4) goToStep(4);
 
-    const savedCount = dedupRows.filter(r => r.saved_at && String(r.saved_at).trim() !== '').length;
+    const savedCount = Object.values(T.phases[T.currentPhase]?.results||{}).filter(r=>r.saved).length;
     const fase = T.phases[T.currentPhase]?.name || '—';
-    _showSyncToast('✓ Sincronizado · ' + savedCount + ' resultados · ' + fase, true);
-
+    _showSyncToast('✓ Sincronizado · '+savedCount+' resultados · '+fase, true);
   } catch(e) {
     console.warn('[syncFromDB]', e.message);
-    _showSyncToast('Erro: ' + e.message.slice(0,40), false);
+    _showSyncToast('Erro: '+e.message.slice(0,40), false);
   } finally {
     btn.classList.remove('spinning');
     btn.disabled = false;
   }
 }
-
-// Mostra/esconde o botão de sync conforme estado do torneio
 function _updateSyncBtnVisibility() {
   const btn = document.getElementById('btn-sync-db');
   if (!btn) return;
-  const show = !!(T && T.id && T.started);
-  btn.style.display = show ? 'flex' : 'none';
+  btn.style.display = (T && T.id && T.status==='open') ? 'flex' : 'none';
 }
 
-// Patcha goToStep e fetchAndOpenTournament para atualizar visibilidade
-const _origGoToStepSync = window.goToStep;
-window.goToStep = function(n, el) {
-  _origGoToStepSync && _origGoToStepSync(n, el);
-  _updateSyncBtnVisibility();
-};
-const _origFetchSync = window.fetchAndOpenTournament;
-window.fetchAndOpenTournament = async function(tid) {
-  const ok = await _origFetchSync(tid);
-  _updateSyncBtnVisibility();
-  return ok;
-};
-setTimeout(_updateSyncBtnVisibility, 1200);
+// ══ ESQUELETOS DE FASE ══════════════════════════════════════════════
+// Complementa o groups_json: grava também linhas vazias (sem placar)
+// pra cada partida da fase, direto na aba de partidas -- reforço extra
+// pra reconstrução funcionar mesmo se o campo groups_json não estiver
+// disponível por algum motivo. saveMatch()/upsertPartida() sobrescreve
+// essas linhas em cima quando o placar real é lançado.
+function _persistPhaseSkeletons(phaseIdx) {
+  const ph = T.phases[phaseIdx];
+  if (!ph || !T.id) return;
+  if (Object.keys(ph.results||{}).length > 0) return;
+  const isFinal = phaseIdx === (T.numFases||3)-1;
+  const rows = [];
+  const now  = new Date().toISOString();
+  ph.groups.forEach((group, gi) => {
+    const grpLetter = isFinal ? 'Z' : GROUP_LETTERS[gi];
+    groupMatches(group).forEach((match, mi) => {
+      rows.push({
+        match_id:            T.id+'-'+phaseIdx+'-'+gi+'-'+mi,
+        tournament_id:       T.id,
+        phase:               ph.name,
+        group:               grpLetter,
+        team_a:              (match.a||[]).filter(Boolean).join(' / '),
+        score_a:             '',
+        score_b:             '',
+        team_b:              (match.b||[]).filter(Boolean).join(' / '),
+        winner_team:         '',
+        match_serial_number: mi + 1,
+        tie_break:           '',
+        tb_a:                '',
+        tb_b:                '',
+        saved_at:            '',
+        created_at:          now,
+      });
+    });
+  });
+  if (rows.length) {
+    PadelEyeDB.send('insert_matches', { rows })
+      .catch(e => console.warn('[_persistPhaseSkeletons] phase '+phaseIdx+':', e.message));
+  }
+}
 
-
-// ══════════════════════════════════════════════════════════════════
-// SUBSTITUIÇÃO DE JOGADOR EM GRUPO
-// Permite trocar um jogador por no-show em qualquer grupo/fase
-// que ainda não esteja concluída. Atualiza T local, localStorage
-// e re-grava todas as partidas do grupo no banco (skeletons + saves).
-// ══════════════════════════════════════════════════════════════════
+// ══ SUBSTITUIÇÃO DE JOGADOR (no-show) ═══════════════════════════════
+// Regra: só cobre no-show desde o início do grupo (nenhuma partida
+// daquele grupo pode ter sido jogada de verdade sem os 4 presentes).
+// Modo "da base": jogador novo entra do zero.
+// Modo "eliminado de outro grupo": jogador que já não avançava do
+// grupo original é movido pra cá. O grupo original NÃO é alterado
+// (fica como realmente foi jogado); só o desempenho no grupo novo
+// conta pro avanço e ranking desse jogador.
+let _subMode = 'db';
+function setSubMode(mode) {
+  _subMode = mode;
+  const dbCard  = document.getElementById('mode-card-db');
+  const trnCard = document.getElementById('mode-card-trn');
+  const dbPane  = document.getElementById('sub-mode-db');
+  const trnPane = document.getElementById('sub-mode-trn');
+  const warn    = document.getElementById('sub-warning');
+  if (warn) warn.style.display = 'none';
+  if (mode === 'db') {
+    dbCard.style.borderColor  = '#C9933A'; dbCard.style.background  = 'linear-gradient(135deg,#fffbf0,#fff8e0)';
+    trnCard.style.borderColor = '#dde6f0'; trnCard.style.background = '#f8fafd';
+    dbPane.style.display  = 'block';
+    trnPane.style.display = 'none';
+  } else {
+    trnCard.style.borderColor = '#3a7bd5'; trnCard.style.background = 'linear-gradient(135deg,#eef4fb,#e8f0fb)';
+    dbCard.style.borderColor  = '#dde6f0'; dbCard.style.background  = '#f8fafd';
+    trnPane.style.display = 'block';
+    dbPane.style.display  = 'none';
+    renderSubInTrn();
+  }
+}
 function openSubModal(phaseIdx, groupIdx) {
   const modal = document.getElementById('sub-modal');
   if (!modal || !T.started) return;
-
-  // Populate phase selector
+  _subMode = 'db';
+  setSubMode('db');
   const phSel = document.getElementById('sub-phase-sel');
-  phSel.innerHTML = T.phases.map((p,i) =>
-    '<option value="'+i+'"'+(i===phaseIdx?' selected':'')+'>'+p.name+'</option>'
-  ).join('');
-
+  phSel.innerHTML = T.phases.map((p,i) => '<option value="'+i+'"'+(i===phaseIdx?' selected':'')+'>'+p.name+'</option>').join('');
   renderSubGroupSel(phaseIdx, groupIdx);
   renderSubInDB();
-
   const ctx = document.getElementById('sub-modal-context');
-  if (ctx) ctx.textContent = T.phases[phaseIdx]?.name + ' · Grupo ' + GROUP_LETTERS[groupIdx];
-
+  if (ctx) ctx.textContent = (T.phases[phaseIdx]?.name||'Fase') + ' · Grupo ' + GROUP_LETTERS[groupIdx];
+  const w = document.getElementById('sub-warning');
+  if (w) w.style.display = 'none';
   modal.classList.add('show');
 }
-
 function closeSubModal() {
   const modal = document.getElementById('sub-modal');
   if (modal) modal.classList.remove('show');
   const w = document.getElementById('sub-warning');
   if (w) w.style.display = 'none';
 }
-
 function renderSubGroupSel(phaseIdx, groupIdx) {
-  const phSel   = document.getElementById('sub-phase-sel');
-  const grpSel  = document.getElementById('sub-group-sel');
-  const pi      = phaseIdx !== undefined ? phaseIdx : parseInt(phSel.value);
-  const ph      = T.phases[pi];
+  const phSel  = document.getElementById('sub-phase-sel');
+  const grpSel = document.getElementById('sub-group-sel');
+  const pi     = phaseIdx !== undefined ? phaseIdx : parseInt(phSel.value);
+  const ph     = T.phases[pi];
   if (!ph) return;
   grpSel.innerHTML = ph.groups.map((g,i) =>
-    '<option value="'+i+'"'+(i===(groupIdx||0)?' selected':'')+'>'
-    + 'Grupo ' + GROUP_LETTERS[i] + ' — ' + g.join(', ')
-    + '</option>'
+    '<option value="'+i+'"'+(i===(groupIdx !== undefined ? groupIdx : 0)?' selected':'')+'>Grupo '+GROUP_LETTERS[i]+' — '+g.join(', ')+'</option>'
   ).join('');
   renderSubOutSel();
 }
-
 function renderSubOutSel() {
   const pi     = parseInt(document.getElementById('sub-phase-sel').value);
   const gi     = parseInt(document.getElementById('sub-group-sel').value);
   const group  = T.phases[pi]?.groups[gi] || [];
   const outSel = document.getElementById('sub-out-sel');
-  outSel.innerHTML = '<option value="">— Selecionar —</option>'
-    + group.map(p => '<option value="'+p+'">'+p+'</option>').join('');
+  outSel.innerHTML = '<option value="">— Selecionar —</option>' + group.map(p => '<option value="'+p+'">'+p+'</option>').join('');
 }
-
 function renderSubInDB() {
   const inSel = document.getElementById('sub-in-db');
-  const allInTournament = new Set(T.players);
-  // Show registry players NOT already in tournament, plus all registry
+  const inTournament = new Set(T.players);
   const opts = REGISTRY
-    .map(r => ({ id: r.id, name: (r.nome||'') + (r.sobrenome?' '+r.sobrenome:''), nick: r.nickname||'' }))
-    .filter(r => r.name.trim())
+    .map(r => ({ name: ((r.nome||'') + (r.sobrenome?' '+r.sobrenome:'')).trim() }))
+    .filter(r => r.name)
     .sort((a,b) => a.name.localeCompare(b.name));
-  inSel.innerHTML = '<option value="">— Selecionar da base —</option>'
-    + opts.map(r => {
-        const inUse = allInTournament.has(r.name);
-        return '<option value="'+r.name+'"'+(inUse?' style="color:#b0c4d8"':'')+'>'+r.name+(inUse?' (já no torneio)':'')+'</option>';
-      }).join('');
+  inSel.innerHTML = '<option value="">— Selecionar —</option>'
+    + opts.map(r => { const inUse = inTournament.has(r.name); return '<option value="'+r.name+'"'+(inUse?' style="color:#b0c4d8"':'')+'>'+r.name+(inUse?' (já no torneio)':'')+'</option>'; }).join('');
 }
-
-async function confirmSub() {
+function renderSubInTrn() {
   const pi      = parseInt(document.getElementById('sub-phase-sel').value);
   const gi      = parseInt(document.getElementById('sub-group-sel').value);
-  const outP    = document.getElementById('sub-out-sel').value.trim();
-  const inDB    = document.getElementById('sub-in-db').value.trim();
-  const inMan   = document.getElementById('sub-in-manual').value.trim();
-  const inP     = inDB || inMan;
-  const warn    = document.getElementById('sub-warning');
-
+  const outP    = document.getElementById('sub-out-sel').value;
+  const grpNow  = new Set(T.phases[pi]?.groups[gi] || []);
+  const inSel   = document.getElementById('sub-in-trn');
+  const candidates = T.players.filter(p => !grpNow.has(p) || p === outP);
+  inSel.innerHTML = '<option value="">— Selecionar —</option>' + candidates.filter(p=>p!==outP).map(p => '<option value="'+p+'">'+p+'</option>').join('');
+}
+async function confirmSub() {
+  const pi   = parseInt(document.getElementById('sub-phase-sel').value);
+  const gi   = parseInt(document.getElementById('sub-group-sel').value);
+  const outP = document.getElementById('sub-out-sel').value.trim();
+  const warn = document.getElementById('sub-warning');
   const showWarn = msg => { warn.textContent = msg; warn.style.display='block'; };
 
-  if (!outP)      { showWarn('Selecione o jogador que sai.'); return; }
-  if (!inP)       { showWarn('Selecione ou digite o jogador que entra.'); return; }
+  let inP = '';
+  if (_subMode === 'db') {
+    inP = (document.getElementById('sub-in-db').value || document.getElementById('sub-in-manual').value || '').trim();
+  } else {
+    inP = (document.getElementById('sub-in-trn').value || '').trim();
+  }
+
+  if (!outP)      { showWarn('Selecione o jogador que deu no-show.'); return; }
+  if (!inP)       { showWarn('Selecione o jogador que entra.'); return; }
   if (outP===inP) { showWarn('Os dois jogadores são iguais.'); return; }
 
   const group = T.phases[pi]?.groups[gi];
   if (!group) { showWarn('Grupo não encontrado.'); return; }
-
   const idx = group.indexOf(outP);
   if (idx === -1) { showWarn(outP+' não encontrado neste grupo.'); return; }
 
-  // ── Aplica substituição no estado T ──
-  group[idx] = inP;
-
-  // Atualiza T.players
-  const pIdx = T.players.indexOf(outP);
-  if (pIdx !== -1) T.players[pIdx] = inP;
-  else T.players.push(inP);
-
-  // Atualiza selectedPlayers
-  const spIdx = selectedPlayers.indexOf(outP);
-  if (spIdx !== -1) selectedPlayers[spIdx] = inP;
-
-  // Atualiza seeds
-  const sIdx = seedList.indexOf(outP);
-  if (sIdx !== -1) seedList[sIdx] = inP;
-
-  // Atualiza T_groups se for Fase 1
-  if (pi === 0 && T_groups[gi]) {
-    const tgIdx = T_groups[gi].indexOf(outP);
-    if (tgIdx !== -1) T_groups[gi][tgIdx] = inP;
+  if (_subMode === 'db') {
+    group[idx] = inP;
+    const pIdx = T.players.indexOf(outP);
+    if (pIdx !== -1) T.players[pIdx] = inP; else T.players.push(inP);
+    const spIdx = selectedPlayers.indexOf(outP);
+    if (spIdx !== -1) selectedPlayers[spIdx] = inP;
+    const sIdx = seedList.indexOf(outP);
+    if (sIdx !== -1) seedList[sIdx] = inP;
+    if (pi === 0 && T_groups[gi]) {
+      const tgIdx = T_groups[gi].indexOf(outP);
+      if (tgIdx !== -1) T_groups[gi][tgIdx] = inP;
+    }
+  } else {
+    if (group.includes(inP)) { showWarn(inP+' já está neste grupo.'); return; }
+    group[idx] = inP;
+    const inAnotherGroup = T.phases.some((ph, pi2) => ph.groups.some((g2, gi2) => !(pi2===pi && gi2===gi) && g2.includes(outP)));
+    if (!inAnotherGroup) {
+      const pIdx = T.players.indexOf(outP);
+      if (pIdx !== -1) T.players.splice(pIdx, 1);
+      const spIdx = selectedPlayers.indexOf(outP);
+      if (spIdx !== -1) selectedPlayers.splice(spIdx, 1);
+    }
+    if (pi === 0 && T_groups[gi]) {
+      const tgIdx = T_groups[gi].indexOf(outP);
+      if (tgIdx !== -1) T_groups[gi][tgIdx] = inP;
+    }
   }
-
-  // Atualiza resultados salvos que referenciam o jogador sainte
-  // (os resultados guardam só scores, não nomes — não há nada a mudar em T.phases[pi].results)
 
   persistT();
 
-  // ── Re-grava todos os confrontos deste grupo no banco ──
-  // (skeletons e resultados já salvos, com os nomes corretos)
   const ph      = T.phases[pi];
   const matches = groupMatches(group);
   const isFinal = pi === (T.numFases||3)-1;
@@ -3410,6 +3454,22 @@ async function confirmSub() {
   }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+  const _splash = document.getElementById('s-splash');
+  if (_splash) {
+    setTimeout(() => {
+      _splash.classList.add('splash-exit');
+      setTimeout(() => { _splash.style.display = 'none'; }, 480);
+    }, 2800);
+  }
+});
+document.addEventListener('click', (ev) => {
+  const pop = document.getElementById('tournament-switcher-pop');
+  if (!pop || !pop.classList.contains('show')) return;
+  const isSwitchBtn = ev.target.closest('.btn-switch-trn');
+  const isInsidePop = ev.target.closest('.switcher-popover');
+  if (!isSwitchBtn && !isInsidePop) pop.classList.remove('show');
+});
 </script>
 </body>
 </html>
