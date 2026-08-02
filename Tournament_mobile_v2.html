@@ -82,6 +82,11 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tb-link-btn:hover{background:#eaf3ff;}
 .btn-cancel-trn{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#c0392b;font-size:11px;font-weight:700;padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'DM Sans';display:none;}
 .btn-cancel-trn:hover{background:rgba(231,76,60,.22);}
+.cfg-summary{background:#f8fafd;border:1px solid #e8edf4;border-radius:12px;padding:14px 16px;margin-top:10px;}
+.cfg-summary-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #f0f5fb;font-size:12px;}
+.cfg-summary-row:last-child{border-bottom:none;}
+.cfg-summary-label{color:#9ab0c8;font-family:'DM Mono';font-size:10px;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
+.cfg-summary-value{color:#0d1e3a;font-weight:600;text-align:right;}
 .sub-modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:16px;}
 .sub-modal-overlay.show{display:flex;}
 .sub-modal-box{background:#fff;border-radius:18px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
@@ -610,6 +615,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
 
         <div class="alert warn" id="step1-lock-banner" style="display:none">🔒 Configuração já confirmada — o torneio está em andamento. Para alterar, cancele o torneio no topo da tela.</div>
+        <div id="step1-locked-summary"></div>
 
         <div class="alert" id="alert-setup"></div>
 
@@ -983,6 +989,23 @@ let T_groups = [];
 
 const GROUP_COLORS  = ['#0a1628','#1a5276','#155432','#6e2a00'];
 const GROUP_LETTERS = ['A','B','C','D','E','F','G','H'];
+
+// Letras de grupo NÃO se repetem no torneio inteiro -- cada fase continua
+// o alfabeto de onde a anterior parou (Fase 1: A,B,C,D → Fase 2: E,F →
+// Final sempre Z). getGroupLetterOffset soma quantos grupos as fases
+// ANTERIORES já usaram, pra saber onde a fase atual deve começar.
+function getGroupLetterOffsetFor(Tobj, phaseIdx) {
+  let offset = 0;
+  for (let i = 0; i < phaseIdx; i++) offset += (Tobj.phases[i]?.groups?.length) || 0;
+  return offset;
+}
+function getGroupLetterFor(Tobj, phaseIdx, groupIdx) {
+  const finalIdx = (Tobj.numFases||3)-1;
+  if (phaseIdx === finalIdx) return 'Z';
+  return GROUP_LETTERS[getGroupLetterOffsetFor(Tobj, phaseIdx) + groupIdx] || GROUP_LETTERS[groupIdx];
+}
+function getGroupLetterOffset(phaseIdx) { return getGroupLetterOffsetFor(T, phaseIdx); }
+function getGroupLetter(phaseIdx, groupIdx) { return getGroupLetterFor(T, phaseIdx, groupIdx); }
 const _COLORS = ['#3a7bd5','#e74c3c','#27AE60','#C9933A','#9B59B6','#1ABC9C','#E67E22','#E91E63','#16A085','#8E44AD'];
 
 const CANONICAL = {
@@ -1134,7 +1157,32 @@ function updateLockBanners() {
         + '<span style="font-family:\'DM Mono\';font-size:10px">Identificador deste torneio (use pra continuar em outro aparelho, em Meus Torneios → Buscar por ID): <b>'+tournamentDisplayId(T.id,T.date,T.categoria)+'</b></span>';
     }
   }
+  renderStep1LockedSummary();
   const b2 = document.getElementById('step2-lock-banner'); if (b2) b2.style.display = T.playersConfirmed ? 'block' : 'none';
+}
+// Resumo somente-leitura da configuração já confirmada -- essencial pra
+// conferir o torneio depois de reconstruído em outro aparelho, já que
+// os campos do formulário (que só são preenchidos quando alguém digita
+// ali na hora) ficam vazios nesse caso, mesmo com T já tendo os dados.
+function renderStep1LockedSummary() {
+  const el = document.getElementById('step1-locked-summary');
+  if (!el) return;
+  if (T.status !== 'open') { el.innerHTML = ''; return; }
+  const catLabel = {'8a':'8ª Categoria','7a':'7ª Categoria','6a':'6ª Categoria','5a':'5ª Categoria'}[T.categoria] || T.categoria || '—';
+  const numFases = T.numFases || (T.phaseConfig||[]).length || 3;
+  const faseInfo = (T.phaseConfig||[]).slice(0, numFases).map((pc,i) => {
+    const nome = (i===0) ? 'Fase 1' : (i===numFases-1 ? 'Final' : 'Fase '+(i+1));
+    const maxSc = pc?.maxScore ?? 6, tbAt = pc?.tbAt ?? 5;
+    return nome+': até '+maxSc+' (TB em '+tbAt+'x'+tbAt+')';
+  }).join(' · ');
+  el.innerHTML = '<div class="cfg-summary">'
+    + '<div class="cfg-summary-row"><div class="cfg-summary-label">Nome</div><div class="cfg-summary-value">'+(T.name||'—')+'</div></div>'
+    + '<div class="cfg-summary-row"><div class="cfg-summary-label">Data</div><div class="cfg-summary-value">'+(formatDateSlash(T.date)||T.date||'—')+'</div></div>'
+    + '<div class="cfg-summary-row"><div class="cfg-summary-label">Local</div><div class="cfg-summary-value">'+(T.local||'—')+'</div></div>'
+    + '<div class="cfg-summary-row"><div class="cfg-summary-label">Categoria</div><div class="cfg-summary-value">'+catLabel+'</div></div>'
+    + '<div class="cfg-summary-row"><div class="cfg-summary-label">Jogadores</div><div class="cfg-summary-value">'+(T.players?.length||0)+'</div></div>'
+    + '<div class="cfg-summary-row"><div class="cfg-summary-label">Formato</div><div class="cfg-summary-value">'+(faseInfo||'—')+'</div></div>'
+    + '</div>';
 }
 function goToStep(n, el) {
   if (el) _showResumeGate = false;
@@ -1270,6 +1318,19 @@ function reconstructTournamentFromBackend(row, matchRows) {
   const phaseIndexByName = {};
   phases.forEach((p,i) => { phaseIndexByName[p.name] = i; });
 
+  // Deslocamento de letra de cada fase (letras não se repetem no torneio
+  // inteiro -- Fase 1: A,B,C,D → Fase 2: E,F → Final sempre Z). Usado só
+  // pra DECODIFICAR a letra salva de volta pro índice local do grupo.
+  // Se o deslocamento não bater (torneio com partidas gravadas antes
+  // dessa mudança, esquema antigo reiniciava de A a cada fase), cai no
+  // índice bruto da letra como fallback -- assim continua lendo certo
+  // tanto dados novos quanto dados já em andamento.
+  const phaseLetterOffsets = groupsData.map((g, idx) => {
+    let offset = 0;
+    for (let j = 0; j < idx; j++) offset += (groupsData[j]?.length || 0);
+    return offset;
+  });
+
   matchRows.forEach(m => {
     const phaseName = m.phase || 'Fase 1';
     let pIdx = phaseIndexByName[phaseName];
@@ -1278,8 +1339,15 @@ function reconstructTournamentFromBackend(row, matchRows) {
       phaseIndexByName[phaseName] = pIdx;
       phases.push({ name: phaseName, groups: [], results: {}, complete: false });
     }
-    let gIdx = GROUP_LETTERS.indexOf(m.group);
-    if (gIdx < 0) gIdx = 0;
+    let gIdx;
+    if (m.group === 'Z') {
+      gIdx = 0;
+    } else {
+      const rawIdx = GROUP_LETTERS.indexOf(m.group);
+      const offset = phaseLetterOffsets[pIdx] || 0;
+      const offsetIdx = rawIdx - offset;
+      gIdx = (offsetIdx >= 0 && offsetIdx < 8) ? offsetIdx : (rawIdx >= 0 ? rawIdx : 0);
+    }
     const mi = (parseInt(m.match_serial_number, 10) || 1) - 1;
 
     if (!phases[pIdx].groups[gIdx] || !phases[pIdx].groups[gIdx].length) {
@@ -2176,11 +2244,29 @@ function confirmManualGroups() {
 }
 
 // ── Confirmação final da Etapa 3 → cria Fase 1 e libera a Etapa 4 ──
-function finalizeLaunch() {
+async function finalizeLaunch() {
   if (T.started) { safeAlert('O torneio já foi iniciado — grupos e jogadores não podem mais ser alterados. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const n = selectedPlayers.length;
   if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para iniciar.','err'); return; }
   if (!T.id) T.id = generateTorneiId();
+
+  // Consulta o banco antes de criar a Fase 1 -- se outro aparelho já
+  // iniciou esse mesmo torneio (dois organizadores no mesmo ID, quase ao
+  // mesmo tempo), adota o que já está lá em vez de sobrescrever.
+  try {
+    const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
+    if (tRes && tRes.ok && tRes.rows && tRes.rows.length) {
+      let existingGroups = [];
+      try { existingGroups = JSON.parse(tRes.rows[0].groups_json || '[]'); } catch(e) {}
+      if (existingGroups.length > 0) {
+        safeAlert('Este torneio já foi iniciado em outro aparelho — sincronizando...', 'ok');
+        await fetchAndOpenTournament(T.id);
+        return;
+      }
+    }
+  } catch(e) {
+    console.warn('[finalizeLaunch] checagem falhou, seguindo com criação local:', e.message);
+  }
 
   T.started = true;
   T.name = document.getElementById('cfg-name').value || 'Torneio Americano EcoTenis';
@@ -2451,9 +2537,39 @@ function bestF2Split(pool, groupSize, sourceOf, rankOf) {
   return bestGroups;
 }
 
-function advancePhase() {
+async function advancePhase() {
   const phIdx = T.currentPhase;
   if (!isPhaseComplete(phIdx)) return;
+
+  const nextPhaseIdx = phIdx+1;
+  const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
+  const nextPhaseName = isFinalPhase ? 'Final' : nextPhaseIdx===1 ? 'Fase 2' : ('Fase '+(nextPhaseIdx+1));
+
+  // Consulta o banco ANTES de calcular/gravar -- se outro aparelho já
+  // avançou essa fase (dois organizadores mexendo no mesmo torneio quase
+  // ao mesmo tempo), adota o que já está lá em vez de criar uma versão
+  // paralela com um sorteio/split possivelmente diferente.
+  if (T.id) {
+    try {
+      const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
+      if (tRes && tRes.ok && tRes.rows && tRes.rows.length) {
+        let existingGroups = [];
+        try { existingGroups = JSON.parse(tRes.rows[0].groups_json || '[]'); } catch(e) {}
+        if (existingGroups.length > nextPhaseIdx) {
+          T.phases[nextPhaseIdx] = { name: nextPhaseName, groups: (existingGroups[nextPhaseIdx]||[]).map(g=>[...g]), results:{}, complete:false };
+          T.phases[phIdx].complete = true;
+          T.currentPhase = nextPhaseIdx;
+          persistT();
+          renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
+          safeAlert('Esta fase já tinha sido avançada em outro aparelho — sincronizado.', 'ok');
+          return;
+        }
+      }
+    } catch(e) {
+      console.warn('[advancePhase] checagem falhou, seguindo com cálculo local:', e.message);
+    }
+  }
+
   const cfg = getPhaseConfig(phIdx);
   const nextCfg = getPhaseConfig(phIdx+1);
   const advPer = cfg.advancePerGroup ?? 2;
@@ -2470,8 +2586,6 @@ function advancePhase() {
   }).filter(Boolean).sort((a,b) => (b.w - a.w) || (b.gd - a.gd) || (b.gw - a.gw) || (b.tbsaldo - a.tbsaldo));
   const wildcardPlayers = wcCandidates.slice(0,wc).map(w=>w.name);
 
-  const nextPhaseIdx_ = phIdx+1;
-  const isFinalPhase = nextPhaseIdx_ === (T.numFases||3)-1;
   const pool = isFinalPhase ? qualifiers.flat().filter(Boolean) : [...qualifiers.flat(), ...wildcardPlayers].filter(Boolean);
 
   let nextGroups;
@@ -2516,8 +2630,6 @@ function advancePhase() {
     }
   }
 
-  const nextPhaseIdx = phIdx+1;
-  const nextPhaseName = isFinalPhase ? 'Final' : nextPhaseIdx===1 ? 'Fase 2' : ('Fase '+(nextPhaseIdx+1));
   T.phases[nextPhaseIdx] = { name: nextPhaseName, groups: nextGroups, results:{}, complete:false };
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
@@ -2657,7 +2769,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     const m = matches[matchIdx];
     PadelEyeDB.upsertPartida({
       match_id: T.id+'-'+key, tournament_id: T.id, phase: ph.name,
-      group: (phaseIdx===(T.numFases||3)-1) ? 'Z' : GROUP_LETTERS[groupIdx],
+      group: getGroupLetter(phaseIdx, groupIdx),
       team_a: (m?.a||[]).join(' / '), score_a: sa, score_b: sb, team_b: (m?.b||[]).join(' / '),
       winner_team: sa>sb ? (m?.a||[]).join(' / ') : (m?.b||[]).join(' / '),
       match_serial_number: matchIdx+1, tie_break: hasTB?'Sim':'Nao', tb_a: tba??'', tb_b: tbb??'',
@@ -2691,7 +2803,7 @@ function renderRounds() {
 
     ph.groups.forEach((group, gi) => {
       const isFinalPhase = (phIdx === (T.numFases||3)-1);
-      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const letter = getGroupLetter(phIdx, gi);
       const color = GROUP_COLORS[gi % GROUP_COLORS.length];
       const matches = groupMatches(group);
       const allSaved = matches.every((_,mi) => ph.results[phIdx+'-'+gi+'-'+mi]?.saved);
@@ -2748,8 +2860,8 @@ function renderRounds() {
           + '<span style="font-size:9px;font-weight:600;color:#9ab0c8;text-transform:uppercase">Partida '+(displayIdx+1)+' . Quadra '+(displayIdx % T.courts + 1)+'</span>'
           + '<div style="display:flex;gap:6px;align-items:center">'
           + (!saved?('<div style="display:flex;gap:2px">'
-              + (displayIdx>0?'<button onclick="moveMatch('+phIdx+','+gi+','+displayIdx+','+(displayIdx-1)+')" style="width:20px;height:20px;border:1px solid #dde6f0;border-radius:4px;background:#fff;cursor:pointer;font-size:10px">^</button>':'')
-              + (displayIdx<mOrder.length-1?'<button onclick="moveMatch('+phIdx+','+gi+','+displayIdx+','+(displayIdx+1)+')" style="width:20px;height:20px;border:1px solid #dde6f0;border-radius:4px;background:#fff;cursor:pointer;font-size:10px">v</button>':'')
+              + (displayIdx>0?'<button onclick="moveMatch('+phIdx+','+gi+','+displayIdx+','+(displayIdx-1)+')" title="Mover para cima" style="width:22px;height:22px;border:1px solid #dde6f0;border-radius:5px;background:#f8fafd;color:#5a7090;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:700">↑</button>':'')
+              + (displayIdx<mOrder.length-1?'<button onclick="moveMatch('+phIdx+','+gi+','+displayIdx+','+(displayIdx+1)+')" title="Mover para baixo" style="width:22px;height:22px;border:1px solid #dde6f0;border-radius:5px;background:#f8fafd;color:#5a7090;cursor:pointer;font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;font-weight:700">↓</button>':'')
               + '</div>'):'')
           + '<span style="font-size:9px;color:'+(saved?'#1a7a44':'#9ab0c8')+';font-weight:600">'+(saved?'Salvo no BD':'Aguardando')+'</span>'
           + '</div>'
@@ -2929,7 +3041,7 @@ function renderHistorico() {
       hasAny = true;
       const sa = res.sa, sb = res.sb, aWin = sa > sb;
       phHtml += '<div style="background:#fff;border:1px solid '+(aWin?'rgba(39,174,96,.3)':'#dde6f0')+';border-radius:10px;overflow:hidden;margin-bottom:8px">'
-        + '<div style="padding:5px 12px;border-bottom:1px solid #f0f5fb;font-size:9px;color:#9ab0c8;text-transform:uppercase">'+ph.name+(phIdx===(T.numFases||3)-1?'':' . Grupo '+GROUP_LETTERS[gi])+' . Partida '+(mi+1)+'</div>'
+        + '<div style="padding:5px 12px;border-bottom:1px solid #f0f5fb;font-size:9px;color:#9ab0c8;text-transform:uppercase">'+ph.name+(phIdx===(T.numFases||3)-1?'':' . Grupo '+getGroupLetter(phIdx,gi))+' . Partida '+(mi+1)+'</div>'
         + '<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 12px;gap:8px">'
         + '<div>'+match.a.map(p=>'<div style="font-size:13px;font-weight:600;color:'+(aWin?'#0a1628':'#9ab0c8')+'">'+p+'</div>').join('')+'</div>'
         + '<div style="text-align:center"><span style="font-size:22px;font-weight:700;color:'+(aWin?'#0a1628':'#9ab0c8')+'">'+sa+'</span> x <span style="font-size:22px;font-weight:700;color:'+(!aWin?'#0a1628':'#9ab0c8')+'">'+sb+'</span>'+(res.tb?(' <sup style="color:#C9933A;font-size:9px">TB '+res.tba+'x'+res.tbb+'</sup>'):'')+'</div>'
@@ -3021,7 +3133,7 @@ const PadelEyeDB = (() => {
         matches.forEach((m,mi) => {
           const key = phIdx+'-'+gi+'-'+mi, res = ph.results?.[key]||{};
           rows.push({ match_id:uid(), tournament_id:torneioId, phase:ph.name,
-            group:(phIdx===(Tobj.numFases||3)-1)?'Z':GROUP_LETTERS[gi], team_a:m.a.join(' / '),
+            group:getGroupLetterFor(Tobj,phIdx,gi), team_a:m.a.join(' / '),
             score_a:res.sa??'', score_b:res.sb??'', team_b:m.b.join(' / '),
             winner_team: res.saved ? (res.sa>res.sb?m.a.join(' / '):m.b.join(' / ')) : '',
             match_serial_number:mi+1, tie_break:res.tb?'Sim':'Nao', tb_a:res.tba??'', tb_b:res.tbb??'',
@@ -3252,15 +3364,27 @@ function _updateSyncBtnVisibility() {
 // pra reconstrução funcionar mesmo se o campo groups_json não estiver
 // disponível por algum motivo. saveMatch()/upsertPartida() sobrescreve
 // essas linhas em cima quando o placar real é lançado.
-function _persistPhaseSkeletons(phaseIdx) {
+async function _persistPhaseSkeletons(phaseIdx) {
   const ph = T.phases[phaseIdx];
   if (!ph || !T.id) return;
   if (Object.keys(ph.results||{}).length > 0) return;
+
+  // Consulta o banco antes de gravar -- evita duplicar linhas se outro
+  // aparelho já criou essa fase (ex.: dois organizadores avançando ou
+  // abrindo o torneio quase ao mesmo tempo).
+  try {
+    const check = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: T.id });
+    const already = ((check && check.ok && check.rows) || []).some(m => m.phase === ph.name);
+    if (already) return;
+  } catch(e) {
+    console.warn('[_persistPhaseSkeletons] checagem falhou, seguindo mesmo assim:', e.message);
+  }
+
   const isFinal = phaseIdx === (T.numFases||3)-1;
   const rows = [];
   const now  = new Date().toISOString();
   ph.groups.forEach((group, gi) => {
-    const grpLetter = isFinal ? 'Z' : GROUP_LETTERS[gi];
+    const grpLetter = getGroupLetter(phaseIdx, gi);
     groupMatches(group).forEach((match, mi) => {
       rows.push({
         match_id:            T.id+'-'+phaseIdx+'-'+gi+'-'+mi,
@@ -3327,7 +3451,7 @@ function openSubModal(phaseIdx, groupIdx) {
   renderSubGroupSel(phaseIdx, groupIdx);
   renderSubInDB();
   const ctx = document.getElementById('sub-modal-context');
-  if (ctx) ctx.textContent = (T.phases[phaseIdx]?.name||'Fase') + ' · Grupo ' + GROUP_LETTERS[groupIdx];
+  if (ctx) ctx.textContent = (T.phases[phaseIdx]?.name||'Fase') + ' · Grupo ' + getGroupLetter(phaseIdx,groupIdx);
   const w = document.getElementById('sub-warning');
   if (w) w.style.display = 'none';
   modal.classList.add('show');
@@ -3345,7 +3469,7 @@ function renderSubGroupSel(phaseIdx, groupIdx) {
   const ph     = T.phases[pi];
   if (!ph) return;
   grpSel.innerHTML = ph.groups.map((g,i) =>
-    '<option value="'+i+'"'+(i===(groupIdx !== undefined ? groupIdx : 0)?' selected':'')+'>Grupo '+GROUP_LETTERS[i]+' — '+g.join(', ')+'</option>'
+    '<option value="'+i+'"'+(i===(groupIdx !== undefined ? groupIdx : 0)?' selected':'')+'>Grupo '+getGroupLetter(pi,i)+' — '+g.join(', ')+'</option>'
   ).join('');
   renderSubOutSel();
 }
@@ -3431,7 +3555,7 @@ async function confirmSub() {
   const ph      = T.phases[pi];
   const matches = groupMatches(group);
   const isFinal = pi === (T.numFases||3)-1;
-  const grpLetter = isFinal ? 'Z' : GROUP_LETTERS[gi];
+  const grpLetter = getGroupLetter(pi, gi);
   const now = new Date().toISOString();
 
   const upserts = matches.map((match, mi) => {
