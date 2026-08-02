@@ -1184,10 +1184,23 @@ function renderStep1LockedSummary() {
     + '<div class="cfg-summary-row"><div class="cfg-summary-label">Formato</div><div class="cfg-summary-value">'+(faseInfo||'—')+'</div></div>'
     + '</div>';
 }
-function goToStep(n, el) {
+async function goToStep(n, el) {
   if (el) _showResumeGate = false;
+
+  // Consulta sempre o banco antes de mostrar a etapa -- garante que o
+  // organizador vê o estado mais atual, mesmo se outro aparelho mudou
+  // algo desde a última vez que essa tela foi vista. "silent" porque é
+  // uma checagem automática de navegação, não uma ação explícita do
+  // organizador (o botão 🔄 continua disponível pra isso). Acontece
+  // ANTES de calcular o limite de navegação, senão a checagem abaixo
+  // usaria um limite desatualizado.
+  if (T.id && T.status === 'open') {
+    await refreshFromBackend(true);
+  }
+
   const max = getMaxStep();
   if (n > max) { safeAlert('Complete a etapa '+max+' antes de avançar para a etapa '+n+'.', 'warn'); return; }
+
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
   const btn = el || document.getElementById('stepbtn-'+n);
@@ -2290,7 +2303,7 @@ async function finalizeLaunch() {
   if (T.id) {
     const numGrupos = T_groups.length;
     const jogPorGrupo = numGrupos>0 ? Math.ceil(T.players.length/numGrupos) : 4;
-    PadelEyeDB.send('upsert_tournament', { row: {
+    await PadelEyeDB.send('upsert_tournament', { row: {
       tournament_id: T.id, tournament_name: T.name, date: T.date, venue: T.local || (currentUser && currentUser.club) || '',
       tournament_format: 'Americano - Modelo Brasileiro', group_number: numGrupos, players_per_group: jogPorGrupo,
       advance_per_group: T.phaseConfig[0].advancePerGroup, wildcards: T.phaseConfig[0].wildcards,
@@ -2299,7 +2312,7 @@ async function finalizeLaunch() {
       phase_config_json: JSON.stringify(T.phaseConfig), groups_json: JSON.stringify(T.phases.map(p=>p.groups)),
       created_at: new Date().toISOString(),
     }}).catch(e => console.warn('[finalizeLaunch]', e.message));
-    _persistPhaseSkeletons(0);
+    await _persistPhaseSkeletons(0);
     _updateSyncBtnVisibility();
   }
 
@@ -2635,14 +2648,14 @@ async function advancePhase() {
   T.currentPhase = nextPhaseIdx;
   persistT();
   if (T.id) {
-    PadelEyeDB.send('upsert_tournament', { row: {
+    await PadelEyeDB.send('upsert_tournament', { row: {
       tournament_id: T.id, tournament_name: T.name, date: T.date, venue: T.local || '',
       tournament_format: 'Americano - Modelo Brasileiro', num_phases: T.numFases, tournament_category: T.categoria,
       status: 'Em Curso', players_json: JSON.stringify(T.players), seeds_json: JSON.stringify(T.seeds),
       phase_config_json: JSON.stringify(T.phaseConfig), groups_json: JSON.stringify(T.phases.map(p=>p.groups)),
       created_at: new Date().toISOString(),
     }}).catch(e => console.warn('[advancePhase]', e.message));
-    _persistPhaseSkeletons(nextPhaseIdx);
+    await _persistPhaseSkeletons(nextPhaseIdx);
   }
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
 }
@@ -3316,6 +3329,51 @@ function _showSyncToast(msg, ok) {
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2800);
 }
+// Busca o estado mais atual do banco pra ESTE torneio (T.id) e funde no T
+// local. Usada tanto pelo botão manual de sincronizar quanto pela busca
+// automática ao navegar entre etapas. "silent" evita toast/spinner --
+// usado nas buscas automáticas de navegação, pra não distrair o
+// organizador toda vez que troca de etapa.
+async function refreshFromBackend(silent) {
+  if (!T || !T.id) return false;
+  try {
+    const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
+    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
+      if (!silent) _showSyncToast('Torneio não encontrado no banco', false);
+      return false;
+    }
+    const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: T.id });
+    const matchRows = (mRes && mRes.ok && mRes.rows) ? mRes.rows : [];
+
+    const T2 = reconstructTournamentFromBackend(tRes.rows[0], matchRows);
+
+    // Defesa contra corrida: se este mesmo aparelho acabou de salvar algo
+    // localmente que o banco ainda não confirmou (rede lenta, por exemplo),
+    // a busca nunca "desfaz" um resultado que já está salvo aqui.
+    (T.phases||[]).forEach((localPh, pIdx) => {
+      if (!localPh) return;
+      if (!T2.phases[pIdx]) { T2.phases[pIdx] = localPh; return; }
+      Object.keys(localPh.results||{}).forEach(key => {
+        const localRes = localPh.results[key];
+        const remoteRes = T2.phases[pIdx].results[key];
+        if (localRes?.saved && !remoteRes?.saved) T2.phases[pIdx].results[key] = localRes;
+      });
+    });
+
+    T2.courts = T.courts || 2;
+    Object.assign(T, T2);
+    T_groups = T.phases[T.currentPhase]?.groups?.map(g=>[...g]) || [];
+    selectedPlayers = [...(T.players||[])];
+    seedList        = [...(T.seeds||[])];
+    persistT();
+    return true;
+  } catch(e) {
+    console.warn('[refreshFromBackend]', e.message);
+    if (!silent) _showSyncToast('Erro: '+e.message.slice(0,40), false);
+    return false;
+  }
+}
+
 async function syncFromDB() {
   const btn = document.getElementById('btn-sync-db');
   if (!btn) return;
@@ -3323,18 +3381,8 @@ async function syncFromDB() {
   btn.classList.add('spinning');
   btn.disabled = true;
   try {
-    const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
-    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) { _showSyncToast('Torneio não encontrado no banco', false); return; }
-    const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: T.id });
-    const matchRows = (mRes && mRes.ok && mRes.rows) ? mRes.rows : [];
-
-    const T2 = reconstructTournamentFromBackend(tRes.rows[0], matchRows);
-    T2.courts = T.courts || 2;
-    Object.assign(T, T2);
-    T_groups = T.phases[T.currentPhase]?.groups?.map(g=>[...g]) || [];
-    selectedPlayers = [...(T.players||[])];
-    seedList        = [...(T.seeds||[])];
-    persistT();
+    const ok = await refreshFromBackend(true);
+    if (!ok) { _showSyncToast('Torneio não encontrado no banco', false); return; }
 
     const step = getMaxStep();
     refreshStepNav();
