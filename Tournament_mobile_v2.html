@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PadelEye · Tournament Manager · SIMULAÇÃO</title>
+<title>PadelEye · Tournament Manager · V1</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -87,7 +87,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .cfg-summary-row:last-child{border-bottom:none;}
 .cfg-summary-label{color:#9ab0c8;font-family:'DM Mono';font-size:10px;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0;}
 .cfg-summary-value{color:#0d1e3a;font-weight:600;text-align:right;}
-
 .sub-modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:16px;}
 .sub-modal-overlay.show{display:flex;}
 .sub-modal-box{background:#fff;border-radius:18px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
@@ -325,7 +324,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .sc-kpis{grid-template-columns:repeat(2,1fr);}
   .topbar{padding:0 10px;gap:6px;}
   .topbar-user{display:none;}
-  #trn-status-badge{display:none;}
   .btn-cancel-label{display:none;}
   .btn-cancel-trn{padding:6px 9px;}
   .topbar-right{gap:6px;}
@@ -416,7 +414,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="splash-logo-b">
     <div class="splash-word-padel-b">PADEL</div>
     <div class="splash-word-eye-b">EYE</div>
-    <div class="splash-tag-b">Tournament Manager · Simulação</div>
+    <div class="splash-tag-b">Tournament Manager</div>
   </div>
   <div class="splash-byline-b">
     <div class="splash-by-brand">TECHNIGMA</div>
@@ -458,7 +456,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   <div class="login-wrap">
     <div class="login-brand">
       <div class="login-logo">PADEL<em>EYE</em></div>
-      <div class="login-tag">🧪 Tournament Manager · SIMULAÇÃO</div>
+      <div class="login-tag">Tournament Manager</div>
     </div>
     <div class="login-card">
       <div class="login-card-title">Area do Organizador</div>
@@ -466,15 +464,15 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <div class="login-error" id="login-err">Cliente ou senha incorretos. Tente novamente.</div>
       <div class="lfield">
         <label>Cliente</label>
-        <input type="text" id="l-user" value="organizer@padeleye.com" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="text" id="l-user" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <div class="lfield">
         <label>Senha</label>
-        <input type="password" id="l-pass" value="654321" placeholder="********" onkeydown="if(event.key==='Enter')doLogin()">
+        <input type="password" id="l-pass" placeholder="********" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <button class="btn-login" onclick="doLogin()">Entrar no PadelEye -></button>
     </div>
-    <div class="login-footer">🧪 SIMULAÇÃO . BY TECHNIGMA AI LAB</div>
+    <div class="login-footer">TECHNIGMA AI LAB</div>
   </div>
 </div>
 
@@ -486,7 +484,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       </button>
       <div class="topbar-logo">PADEL<em>EYE</em></div>
     </div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#7a1f1f;background:#fff0f0;padding:3px 10px;border:1.5px solid #e08080;border-radius:20px;font-weight:700" id="trn-status-badge">🧪 SIMULAÇÃO — NÃO É PRODUÇÃO</div>
     <div class="topbar-right">
       <div class="topbar-user">
         <div class="topbar-name" id="tb-name">-</div>
@@ -584,10 +581,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
   </div>
 </div>
-
-  <div style="background:repeating-linear-gradient(45deg,#fff0f0,#fff0f0 10px,#ffe4e4 10px,#ffe4e4 20px);border-bottom:2px solid #e08080;color:#7a1f1f;text-align:center;padding:6px 12px;font-family:'DM Mono';font-size:11px;font-weight:700;letter-spacing:1px">
-    🧪 AMBIENTE DE SIMULAÇÃO — dados de teste, não é o torneio real
-  </div>
 
   <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
 
@@ -745,12 +738,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <div class="card-title">Selecionar Jogadores</div>
             <div class="card-badge" id="db-badge">0 / 16 vagas</div>
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px 12px;border:1.5px dashed #e08080;border-radius:10px;background:#fff8f8">
-            <div style="font-size:11px;color:#7a1f1f;font-weight:700;flex-basis:100%">🧪 Simulação — selecionar jogadores fictícios:</div>
-            <button class="btn btn-sm" style="background:#7a1f1f;color:#fff" onclick="simSelectPlayers(8)">🧪 8 Jogadores</button>
-            <button class="btn btn-sm" style="background:#7a1f1f;color:#fff" onclick="simSelectPlayers(12)">🧪 12 Jogadores</button>
-            <button class="btn btn-sm" style="background:#7a1f1f;color:#fff" onclick="simSelectPlayers(16)">🧪 16 Jogadores</button>
-          </div>
           <div class="vagas-bar-wrap">
             <div class="vagas-bar-track"><div class="vagas-bar-fill" id="vagas-bar"></div></div>
             <div style="font-family:'DM Mono';font-size:12px;font-weight:700;color:#0d1e3a" id="vagas-cur">0</div>
@@ -832,15 +819,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <button class="tb-link-btn" onclick="showTiebreakInfo()">⚖️ Ver critérios de desempate</button>
         </div>
         <div class="alert" id="alert-game"></div>
-        <div class="card" style="border:1.5px dashed #e08080;background:#fff8f8">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <div style="flex:1;min-width:200px">
-              <div style="font-size:12px;font-weight:700;color:#7a1f1f">🧪 Simular esta etapa</div>
-              <div style="font-size:11px;color:#9ab0c8">Preenche e salva todas as partidas pendentes da fase atual com placares aleatórios (sem empate forçado — inclusive testa o critério de desempate quando calha)</div>
-            </div>
-            <button class="btn" style="background:#7a1f1f;color:#fff;flex-shrink:0" onclick="simFillCurrentPhase()">🧪 Simular Fase Atual</button>
-          </div>
-        </div>
         <div id="rounds-container"></div>
       </div>
 
@@ -1005,36 +983,8 @@ let selectedPlayers = [];
 let extraPlayers    = [];
 let seedList        = [];
 
-// ══════════════════════════════════════════════════════════════════
-// DADOS FICTÍCIOS DE SIMULAÇÃO
-// Como o sorteio dos grupos é aleatório, os templates abaixo descrevem
-// PADRÕES de placar por posição (g[0],g[1],g[2],g[3] dentro do grupo),
-// não nomes fixos — funcionam com qualquer composição real de grupo.
-// ══════════════════════════════════════════════════════════════════
-const SIM_PLAYER_POOL = [
-  'Teste 01','Teste 02','Teste 03','Teste 04','Teste 05','Teste 06','Teste 07','Teste 08',
-  'Teste 09','Teste 10','Teste 11','Teste 12','Teste 13','Teste 14','Teste 15','Teste 16',
-];
-
-// Ranking limpo (1>0>2>3, sem empates) + 1 partida com tie-break (6x5 + TB 7x5).
-// Gera um placar aleatório válido, respeitando o maxScore/tbAt configurado
-// pra fase (mesmas regras que saveMatch() exige). Sem viés de lado nem
-// empate forçado -- cada partida decide por conta própria quem ganha.
-function simRandomMatchScore(maxSc, tbAt) {
-  const loser = Math.floor(Math.random() * (tbAt + 1)); // 0..tbAt
-  let sa = maxSc, sb = loser, tb = false, tba = null, tbb = null;
-  if (loser === tbAt) {
-    tb = true;
-    const tbLoser = Math.floor(Math.random() * 6); // 0..5
-    const tbWinner = Math.max(7, tbLoser + 2);      // vencedor 7+, margem 2+
-    tba = tbWinner; tbb = tbLoser;
-  }
-  if (Math.random() < 0.5) { [sa, sb] = [sb, sa]; if (tb) [tba, tbb] = [tbb, tba]; }
-  return { sa, sb, tb, tba, tbb };
-}
-
-let WEB_APP_URL = localStorage.getItem('pe_web_app_url_SIM') ||
-  "COLE_AQUI_A_URL_DO_GAS_DE_SIMULACAO";
+let WEB_APP_URL = localStorage.getItem('pe_web_app_url') ||
+  "COLE_AQUI_A_URL_DO_GAS_DE_PRODUCAO";
 
 function freshT() {
   return {
@@ -1056,6 +1006,10 @@ let T_groups = [];
 const GROUP_COLORS  = ['#0a1628','#1a5276','#155432','#6e2a00'];
 const GROUP_LETTERS = ['A','B','C','D','E','F','G','H'];
 
+// Letras de grupo NÃO se repetem no torneio inteiro -- cada fase continua
+// o alfabeto de onde a anterior parou (Fase 1: A,B,C,D → Fase 2: E,F →
+// Final sempre Z). getGroupLetterOffset soma quantos grupos as fases
+// ANTERIORES já usaram, pra saber onde a fase atual deve começar.
 function getGroupLetterOffsetFor(Tobj, phaseIdx) {
   let offset = 0;
   for (let i = 0; i < phaseIdx; i++) offset += (Tobj.phases[i]?.groups?.length) || 0;
@@ -1091,7 +1045,7 @@ function doLogin() {
     err.style.display = 'block'; document.getElementById('l-pass').value = ''; return;
   }
   currentUser = {...USERS[user], key:user};
-  localStorage.setItem('pe_auth_tournament_v1_SIM', JSON.stringify({ key: user }));
+  localStorage.setItem('pe_auth_tournament_v1', JSON.stringify({ key: user }));
   document.getElementById('s-login').classList.remove('active');
   document.getElementById('s-dashboard').classList.add('active');
   document.getElementById('tb-name').textContent = currentUser.name;
@@ -1102,7 +1056,7 @@ function doLogin() {
   bootstrapTournamentState();
 }
 function doLogout() {
-  localStorage.removeItem('pe_auth_tournament_v1_SIM');
+  localStorage.removeItem('pe_auth_tournament_v1');
   currentUser = null;
   document.getElementById('s-dashboard').classList.remove('active');
   document.getElementById('s-login').classList.add('active');
@@ -1160,8 +1114,8 @@ function refreshStepNav() {
   }
   refreshCancelButton();
   updateLockBanners();
-  renderStep1Gate();
   _updateSyncBtnVisibility();
+  renderStep1Gate();
   applyStep1ViewMode();
   applyStep2ViewMode();
 }
@@ -1350,7 +1304,7 @@ function showTiebreakInfo() {
 }
 
 function resetTournamentState() {
-  try { localStorage.removeItem('padeleye_T_v1_SIM'); } catch(e) {}
+  try { localStorage.removeItem('padeleye_T_v1'); } catch(e) {}
   T = freshT();
   T_groups = [];
   selectedPlayers = []; seedList = []; extraPlayers = [];
@@ -1452,6 +1406,13 @@ function reconstructTournamentFromBackend(row, matchRows) {
   const phaseIndexByName = {};
   phases.forEach((p,i) => { phaseIndexByName[p.name] = i; });
 
+  // Deslocamento de letra de cada fase (letras não se repetem no torneio
+  // inteiro -- Fase 1: A,B,C,D → Fase 2: E,F → Final sempre Z). Usado só
+  // pra DECODIFICAR a letra salva de volta pro índice local do grupo.
+  // Se o deslocamento não bater (torneio com partidas gravadas antes
+  // dessa mudança, esquema antigo reiniciava de A a cada fase), cai no
+  // índice bruto da letra como fallback -- assim continua lendo certo
+  // tanto dados novos quanto dados já em andamento.
   const phaseLetterOffsets = groupsData.map((g, idx) => {
     let offset = 0;
     for (let j = 0; j < idx; j++) offset += (groupsData[j]?.length || 0);
@@ -1529,7 +1490,12 @@ async function fetchAndOpenTournament(tid) {
   safeAlert('Buscando torneio '+tid+' no banco de dados...', 'ok');
   try {
     const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
-    if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
+    if (!tRes || !tRes.ok) {
+      const detail = (tRes && (tRes.error || tRes.message)) || (tRes && tRes.raw ? String(tRes.raw).slice(0,300) : 'sem resposta do servidor -- confira a URL do GAS em Sistema → Test DB');
+      safeAlert('Erro ao consultar o banco: '+detail, 'err');
+      return false;
+    }
+    if (!tRes.rows || !tRes.rows.length) {
       safeAlert('Torneio não encontrado no banco: '+tid, 'err');
       return false;
     }
@@ -1607,7 +1573,12 @@ async function searchTournamentById() {
   if (!tid) { safeAlert('Digite um ID de torneio.', 'warn'); return; }
   resultEl.innerHTML = '<div style="font-size:12px;color:#9ab0c8">Buscando...</div>';
   const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
-  if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) {
+  if (!tRes || !tRes.ok) {
+    const detail = (tRes && (tRes.error || tRes.message)) || (tRes && tRes.raw ? String(tRes.raw).slice(0,300) : 'sem resposta do servidor -- confira a URL do GAS em Sistema → Test DB');
+    resultEl.innerHTML = '<div class="alert err" style="display:block">Erro ao consultar o banco.<br><span style="font-family:\'DM Mono\';font-size:9px;opacity:.85">'+String(detail).replace(/</g,'&lt;')+'</span></div>';
+    return;
+  }
+  if (!tRes.rows || !tRes.rows.length) {
     resultEl.innerHTML = '<div class="alert err" style="display:block">Torneio não encontrado: '+tid+'</div>';
     return;
   }
@@ -1621,7 +1592,11 @@ async function listAllTournamentsFromBackend(limit) {
   const el = document.getElementById('meus-torneios-backend-list');
   el.innerHTML = '<div style="font-size:12px;color:#9ab0c8">Buscando no banco de dados...</div>';
   const res = await PadelEyeDB.send('get_tournaments', {});
-  if (!res || !res.ok) { el.innerHTML = '<div class="alert err" style="display:block">Erro ao buscar torneios no banco.</div>'; return; }
+  if (!res || !res.ok) {
+    const detail = (res && (res.error || res.message)) || (res && res.raw ? String(res.raw).slice(0,300) : 'sem resposta do servidor -- confira a URL do GAS em Sistema → Test DB');
+    el.innerHTML = '<div class="alert err" style="display:block">Erro ao buscar torneios no banco.<br><span style="font-family:\'DM Mono\';font-size:9px;opacity:.85">'+String(detail).replace(/</g,'&lt;')+'</span></div>';
+    return;
+  }
   const allRows = (res.rows||[]).slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
   const rows = limit ? allRows.slice(0, limit) : allRows;
   const hasMore = !!limit && allRows.length > limit;
@@ -1706,60 +1681,6 @@ function generateTorneiId() {
   const date = d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
   const rand = Math.random().toString(36).substr(2,5).toUpperCase();
   return 'TRN-' + date + '-' + rand;
-}
-
-// ── SIMULAÇÃO: seleciona N jogadores fictícios + seeds automaticamente ──
-function simSelectPlayers(n) {
-  if (T.started) { safeAlert('O torneio já foi iniciado — não é possível trocar os jogadores agora.', 'warn'); return; }
-  const pool = SIM_PLAYER_POOL.slice(0, n);
-  pool.forEach(p => { if (!extraPlayers.includes(p)) extraPlayers.push(p); });
-  selectedPlayers = [...pool];
-  const numSeeds = Math.max(1, Math.floor(n / 4));
-  seedList = pool.slice(0, numSeeds);
-  applyCanonical(n);
-  renderDB();
-  renderSeedPicker();
-  updateVagas();
-  updateSummary();
-  safeAlert('🧪 ' + n + ' jogadores fictícios selecionados (' + numSeeds + ' seed(s)).', 'ok');
-}
-
-// ── SIMULAÇÃO: preenche e salva a fase atual com o dado fictício ──
-// Usa os MESMOS caminhos de um preenchimento manual (seta o .value dos
-// inputs reais e chama saveMatch()), então passa pela validação de
-// placar e grava de verdade no Google Sheets de simulação.
-function simFillCurrentPhase() {
-  if (!T.started) { safeAlert('Inicie o torneio primeiro (aba Configuração).', 'warn'); return; }
-  const phIdx = T.currentPhase;
-  const ph = T.phases[phIdx];
-  if (!ph) return;
-  if (isPhaseComplete(phIdx)) { safeAlert('Esta fase já está completa — avance ou vá para a próxima etapa.', 'ok'); return; }
-
-  const cfg = getPhaseConfig(phIdx) || { maxScore:6, tbAt:5 };
-  const maxSc = cfg.maxScore ?? 6, tbAt = cfg.tbAt ?? 5;
-
-  ph.groups.forEach((g, gi) => {
-    const matches = groupMatches(g);
-    matches.forEach((m, mi) => {
-      const key = phIdx + '-' + gi + '-' + mi;
-      if (ph.results[key]?.saved) return;
-      const { sa, sb, tb:hasTB, tba, tbb } = simRandomMatchScore(maxSc, tbAt);
-      const inA = document.getElementById('sc-' + key + '-a');
-      const inB = document.getElementById('sc-' + key + '-b');
-      if (inA) inA.value = sa;
-      if (inB) inB.value = sb;
-      if (hasTB) {
-        const tbBtn = document.getElementById('tb-btn-' + key);
-        if (tbBtn && tbBtn.dataset.active !== '1') toggleTB(key);
-        const tbInA = document.getElementById('tb-' + key + '-a');
-        const tbInB = document.getElementById('tb-' + key + '-b');
-        if (tbInA) tbInA.value = tba;
-        if (tbInB) tbInB.value = tbb;
-      }
-      saveMatch(phIdx, gi, mi);
-    });
-  });
-  gameAlert('🧪 Fase preenchida com placares aleatórios (sem empate forçado).', 'ok');
 }
 
 function applyCanonical(n) {
@@ -2031,7 +1952,7 @@ function confirmPlayersStep() {
 }
 
 function persistT() {
-  try { localStorage.setItem('padeleye_T_v1_SIM', JSON.stringify(T)); } catch(e) {}
+  try { localStorage.setItem('padeleye_T_v1', JSON.stringify(T)); } catch(e) {}
   updateTournamentRegistry(T);
 }
 
@@ -2065,7 +1986,7 @@ function tournamentDisplayId(id, date, categoria) {
 }
 
 function getTournamentRegistry() {
-  try { return JSON.parse(localStorage.getItem('padeleye_tournaments_registry_v1_SIM') || '{}'); }
+  try { return JSON.parse(localStorage.getItem('padeleye_tournaments_registry_v1') || '{}'); }
   catch(e) { return {}; }
 }
 function updateTournamentRegistry(t) {
@@ -2077,14 +1998,14 @@ function updateTournamentRegistry(t) {
       status: t.finalized ? 'finalizado' : (t.started ? 'andamento' : 'aberto'),
       updatedAt: new Date().toISOString()
     };
-    localStorage.setItem('padeleye_tournaments_registry_v1_SIM', JSON.stringify(reg));
+    localStorage.setItem('padeleye_tournaments_registry_v1', JSON.stringify(reg));
   } catch(e) {}
 }
 function removeFromTournamentRegistry(tid) {
   try {
     const reg = getTournamentRegistry();
     delete reg[tid];
-    localStorage.setItem('padeleye_tournaments_registry_v1_SIM', JSON.stringify(reg));
+    localStorage.setItem('padeleye_tournaments_registry_v1', JSON.stringify(reg));
   } catch(e) {}
 }
 
@@ -3444,7 +3365,7 @@ function dbtSaveUrl() {
   const newUrl = input.value.trim();
   if (!newUrl || !newUrl.startsWith('https://script.google.com')) { input.style.borderColor='#e74c3c'; return; }
   WEB_APP_URL = newUrl;
-  localStorage.setItem('pe_web_app_url_SIM', newUrl);
+  localStorage.setItem('pe_web_app_url', newUrl);
   document.getElementById('dbt-url-text').textContent = newUrl;
   dbtCancelUrl();
 }
@@ -3492,7 +3413,7 @@ function bootstrapTournamentState() {
 
 function restoreT() {
   try {
-    const saved = localStorage.getItem('padeleye_T_v1_SIM');
+    const saved = localStorage.getItem('padeleye_T_v1');
     if (!saved) return false;
     const parsed = JSON.parse(saved);
     if (!parsed) return false;
@@ -3520,7 +3441,7 @@ function restoreT() {
 
 (function init() {
   try {
-    const saved = localStorage.getItem('pe_auth_tournament_v1_SIM');
+    const saved = localStorage.getItem('pe_auth_tournament_v1');
     if (saved) {
       const auth = JSON.parse(saved);
       if (auth && auth.key && USERS[auth.key]) {
