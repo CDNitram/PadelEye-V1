@@ -288,6 +288,66 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .classif-table{min-width:0 !important;}
   .formation-grid{grid-template-columns:1fr;}
 }
+/* ══ SPLASH SCREEN (adaptado de PadelEye_Americano_V40_Prod.html) ══ */
+#s-splash{background:linear-gradient(160deg,#0d5c2e 0%,#1a8a45 40%,#22a855 70%,#1db954 100%);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+#s-splash::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:36px 36px;animation:splashGrid 1s ease forwards}
+@keyframes splashGrid{from{opacity:0}to{opacity:1}}
+.splash-orb-b{position:absolute;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(99,179,237,.16) 0%,transparent 70%);animation:splashPulse 2.5s ease-in-out infinite}
+@keyframes splashPulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.1);opacity:1}}
+.splash-ring-b{position:absolute;border-radius:50%;width:130px;height:130px;border:1px solid rgba(99,179,237,.16);animation:splashRing 2.2s ease-out infinite}
+.splash-ring-b:nth-child(2){animation-delay:.7s}.splash-ring-b:nth-child(3){animation-delay:1.4s}
+@keyframes splashRing{0%{transform:scale(.8);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+.splash-court-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.splash-logo-b{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center}
+.splash-word-padel-b{font-family:'Bebas Neue',sans-serif;font-size:72px;letter-spacing:14px;color:#fff;line-height:1;opacity:0;transform:translateY(18px);animation:splashUp .6s cubic-bezier(.16,1,.3,1) .35s forwards}
+.splash-word-eye-b{font-family:'Bebas Neue',sans-serif;font-size:72px;letter-spacing:14px;color:#fde68a;line-height:1;position:relative;opacity:0;transform:translateY(18px);animation:splashUp .6s cubic-bezier(.16,1,.3,1) .6s forwards}
+.splash-word-eye-b::after{content:'';position:absolute;bottom:-5px;left:0;width:0;height:2px;background:#fde68a;animation:splashLine .5s ease 1s forwards}
+@keyframes splashLine{to{width:100%}}
+@keyframes splashUp{to{opacity:1;transform:translateY(0)}}
+.splash-tag-b{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.28);margin-top:20px;opacity:0;animation:splashFade .5s ease 1.1s forwards}
+.splash-byline-b{position:absolute;bottom:28px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;animation:splashFade .5s ease 1.35s forwards}
+.splash-by-brand{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:4px;color:#bfdbfe}
+.splash-by-loc{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.3)}
+@keyframes splashFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.splash-bar-wrap-b{position:absolute;bottom:0;left:0;right:0;height:2px;background:rgba(255,255,255,.06)}
+.splash-bar-b{height:100%;width:0;background:linear-gradient(90deg,rgba(255,255,255,.6),#fff);animation:splashBar 2.8s cubic-bezier(.4,0,.2,1) .2s forwards}
+@keyframes splashBar{0%{width:0}30%{width:45%}70%{width:75%}90%{width:92%}100%{width:100%}}
+#s-splash.splash-exit{animation:splashOut .5s ease forwards}
+@keyframes splashOut{to{opacity:0;transform:scale(1.03)}}
+/* ═══ SORTEIO ANIMADO (adaptado de PadelEye_Americano_V40_Prod.html) ═══ */
+#s-raffle{position:fixed;inset:0;z-index:9999;background:#f0f5fb;display:none;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:14px 16px 20px;}
+#s-raffle.show{display:flex;}
+.raffle-cancel-link{align-self:flex-end;background:none;border:none;color:#9ab0c8;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:4px;text-transform:uppercase;}
+.raffle-cancel-link:hover{color:#c0392b;}
+.raffle-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:3px;color:#0a1628;text-align:center;margin-bottom:1px;}
+.raffle-sub{font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase;margin-bottom:10px;text-align:center;}
+.raffle-reveal{display:flex;align-items:center;gap:12px;width:100%;max-width:600px;background:#fff;border:2px solid #C9933A;border-radius:12px;padding:10px 14px;margin-bottom:12px;box-shadow:0 3px 16px rgba(201,147,58,.18);}
+.raffle-reveal.pop{animation:revealpop .4s cubic-bezier(.36,2,.6,1);}
+@keyframes revealpop{0%{transform:scale(.92);opacity:.5}100%{transform:scale(1);opacity:1}}
+.raffle-reveal-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#fff;flex-shrink:0;background:#9ab0c8;}
+.raffle-reveal-info{flex:1;min-width:0;}
+.raffle-reveal-name{font-family:'Bebas Neue';font-size:19px;letter-spacing:.5px;color:#0a1628;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.raffle-reveal-grp{font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#C9933A;margin-top:1px;}
+.raffle-countdown-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+.raffle-countdown-ring{position:relative;width:44px;height:44px;border-radius:50%;background:conic-gradient(#C9933A calc(var(--pct,100)*1%), #dde6f0 0);display:flex;align-items:center;justify-content:center;transition:background .15s linear;}
+.raffle-countdown-ring::before{content:'';position:absolute;inset:4px;background:#fff;border-radius:50%;}
+.raffle-countdown{position:relative;z-index:1;font-family:'Bebas Neue';font-size:15px;color:#0a1628;letter-spacing:0;}
+.raffle-countdown.urgent{color:#c0392b;}
+.raffle-countdown-ring.urgent{background:conic-gradient(#c0392b calc(var(--pct,100)*1%), #dde6f0 0);}
+.raffle-groups{width:100%;max-width:600px;margin-bottom:10px;}
+.grupo-card.lit{border-color:#C9933A;}
+.raffle-queue-label{font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase;margin-bottom:6px;width:100%;max-width:600px;}
+.raffle-queue{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-width:600px;margin-bottom:12px;max-height:9vh;overflow-y:auto;}
+.raffle-chip{font-family:'DM Mono';font-size:9px;padding:3px 8px;border-radius:99px;background:#f0f5fb;border:1px solid #dde6f0;color:#9ab0c8;transition:all .3s;}
+.raffle-chip.drawn{background:#e8f5ee;border-color:#c8e0d0;color:#8ab0a0;text-decoration:line-through;opacity:.5;}
+.raffle-controls{display:flex;gap:10px;width:100%;max-width:600px;flex-wrap:wrap;}
+.raffle-btn{flex:1;padding:12px;border:none;border-radius:10px;font-family:'DM Mono';font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;font-weight:700;}
+.raffle-btn-primary{background:#C9933A;color:#0a1628;}
+.raffle-btn-primary:hover{background:#e0a840;}
+.raffle-btn-secondary{background:#fff;color:#5a8aaa;border:1px solid #dde6f0;}
+.raffle-btn-secondary:hover{border-color:#C9933A;color:#C9933A;}
+.raffle-btn-start{background:linear-gradient(135deg,#1a7a44,#2a9a54);color:#fff;display:none;}
+.raffle-btn-start.show{display:block;}
 </style>
 </head>
 <body>
