@@ -758,8 +758,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
         <div class="card" style="border:1.5px solid #e8eef5">
           <div class="card-hd" style="margin-bottom:10px">
-            <div class="card-title">🔗 Apps Script URL</div>
-            <div class="card-badge" id="dbt-url-badge" style="background:#e8f4fd;color:#1a5276">V7.5</div>
+            <div class="card-title">🔗 Apps Script URL (Simulação — grava aqui)</div>
+            <div class="card-badge" id="dbt-url-badge" style="background:#fff0f0;color:#a32d2d">SIM</div>
           </div>
           <div id="dbt-url-display" style="display:flex;align-items:center;gap:10px">
             <div style="flex:1;background:#f4f7fb;border-radius:8px;padding:10px 12px;font-family:'DM Mono';font-size:9px;color:#3a5a7a;word-break:break-all;border:1px solid #dce6f0" id="dbt-url-text">-</div>
@@ -772,6 +772,26 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
               <button onclick="dbtCancelUrl()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #ccc;background:#fff;color:#888;font-family:'DM Mono';font-size:9px;cursor:pointer">CANCELAR</button>
             </div>
           </div>
+        </div>
+        <div class="card" style="border:1.5px solid #dce9f5">
+          <div class="card-hd" style="margin-bottom:10px">
+            <div class="card-title">🔗 Banco de Jogadores (Produção — só leitura)</div>
+            <div class="card-badge" id="dbt-players-url-badge" style="background:#e8f4fd;color:#1a5276">PROD</div>
+          </div>
+          <div style="font-size:10.5px;color:#7090b0;margin-bottom:10px;line-height:1.5">Usada só pra <b>buscar jogadores reais</b> (get_players) — pra que os testes rodem com nomes de verdade. Nunca grava nada aqui; torneios e partidas continuam indo pra URL de Simulação acima.</div>
+          <div id="dbt-players-url-display" style="display:flex;align-items:center;gap:10px">
+            <div style="flex:1;background:#f4f7fb;border-radius:8px;padding:10px 12px;font-family:'DM Mono';font-size:9px;color:#3a5a7a;word-break:break-all;border:1px solid #dce6f0" id="dbt-players-url-text">-</div>
+            <button onclick="dbtEditPlayersUrl()" style="flex-shrink:0;padding:8px 14px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;color:#3a7bd5;cursor:pointer">✏️ EDITAR</button>
+          </div>
+          <div id="dbt-players-url-edit" style="display:none">
+            <textarea id="dbt-players-url-input" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1.5px solid #3a7bd5;font-family:'DM Mono';font-size:9px;min-height:64px"></textarea>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button onclick="dbtSavePlayersUrl()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#0a1628;color:#93C5FD;font-family:'Bebas Neue';font-size:14px;cursor:pointer">✅ GUARDAR</button>
+              <button onclick="dbtCancelPlayersUrl()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #ccc;background:#fff;color:#888;font-family:'DM Mono';font-size:9px;cursor:pointer">CANCELAR</button>
+            </div>
+          </div>
+          <button onclick="dbtTestPlayersUrl()" style="width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1.5px solid #3a7bd5;background:#eaf3ff;font-family:'DM Mono';font-size:10px;color:#1a5276;cursor:pointer">🔌 TESTAR BUSCA DE JOGADORES</button>
+          <div id="dbt-players-result" style="margin-top:10px;font-size:10px;font-family:'DM Mono'"></div>
         </div>
         <div class="card">
           <div class="card-hd"><div class="card-title">Conexao Global</div><div class="card-badge" id="dbt-badge-all">Aguardando</div></div>
@@ -840,6 +860,18 @@ let seedList        = [];
 
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url_SIM') ||
   "COLE_AQUI_A_URL_DO_GAS_DE_SIMULACAO";
+
+// URL separada, só pra LEITURA de jogadores -- aponta pro banco de
+// PRODUÇÃO de verdade, propositalmente, pra que testes/simulações usem
+// jogadores reais em vez de nomes fictícios. Nunca usada pra escrita:
+// só entra no fetch GET de get_players em loadPlayersFromDB(). Tudo
+// que grava (torneios, partidas, scorecard) continua indo pra WEB_APP_URL
+// (a URL de simulação, isolada da produção).
+// ⚠️ Confirme em Test DB se esta URL de produção ainda está ativa --
+// deployments antigos "New Deployment" (em vez de editar o existente)
+// geram URL nova e invalidam a anterior.
+let PLAYERS_DB_URL = localStorage.getItem('pe_players_url_SIM') ||
+  "https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec";
 
 function freshT() {
   return {
@@ -1394,7 +1426,9 @@ function applyCanonical(n) {
 
 async function loadPlayersFromDB() {
   try {
-    const res = await fetch(WEB_APP_URL + '?action=get_players');
+    // Propositalmente usa PLAYERS_DB_URL (produção), não WEB_APP_URL (sim) --
+    // simulações usam jogadores reais, mas gravam torneios/partidas isolados.
+    const res = await fetch(PLAYERS_DB_URL + '?action=get_players');
     const data = await res.json();
     REGISTRY.length = 0;
     (data.rows||[]).forEach(p => {
@@ -3092,6 +3126,39 @@ function dbtCancelUrl() {
   document.getElementById('dbt-url-edit').style.display='none';
   document.getElementById('dbt-url-display').style.display='flex';
 }
+function dbtEditPlayersUrl() {
+  document.getElementById('dbt-players-url-display').style.display='none';
+  document.getElementById('dbt-players-url-edit').style.display='block';
+  const input = document.getElementById('dbt-players-url-input');
+  input.value = PLAYERS_DB_URL; input.focus(); input.select();
+}
+function dbtSavePlayersUrl() {
+  const input = document.getElementById('dbt-players-url-input');
+  const newUrl = input.value.trim();
+  if (!newUrl || !newUrl.startsWith('https://script.google.com')) { input.style.borderColor='#e74c3c'; return; }
+  PLAYERS_DB_URL = newUrl;
+  localStorage.setItem('pe_players_url_SIM', newUrl);
+  document.getElementById('dbt-players-url-text').textContent = newUrl;
+  dbtCancelPlayersUrl();
+  loadPlayersFromDB();
+}
+function dbtCancelPlayersUrl() {
+  document.getElementById('dbt-players-url-edit').style.display='none';
+  document.getElementById('dbt-players-url-display').style.display='flex';
+}
+async function dbtTestPlayersUrl() {
+  const resultEl = document.getElementById('dbt-players-result');
+  resultEl.textContent = 'Testando...'; resultEl.style.color = '#9ab0c8';
+  try {
+    const res = await fetch(PLAYERS_DB_URL + '?action=get_players');
+    const data = await res.json();
+    const rows = Array.isArray(data.rows) ? data.rows.length : 0;
+    if (rows > 0) { resultEl.textContent = '✓ '+rows+' jogadores reais encontrados.'; resultEl.style.color = '#1a7a44'; }
+    else { resultEl.textContent = '⚠ Conectou, mas 0 jogadores retornados. Confira a URL.'; resultEl.style.color = '#865a10'; }
+  } catch(e) {
+    resultEl.textContent = '❌ Sem resposta: ' + e.message; resultEl.style.color = '#c0392b';
+  }
+}
 async function dbtTestOne(action, key, pingOnly) {
   const statusEl = document.getElementById('dbt-status-'+key);
   if (!statusEl) return;
@@ -3117,6 +3184,7 @@ async function dbtTestAll() {
 }
 
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
+document.getElementById('dbt-players-url-text').textContent = PLAYERS_DB_URL;
 function bootstrapTournamentState() {
   restoreT();
   _showResumeGate = (T.status === 'open');
