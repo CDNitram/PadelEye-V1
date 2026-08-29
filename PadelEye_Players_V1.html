@@ -9,11 +9,9 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f0f5fb;}
-
 /* ── SCREENS ── */
 .screen{display:none;min-height:100vh;}
 .screen.active{display:flex;}
-
 /* ══ LOGIN ══ */
 #s-login{flex-direction:column;align-items:center;justify-content:center;background:#f4f7fc;padding:24px;}
 .login-wrap{width:100%;max-width:400px;}
@@ -33,7 +31,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(201,147,58,.3);}
 .login-error{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);border-radius:10px;padding:10px 14px;font-size:12px;color:#c0392b;margin-bottom:14px;display:none;text-align:center;}
 .login-footer{text-align:center;margin-top:20px;font-size:10px;color:#b0c4d8;font-family:'DM Mono';letter-spacing:1px;}
-
 /* ══ DASHBOARD ══ */
 #s-dashboard{flex-direction:column;background:#f0f5fb;}
 .topbar{background:#fff;padding:0 20px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:300;flex-shrink:0;border-bottom:1px solid #dde6f0;}
@@ -46,11 +43,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .topbar-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#C9933A,#e0a840);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:15px;color:#0a1628;flex-shrink:0;}
 .btn-out{background:#f4f7fc;border:1px solid #dde6f0;color:#5a7090;font-size:11px;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:'DM Sans';transition:all .2s;}
 .btn-out:hover{background:#eaf0f8;}
-
 .mob-menu-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid #dde6f0;background:#f4f7fc;cursor:pointer;flex-shrink:0;}
 .mob-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(10,22,40,.4);z-index:350;opacity:0;pointer-events:none;transition:opacity .25s ease;}
 .mob-overlay.show{display:block;opacity:1;pointer-events:auto;}
-
 .app-body{display:flex;min-height:calc(100vh - 56px);}
 .sidebar-nav{width:230px;background:#fff;border-right:1px solid #dde6f0;flex-shrink:0;padding:8px 0 20px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
 .sb-section-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#b0c4d8;padding:14px 16px 5px;display:flex;align-items:center;gap:6px;}
@@ -62,37 +57,31 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tab-btn:hover:not(.on){color:#0d1e3a;background:#f8fafd;}
 .sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
 .main-content{flex:1;overflow-y:auto;padding:20px;}
-
 /* PANELS */
 .panel{display:none;max-width:900px;margin:0 auto;width:100%;}
 .panel.on{display:block;}
-
 /* CARDS */
 .card{background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:18px;margin-bottom:16px;}
 .card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;}
 .card-badge{background:#f0f5fb;border:1px solid #dde6f0;border-radius:6px;padding:3px 10px;font-size:10px;color:#5a7090;font-weight:600;}
-
 /* FIELDS */
 .field{margin-bottom:12px;}
 .field label{font-size:11px;font-weight:600;color:#5a7090;display:block;margin-bottom:5px;}
 .finput{width:100%;background:#f4f7fc;border:1px solid #dde6f0;border-radius:9px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:10px 13px;outline:none;transition:border-color .2s;}
 .finput:focus{border-color:#3a7bd5;background:#fff;}
 .finput::placeholder{color:#b0c4d8;}
-
 /* ALERT */
 .alert{border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:none;}
 .alert.ok{background:#E8F8EE;border:1px solid #c8e8d0;color:#1a7a44;}
 .alert.warn{background:#FFF8E0;border:1px solid #e8c870;color:#865a10;}
 .alert.err{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);color:#c0392b;}
-
 /* SEARCH */
 .db-search-wrap{position:relative;flex:1;min-width:160px;}
 .db-search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9ab0c8;}
 .db-search{width:100%;background:#f4f7fc;border:1px solid #dde6f0;border-radius:99px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:8px 12px 8px 34px;outline:none;transition:all .2s;}
 .db-search:focus{border-color:#3a7bd5;background:#fff;}
 .db-search::placeholder{color:#b0c4d8;}
-
 /* ══ CADASTRO DE JOGADORES ══ */
 .reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
 .player-roster{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
@@ -106,7 +95,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .roster-id{font-family:'DM Mono';font-size:10px;color:#b0c4d8;}
 .btn-add-player{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;background:#0a1628;color:#fff;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans';transition:all .2s;}
 .btn-add-player:hover{background:#132240;}
-
 /* REGISTRATION MODAL */
 #reg-modal{position:fixed;inset:0;background:rgba(10,22,40,.8);z-index:600;display:none;align-items:center;justify-content:center;padding:16px;}
 #reg-modal.show{display:flex;}
@@ -121,911 +109,1003 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .btn-save-player{flex:1;padding:13px;border-radius:10px;background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'DM Sans';}
 .btn-cancel-reg{padding:13px 20px;border-radius:10px;background:#f0f5fb;color:#5a7090;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:'DM Sans';}
 .reg-section-lbl{font-family:'DM Mono';font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8;margin:14px 0 8px;padding-bottom:5px;border-bottom:1px solid #f0f5fb;}
-
+/* ══ SKILLS (novo) ══ */
+.skills-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.skill-input-field label{display:flex;justify-content:space-between;align-items:center;}
+.skill-input-hint{font-family:'DM Mono';font-size:9px;color:#b0c4d8;}
+.skill-row{display:grid;grid-template-columns:110px 1fr 30px;align-items:center;gap:10px;padding:6px 0;}
+.skill-label{font-size:11.5px;font-weight:600;color:#5a7090;}
+.skill-bar-track{height:7px;background:#eef2f7;border-radius:99px;overflow:hidden;}
+.skill-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3a7bd5,#C9933A);}
+.skill-value{font-family:'DM Mono';font-size:11px;font-weight:700;color:#0a1628;text-align:right;}
 @media(max-width:760px){
-  .mob-menu-btn{display:flex;}
-  .sidebar-nav{position:fixed;left:0;top:56px;height:calc(100vh - 56px);z-index:360;transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.1);}
-  .sidebar-nav.mob-open{transform:translateX(0);}
-  .player-roster{grid-template-columns:1fr;}
-  .reg-grid{grid-template-columns:1fr;}
+.mob-menu-btn{display:flex;}
+.sidebar-nav{position:fixed;left:0;top:56px;height:calc(100vh - 56px);z-index:360;transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.1);}
+.sidebar-nav.mob-open{transform:translateX(0);}
+.player-roster{grid-template-columns:1fr;}
+.reg-grid{grid-template-columns:1fr;}
+.skills-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
 <body>
-
 <!-- ════════ LOGIN ════════ -->
 <div class="screen active" id="s-login">
-  <div class="login-wrap">
-    <div class="login-brand">
-      <div class="login-logo">PADEL<em>EYE</em></div>
-      <div class="login-tag">Módulo Jogadores</div>
-    </div>
-    <div class="login-card">
-      <div class="login-card-title">Área do Organizador</div>
-      <div class="login-card-sub">Acesso exclusivo para gestores de clube e organizadores.</div>
-      <div class="login-error" id="login-err">Cliente ou senha incorretos. Tente novamente.</div>
-      <div class="lfield">
-        <label>Cliente</label>
-        <input type="text" id="l-user" value="organizer@padeleye.com" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <div class="lfield">
-        <label>Senha</label>
-        <input type="password" id="l-pass" value="654321" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
-      </div>
-      <button class="btn-login" onclick="doLogin()">Entrar no PadelEye →</button>
-    </div>
-    <div class="login-footer">JOGADORES · V1 · BY TECHNIGMA AI LAB</div>
-  </div>
+<div class="login-wrap">
+<div class="login-brand">
+<div class="login-logo">PADEL<em>EYE</em></div>
+<div class="login-tag">Módulo Jogadores</div>
+</div>
+<div class="login-card">
+<div class="login-card-title">Área do Organizador</div>
+<div class="login-card-sub">Acesso exclusivo para gestores de clube e organizadores.</div>
+<div class="login-error" id="login-err">Cliente ou senha incorretos. Tente novamente.</div>
+<div class="lfield">
+<label>Cliente</label>
+<input type="text" id="l-user" value="organizer@padeleye.com" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+</div>
+<div class="lfield">
+<label>Senha</label>
+<input type="password" id="l-pass" value="654321" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+</div>
+<button class="btn-login" onclick="doLogin()">Entrar no PadelEye →</button>
+</div>
+<div class="login-footer">JOGADORES · V1 · BY TECHNIGMA AI LAB</div>
+</div>
 </div>
 
 <!-- ════════ DASHBOARD ════════ -->
 <div class="screen" id="s-dashboard">
-
-  <div class="topbar">
-    <div style="display:flex;align-items:center;gap:10px">
-      <button class="mob-menu-btn" onclick="toggleMobMenu()" id="mob-menu-btn" aria-label="Menu">
-        <svg id="mob-menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5a7090" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
-      <div class="topbar-logo">PADEL<em>EYE</em></div>
-    </div>
-    <div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">JOGADORES · V1</div>
-    <div class="topbar-right">
-      <div class="topbar-user">
-        <div class="topbar-name" id="tb-name">—</div>
-        <div class="topbar-club" id="tb-club">—</div>
-      </div>
-      <div class="topbar-av" id="tb-av">?</div>
-      <button class="btn-out" onclick="doLogout()">Sair</button>
-    </div>
-  </div>
-
-  <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
-
-  <div class="app-body">
-    <div class="sidebar-nav" id="sidebar-nav">
-      <div class="sb-section-label">Jogadores</div>
-      <button class="tab-btn on" onclick="showTab('cadastro',this)"><span class="sb-ic" style="background:#dbeafe">👤</span> Cadastro de Jogadores</button>
-      <div class="sb-divider"></div>
-      <div class="sb-section-label">Sistema</div>
-      <button class="tab-btn" onclick="showTab('dbtest',this)"><span class="sb-ic" style="background:#f1f5f9">🔧</span> Test DB</button>
-    </div>
-
-    <div class="main-content">
-
-      <!-- ── CADASTRO DE JOGADORES ── -->
-      <div class="panel on" id="p-cadastro">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
-          <div>
-            <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">Cadastro de Jogadores</div>
-            <div style="font-size:12px;color:#9ab0c8">Base de jogadores registados na plataforma</div>
-          </div>
-          <button class="btn-add-player" onclick="openRegModal()">+ Adicionar Jogador</button>
-        </div>
-
-        <div class="alert" id="alert-cadastro" style="margin-bottom:12px"></div>
-
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-          <div class="db-search-wrap">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input class="db-search" id="roster-search" placeholder="Pesquisar jogador..." oninput="renderRoster()">
-          </div>
-          <div class="card-badge" id="roster-badge" style="flex-shrink:0">0 jogadores</div>
-        </div>
-
-        <div class="player-roster" id="player-roster"></div>
-      </div>
-
-      <!-- ── TEST DB ── -->
-      <div class="panel" id="p-dbtest">
-        <div style="margin-bottom:20px">
-          <div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px">Test Connection to DB</div>
-          <div style="font-size:11px;color:#9ab0c8;margin-top:4px;font-family:'DM Mono'">Google Sheets · Apps Script Web App</div>
-        </div>
-
-        <div class="card" style="margin-bottom:16px;border:1.5px solid #e8eef5">
-          <div class="card-hd" style="margin-bottom:10px">
-            <div class="card-title" style="display:flex;align-items:center;gap:6px">🔗 Apps Script URL</div>
-            <div class="card-badge" id="dbt-url-badge" style="background:#e8f4fd;color:#1a5276;font-size:9px">V7.5</div>
-          </div>
-          <div id="dbt-url-display" style="display:flex;align-items:center;gap:10px">
-            <div style="flex:1;background:#f4f7fb;border-radius:8px;padding:10px 12px;font-family:'DM Mono';font-size:9px;color:#3a5a7a;word-break:break-all;line-height:1.5;border:1px solid #dce6f0" id="dbt-url-text">—</div>
-            <button onclick="dbtEditUrl()" style="flex-shrink:0;padding:8px 14px;border-radius:8px;border:1.5px solid #C9933A;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#C9933A;cursor:pointer;white-space:nowrap">✏️ EDITAR</button>
-          </div>
-          <div id="dbt-url-edit" style="display:none">
-            <textarea id="dbt-url-input" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1.5px solid #3a7bd5;font-family:'DM Mono';font-size:9px;color:#0d1e3a;line-height:1.6;resize:vertical;min-height:64px;background:#f8fbff;outline:none"></textarea>
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <button onclick="dbtSaveUrl()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#0a1628;color:#C9933A;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer">✅ GUARDAR</button>
-              <button onclick="dbtCancelUrl()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #ccc;background:#fff;color:#888;font-family:'DM Mono';font-size:9px;cursor:pointer">CANCELAR</button>
-            </div>
-            <div id="dbt-url-confirm" style="display:none;margin-top:8px;font-family:'DM Mono';font-size:10px;color:#1a7a44;background:#E8F8EE;border:1px solid #c8e8d0;border-radius:6px;padding:6px 10px">✅ Nova URL guardada com sucesso.</div>
-            <div style="font-size:9px;color:#b0c4d8;margin-top:6px;font-family:'DM Mono'">⚠️ URL gravada localmente no browser. Atualizar após cada novo deployment do Apps Script.</div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:16px">
-          <div class="card-hd">
-            <div class="card-title">Conexão Global</div>
-            <div class="card-badge" id="dbt-badge-all">Aguardando</div>
-          </div>
-          <div style="font-size:12px;color:#9ab0c8;margin-bottom:14px">Testa o ping ao Apps Script e a tabela Players.</div>
-          <button onclick="dbtTestAll()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a1628,#1a3052);color:#C9933A;font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;border:none;border-radius:10px;cursor:pointer">🔌 TESTAR CONEXÃO COMPLETA</button>
-          <div id="dbt-result-all" style="margin-top:12px"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-hd">
-            <div class="card-title">Teste por Tabela</div>
-            <div class="card-badge">2 verificações</div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <div class="card" id="dbt-row-jogadores" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
-              <div style="font-size:20px">👤</div>
-              <div style="flex:1">
-                <div style="font-size:13px;font-weight:700;color:#0d1e3a">Players</div>
-                <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_players</div>
-              </div>
-              <div id="dbt-status-jogadores" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
-              <button onclick="dbtTestOne('get_players','jogadores',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
-            </div>
-            <div class="card" id="dbt-row-ping" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
-              <div style="font-size:20px">📡</div>
-              <div style="flex:1">
-                <div style="font-size:13px;font-weight:700;color:#0d1e3a">Apps Script</div>
-                <div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ping (health check)</div>
-              </div>
-              <div id="dbt-status-ping" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
-              <button onclick="dbtTestOne('ping','ping',true)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- REGISTRATION MODAL -->
-  <div id="reg-modal" onclick="closeRegModal(event)">
-    <div class="reg-box">
-      <div class="reg-box-title" id="reg-box-title">Novo Jogador</div>
-      <div class="reg-box-sub" id="reg-box-sub">Preencha os dados do jogador. Campos com * são obrigatórios.</div>
-
-      <div class="reg-id-display">
-        <span style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ID</span>
-        <span class="reg-id-val" id="reg-id-preview">Gerado ao salvar</span>
-      </div>
-
-      <div class="reg-section-lbl">Identificação *</div>
-      <div class="reg-grid">
-        <div class="field">
-          <label>Nome <span class="reg-required">*</span></label>
-          <input class="finput" id="reg-nome" placeholder="Nome próprio">
-        </div>
-        <div class="field">
-          <label>Sobrenome <span class="reg-required">*</span></label>
-          <input class="finput" id="reg-sobrenome" placeholder="Sobrenome">
-        </div>
-      </div>
-      <div class="field">
-        <label>Apelido / Nickname <span class="reg-optional">opcional</span></label>
-        <input class="finput" id="reg-nickname" placeholder="ex: Negão, Gordão, Titio...">
-      </div>
-
-      <div class="reg-section-lbl">Categoria *</div>
-      <div class="reg-grid">
-        <div class="field">
-          <label>Categoria Atual <span class="reg-required">*</span></label>
-          <select class="finput" id="reg-categoria">
-            <option value="">Selecionar...</option>
-            <option value="8a">8ª Categoria</option>
-            <option value="7a">7ª Categoria</option>
-            <option value="6a">6ª Categoria</option>
-            <option value="5a">5ª Categoria</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Género <span class="reg-required">*</span></label>
-          <select class="finput" id="reg-genero">
-            <option value="">Selecionar...</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Feminino">Feminino</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="reg-section-lbl">Localização <span class="reg-optional">opcional</span></div>
-      <div class="reg-grid">
-        <div class="field">
-          <label>Cidade <span class="reg-optional">opcional</span></label>
-          <input class="finput" id="reg-cidade" placeholder="ex: Foz do Iguaçu">
-        </div>
-        <div class="field">
-          <label>Nacionalidade <span class="reg-optional">opcional</span></label>
-          <input class="finput" id="reg-nacionalidade" placeholder="ex: Brasileiro">
-        </div>
-      </div>
-
-      <div class="reg-section-lbl">Contacto <span class="reg-optional">opcional</span></div>
-      <div class="reg-grid">
-        <div class="field">
-          <label>Email <span class="reg-optional">opcional</span></label>
-          <input class="finput" id="reg-email" type="email" placeholder="email@exemplo.com">
-        </div>
-        <div class="field">
-          <label>Celular <span class="reg-optional">opcional</span></label>
-          <input class="finput" id="reg-celular" placeholder="+55 (45) 9 9999-9999">
-        </div>
-      </div>
-
-      <div class="reg-actions">
-        <button class="btn-cancel-reg" onclick="closeRegModal()">Cancelar</button>
-        <button class="btn-save-player" id="reg-save-btn" onclick="savePlayer()">💾 Salvar Perfil</button>
-      </div>
-    </div>
-  </div>
+<div class="topbar">
+<div style="display:flex;align-items:center;gap:10px">
+<button class="mob-menu-btn" onclick="toggleMobMenu()" id="mob-menu-btn" aria-label="Menu">
+<svg id="mob-menu-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5a7090" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="topbar-logo">PADEL<em>EYE</em></div>
+</div>
+<div style="font-family:'DM Mono';font-size:9px;letter-spacing:2px;color:#9ab0c8;padding:3px 8px;border:1px solid #dde6f0;border-radius:20px">JOGADORES · V1</div>
+<div class="topbar-right">
+<div class="topbar-user">
+<div class="topbar-name" id="tb-name">—</div>
+<div class="topbar-club" id="tb-club">—</div>
+</div>
+<div class="topbar-av" id="tb-av">?</div>
+<button class="btn-out" onclick="doLogout()">Sair</button>
+</div>
+</div>
+<div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
+<div class="app-body">
+<div class="sidebar-nav" id="sidebar-nav">
+<div class="sb-section-label">Jogadores</div>
+<button class="tab-btn on" onclick="showTab('cadastro',this)"><span class="sb-ic" style="background:#dbeafe">👤</span> Cadastro de Jogadores</button>
+<div class="sb-divider"></div>
+<div class="sb-section-label">Sistema</div>
+<button class="tab-btn" onclick="showTab('dbtest',this)"><span class="sb-ic" style="background:#f1f5f9">🔧</span> Test DB</button>
+</div>
+<div class="main-content">
+<!-- ── CADASTRO DE JOGADORES ── -->
+<div class="panel on" id="p-cadastro">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:10px">
+<div>
+<div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px">Cadastro de Jogadores</div>
+<div style="font-size:12px;color:#9ab0c8">Base de jogadores registados na plataforma</div>
+</div>
+<button class="btn-add-player" onclick="openRegModal()">+ Adicionar Jogador</button>
+</div>
+<div class="alert" id="alert-cadastro" style="margin-bottom:12px"></div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+<div class="db-search-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<input class="db-search" id="roster-search" placeholder="Pesquisar jogador..." oninput="renderRoster()">
+</div>
+<div class="card-badge" id="roster-badge" style="flex-shrink:0">0 jogadores</div>
+</div>
+<div class="player-roster" id="player-roster"></div>
+</div>
+<!-- ── TEST DB ── -->
+<div class="panel" id="p-dbtest">
+<div style="margin-bottom:20px">
+<div style="font-family:'Bebas Neue';font-size:26px;color:#0a1628;letter-spacing:1px">Test Connection to DB</div>
+<div style="font-size:11px;color:#9ab0c8;margin-top:4px;font-family:'DM Mono'">Google Sheets · Apps Script Web App</div>
+</div>
+<div class="card" style="margin-bottom:16px;border:1.5px solid #e8eef5">
+<div class="card-hd" style="margin-bottom:10px">
+<div class="card-title" style="display:flex;align-items:center;gap:6px">🔗 Apps Script URL</div>
+<div class="card-badge" id="dbt-url-badge" style="background:#e8f4fd;color:#1a5276;font-size:9px">V7.5</div>
+</div>
+<div id="dbt-url-display" style="display:flex;align-items:center;gap:10px">
+<div style="flex:1;background:#f4f7fb;border-radius:8px;padding:10px 12px;font-family:'DM Mono';font-size:9px;color:#3a5a7a;word-break:break-all;line-height:1.5;border:1px solid #dce6f0" id="dbt-url-text">—</div>
+<button onclick="dbtEditUrl()" style="flex-shrink:0;padding:8px 14px;border-radius:8px;border:1.5px solid #C9933A;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#C9933A;cursor:pointer;white-space:nowrap">✏️ EDITAR</button>
+</div>
+<div id="dbt-url-edit" style="display:none">
+<textarea id="dbt-url-input" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1.5px solid #3a7bd5;font-family:'DM Mono';font-size:9px;color:#0d1e3a;line-height:1.6;resize:vertical;min-height:64px;background:#f8fbff;outline:none"></textarea>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button onclick="dbtSaveUrl()" style="flex:1;padding:9px;border-radius:8px;border:none;background:#0a1628;color:#C9933A;font-family:'Bebas Neue';font-size:14px;letter-spacing:1px;cursor:pointer">✅ GUARDAR</button>
+<button onclick="dbtCancelUrl()" style="padding:9px 18px;border-radius:8px;border:1.5px solid #ccc;background:#fff;color:#888;font-family:'DM Mono';font-size:9px;cursor:pointer">CANCELAR</button>
+</div>
+<div id="dbt-url-confirm" style="display:none;margin-top:8px;font-family:'DM Mono';font-size:10px;color:#1a7a44;background:#E8F8EE;border:1px solid #c8e8d0;border-radius:6px;padding:6px 10px">✅ Nova URL guardada com sucesso.</div>
+<div style="font-size:9px;color:#b0c4d8;margin-top:6px;font-family:'DM Mono'">⚠️ URL gravada localmente no browser. Atualizar após cada novo deployment do Apps Script.</div>
+</div>
+</div>
+<div class="card" style="margin-bottom:16px">
+<div class="card-hd">
+<div class="card-title">Conexão Global</div>
+<div class="card-badge" id="dbt-badge-all">Aguardando</div>
+</div>
+<div style="font-size:12px;color:#9ab0c8;margin-bottom:14px">Testa o ping ao Apps Script e a tabela Players.</div>
+<button onclick="dbtTestAll()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a1628,#1a3052);color:#C9933A;font-family:'Bebas Neue';font-size:18px;letter-spacing:2px;border:none;border-radius:10px;cursor:pointer">🔌 TESTAR CONEXÃO COMPLETA</button>
+<div id="dbt-result-all" style="margin-top:12px"></div>
+</div>
+<div class="card">
+<div class="card-hd">
+<div class="card-title">Teste por Tabela</div>
+<div class="card-badge">2 verificações</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="card" id="dbt-row-jogadores" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+<div style="font-size:20px">👤</div>
+<div style="flex:1">
+<div style="font-size:13px;font-weight:700;color:#0d1e3a">Players</div>
+<div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">get_players</div>
+</div>
+<div id="dbt-status-jogadores" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+<button onclick="dbtTestOne('get_players','jogadores',false)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+</div>
+<div class="card" id="dbt-row-ping" style="margin-bottom:0;display:flex;align-items:center;gap:12px;padding:12px 16px">
+<div style="font-size:20px">📡</div>
+<div style="flex:1">
+<div style="font-size:13px;font-weight:700;color:#0d1e3a">Apps Script</div>
+<div style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ping (health check)</div>
+</div>
+<div id="dbt-status-ping" style="font-size:10px;font-family:'DM Mono';color:#b0c4d8;min-width:90px;text-align:right">—</div>
+<button onclick="dbtTestOne('ping','ping',true)" style="padding:7px 16px;border-radius:8px;border:1.5px solid #3a7bd5;background:#fff;font-family:'DM Mono';font-size:9px;letter-spacing:1px;color:#3a7bd5;cursor:pointer">TESTAR</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- REGISTRATION MODAL -->
+<div id="reg-modal" onclick="closeRegModal(event)">
+<div class="reg-box">
+<div class="reg-box-title" id="reg-box-title">Novo Jogador</div>
+<div class="reg-box-sub" id="reg-box-sub">Preencha os dados do jogador. Campos com * são obrigatórios.</div>
+<div class="reg-id-display">
+<span style="font-size:10px;color:#9ab0c8;font-family:'DM Mono'">ID</span>
+<span class="reg-id-val" id="reg-id-preview">Gerado ao salvar</span>
+</div>
+<div class="reg-section-lbl">Identificação *</div>
+<div class="reg-grid">
+<div class="field">
+<label>Nome <span class="reg-required">*</span></label>
+<input class="finput" id="reg-nome" placeholder="Nome próprio">
+</div>
+<div class="field">
+<label>Sobrenome <span class="reg-required">*</span></label>
+<input class="finput" id="reg-sobrenome" placeholder="Sobrenome">
+</div>
+</div>
+<div class="field">
+<label>Apelido / Nickname <span class="reg-optional">opcional</span></label>
+<input class="finput" id="reg-nickname" placeholder="ex: Negão, Gordão, Titio...">
+</div>
+<div class="reg-section-lbl">Categoria *</div>
+<div class="reg-grid">
+<div class="field">
+<label>Categoria Atual <span class="reg-required">*</span></label>
+<select class="finput" id="reg-categoria">
+<option value="">Selecionar...</option>
+<option value="8a">8ª Categoria</option>
+<option value="7a">7ª Categoria</option>
+<option value="6a">6ª Categoria</option>
+<option value="5a">5ª Categoria</option>
+</select>
+</div>
+<div class="field">
+<label>Género <span class="reg-required">*</span></label>
+<select class="finput" id="reg-genero">
+<option value="">Selecionar...</option>
+<option value="Masculino">Masculino</option>
+<option value="Feminino">Feminino</option>
+</select>
+</div>
+</div>
+<div class="reg-section-lbl">Localização <span class="reg-optional">opcional</span></div>
+<div class="reg-grid">
+<div class="field">
+<label>Cidade <span class="reg-optional">opcional</span></label>
+<input class="finput" id="reg-cidade" placeholder="ex: Foz do Iguaçu">
+</div>
+<div class="field">
+<label>Nacionalidade <span class="reg-optional">opcional</span></label>
+<input class="finput" id="reg-nacionalidade" placeholder="ex: Brasileiro">
+</div>
+</div>
+<div class="reg-section-lbl">Contacto <span class="reg-optional">opcional</span></div>
+<div class="reg-grid">
+<div class="field">
+<label>Email <span class="reg-optional">opcional</span></label>
+<input class="finput" id="reg-email" type="email" placeholder="email@exemplo.com">
+</div>
+<div class="field">
+<label>Celular <span class="reg-optional">opcional</span></label>
+<input class="finput" id="reg-celular" placeholder="+55 (45) 9 9999-9999">
+</div>
+</div>
+<div class="reg-section-lbl">Skills <span class="reg-optional">opcional · escala 1 a 10</span></div>
+<div class="skills-grid" id="reg-skills-grid">
+<div class="field skill-input-field"><label>Saque <span class="skill-input-hint" id="hint-serve"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-serve" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Forehand <span class="skill-input-hint" id="hint-forehand"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-forehand" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Backhand <span class="skill-input-hint" id="hint-backhand"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-backhand" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Lob <span class="skill-input-hint" id="hint-lob"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-lob" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Voleio <span class="skill-input-hint" id="hint-volley"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-volley" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Smash <span class="skill-input-hint" id="hint-smash"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-smash" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Uso da Parede <span class="skill-input-hint" id="hint-wall"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-wall" placeholder="1–10"></div>
+<div class="field skill-input-field"><label>Subida à Rede <span class="skill-input-hint" id="hint-net"></span></label><input class="finput" type="number" min="1" max="10" step="1" id="skill-net" placeholder="1–10"></div>
+</div>
+<div class="reg-actions">
+<button class="btn-cancel-reg" onclick="closeRegModal()">Cancelar</button>
+<button class="btn-save-player" id="reg-save-btn" onclick="savePlayer()">💾 Salvar Perfil</button>
+</div>
+</div>
 </div>
 
 <!-- VIEW PLAYER MODAL -->
 <div id="view-modal" onclick="closeViewModal(event)"
-  style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:700;align-items:center;justify-content:center;padding:16px">
-  <div style="background:#fff;border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div>
-        <div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px" id="vm-title">Perfil do Jogador</div>
-        <div style="font-size:11px;color:#9ab0c8;margin-top:2px;font-family:'DM Mono'" id="vm-sub"></div>
-      </div>
-      <button onclick="closeViewModal()"
-        style="width:32px;height:32px;border-radius:50%;border:1px solid #dde6f0;background:#f4f7fc;color:#7090b0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
-    </div>
-    <div id="vm-body"></div>
-    <div style="margin-top:20px">
-      <button onclick="closeViewModal()"
-        style="width:100%;padding:12px;border-radius:10px;background:#f0f5fb;border:none;color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans'">Fechar</button>
-    </div>
-  </div>
+style="display:none;position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:700;align-items:center;justify-content:center;padding:16px">
+<div style="background:#fff;border-radius:20px;padding:28px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+<div>
+<div style="font-family:'Bebas Neue';font-size:24px;color:#0a1628;letter-spacing:1px" id="vm-title">Perfil do Jogador</div>
+<div style="font-size:11px;color:#9ab0c8;margin-top:2px;font-family:'DM Mono'" id="vm-sub"></div>
+</div>
+<button onclick="closeViewModal()"
+style="width:32px;height:32px;border-radius:50%;border:1px solid #dde6f0;background:#f4f7fc;color:#7090b0;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+</div>
+<div id="vm-body"></div>
+<div style="margin-top:20px">
+<button onclick="closeViewModal()"
+style="width:100%;padding:12px;border-radius:10px;background:#f0f5fb;border:none;color:#5a7090;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans'">Fechar</button>
+</div>
+</div>
 </div>
 
 <script>
 // ══════════════════════════════════════════════════════════════════
-// PadelEye · Jogadores · V1
+// PadelEye · Jogadores · V1.1
 // Módulo standalone extraído do Tournament Manager V40.1 — mesmo
 // Google Sheets DB, mesmo Apps Script V7.5, sem nada de torneio/sessão.
+// NOVO NESTA VERSÃO (V1.1): 7 campos de skills por jogador (Saque,
+// Forehand, Backhand, Lob, Smash, Uso da Parede, Subida à Rede),
+// escala 1–10, editáveis aqui -- mesmos nomes de campo usados no
+// Tournament Manager (leitura), pra manter os dois 100% compatíveis.
 // ══════════════════════════════════════════════════════════════════
 
 const USERS = {
-  'organizador':                {pass:'padel2026', name:'Carlos Mendes',   club:'H7 Local · Foz do Iguaçu',      role:'organizer'},
-  'martin':                     {pass:'padel2026', name:'Martin Cordoba',  club:'PadelEye, By TechNigma AI Lab',  role:'admin'},
-  'organizer@padeleye.com':     {pass:'654321',     name:'Martin Cordoba', club:'EcoTenis · Foz do Iguaçu',        role:'admin', av:'MC'},
-  'marciocarrenho@hotmail.com': {pass:'987654',     name:'Márcio Carrenho', club:'EcoTenis · Organizador',         role:'organizer'},
-  'marcio':                     {pass:'987654',     name:'Márcio Carrenho', club:'EcoTenis · Organizador',         role:'organizer'},
-  'admin':                      {pass:'admin123',   name:'Administrador',   club:'PadelEye Admin',                 role:'admin'},
+'organizador': {pass:'padel2026', name:'Carlos Mendes', club:'H7 Local · Foz do Iguaçu', role:'organizer'},
+'martin': {pass:'padel2026', name:'Martin Cordoba', club:'PadelEye, By TechNigma AI Lab', role:'admin'},
+'organizer@padeleye.com': {pass:'654321', name:'Martin Cordoba', club:'EcoTenis · Foz do Iguaçu', role:'admin', av:'MC'},
+'marciocarrenho@hotmail.com': {pass:'987654', name:'Márcio Carrenho', club:'EcoTenis · Organizador', role:'organizer'},
+'marcio': {pass:'987654', name:'Márcio Carrenho', club:'EcoTenis · Organizador', role:'organizer'},
+'admin': {pass:'admin123', name:'Administrador', club:'PadelEye Admin', role:'admin'},
 };
 let currentUser = null;
 
 // ── REGISTRY[]: fonte de verdade do Cadastro, populada por loadPlayersFromDB() ─
-let REGISTRY      = [];
+let REGISTRY = [];
 let playerNormMap = {}; // normStr(displayName) → registry entry
-let playerIdMap   = {}; // player_id → registry entry
+let playerIdMap = {}; // player_id → registry entry
 let _editingPlayerId = null; // null = novo jogador | id = editar existente
 
 let WEB_APP_URL = localStorage.getItem('pe_web_app_url') ||
-  "https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec";
+"https://script.google.com/macros/s/AKfycbweA4wq6I3s7Yed-EixZQXwscL5kvWQD4DgJUBHGgrGWD3bN9NtXUd-_LoSYv60aWXV8Q/exec";
+
+// ══ SKILLS — mesmos nomes de campo usados no Tournament Manager ═════
+const SKILL_DEFS = [
+{ key:'serve',    label:'Saque' },
+{ key:'forehand', label:'Forehand' },
+{ key:'backhand', label:'Backhand' },
+{ key:'lob',      label:'Lob' },
+{ key:'volley',   label:'Voleio' },
+{ key:'smash',    label:'Smash' },
+{ key:'wall',     label:'Uso da Parede' },
+{ key:'net',      label:'Subida à Rede' },
+];
+// ══ RADAR (OCTÓGONO) — 8 eixos, um por skill ═════════════════════════
+// SVG puro, sem lib externa. Anéis de referência em 2/4/6/8/10, polígono
+// preenchido com os valores do jogador. Ângulo inicial no topo (12h),
+// sentido horário, na mesma ordem de SKILL_DEFS.
+function skillsRadarSVG(skills) {
+  const N = SKILL_DEFS.length;
+  const size = 260, cx = size/2, cy = size/2 - 4, maxR = 82;
+  const startAngle = -Math.PI/2;
+  const angleStep = (2*Math.PI)/N;
+  function ptAt(i, value) {
+    const angle = startAngle + i*angleStep;
+    const r = Math.max(0, Math.min(10, value))/10 * maxR;
+    return [cx + r*Math.cos(angle), cy + r*Math.sin(angle)];
+  }
+  const gridRings = [2,4,6,8,10].map(ringVal => {
+    const pts = SKILL_DEFS.map((s,i) => ptAt(i, ringVal).join(',')).join(' ');
+    return '<polygon points="'+pts+'" fill="none" stroke="#e4eaf1" stroke-width="1"/>';
+  }).join('');
+  const axisLines = SKILL_DEFS.map((s,i) => {
+    const [x,y] = ptAt(i, 10);
+    return '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="#eef2f7" stroke-width="1"/>';
+  }).join('');
+  const hasAny = SKILL_DEFS.some(s => skills && skills[s.key] != null);
+  const dataPts = SKILL_DEFS.map((s,i) => ptAt(i, (skills && skills[s.key]) || 0).join(',')).join(' ');
+  const dataDots = SKILL_DEFS.map((s,i) => {
+    if (!skills || skills[s.key] == null) return '';
+    const [x,y] = ptAt(i, skills[s.key]);
+    return '<circle cx="'+x+'" cy="'+y+'" r="3" fill="#3a7bd5"/>';
+  }).join('');
+  const labels = SKILL_DEFS.map((s,i) => {
+    const [x,y] = ptAt(i, 10 + 2.3);
+    const angle = startAngle + i*angleStep;
+    const cos = Math.cos(angle);
+    const anchor = cos > 0.25 ? 'start' : (cos < -0.25 ? 'end' : 'middle');
+    const v = skills && skills[s.key] != null ? skills[s.key] : '—';
+    return '<text x="'+x+'" y="'+y+'" font-family="DM Sans, sans-serif" font-size="9.5" font-weight="700" fill="#5a7090" text-anchor="'+anchor+'" dominant-baseline="middle">'+s.label+'</text>'
+      + '<text x="'+x+'" y="'+(y+11)+'" font-family="DM Mono, monospace" font-size="9" fill="#b0c4d8" text-anchor="'+anchor+'" dominant-baseline="middle">'+v+'/10</text>';
+  }).join('');
+  return '<svg viewBox="0 0 '+size+' '+(size+14)+'" width="100%" style="max-width:280px;display:block;margin:0 auto">'
+    + gridRings + axisLines
+    + (hasAny ? '<polygon points="'+dataPts+'" fill="rgba(58,123,213,.18)" stroke="#3a7bd5" stroke-width="2" stroke-linejoin="round"/>'+dataDots : '')
+    + labels
+    + '</svg>';
+}
+function parsePlayerSkills(p) {
+  const skills = {};
+  SKILL_DEFS.forEach(s => {
+    const raw = p['player_skill_'+s.key] ?? p['skill_'+s.key] ?? null;
+    const n = (raw !== null && raw !== undefined && raw !== '') ? parseInt(raw, 10) : NaN;
+    skills[s.key] = (!isNaN(n) && n >= 1 && n <= 10) ? n : null;
+  });
+  return skills;
+}
+function readSkillInputs() {
+  const skills = {};
+  let hasInvalid = false;
+  SKILL_DEFS.forEach(s => {
+    const el = document.getElementById('skill-'+s.key);
+    const hintEl = document.getElementById('hint-'+s.key);
+    if (hintEl) hintEl.textContent = '';
+    if (!el) return;
+    const raw = el.value.trim();
+    if (raw === '') { skills[s.key] = null; return; }
+    const n = parseInt(raw, 10);
+    if (isNaN(n) || n < 1 || n > 10) {
+      hasInvalid = true;
+      if (hintEl) hintEl.textContent = '1–10';
+      el.style.borderColor = '#e74c3c';
+      skills[s.key] = null;
+    } else {
+      el.style.borderColor = '#dde6f0';
+      skills[s.key] = n;
+    }
+  });
+  return { skills, hasInvalid };
+}
+function fillSkillInputs(skills) {
+  SKILL_DEFS.forEach(s => {
+    const el = document.getElementById('skill-'+s.key);
+    const hintEl = document.getElementById('hint-'+s.key);
+    if (el) { el.value = (skills && skills[s.key] != null) ? skills[s.key] : ''; el.style.borderColor = '#dde6f0'; }
+    if (hintEl) hintEl.textContent = '';
+  });
+}
+function skillsBarsHTML(skills) {
+  const hasAny = SKILL_DEFS.some(s => skills && skills[s.key] != null);
+  if (!hasAny) return '<div style="text-align:center;color:#b0c4d8;font-size:11px;padding:10px 0">Nenhuma skill cadastrada ainda.</div>';
+  return SKILL_DEFS.map(s => {
+    const v = skills[s.key];
+    const pct = v != null ? Math.round(v/10*100) : 0;
+    return '<div class="skill-row"><div class="skill-label">'+s.label+'</div>'
+      + '<div class="skill-bar-track"><div class="skill-bar-fill" style="width:'+pct+'%"></div></div>'
+      + '<div class="skill-value">'+(v!=null ? v+'/10' : '—')+'</div></div>';
+  }).join('');
+}
 
 // ══════════════════════════════════
 // AUTH
 // ══════════════════════════════════
 function doLogin() {
-  const user = document.getElementById('l-user').value.trim().toLowerCase();
-  const pass = document.getElementById('l-pass').value;
-  const err  = document.getElementById('login-err');
-  err.style.display = 'none';
-  if (!USERS[user] || USERS[user].pass !== pass) {
-    err.style.display = 'block';
-    document.getElementById('l-pass').value = '';
-    return;
-  }
-  currentUser = {...USERS[user], key:user};
-  localStorage.setItem('pe_auth_players_v1', JSON.stringify({ key: user }));
-
-  document.getElementById('s-login').classList.remove('active');
-  document.getElementById('s-dashboard').classList.add('active');
-  document.getElementById('tb-name').textContent = currentUser.name;
-  document.getElementById('tb-club').textContent = currentUser.club;
-  document.getElementById('tb-av').textContent   = currentUser.name[0];
-  loadPlayersFromDB();
+const user = document.getElementById('l-user').value.trim().toLowerCase();
+const pass = document.getElementById('l-pass').value;
+const err = document.getElementById('login-err');
+err.style.display = 'none';
+if (!USERS[user] || USERS[user].pass !== pass) {
+err.style.display = 'block';
+document.getElementById('l-pass').value = '';
+return;
 }
-
+currentUser = {...USERS[user], key:user};
+localStorage.setItem('pe_auth_players_v1', JSON.stringify({ key: user }));
+document.getElementById('s-login').classList.remove('active');
+document.getElementById('s-dashboard').classList.add('active');
+document.getElementById('tb-name').textContent = currentUser.name;
+document.getElementById('tb-club').textContent = currentUser.club;
+document.getElementById('tb-av').textContent = currentUser.name[0];
+loadPlayersFromDB();
+}
 function doLogout() {
-  localStorage.removeItem('pe_auth_players_v1');
-  currentUser = null;
-  document.getElementById('s-dashboard').classList.remove('active');
-  document.getElementById('s-login').classList.add('active');
-  document.getElementById('l-pass').value = '';
+localStorage.removeItem('pe_auth_players_v1');
+currentUser = null;
+document.getElementById('s-dashboard').classList.remove('active');
+document.getElementById('s-login').classList.add('active');
+document.getElementById('l-pass').value = '';
 }
 
 // ══════════════════════════════════
 // TABS
 // ══════════════════════════════════
 function toggleMobMenu() {
-  const sidebar = document.getElementById('sidebar-nav');
-  const overlay = document.getElementById('mob-overlay');
-  const icon    = document.getElementById('mob-menu-icon');
-  if (!sidebar) return;
-  const isOpen = sidebar.classList.contains('mob-open');
-  if (isOpen) { closeMobMenu(); return; }
-  sidebar.classList.add('mob-open');
-  overlay.classList.add('show');
-  icon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+const sidebar = document.getElementById('sidebar-nav');
+const overlay = document.getElementById('mob-overlay');
+const icon = document.getElementById('mob-menu-icon');
+if (!sidebar) return;
+const isOpen = sidebar.classList.contains('mob-open');
+if (isOpen) { closeMobMenu(); return; }
+sidebar.classList.add('mob-open');
+overlay.classList.add('show');
+icon.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
 }
 function closeMobMenu() {
-  const sidebar = document.getElementById('sidebar-nav');
-  const overlay = document.getElementById('mob-overlay');
-  const icon    = document.getElementById('mob-menu-icon');
-  if (!sidebar) return;
-  sidebar.classList.remove('mob-open');
-  if (overlay) overlay.classList.remove('show');
-  if (icon) icon.innerHTML = '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
+const sidebar = document.getElementById('sidebar-nav');
+const overlay = document.getElementById('mob-overlay');
+const icon = document.getElementById('mob-menu-icon');
+if (!sidebar) return;
+sidebar.classList.remove('mob-open');
+if (overlay) overlay.classList.remove('show');
+if (icon) icon.innerHTML = '<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>';
 }
 function showTab(id, el) {
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-  if (el) el.classList.add('on');
-  const panel = document.getElementById('p-' + id);
-  if (panel) panel.classList.add('on');
-  closeMobMenu();
-  if (id === 'cadastro') renderRoster();
+document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+if (el) el.classList.add('on');
+const panel = document.getElementById('p-' + id);
+if (panel) panel.classList.add('on');
+closeMobMenu();
+if (id === 'cadastro') renderRoster();
 }
 
 // ══════════════════════════════════
 // HELPERS — nomes, cores, ids
 // ══════════════════════════════════
 function normStr(s) {
-  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 }
 function displayName(p) {
-  if (p.nickname) return p.nickname;
-  return (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
+if (p.nickname) return p.nickname;
+return (p.nome + (p.sobrenome ? ' ' + p.sobrenome : '')).trim();
 }
 function _init(name) {
-  if (!name || typeof name !== 'string') return '??';
-  return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+if (!name || typeof name !== 'string') return '??';
+return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 }
 function catColor(cat) {
-  if (!cat) return '#0a1628';
-  const c = cat.toString().replace(/[^0-9]/g,'');
-  if (c === '8') return '#d97706';
-  if (c === '7') return '#b85c38';
-  if (c === '6') return '#276221';
-  if (c === '5') return '#1a5fa8';
-  return '#0a1628';
+if (!cat) return '#0a1628';
+const c = cat.toString().replace(/[^0-9]/g,'');
+if (c === '8') return '#d97706';
+if (c === '7') return '#b85c38';
+if (c === '6') return '#276221';
+if (c === '5') return '#1a5fa8';
+return '#0a1628';
 }
 // Gradiente da bandeira por nacionalidade — mesma convenção do resto do sistema
 function flagGrad(nat) {
-  const n = (nat||'').toLowerCase();
-  if (n.includes('brasile') || n.includes('brazil'))
-    return 'linear-gradient(135deg,#1a6e30 0%,#3aaa5c 40%,#f5d020 70%,#f5d020 100%)';
-  if (n.includes('argentin'))
-    return 'linear-gradient(135deg,#74acdf 0%,#aed6f1 45%,#fff 60%,#aed6f1 80%,#74acdf 100%)';
-  if (n.includes('paraguai') || n.includes('paraguay'))
-    return 'linear-gradient(160deg,#c8102e 0%,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8 100%)';
-  if (n.includes('uruguai') || n.includes('uruguay'))
-    return 'linear-gradient(135deg,#75aadb 0%,#fff 50%,#75aadb 100%)';
-  if (n.includes('chile') || n.includes('chilen'))
-    return 'linear-gradient(135deg,#d52b1e 0%,#fff 50%,#d52b1e 100%)';
-  return 'linear-gradient(135deg,#3a5a8a 0%,#5a7aaa 100%)';
+const n = (nat||'').toLowerCase();
+if (n.includes('brasile') || n.includes('brazil'))
+return 'linear-gradient(135deg,#1a6e30 0%,#3aaa5c 40%,#f5d020 70%,#f5d020 100%)';
+if (n.includes('argentin'))
+return 'linear-gradient(135deg,#74acdf 0%,#aed6f1 45%,#fff 60%,#aed6f1 80%,#74acdf 100%)';
+if (n.includes('paraguai') || n.includes('paraguay'))
+return 'linear-gradient(160deg,#c8102e 0%,#f5b8c4 40%,#fff 55%,#b0c4de 70%,#0038a8 100%)';
+if (n.includes('uruguai') || n.includes('uruguay'))
+return 'linear-gradient(135deg,#75aadb 0%,#fff 50%,#75aadb 100%)';
+if (n.includes('chile') || n.includes('chilen'))
+return 'linear-gradient(135deg,#d52b1e 0%,#fff 50%,#d52b1e 100%)';
+return 'linear-gradient(135deg,#3a5a8a 0%,#5a7aaa 100%)';
 }
 function flagTextCol(nat) {
-  const n = (nat||'').toLowerCase();
-  if (n.includes('argentin') || n.includes('uruguai') || n.includes('uruguay')) return '#002D6E';
-  return '#fff';
+const n = (nat||'').toLowerCase();
+if (n.includes('argentin') || n.includes('uruguai') || n.includes('uruguay')) return '#002D6E';
+return '#fff';
 }
 function nextPlayerId() {
-  const year   = new Date().getFullYear().toString();
-  const thisYearIds = REGISTRY
-    .map(p => p.id ? p.id.toString() : '')
-    .filter(id => id.startsWith(year) && id.length === 7)
-    .map(id => parseInt(id.slice(4), 10))
-    .filter(n => !isNaN(n));
-  const maxSeq  = thisYearIds.length > 0 ? Math.max(...thisYearIds) : 0;
-  const nextSeq = (maxSeq + 1).toString().padStart(3, '0');
-  return parseInt(year + nextSeq, 10);
+const year = new Date().getFullYear().toString();
+const thisYearIds = REGISTRY
+.map(p => p.id ? p.id.toString() : '')
+.filter(id => id.startsWith(year) && id.length === 7)
+.map(id => parseInt(id.slice(4), 10))
+.filter(n => !isNaN(n));
+const maxSeq = thisYearIds.length > 0 ? Math.max(...thisYearIds) : 0;
+const nextSeq = (maxSeq + 1).toString().padStart(3, '0');
+return parseInt(year + nextSeq, 10);
 }
 function safeAlert(msg, type) {
-  const el = document.getElementById('alert-cadastro');
-  if (!el) { alert(msg); return; }
-  el.textContent = msg;
-  el.className = 'alert ' + (type === 'err' ? 'err' : type === 'warn' ? 'warn' : 'ok');
-  el.style.display = 'block';
-  setTimeout(() => { el.style.display = 'none'; }, 4000);
+const el = document.getElementById('alert-cadastro');
+if (!el) { alert(msg); return; }
+el.textContent = msg;
+el.className = 'alert ' + (type === 'err' ? 'err' : type === 'warn' ? 'warn' : 'ok');
+el.style.display = 'block';
+setTimeout(() => { el.style.display = 'none'; }, 4000);
 }
 
 // ══════════════════════════════════
 // CADASTRO — modais e CRUD
 // ══════════════════════════════════
 function openRegModal() {
-  _editingPlayerId = null;
-  document.getElementById('reg-box-title').textContent  = 'Novo Jogador';
-  document.getElementById('reg-box-sub').textContent    = 'Preencha os dados do jogador. Campos com * são obrigatórios.';
-  document.getElementById('reg-save-btn').textContent   = '💾 Salvar Perfil';
-  document.getElementById('reg-nome').value             = '';
-  document.getElementById('reg-sobrenome').value        = '';
-  document.getElementById('reg-nickname').value         = '';
-  document.getElementById('reg-categoria').value        = '';
-  document.getElementById('reg-genero').value           = '';
-  document.getElementById('reg-cidade').value           = '';
-  document.getElementById('reg-nacionalidade').value    = '';
-  document.getElementById('reg-email').value            = '';
-  document.getElementById('reg-celular').value          = '';
-  document.getElementById('reg-id-preview').textContent = `#${nextPlayerId()} (gerado ao salvar)`;
-  document.getElementById('reg-modal').classList.add('show');
-  setTimeout(() => document.getElementById('reg-nome').focus(), 100);
+_editingPlayerId = null;
+document.getElementById('reg-box-title').textContent = 'Novo Jogador';
+document.getElementById('reg-box-sub').textContent = 'Preencha os dados do jogador. Campos com * são obrigatórios.';
+document.getElementById('reg-save-btn').textContent = '💾 Salvar Perfil';
+document.getElementById('reg-nome').value = '';
+document.getElementById('reg-sobrenome').value = '';
+document.getElementById('reg-nickname').value = '';
+document.getElementById('reg-categoria').value = '';
+document.getElementById('reg-genero').value = '';
+document.getElementById('reg-cidade').value = '';
+document.getElementById('reg-nacionalidade').value = '';
+document.getElementById('reg-email').value = '';
+document.getElementById('reg-celular').value = '';
+fillSkillInputs({});
+document.getElementById('reg-id-preview').textContent = `#${nextPlayerId()} (gerado ao salvar)`;
+document.getElementById('reg-modal').classList.add('show');
+setTimeout(() => document.getElementById('reg-nome').focus(), 100);
 }
 function closeRegModal(e) {
-  // Só fecha se o clique for exatamente no overlay (não em qualquer lugar dentro do card)
-  if (!e || e.target.id === 'reg-modal') {
-    document.getElementById('reg-modal').classList.remove('show');
-  }
+// Só fecha se o clique for exatamente no overlay (não em qualquer lugar dentro do card)
+if (!e || e.target.id === 'reg-modal') {
+document.getElementById('reg-modal').classList.remove('show');
 }
-
+}
 function openEditModal(playerId) {
-  const p = REGISTRY.find(r => String(r.id) === String(playerId));
-  if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
-
-  _editingPlayerId = p.id;
-  document.getElementById('reg-box-title').textContent  = 'Editar Jogador';
-  document.getElementById('reg-box-sub').textContent    = `A editar: ${p.nome} ${p.sobrenome} · ID #${p.id}`;
-  document.getElementById('reg-save-btn').textContent   = '💾 Guardar Alterações';
-  document.getElementById('reg-id-preview').textContent = `#${p.id}`;
-  document.getElementById('reg-nome').value             = p.nome          || '';
-  document.getElementById('reg-sobrenome').value        = p.sobrenome     || '';
-  document.getElementById('reg-nickname').value         = p.nickname      || '';
-  document.getElementById('reg-categoria').value        = p.categoria     || '';
-  document.getElementById('reg-genero').value           = p.genero        || '';
-  document.getElementById('reg-cidade').value           = p.cidade        || '';
-  document.getElementById('reg-nacionalidade').value    = p.nacionalidade || '';
-  document.getElementById('reg-email').value            = p.email         || '';
-  document.getElementById('reg-celular').value          = p.celular       || '';
-  document.getElementById('reg-modal').classList.add('show');
-  setTimeout(() => document.getElementById('reg-nome').focus(), 100);
+const p = REGISTRY.find(r => String(r.id) === String(playerId));
+if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
+_editingPlayerId = p.id;
+document.getElementById('reg-box-title').textContent = 'Editar Jogador';
+document.getElementById('reg-box-sub').textContent = `A editar: ${p.nome} ${p.sobrenome} · ID #${p.id}`;
+document.getElementById('reg-save-btn').textContent = '💾 Guardar Alterações';
+document.getElementById('reg-id-preview').textContent = `#${p.id}`;
+document.getElementById('reg-nome').value = p.nome || '';
+document.getElementById('reg-sobrenome').value = p.sobrenome || '';
+document.getElementById('reg-nickname').value = p.nickname || '';
+document.getElementById('reg-categoria').value = p.categoria || '';
+document.getElementById('reg-genero').value = p.genero || '';
+document.getElementById('reg-cidade').value = p.cidade || '';
+document.getElementById('reg-nacionalidade').value = p.nacionalidade || '';
+document.getElementById('reg-email').value = p.email || '';
+document.getElementById('reg-celular').value = p.celular || '';
+fillSkillInputs(p.skills || {});
+document.getElementById('reg-modal').classList.add('show');
+setTimeout(() => document.getElementById('reg-nome').focus(), 100);
 }
-
 function openViewModal(playerId) {
-  const p = REGISTRY.find(r => String(r.id) === String(playerId));
-  if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
-
-  const dname    = displayName(p);
-  const initials = _init(dname);
-  const hdrCol   = catColor(p.categoria);
-  const grad     = flagGrad(p.nacionalidade);
-  const txtCol   = flagTextCol(p.nacionalidade);
-  const catNum   = (p.categoria||'').replace(/[^0-9]/g,'');
-
-  document.getElementById('vm-title').textContent = '';
-  document.getElementById('vm-sub').textContent   = '';
-
-  const extraFields = [
-    p.genero  ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f7fc;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Género</span><span style="color:#0d1e3a;font-weight:500">${p.genero}</span></div>` : '',
-    p.email   ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f7fc;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Email</span><span style="color:#3a7bd5;font-weight:500">${p.email}</span></div>` : '',
-    p.celular ? `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Celular</span><span style="color:#0d1e3a;font-weight:500">${p.celular}</span></div>` : '',
-  ].filter(Boolean).join('');
-
-  document.getElementById('vm-body').innerHTML = `
-    <div style="border-radius:14px;overflow:hidden;border:0.5px solid #dde6f0;margin-bottom:4px">
-      <div style="background:${hdrCol};padding:14px 16px 0">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <span style="font-size:12px;color:#fff;letter-spacing:2px;font-weight:700">PADEL<span style="color:#fde68a">EYE</span></span>
-          <span style="font-size:9px;font-weight:700;color:#fde68a;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:99px">${catNum ? catNum+'ª Categoria' : '—'}</span>
-        </div>
-        <div style="display:flex;justify-content:center;margin-bottom:-26px">
-          <div style="width:56px;height:56px;border-radius:50%;border:3px solid #fff;background:${grad};display:flex;align-items:center;justify-content:center">
-            <span style="font-size:15px;font-weight:700;color:${txtCol};text-shadow:0 1px 4px rgba(0,0,0,0.4)">${initials}</span>
-          </div>
-        </div>
-      </div>
-      <div style="background:#fff;padding:32px 16px 16px;text-align:center">
-        <div style="font-size:20px;font-weight:700;color:#0a1628;line-height:1.1">
-          ${p.nome||dname}${p.sobrenome ? ' <span style="font-weight:500;color:#5a7090">'+p.sobrenome+'</span>' : ''}
-        </div>
-        ${p.nickname ? `<div style="font-size:11px;color:#9ab0c8;margin-top:3px">"${p.nickname}"</div>` : ''}
-        <div style="font-size:11px;font-weight:600;color:${hdrCol};margin-top:6px">Atleta de Padel</div>
-        ${p.cidade ? `<div style="font-size:10px;color:#9ab0c8;margin-top:3px">${p.cidade}</div>` : ''}
-        <div style="margin:12px 0;height:0.5px;background:#eef1f5"></div>
-        <div style="border:0.5px solid #dde6f0;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
-          <div style="text-align:left">
-            <div style="font-size:9px;color:#9ab0c8;text-transform:uppercase;letter-spacing:0.06em">ID do Jogador</div>
-            <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#0a1628;margin-top:1px">#${p.id}</div>
-          </div>
-        </div>
-        ${extraFields ? `<div style="margin-top:10px;text-align:left">${extraFields}</div>` : ''}
-      </div>
-    </div>
-  `;
-
-  document.getElementById('view-modal').style.display = 'flex';
+const p = REGISTRY.find(r => String(r.id) === String(playerId));
+if (!p) { safeAlert('Jogador não encontrado.', 'err'); return; }
+const dname = displayName(p);
+const initials = _init(dname);
+const hdrCol = catColor(p.categoria);
+const grad = flagGrad(p.nacionalidade);
+const txtCol = flagTextCol(p.nacionalidade);
+const catNum = (p.categoria||'').replace(/[^0-9]/g,'');
+document.getElementById('vm-title').textContent = '';
+document.getElementById('vm-sub').textContent = '';
+const extraFields = [
+p.genero ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f7fc;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Género</span><span style="color:#0d1e3a;font-weight:500">${p.genero}</span></div>` : '',
+p.email ? `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f4f7fc;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Email</span><span style="color:#3a7bd5;font-weight:500">${p.email}</span></div>` : '',
+p.celular ? `<div style="display:flex;justify-content:space-between;padding:7px 0;font-size:12px"><span style="color:#9ab0c8;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Celular</span><span style="color:#0d1e3a;font-weight:500">${p.celular}</span></div>` : '',
+].filter(Boolean).join('');
+document.getElementById('vm-body').innerHTML = `
+<div style="border-radius:14px;overflow:hidden;border:0.5px solid #dde6f0;margin-bottom:4px">
+<div style="background:${hdrCol};padding:14px 16px 0">
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+<span style="font-size:12px;color:#fff;letter-spacing:2px;font-weight:700">PADEL<span style="color:#fde68a">EYE</span></span>
+<span style="font-size:9px;font-weight:700;color:#fde68a;background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:99px">${catNum ? catNum+'ª Categoria' : '—'}</span>
+</div>
+<div style="display:flex;justify-content:center;margin-bottom:-26px">
+<div style="width:56px;height:56px;border-radius:50%;border:3px solid #fff;background:${grad};display:flex;align-items:center;justify-content:center">
+<span style="font-size:15px;font-weight:700;color:${txtCol};text-shadow:0 1px 4px rgba(0,0,0,0.4)">${initials}</span>
+</div>
+</div>
+</div>
+<div style="background:#fff;padding:32px 16px 16px;text-align:center">
+<div style="font-size:20px;font-weight:700;color:#0a1628;line-height:1.1">
+${p.nome||dname}${p.sobrenome ? ' <span style="font-weight:500;color:#5a7090">'+p.sobrenome+'</span>' : ''}
+</div>
+${p.nickname ? `<div style="font-size:11px;color:#9ab0c8;margin-top:3px">"${p.nickname}"</div>` : ''}
+<div style="font-size:11px;font-weight:600;color:${hdrCol};margin-top:6px">Atleta de Padel</div>
+${p.cidade ? `<div style="font-size:10px;color:#9ab0c8;margin-top:3px">${p.cidade}</div>` : ''}
+<div style="margin:12px 0;height:0.5px;background:#eef1f5"></div>
+<div style="border:0.5px solid #dde6f0;border-radius:8px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
+<div style="text-align:left">
+<div style="font-size:9px;color:#9ab0c8;text-transform:uppercase;letter-spacing:0.06em">ID do Jogador</div>
+<div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:#0a1628;margin-top:1px">#${p.id}</div>
+</div>
+</div>
+${extraFields ? `<div style="margin-top:10px;text-align:left">${extraFields}</div>` : ''}
+<div style="margin-top:14px;text-align:left">
+<div style="font-family:'DM Mono';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f0f5fb">Skills · 1–10</div>
+${skillsRadarSVG(p.skills || {})}
+<div style="margin-top:10px">${skillsBarsHTML(p.skills || {})}</div>
+</div>
+</div>
+</div>
+`;
+document.getElementById('view-modal').style.display = 'flex';
 }
 function closeViewModal(e) {
-  // Só fecha se o clique for exatamente no overlay
-  if (!e || e.target.id === 'view-modal') {
-    document.getElementById('view-modal').style.display = 'none';
-  }
+// Só fecha se o clique for exatamente no overlay
+if (!e || e.target.id === 'view-modal') {
+document.getElementById('view-modal').style.display = 'none';
 }
-
+}
 function savePlayer() {
-  const nome      = document.getElementById('reg-nome').value.trim();
-  const sobrenome = document.getElementById('reg-sobrenome').value.trim();
-  const categoria = document.getElementById('reg-categoria').value;
-  const genero    = document.getElementById('reg-genero').value;
+const nome = document.getElementById('reg-nome').value.trim();
+const sobrenome = document.getElementById('reg-sobrenome').value.trim();
+const categoria = document.getElementById('reg-categoria').value;
+const genero = document.getElementById('reg-genero').value;
+if (!nome) { document.getElementById('reg-nome').focus(); safeAlert('Nome é obrigatório.','err'); return; }
+if (!sobrenome) { document.getElementById('reg-sobrenome').focus(); safeAlert('Sobrenome é obrigatório.','err'); return; }
+if (!categoria) { document.getElementById('reg-categoria').focus(); safeAlert('Categoria é obrigatória.','err'); return; }
+if (!genero) { document.getElementById('reg-genero').focus(); safeAlert('Género é obrigatório.','err'); return; }
 
-  if (!nome)      { document.getElementById('reg-nome').focus();      safeAlert('Nome é obrigatório.','err'); return; }
-  if (!sobrenome) { document.getElementById('reg-sobrenome').focus(); safeAlert('Sobrenome é obrigatório.','err'); return; }
-  if (!categoria) { document.getElementById('reg-categoria').focus(); safeAlert('Categoria é obrigatória.','err'); return; }
-  if (!genero)    { document.getElementById('reg-genero').focus();    safeAlert('Género é obrigatório.','err'); return; }
+const { skills, hasInvalid } = readSkillInputs();
+if (hasInvalid) { safeAlert('Alguma skill está fora da escala 1–10 — corrija ou deixe em branco.', 'err'); return; }
 
-  const player = {
-    id:            _editingPlayerId !== null ? _editingPlayerId : nextPlayerId(),
-    nome, sobrenome,
-    nickname:      document.getElementById('reg-nickname').value.trim(),
-    categoria, genero,
-    cidade:        document.getElementById('reg-cidade').value.trim(),
-    nacionalidade: document.getElementById('reg-nacionalidade').value.trim(),
-    email:         document.getElementById('reg-email').value.trim(),
-    celular:       document.getElementById('reg-celular').value.trim(),
-  };
-
-  if (_editingPlayerId !== null) {
-    const idx = REGISTRY.findIndex(r => String(r.id) === String(_editingPlayerId));
-    if (idx !== -1) REGISTRY[idx] = { ...REGISTRY[idx], ...player };
-
-    document.getElementById('reg-modal').classList.remove('show');
-    renderRoster();
-    safeAlert(`⏳ A actualizar ${displayName(player)}...`, 'warn');
-
-    PadelEyeDB.updatePlayer(player).then(result => {
-      const ok = result && result.status !== 'error';
-      safeAlert(
-        ok ? `✅ ${displayName(player)} actualizado com sucesso (ID #${_editingPlayerId}).`
-           : '⚠️ Erro ao actualizar no servidor. Dados actualizados localmente.',
-        ok ? 'ok' : 'warn'
-      );
-      if (ok) loadPlayersFromDB();
-    });
-  } else {
-    REGISTRY.push(player);
-    PadelEyeDB.registerPlayer(player);
-
-    document.getElementById('reg-modal').classList.remove('show');
-    renderRoster();
-    safeAlert(`✅ Jogador ${displayName(player)} registado com ID #${player.id}.`, 'ok');
-  }
+const player = {
+id: _editingPlayerId !== null ? _editingPlayerId : nextPlayerId(),
+nome, sobrenome,
+nickname: document.getElementById('reg-nickname').value.trim(),
+categoria, genero,
+cidade: document.getElementById('reg-cidade').value.trim(),
+nacionalidade: document.getElementById('reg-nacionalidade').value.trim(),
+email: document.getElementById('reg-email').value.trim(),
+celular: document.getElementById('reg-celular').value.trim(),
+skills,
+};
+if (_editingPlayerId !== null) {
+const idx = REGISTRY.findIndex(r => String(r.id) === String(_editingPlayerId));
+if (idx !== -1) REGISTRY[idx] = { ...REGISTRY[idx], ...player };
+document.getElementById('reg-modal').classList.remove('show');
+renderRoster();
+safeAlert(`⏳ A actualizar ${displayName(player)}...`, 'warn');
+PadelEyeDB.updatePlayer(player).then(result => {
+const ok = result && result.status !== 'error';
+safeAlert(
+ok ? `✅ ${displayName(player)} actualizado com sucesso (ID #${_editingPlayerId}).`
+: '⚠️ Erro ao actualizar no servidor. Dados actualizados localmente.',
+ok ? 'ok' : 'warn'
+);
+if (ok) loadPlayersFromDB();
+});
+} else {
+REGISTRY.push(player);
+PadelEyeDB.registerPlayer(player);
+document.getElementById('reg-modal').classList.remove('show');
+renderRoster();
+safeAlert(`✅ Jogador ${displayName(player)} registado com ID #${player.id}.`, 'ok');
 }
-
+}
 function renderRoster() {
-  const container = document.getElementById('player-roster');
-  const badge     = document.getElementById('roster-badge');
-  if (!container) return;
-
-  const q = (document.getElementById('roster-search')?.value || '').toLowerCase();
-  const filtered = [...REGISTRY]
-    .sort((a, b) => displayName(a).localeCompare(displayName(b), 'pt', {sensitivity:'base'}))
-    .filter(p => {
-      if (!q) return true;
-      return displayName(p).toLowerCase().includes(q) ||
-             p.cidade?.toLowerCase().includes(q)       ||
-             p.categoria?.toLowerCase().includes(q)    ||
-             String(p.id).includes(q);
-    });
-
-  if (badge) badge.textContent = `${filtered.length} / ${REGISTRY.length} jogadores`;
-
-  if (!filtered.length) {
-    container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ab0c8;font-size:13px">Nenhum jogador encontrado.</div>';
-    return;
-  }
-
-  container.innerHTML = filtered.map(p => {
-    const dname    = displayName(p);
-    const grad     = flagGrad(p.nacionalidade);
-    const txtCol   = flagTextCol(p.nacionalidade);
-    const initials = _init(dname);
-    const tags = [p.categoria, p.cidade, p.nacionalidade].filter(Boolean);
-    return `<div class="roster-card">
-      <div class="roster-av" style="background:${grad};color:${txtCol};text-shadow:0 1px 3px rgba(0,0,0,0.35)">${initials}</div>
-      <div class="roster-info">
-        <div class="roster-name">${p.nome} ${p.sobrenome}${p.nickname ? ` <span style="color:#9ab0c8;font-weight:400;font-size:12px">"${p.nickname}"</span>` : ''}</div>
-        <div class="roster-meta">
-          ${tags.map(t=>`<span class="roster-tag">${t}</span>`).join('')}
-          ${p.email ? `<span class="roster-tag" style="color:#3a7bd5">${p.email}</span>` : ''}
-        </div>
-      </div>
-      <div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <div class="roster-id">#${p.id}</div>
-        ${p.celular ? `<div style="font-size:10px;color:#b0c4d8">${p.celular}</div>` : ''}
-        <div style="display:flex;gap:5px">
-          <button onclick="openViewModal('${p.id}')" title="Ver jogador"
-            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #2980b9;background:rgba(41,128,185,0.07);color:#2980b9;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
-            onmouseover="this.style.background='rgba(41,128,185,0.18)'" onmouseout="this.style.background='rgba(41,128,185,0.07)'">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-            </svg>
-          </button>
-          <button onclick="openEditModal('${p.id}')" title="Editar jogador"
-            style="width:28px;height:28px;border-radius:5px;border:1.5px solid #C9933A;background:rgba(201,147,58,0.07);color:#C9933A;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
-            onmouseover="this.style.background='rgba(201,147,58,0.18)'" onmouseout="this.style.background='rgba(201,147,58,0.07)'">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+const container = document.getElementById('player-roster');
+const badge = document.getElementById('roster-badge');
+if (!container) return;
+const q = (document.getElementById('roster-search')?.value || '').toLowerCase();
+const filtered = [...REGISTRY]
+.sort((a, b) => displayName(a).localeCompare(displayName(b), 'pt', {sensitivity:'base'}))
+.filter(p => {
+if (!q) return true;
+return displayName(p).toLowerCase().includes(q) ||
+p.cidade?.toLowerCase().includes(q) ||
+p.categoria?.toLowerCase().includes(q) ||
+String(p.id).includes(q);
+});
+if (badge) badge.textContent = `${filtered.length} / ${REGISTRY.length} jogadores`;
+if (!filtered.length) {
+container.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#9ab0c8;font-size:13px">Nenhum jogador encontrado.</div>';
+return;
+}
+container.innerHTML = filtered.map(p => {
+const dname = displayName(p);
+const grad = flagGrad(p.nacionalidade);
+const txtCol = flagTextCol(p.nacionalidade);
+const initials = _init(dname);
+const tags = [p.categoria, p.cidade, p.nacionalidade].filter(Boolean);
+return `<div class="roster-card">
+<div class="roster-av" style="background:${grad};color:${txtCol};text-shadow:0 1px 3px rgba(0,0,0,0.35)">${initials}</div>
+<div class="roster-info">
+<div class="roster-name">${p.nome} ${p.sobrenome}${p.nickname ? ` <span style="color:#9ab0c8;font-weight:400;font-size:12px">"${p.nickname}"</span>` : ''}</div>
+<div class="roster-meta">
+${tags.map(t=>`<span class="roster-tag">${t}</span>`).join('')}
+${p.email ? `<span class="roster-tag" style="color:#3a7bd5">${p.email}</span>` : ''}
+</div>
+</div>
+<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+<div class="roster-id">#${p.id}</div>
+${p.celular ? `<div style="font-size:10px;color:#b0c4d8">${p.celular}</div>` : ''}
+<div style="display:flex;gap:5px">
+<button onclick="openViewModal('${p.id}')" title="Ver jogador"
+style="width:28px;height:28px;border-radius:5px;border:1.5px solid #2980b9;background:rgba(41,128,185,0.07);color:#2980b9;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+onmouseover="this.style.background='rgba(41,128,185,0.18)'" onmouseout="this.style.background='rgba(41,128,185,0.07)'">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+</svg>
+</button>
+<button onclick="openEditModal('${p.id}')" title="Editar jogador"
+style="width:28px;height:28px;border-radius:5px;border:1.5px solid #C9933A;background:rgba(201,147,58,0.07);color:#C9933A;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0"
+onmouseover="this.style.background='rgba(201,147,58,0.18)'" onmouseout="this.style.background='rgba(201,147,58,0.07)'">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+<path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+</svg>
+</button>
+</div>
+</div>
+</div>`;
+}).join('');
 }
 
 // ══════════════════════════════════
 // DB LOAD
 // ══════════════════════════════════
 async function loadPlayersFromDB() {
-  try {
-    const res  = await fetch(WEB_APP_URL + '?action=get_players');
-    const data = await res.json();
-    REGISTRY.length = 0;
-
-    (data.rows || []).forEach(p => {
-      const pname    = p.player_name || p.nome || '';
-      const psurname = p.player_surname || p.sobrenome || '';
-      const pnick    = p.player_nickname || p.apelido || '';
-      const nome     = pnick || (pname + (psurname ? ' ' + psurname : '')).trim();
-      if (!nome) return;
-
-      REGISTRY.push({
-        id:            p.player_id || p.jogador_id || p.id || '',
-        nome:          pname,
-        sobrenome:     psurname,
-        nickname:      pnick,
-        categoria:     p.player_category    || p.categoria    || '',
-        genero:        p.player_gender      || p.genero       || '',
-        cidade:        p.player_city        || p.cidade       || '',
-        nacionalidade: p.player_nationality || p.nacionalidade || '',
-        email:         p.email              || '',
-        celular:       p.mobile_number      || p.celular      || '',
-      });
-    });
-  } catch(e) {
-    console.warn('[loadPlayersFromDB] fetch failed:', e.message);
-    safeAlert('⚠️ Não foi possível carregar jogadores do servidor. Verifique a ligação e recarregue.', 'warn');
-  }
-
-  playerNormMap = {};
-  playerIdMap   = {};
-  REGISTRY.forEach(r => {
-    const dn  = displayName(r);
-    const key = normStr(dn);
-    if (key) playerNormMap[key] = r;
-    if (r.nome) playerNormMap[normStr(r.nome)] = playerNormMap[normStr(r.nome)] || r;
-    if (r.id)   playerIdMap[String(r.id)] = r;
-  });
-
-  renderRoster();
+try {
+const res = await fetch(WEB_APP_URL + '?action=get_players');
+const data = await res.json();
+REGISTRY.length = 0;
+(data.rows || []).forEach(p => {
+const pname = p.player_name || p.nome || '';
+const psurname = p.player_surname || p.sobrenome || '';
+const pnick = p.player_nickname || p.apelido || '';
+const nome = pnick || (pname + (psurname ? ' ' + psurname : '')).trim();
+if (!nome) return;
+REGISTRY.push({
+id: p.player_id || p.jogador_id || p.id || '',
+nome: pname,
+sobrenome: psurname,
+nickname: pnick,
+categoria: p.player_category || p.categoria || '',
+genero: p.player_gender || p.genero || '',
+cidade: p.player_city || p.cidade || '',
+nacionalidade: p.player_nationality || p.nacionalidade || '',
+email: p.email || '',
+celular: p.mobile_number || p.celular || '',
+skills: parsePlayerSkills(p),
+});
+});
+} catch(e) {
+console.warn('[loadPlayersFromDB] fetch failed:', e.message);
+safeAlert('⚠️ Não foi possível carregar jogadores do servidor. Verifique a ligação e recarregue.', 'warn');
+}
+playerNormMap = {};
+playerIdMap = {};
+REGISTRY.forEach(r => {
+const dn = displayName(r);
+const key = normStr(dn);
+if (key) playerNormMap[key] = r;
+if (r.nome) playerNormMap[normStr(r.nome)] = playerNormMap[normStr(r.nome)] || r;
+if (r.id) playerIdMap[String(r.id)] = r;
+});
+renderRoster();
 }
 
 // ══════════════════════════════════
 // PadelEyeDB — camada de acesso ao Google Sheets
 // ══════════════════════════════════
 const PadelEyeDB = (() => {
-  function now() { return new Date().toISOString(); }
-
-  function mapJogador(p) {
-    return {
-      player_id:          p.id,
-      player_name:        p.nome          || '',
-      player_surname:     p.sobrenome     || '',
-      player_nickname:    p.nickname      || '',
-      player_category:    p.categoria     || '',
-      player_gender:      p.genero        || '',
-      player_city:        p.cidade        || '',
-      player_nationality: p.nacionalidade || '',
-      email:              p.email         || '',
-      mobile_number:      p.celular       || '',
-      created_at:         now(),
-      active:             true,
-    };
-  }
-
-  // ATENÇÃO: text/plain evita o preflight CORS que o Apps Script Web App
-  // não responde — usar application/json aqui quebra TODO POST silenciosamente.
-  async function send(action, data) {
-    try {
-      const res = await fetch(WEB_APP_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify({ action, data, timestamp: now() })
-      });
-      const text = await res.text();
-      let result;
-      try { result = JSON.parse(text); } catch { result = { status:'ok', raw:text }; }
-      return result;
-    } catch(err) {
-      console.warn(`[PadelEyeDB] ${action} failed:`, err.message);
-      return { status:'error', message:err.message };
-    }
-  }
-
-  async function registerPlayer(playerData) {
-    const result = await send('insert_player', { row: mapJogador(playerData) });
-    return result;
-  }
-
-  async function updatePlayer(playerData) {
-    const row    = mapJogador(playerData);
-    const result = await send('upsert_player', { row });
-    return result;
-  }
-
-  async function ping() {
-    try {
-      const res  = await fetch(WEB_APP_URL + '?action=ping');
-      return await res.json();
-    } catch(e) { return { status:'error', message:e.message }; }
-  }
-
-  return { registerPlayer, updatePlayer, ping, send };
+function now() { return new Date().toISOString(); }
+function mapJogador(p) {
+const skills = p.skills || {};
+const skillFields = {};
+SKILL_DEFS.forEach(s => { skillFields['player_skill_'+s.key] = skills[s.key] ?? ''; });
+return {
+player_id: p.id,
+player_name: p.nome || '',
+player_surname: p.sobrenome || '',
+player_nickname: p.nickname || '',
+player_category: p.categoria || '',
+player_gender: p.genero || '',
+player_city: p.cidade || '',
+player_nationality: p.nacionalidade || '',
+email: p.email || '',
+mobile_number: p.celular || '',
+...skillFields,
+created_at: now(),
+active: true,
+};
+}
+// ATENÇÃO: text/plain evita o preflight CORS que o Apps Script Web App
+// não responde — usar application/json aqui quebra TODO POST silenciosamente.
+async function send(action, data) {
+try {
+const res = await fetch(WEB_APP_URL, {
+method: 'POST',
+headers: { 'Content-Type': 'text/plain' },
+body: JSON.stringify({ action, data, timestamp: now() })
+});
+const text = await res.text();
+let result;
+try { result = JSON.parse(text); } catch { result = { status:'ok', raw:text }; }
+return result;
+} catch(err) {
+console.warn(`[PadelEyeDB] ${action} failed:`, err.message);
+return { status:'error', message:err.message };
+}
+}
+async function registerPlayer(playerData) {
+const result = await send('insert_player', { row: mapJogador(playerData) });
+return result;
+}
+async function updatePlayer(playerData) {
+const row = mapJogador(playerData);
+const result = await send('upsert_player', { row });
+return result;
+}
+async function ping() {
+try {
+const res = await fetch(WEB_APP_URL + '?action=ping');
+return await res.json();
+} catch(e) { return { status:'error', message:e.message }; }
+}
+return { registerPlayer, updatePlayer, ping, send };
 })();
 
 // ══════════════════════════════════════════════════════════════════
 // TEST DB
 // ══════════════════════════════════════════════════════════════════
 function dbtEditUrl() {
-  document.getElementById('dbt-url-display').style.display = 'none';
-  document.getElementById('dbt-url-edit').style.display = 'block';
-  const input = document.getElementById('dbt-url-input');
-  input.value = WEB_APP_URL;
-  input.focus();
-  input.select();
+document.getElementById('dbt-url-display').style.display = 'none';
+document.getElementById('dbt-url-edit').style.display = 'block';
+const input = document.getElementById('dbt-url-input');
+input.value = WEB_APP_URL;
+input.focus();
+input.select();
 }
 function dbtSaveUrl() {
-  const input = document.getElementById('dbt-url-input');
-  const newUrl = input.value.trim();
-  if (!newUrl || !newUrl.startsWith('https://script.google.com')) {
-    input.style.borderColor = '#e74c3c';
-    input.placeholder = '⚠️ URL inválida — deve começar com https://script.google.com';
-    return;
-  }
-  WEB_APP_URL = newUrl;
-  localStorage.setItem('pe_web_app_url', newUrl);
-  document.getElementById('dbt-url-text').textContent = newUrl;
-  const badge = document.getElementById('dbt-url-badge');
-  badge.textContent = 'Atualizado ✅';
-  badge.style.background = '#e8f9ed';
-  badge.style.color = '#1a6b3a';
-  const confirmEl = document.getElementById('dbt-url-confirm');
-  if (confirmEl) confirmEl.style.display = 'block';
-  setTimeout(() => {
-    badge.textContent = 'Custom';
-    badge.style.background = '#fef3cd';
-    badge.style.color = '#7a5c00';
-    if (confirmEl) confirmEl.style.display = 'none';
-  }, 2000);
-  dbtCancelUrl();
+const input = document.getElementById('dbt-url-input');
+const newUrl = input.value.trim();
+if (!newUrl || !newUrl.startsWith('https://script.google.com')) {
+input.style.borderColor = '#e74c3c';
+input.placeholder = '⚠️ URL inválida — deve começar com https://script.google.com';
+return;
+}
+WEB_APP_URL = newUrl;
+localStorage.setItem('pe_web_app_url', newUrl);
+document.getElementById('dbt-url-text').textContent = newUrl;
+const badge = document.getElementById('dbt-url-badge');
+badge.textContent = 'Atualizado ✅';
+badge.style.background = '#e8f9ed';
+badge.style.color = '#1a6b3a';
+const confirmEl = document.getElementById('dbt-url-confirm');
+if (confirmEl) confirmEl.style.display = 'block';
+setTimeout(() => {
+badge.textContent = 'Custom';
+badge.style.background = '#fef3cd';
+badge.style.color = '#7a5c00';
+if (confirmEl) confirmEl.style.display = 'none';
+}, 2000);
+dbtCancelUrl();
 }
 function dbtCancelUrl() {
-  document.getElementById('dbt-url-edit').style.display = 'none';
-  document.getElementById('dbt-url-display').style.display = 'flex';
-  const input = document.getElementById('dbt-url-input');
-  input.style.borderColor = '#3a7bd5';
+document.getElementById('dbt-url-edit').style.display = 'none';
+document.getElementById('dbt-url-display').style.display = 'flex';
+const input = document.getElementById('dbt-url-input');
+input.style.borderColor = '#3a7bd5';
 }
-
 async function dbtTestOne(action, key, pingOnly) {
-  const statusEl = document.getElementById('dbt-status-' + key);
-  const rowEl    = document.getElementById('dbt-row-'    + key);
-  if (!statusEl) return;
-
-  statusEl.textContent = '⏳ ...';
-  statusEl.style.color = '#9ab0c8';
-  if (rowEl) { rowEl.style.borderColor = '#dde6f0'; rowEl.style.background = '#f8fafd'; }
-
-  try {
-    const res  = await fetch(WEB_APP_URL + '?action=' + action);
-    const data = await res.json();
-    const ok   = data.ok === true || data.status === 'ok' || Array.isArray(data.rows);
-    const rows = Array.isArray(data.rows) ? data.rows.length : null;
-
-    if (ok) {
-      statusEl.textContent = pingOnly ? '✅ Online' : '✅ ' + rows + ' rows';
-      statusEl.style.color = '#1a7a44';
-      if (rowEl) { rowEl.style.borderColor = '#c8e8d0'; rowEl.style.background = '#f0fdf4'; }
-    } else {
-      const msg = (data.error || data.message || 'erro').toString().slice(0, 25);
-      statusEl.textContent = '❌ ' + msg;
-      statusEl.style.color = '#c0392b';
-      if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
-    }
-  } catch(e) {
-    statusEl.textContent = '❌ Sem resposta';
-    statusEl.style.color = '#c0392b';
-    if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
-  }
+const statusEl = document.getElementById('dbt-status-' + key);
+const rowEl = document.getElementById('dbt-row-' + key);
+if (!statusEl) return;
+statusEl.textContent = '⏳ ...';
+statusEl.style.color = '#9ab0c8';
+if (rowEl) { rowEl.style.borderColor = '#dde6f0'; rowEl.style.background = '#f8fafd'; }
+try {
+const res = await fetch(WEB_APP_URL + '?action=' + action);
+const data = await res.json();
+const ok = data.ok === true || data.status === 'ok' || Array.isArray(data.rows);
+const rows = Array.isArray(data.rows) ? data.rows.length : null;
+if (ok) {
+statusEl.textContent = pingOnly ? '✅ Online' : '✅ ' + rows + ' rows';
+statusEl.style.color = '#1a7a44';
+if (rowEl) { rowEl.style.borderColor = '#c8e8d0'; rowEl.style.background = '#f0fdf4'; }
+} else {
+const msg = (data.error || data.message || 'erro').toString().slice(0, 25);
+statusEl.textContent = '❌ ' + msg;
+statusEl.style.color = '#c0392b';
+if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
 }
-
+} catch(e) {
+statusEl.textContent = '❌ Sem resposta';
+statusEl.style.color = '#c0392b';
+if (rowEl) { rowEl.style.borderColor = '#fca5a5'; rowEl.style.background = '#fff5f5'; }
+}
+}
 async function dbtTestAll() {
-  const badge    = document.getElementById('dbt-badge-all');
-  const resultEl = document.getElementById('dbt-result-all');
-  if (badge) { badge.textContent = '⏳ A testar...'; badge.className = 'card-badge'; }
-
-  const TESTS = [
-    { id:'d1', label:'👤 Players',       action:'get_players', pingOnly:false },
-    { id:'d2', label:'📡 Apps Script',   action:'ping',         pingOnly:true  },
-  ];
-
-  if (resultEl) resultEl.innerHTML =
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
-    '  <div id="dbt-dot" style="width:8px;height:8px;border-radius:50%;background:#C9933A"></div>' +
-    '  <div id="dbt-summary" style="font-family:DM Mono,monospace;font-size:11px;color:#5a7090;font-weight:700">A testar ' + TESTS.length + ' verificações...</div>' +
-    '</div>' +
-    TESTS.map(t =>
-      '<div style="background:#fff;border:1px solid #dde6f0;border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
-      '  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
-      '    <span style="font-size:12px;font-weight:600;color:#0d1e3a">' + t.label + '</span>' +
-      '    <span id="dres-' + t.id + '" style="font-family:DM Mono,monospace;font-size:11px;color:#b0c4d8">⏳</span>' +
-      '  </div>' +
-      '  <div style="height:4px;background:#eaf0f8;border-radius:2px;overflow:hidden">' +
-      '    <div id="dbar-' + t.id + '" style="height:100%;width:0%;background:#27AE60;border-radius:2px;transition:width .5s ease"></div>' +
-      '  </div>' +
-      '</div>'
-    ).join('');
-
-  requestAnimationFrame(() => {
-    TESTS.forEach(t => {
-      const b = document.getElementById('dbar-' + t.id);
-      if (b) b.style.width = '20%';
-    });
-  });
-
-  await Promise.allSettled(TESTS.map(t => (async () => {
-    try {
-      const res = await fetch(WEB_APP_URL + '?action=' + t.action);
-      const j   = await res.json();
-      const rowCount = t.pingOnly ? (j.ok ? '✓' : '?') : (j.rows ? j.rows.length : (j.ok ? '✓' : '?'));
-      const ok  = j.ok !== false;
-      const barEl = document.getElementById('dbar-' + t.id);
-      const resEl = document.getElementById('dres-' + t.id);
-      if (barEl) { barEl.style.width = '100%'; if (!ok) barEl.style.background = '#E74C3C'; }
-      if (resEl) { resEl.textContent = ok ? ('✅ ' + (typeof rowCount==='number' ? rowCount+' rows' : rowCount)) : '❌ Erro'; resEl.style.color = ok ? '#1a7a44' : '#c0392b'; }
-    } catch(e) {
-      const barEl = document.getElementById('dbar-' + t.id);
-      const resEl = document.getElementById('dres-' + t.id);
-      if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#E74C3C'; }
-      if (resEl) { resEl.textContent = '❌ Sem resposta'; resEl.style.color = '#c0392b'; }
-    }
-    const done  = TESTS.filter(t2 => { const el=document.getElementById('dres-'+t2.id); return el && el.textContent!=='⏳'; }).length;
-    const curOk = TESTS.filter(t2 => { const el=document.getElementById('dres-'+t2.id); return el && el.textContent.indexOf('✅')===0; }).length;
-    const sumEl = document.getElementById('dbt-summary');
-    if (sumEl) sumEl.textContent = done < TESTS.length ? curOk+'/'+done+' testadas...' : curOk+'/'+TESTS.length+' verificações OK';
-  })()));
-
-  if (badge) { badge.textContent = 'Concluído'; badge.className = 'card-badge green'; }
+const badge = document.getElementById('dbt-badge-all');
+const resultEl = document.getElementById('dbt-result-all');
+if (badge) { badge.textContent = '⏳ A testar...'; badge.className = 'card-badge'; }
+const TESTS = [
+{ id:'d1', label:'👤 Players', action:'get_players', pingOnly:false },
+{ id:'d2', label:'📡 Apps Script', action:'ping', pingOnly:true },
+];
+if (resultEl) resultEl.innerHTML =
+'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">' +
+' <div id="dbt-dot" style="width:8px;height:8px;border-radius:50%;background:#C9933A"></div>' +
+' <div id="dbt-summary" style="font-family:DM Mono,monospace;font-size:11px;color:#5a7090;font-weight:700">A testar ' + TESTS.length + ' verificações...</div>' +
+'</div>' +
+TESTS.map(t =>
+'<div style="background:#fff;border:1px solid #dde6f0;border-radius:8px;padding:10px 12px;margin-bottom:6px">' +
+' <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">' +
+' <span style="font-size:12px;font-weight:600;color:#0d1e3a">' + t.label + '</span>' +
+' <span id="dres-' + t.id + '" style="font-family:DM Mono,monospace;font-size:11px;color:#b0c4d8">⏳</span>' +
+' </div>' +
+' <div style="height:4px;background:#eaf0f8;border-radius:2px;overflow:hidden">' +
+' <div id="dbar-' + t.id + '" style="height:100%;width:0%;background:#27AE60;border-radius:2px;transition:width .5s ease"></div>' +
+' </div>' +
+'</div>'
+).join('');
+requestAnimationFrame(() => {
+TESTS.forEach(t => {
+const b = document.getElementById('dbar-' + t.id);
+if (b) b.style.width = '20%';
+});
+});
+await Promise.allSettled(TESTS.map(t => (async () => {
+try {
+const res = await fetch(WEB_APP_URL + '?action=' + t.action);
+const j = await res.json();
+const rowCount = t.pingOnly ? (j.ok ? '✓' : '?') : (j.rows ? j.rows.length : (j.ok ? '✓' : '?'));
+const ok = j.ok !== false;
+const barEl = document.getElementById('dbar-' + t.id);
+const resEl = document.getElementById('dres-' + t.id);
+if (barEl) { barEl.style.width = '100%'; if (!ok) barEl.style.background = '#E74C3C'; }
+if (resEl) { resEl.textContent = ok ? ('✅ ' + (typeof rowCount==='number' ? rowCount+' rows' : rowCount)) : '❌ Erro'; resEl.style.color = ok ? '#1a7a44' : '#c0392b'; }
+} catch(e) {
+const barEl = document.getElementById('dbar-' + t.id);
+const resEl = document.getElementById('dres-' + t.id);
+if (barEl) { barEl.style.width = '100%'; barEl.style.background = '#E74C3C'; }
+if (resEl) { resEl.textContent = '❌ Sem resposta'; resEl.style.color = '#c0392b'; }
+}
+const done = TESTS.filter(t2 => { const el=document.getElementById('dres-'+t2.id); return el && el.textContent!=='⏳'; }).length;
+const curOk = TESTS.filter(t2 => { const el=document.getElementById('dres-'+t2.id); return el && el.textContent.indexOf('✅')===0; }).length;
+const sumEl = document.getElementById('dbt-summary');
+if (sumEl) sumEl.textContent = done + '/' + TESTS.length + ' concluído · ' + curOk + ' OK';
+const dotEl = document.getElementById('dbt-dot');
+if (dotEl) dotEl.style.background = (done < TESTS.length) ? '#C9933A' : (curOk === TESTS.length ? '#27AE60' : '#E74C3C');
+})()));
+const finalOk = TESTS.filter(t2 => { const el=document.getElementById('dres-'+t2.id); return el && el.textContent.indexOf('✅')===0; }).length;
+if (badge) {
+badge.textContent = finalOk === TESTS.length ? '✅ Tudo OK' : ('⚠️ ' + finalOk + '/' + TESTS.length + ' OK');
+badge.className = 'card-badge';
+badge.style.background = finalOk === TESTS.length ? '#e8f9ed' : '#fff8e0';
+badge.style.color = finalOk === TESTS.length ? '#1a6b3a' : '#865a10';
+}
 }
 
-// ══════════════════════════════════
-// BOOT
-// ══════════════════════════════════
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
-(function init() {
-  try {
-    const saved = localStorage.getItem('pe_auth_players_v1');
-    if (saved) {
-      const auth = JSON.parse(saved);
-      if (auth && auth.key && USERS[auth.key]) {
-        currentUser = { ...USERS[auth.key], key: auth.key };
-        document.getElementById('s-login').classList.remove('active');
-        document.getElementById('s-dashboard').classList.add('active');
-        document.getElementById('tb-name').textContent = currentUser.name;
-        document.getElementById('tb-club').textContent = currentUser.club;
-        document.getElementById('tb-av').textContent   = currentUser.name[0];
-        loadPlayersFromDB();
-        return;
-      }
-    }
-  } catch(e) { console.warn('[Jogadores] auth restore error:', e); }
+
+// ══════════════════════════════════════════════════════════════════
+// RESTAURA SESSÃO (se já autenticado neste navegador)
+// ══════════════════════════════════════════════════════════════════
+(function initAuth() {
+try {
+const saved = localStorage.getItem('pe_auth_players_v1');
+if (saved) {
+const auth = JSON.parse(saved);
+if (auth && auth.key && USERS[auth.key]) {
+currentUser = { ...USERS[auth.key], key: auth.key };
+document.getElementById('s-login').classList.remove('active');
+document.getElementById('s-dashboard').classList.add('active');
+document.getElementById('tb-name').textContent = currentUser.name;
+document.getElementById('tb-club').textContent = currentUser.club;
+document.getElementById('tb-av').textContent = currentUser.name[0];
+loadPlayersFromDB();
+}
+}
+} catch(e) { console.warn('[Jogadores] auth restore error:', e); }
 })();
 </script>
 </body>
