@@ -350,6 +350,23 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .raffle-btn-start.show{display:block;}
 /* ══ MARCADORES VISUAIS DE AMBIENTE SIM ══ */
 .topbar{border-bottom:3px solid #dc2626 !important;}
+/* ══ SKILLS DO JOGADOR (leitura) ══ */
+.player-info-btn{position:absolute;top:6px;left:6px;width:18px;height:18px;border-radius:50%;background:rgba(10,22,40,.08);border:none;color:#5a7090;font-size:10px;font-weight:700;font-family:'DM Mono';cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;}
+.player-info-btn:hover{background:#3a7bd5;color:#fff;}
+.db-card.selected .player-info-btn{background:rgba(255,255,255,.15);color:#93C5FD;}
+.skills-modal-overlay{position:fixed;inset:0;background:rgba(10,22,40,.75);z-index:8000;display:none;align-items:center;justify-content:center;padding:16px;}
+.skills-modal-overlay.show{display:flex;}
+.skills-modal-box{background:#fff;border-radius:18px;padding:24px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;}
+.skills-modal-hd{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+.skills-modal-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:17px;color:#fff;flex-shrink:0;}
+.skills-modal-name{font-family:'Bebas Neue';font-size:20px;color:#0a1628;letter-spacing:.5px;}
+.skills-modal-sub{font-size:10px;color:#9ab0c8;font-family:'DM Mono';text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
+.skills-modal-close{margin-left:auto;background:#f0f5fb;border:none;width:28px;height:28px;border-radius:50%;color:#5a7090;font-size:14px;cursor:pointer;flex-shrink:0;}
+.skill-row{display:grid;grid-template-columns:100px 1fr 26px;align-items:center;gap:10px;padding:6px 0;}
+.skill-label{font-size:11.5px;font-weight:600;color:#5a7090;}
+.skill-bar-track{height:7px;background:#eef2f7;border-radius:99px;overflow:hidden;}
+.skill-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3a7bd5,#C9933A);}
+.skill-value{font-family:'DM Mono';font-size:11px;font-weight:700;color:#0a1628;text-align:right;}
 </style>
 </head>
 <body>
@@ -433,6 +450,20 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
   <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
 
+  <div class="skills-modal-overlay" id="skills-modal" onclick="if(event.target===this)closeSkillsModal()">
+    <div class="skills-modal-box">
+      <div class="skills-modal-hd">
+        <div class="skills-modal-av" id="skills-modal-av">?</div>
+        <div>
+          <div class="skills-modal-name" id="skills-modal-name">-</div>
+          <div class="skills-modal-sub">Skills · escala 1–10 · somente leitura</div>
+        </div>
+        <button class="skills-modal-close" onclick="closeSkillsModal()">✕</button>
+      </div>
+      <div id="skills-modal-body"></div>
+    </div>
+  </div>
+
   <div class="app-body">
     <div class="sidebar-nav" id="sidebar-nav">
       <div class="sb-section-label">Torneio Atual</div>
@@ -443,6 +474,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
       <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
       <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
+      <button class="tab-btn" onclick="showVerGrupos()"><span class="sb-ic" style="background:#e0f7ea">📋</span> Ver Grupos</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
@@ -717,6 +749,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
       </div>
 
+      <div class="panel" id="p-vergrupos">
+        <div id="vergrupos-container"></div>
+      </div>
+
       <div class="panel" id="p-tiebreak">
         <div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">
           <div><div class="welcome-title" style="font-size:22px">CRITÉRIOS DE <em>DESEMPATE</em></div><div class="welcome-sub">Hierarquia usada pra decidir a classificação dentro de cada grupo.</div></div>
@@ -906,6 +942,76 @@ const CANONICAL = {
 let _canonicalSelected = 0;
 
 const SC_PTS = { f1:10, f2:50, final:100, champ:300, runner:200, third:100 };
+
+// ══ SKILLS DO JOGADOR (leitura, escala 1–10) ══════════════════════════
+// Só exibição por enquanto -- edição fica pro Session Manager, que é
+// onde os jogadores já são cadastrados/editados. Cada skill aceita o
+// nome de campo em inglês (player_skill_X, convenção do resto do schema)
+// com fallback pro nome curto (skill_X), pra tolerar planilhas antigas.
+const SKILL_DEFS = [
+  { key:'serve',    label:'Saque' },
+  { key:'forehand', label:'Forehand' },
+  { key:'backhand', label:'Backhand' },
+  { key:'lob',      label:'Lob' },
+  { key:'volley',   label:'Voleio' },
+  { key:'smash',    label:'Smash' },
+  { key:'wall',     label:'Uso da Parede' },
+  { key:'net',      label:'Subida à Rede' },
+];
+// ══ RADAR (OCTÓGONO) — 8 eixos, um por skill ═════════════════════════
+// SVG puro, sem lib externa. Anéis de referência em 2/4/6/8/10, polígono
+// preenchido com os valores do jogador. Ângulo inicial no topo (12h),
+// sentido horário, na mesma ordem de SKILL_DEFS. Mesma função do Players,
+// mantida idêntica pra visual consistente entre os dois apps.
+function skillsRadarSVG(skills) {
+  const N = SKILL_DEFS.length;
+  const size = 260, cx = size/2, cy = size/2 - 4, maxR = 82;
+  const startAngle = -Math.PI/2;
+  const angleStep = (2*Math.PI)/N;
+  function ptAt(i, value) {
+    const angle = startAngle + i*angleStep;
+    const r = Math.max(0, Math.min(10, value))/10 * maxR;
+    return [cx + r*Math.cos(angle), cy + r*Math.sin(angle)];
+  }
+  const gridRings = [2,4,6,8,10].map(ringVal => {
+    const pts = SKILL_DEFS.map((s,i) => ptAt(i, ringVal).join(',')).join(' ');
+    return '<polygon points="'+pts+'" fill="none" stroke="#e4eaf1" stroke-width="1"/>';
+  }).join('');
+  const axisLines = SKILL_DEFS.map((s,i) => {
+    const [x,y] = ptAt(i, 10);
+    return '<line x1="'+cx+'" y1="'+cy+'" x2="'+x+'" y2="'+y+'" stroke="#eef2f7" stroke-width="1"/>';
+  }).join('');
+  const hasAny = SKILL_DEFS.some(s => skills && skills[s.key] != null);
+  const dataPts = SKILL_DEFS.map((s,i) => ptAt(i, (skills && skills[s.key]) || 0).join(',')).join(' ');
+  const dataDots = SKILL_DEFS.map((s,i) => {
+    if (!skills || skills[s.key] == null) return '';
+    const [x,y] = ptAt(i, skills[s.key]);
+    return '<circle cx="'+x+'" cy="'+y+'" r="3" fill="#3a7bd5"/>';
+  }).join('');
+  const labels = SKILL_DEFS.map((s,i) => {
+    const [x,y] = ptAt(i, 10 + 2.3);
+    const angle = startAngle + i*angleStep;
+    const cos = Math.cos(angle);
+    const anchor = cos > 0.25 ? 'start' : (cos < -0.25 ? 'end' : 'middle');
+    const v = skills && skills[s.key] != null ? skills[s.key] : '—';
+    return '<text x="'+x+'" y="'+y+'" font-family="DM Sans, sans-serif" font-size="9.5" font-weight="700" fill="#5a7090" text-anchor="'+anchor+'" dominant-baseline="middle">'+s.label+'</text>'
+      + '<text x="'+x+'" y="'+(y+11)+'" font-family="DM Mono, monospace" font-size="9" fill="#b0c4d8" text-anchor="'+anchor+'" dominant-baseline="middle">'+v+'/10</text>';
+  }).join('');
+  return '<svg viewBox="0 0 '+size+' '+(size+14)+'" width="100%" style="max-width:280px;display:block;margin:0 auto">'
+    + gridRings + axisLines
+    + (hasAny ? '<polygon points="'+dataPts+'" fill="rgba(58,123,213,.18)" stroke="#3a7bd5" stroke-width="2" stroke-linejoin="round"/>'+dataDots : '')
+    + labels
+    + '</svg>';
+}
+function parsePlayerSkills(p) {
+  const skills = {};
+  SKILL_DEFS.forEach(s => {
+    const raw = p['player_skill_'+s.key] ?? p['skill_'+s.key] ?? null;
+    const n = (raw !== null && raw !== undefined && raw !== '') ? parseInt(raw, 10) : NaN;
+    skills[s.key] = (!isNaN(n) && n >= 1 && n <= 10) ? n : null;
+  });
+  return skills;
+}
 
 function doLogin() {
   const user = document.getElementById('l-user').value.trim().toLowerCase();
@@ -1277,6 +1383,68 @@ function showMeusTorneios() {
   const searchEl = document.getElementById('search-tid-result');
   if (searchEl) searchEl.innerHTML = '';
 }
+
+// ══ VER GRUPOS — visão consolidada de todas as fases/grupos/placares ══
+// Acessível a qualquer momento depois que o torneio começa (Etapa 4 em
+// diante), independente de em qual fase o organizador está trabalhando
+// no momento -- útil pra conferir de relance quem joga com quem e o que
+// já foi decidido, sem precisar navegar fase por fase em Jogos & Rodadas.
+function showVerGrupos() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const navBtn = document.querySelector('.tab-btn[onclick^="showVerGrupos"]');
+  if (navBtn) navBtn.classList.add('on');
+  const panel = document.getElementById('p-vergrupos');
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+  renderVerGrupos();
+}
+function renderVerGrupos() {
+  const c = document.getElementById('vergrupos-container');
+  if (!c) return;
+  if (!T.started || !T.phases || !T.phases.length) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">📋</div><div>Os grupos aparecem aqui assim que forem formados (Etapa 3).</div></div>';
+    return;
+  }
+  let html = '<div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">'
+    + '<div><div class="welcome-title" style="font-size:22px">VER <em>GRUPOS</em></div><div class="welcome-sub">Todas as fases, grupos e placares — atualizado na hora.</div></div>'
+    + '</div>';
+
+  T.phases.forEach((ph, phIdx) => {
+    const isFinalPhase = phIdx === (T.numFases||3)-1;
+    html += '<div class="card-hd" style="margin:20px 0 10px"><div class="card-title" style="font-size:12px">'+ph.name+'</div>'
+      + '<div class="card-badge '+(ph.complete?'green':(phIdx===T.currentPhase?'gold':''))+'">'+(ph.complete?'✓ Concluída':(phIdx===T.currentPhase?'Em andamento':'Ainda não começou'))+'</div></div>';
+    html += '<div class="grupos-grid">';
+    ph.groups.forEach((group, gi) => {
+      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const color = GROUP_COLORS[gi % GROUP_COLORS.length];
+      const matches = groupMatches(group);
+      html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div>'
+        + '<div class="grupo-body">'
+        + group.map(name => {
+            const reg = getPlayerReg(name);
+            const isSeed = (T.seeds||[]).includes(name) && phIdx === 0;
+            return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' 🌱':'')+'</div></div>';
+          }).join('')
+        + '</div>';
+      html += '<div style="padding:8px 14px 12px;border-top:1px solid #f0f5fb">'
+        + matches.map((m, mi) => {
+            const key = phIdx+'-'+gi+'-'+mi;
+            const res = ph.results[key];
+            const played = res && res.saved;
+            const scoreText = played ? (res.sa+' x '+res.sb+(res.tb?(' <span style="color:#C9933A">(TB '+res.tba+'x'+res.tbb+')</span>'):'')) : '— x —';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:11px;color:#5a7090;border-bottom:1px solid #f8fafd">'
+              + '<span>'+(m.a||[]).filter(Boolean).join(' / ')+' <span style="color:#c0cdd8">vs</span> '+(m.b||[]).filter(Boolean).join(' / ')+'</span>'
+              + '<span style="font-weight:700;font-family:\'DM Mono\';color:'+(played?'#0a1628':'#c0cdd8')+'">'+scoreText+'</span>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    });
+    html += '</div>';
+  });
+
+  c.innerHTML = html;
+}
 function renderMeusTorneiosLocal() {
   const reg = getTournamentRegistry();
   const list = Object.values(reg).sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||''));
@@ -1348,7 +1516,7 @@ function getPlayerReg(nameOrId) {
   const n = normStr(nameOrId);
   if (playerNormMap[n]) return playerNormMap[n];
   return REGISTRY.find(r => normStr(displayName(r))===n) || REGISTRY.find(r => normStr(r.nome||'')===n)
-      || { nome:nameOrId, sobrenome:'', categoria:'', genero:'', cidade:'', nacionalidade:'', id:'' };
+      || { nome:nameOrId, sobrenome:'', categoria:'', genero:'', cidade:'', nacionalidade:'', id:'', skills:{} };
 }
 function allPlayers() {
   return [...REGISTRY.map(p=>displayName(p)), ...extraPlayers].sort((a,b)=>a.localeCompare(b,'pt',{sensitivity:'base'}));
@@ -1439,6 +1607,7 @@ async function loadPlayersFromDB() {
         id: p.player_id||p.id||'', nome:pname, sobrenome:psurname, nickname:pnick,
         categoria: p.player_category||p.categoria||'', genero: p.player_gender||p.genero||'',
         cidade: p.player_city||p.cidade||'', nacionalidade: p.player_nationality||p.nacionalidade||'',
+        skills: parsePlayerSkills(p),
       });
     });
   } catch(e) { console.warn('[loadPlayersFromDB]', e.message); }
@@ -1464,6 +1633,7 @@ function renderDB() {
     const atMax = !sel && selectedPlayers.length >= (_canonicalSelected || 16);
     const reg = getPlayerReg(name);
     return '<div class="db-card '+(sel?'selected':'')+' '+(hidden?'hidden':'')+' '+(atMax?'maxed':'')+'" onclick="togglePlayer(\''+name.replace(/'/g,"\\'")+'\')">'
+      + '<button class="player-info-btn" onclick="event.stopPropagation();openSkillsModal(\''+name.replace(/'/g,"\\'")+'\')" title="Ver skills">ℹ</button>'
       + '<div class="db-check-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>'
       + '<div class="db-avatar" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+';text-shadow:0 1px 3px rgba(0,0,0,.35)">'+_init(name)+'</div>'
       + '<div class="db-name">'+name+'</div>'
@@ -1481,6 +1651,35 @@ function renderDB() {
   document.getElementById('db-cnt-n').textContent = n;
   document.getElementById('db-total-lbl').textContent = '/ ' + tot + ' disponiveis';
   document.getElementById('db-cnt-bar').style.width = (n/Math.max(tot,1)*100)+'%';
+}
+function openSkillsModal(name) {
+  const reg = getPlayerReg(name);
+  const modal = document.getElementById('skills-modal');
+  if (!modal) return;
+  const avEl = document.getElementById('skills-modal-av');
+  avEl.textContent = _init(name);
+  avEl.style.background = flagGrad(reg.nacionalidade);
+  avEl.style.color = flagTextCol(reg.nacionalidade);
+  document.getElementById('skills-modal-name').textContent = name;
+
+  const skills = reg.skills || {};
+  const hasAny = SKILL_DEFS.some(s => skills[s.key] != null);
+  const body = document.getElementById('skills-modal-body');
+  const barsHTML = hasAny
+    ? SKILL_DEFS.map(s => {
+        const v = skills[s.key];
+        const pct = v != null ? Math.round(v/10*100) : 0;
+        return '<div class="skill-row"><div class="skill-label">'+s.label+'</div>'
+          + '<div class="skill-bar-track"><div class="skill-bar-fill" style="width:'+pct+'%"></div></div>'
+          + '<div class="skill-value">'+(v!=null ? v+'/10' : '—')+'</div></div>';
+      }).join('')
+    : '<div style="text-align:center;color:#b0c4d8;font-size:12px;padding:24px 0">Nenhuma skill cadastrada pra este jogador ainda.<br>Edição de skills fica no Session Manager.</div>';
+  body.innerHTML = hasAny ? (skillsRadarSVG(skills) + '<div style="margin-top:8px">' + barsHTML + '</div>') : barsHTML;
+  modal.classList.add('show');
+}
+function closeSkillsModal() {
+  const modal = document.getElementById('skills-modal');
+  if (modal) modal.classList.remove('show');
 }
 function togglePlayer(name) {
   if (selectedPlayers.includes(name)) {
@@ -1574,7 +1773,7 @@ function updateSummary() {
   document.getElementById('s-matches').textContent = n>=4 ? totalMatches : '-';
 }
 
-function openTournament() {
+async function openTournament() {
   if (T.started) { safeAlert('O torneio já foi iniciado — a configuração não pode mais ser alterada. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const _name = document.getElementById('cfg-name')?.value?.trim();
   const _date = document.getElementById('cfg-date-raw')?.value?.trim();
@@ -1587,29 +1786,55 @@ function openTournament() {
   if (!_canonicalSelected) { safeAlert('Selecione o numero de jogadores (8, 12 ou 16) antes de abrir.','warn'); return; }
 
   const alreadyOpen = (T.status === 'open');
-  if (!T.id) T.id = generateTorneiId();
-  T.name = _name;
-  T.date = getCfgDate();
-  T.local = _venue + (document.getElementById('cfg-city')?.value?.trim() ? ' - '+document.getElementById('cfg-city').value.trim() : '');
+  const idForThisSave = T.id || generateTorneiId();
+  const localName = _name, localDate = getCfgDate(),
+        localVenue = _venue + (document.getElementById('cfg-city')?.value?.trim() ? ' - '+document.getElementById('cfg-city').value.trim() : '');
+
+  // CRÍTICO: espera a resposta do banco antes de avançar de etapa. Antes,
+  // esse envio era "dispara e esquece" (fire-and-forget) -- se falhasse
+  // (rede, URL errada, etc), o organizador avançava pra Etapa 2 achando
+  // que estava tudo salvo, e não estava. Agora só avança se o banco
+  // confirmar.
+  const btnWrap = document.getElementById('trn-open-btn');
+  const btn = btnWrap ? btnWrap.querySelector('button') : null;
+  const originalBtnText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '💾 Gravando no banco de dados...'; btn.style.opacity = '.7'; }
+
+  let saveResult;
+  try {
+    saveResult = await PadelEyeDB.send(alreadyOpen ? 'upsert_tournament' : 'create_tournament', { row: {
+      tournament_id: idForThisSave, tournament_name: localName, date: localDate, venue: localVenue,
+      tournament_format: 'Americano - Modelo Brasileiro', tournament_category: _cat,
+      status: 'Iniciado', created_at: new Date().toISOString(),
+    }});
+  } catch(e) {
+    saveResult = { status: 'error', message: e.message };
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = originalBtnText; btn.style.opacity = '1'; }
+
+  const saveOk = saveResult && saveResult.status !== 'error' && saveResult.ok !== false;
+  if (!saveOk) {
+    safeAlert('⚠️ Não consegui gravar no banco de dados — nada foi perdido, mas a configuração ainda não está salva. Confira a conexão em Sistema → Test DB e clique em Abrir Torneio de novo. Erro: '+(saveResult?.message||saveResult?.error||'sem resposta do servidor'), 'err');
+    return; // NÃO avança de etapa se o banco não confirmou.
+  }
+
+  T.id = idForThisSave;
+  T.name = localName;
+  T.date = localDate;
+  T.local = localVenue;
   T.categoria = _cat;
   T.status = 'open';
 
   const badge = document.getElementById('trn-open-badge');
   if (badge) { badge.textContent = 'Aberto'; badge.className = 'card-badge green'; }
 
-  if (!alreadyOpen) {
-    PadelEyeDB.send('create_tournament', { row: {
-      tournament_id: T.id, tournament_name: _name, date: getCfgDate(), venue: T.local,
-      tournament_format: 'Americano - Modelo Brasileiro', tournament_category: _cat,
-      status: 'Iniciado', created_at: new Date().toISOString(),
-    }}).catch(e => console.warn('[openTournament]', e.message));
-  }
   persistT();
-  safeAlert(alreadyOpen ? 'Configuração atualizada.' : 'Torneio aberto. Selecione os jogadores.', 'ok');
+  safeAlert(alreadyOpen ? 'Configuração atualizada e salva no banco.' : 'Torneio aberto e salvo no banco. Selecione os jogadores.', 'ok');
   goToStep(2);
 }
 
-function confirmPlayersStep() {
+async function confirmPlayersStep() {
   if (T.started) { safeAlert('O torneio já foi iniciado — os jogadores não podem mais ser alterados. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const n = selectedPlayers.length;
   if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para avançar.', 'err'); return; }
@@ -1621,7 +1846,32 @@ function confirmPlayersStep() {
   manualPool = []; manualGroups = []; _dragPlayer = null;
   persistT();
   refreshStepNav();
-  safeAlert('Jogadores confirmados. Escolha a formação dos grupos.', 'ok');
+
+  const btn = document.getElementById('confirm-players-btn');
+  const originalText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '💾 Gravando no banco de dados...'; btn.style.opacity = '.7'; }
+
+  let saveResult;
+  try {
+    saveResult = await PadelEyeDB.send('upsert_tournament', { row: {
+      tournament_id: T.id, tournament_name: T.name, date: T.date, venue: T.local,
+      tournament_format: 'Americano - Modelo Brasileiro', tournament_category: T.categoria, status: 'Em Curso',
+      players_json: JSON.stringify(T.players), seeds_json: JSON.stringify(T.seeds),
+      created_at: new Date().toISOString(),
+    }});
+  } catch(e) { saveResult = { status: 'error', message: e.message }; }
+
+  if (btn) { btn.disabled = false; btn.textContent = originalText; btn.style.opacity = '1'; }
+
+  const saveOk = saveResult && saveResult.status !== 'error' && saveResult.ok !== false;
+  if (!saveOk) {
+    // Não bloqueia (os grupos + tudo mais ainda vão ser gravados na Etapa 3),
+    // mas avisa com clareza que essa lista de jogadores específica ainda
+    // não está confirmada no banco -- se o navegador fechar agora, ela some.
+    safeAlert('⚠️ Jogadores confirmados aqui, mas NÃO consegui gravar no banco ainda. Confira Sistema → Test DB. Continuando mesmo assim -- a formação dos grupos na próxima etapa vai tentar salvar tudo de novo.', 'warn');
+  } else {
+    safeAlert('Jogadores confirmados e salvos no banco. Escolha a formação dos grupos.', 'ok');
+  }
   goToStep(3);
 }
 
@@ -2084,6 +2334,12 @@ function finalizeLaunch() {
     }}).then(r => {
       if (!r || r.ok === false) console.warn('[finalizeLaunch] upsert_tournament pode ter falhado:', r);
     }).catch(e => console.warn('[finalizeLaunch]', e.message));
+    // Grava no banco, já com placar vazio, TODOS os jogos da Fase 1 assim
+    // que os grupos são formados -- pedido explícito: o banco precisa
+    // enxergar o confronto completo desde o início, não só quando alguém
+    // digitar o primeiro placar. Cada resultado (na hora ou no dia seguinte)
+    // depois faz upsert em cima dessa mesma linha, nunca duplica.
+    _persistPhaseSkeletons(0);
   }
 
   try { renderRounds(); } catch(e) { console.warn('[finalizeLaunch] renderRounds:', e.message); }
@@ -2092,6 +2348,55 @@ function finalizeLaunch() {
 
   safeAlert('Torneio iniciado! Escolha como conduzir a Fase 1.', 'ok');
   goToStep(4);
+}
+
+// ══ ESQUELETOS DE FASE ══════════════════════════════════════════════
+// Grava no banco, com placar em branco, uma linha por partida de uma fase
+// inteira -- chamado logo depois que os grupos daquela fase são formados
+// (sorteio/manual na Etapa 3 para a Fase 1; e depois, quando a Etapa 4
+// avançar pra Fase 2/Final, o mesmo vale). saveMatch()/upsertPartida()
+// depois faz UPSERT por cima dessas linhas (mesma chave: tournament_id +
+// phase + group + match_serial_number) quando o placar de verdade chegar
+// -- na hora, ou só no dia seguinte, tanto faz. Nunca duplica.
+async function _persistPhaseSkeletons(phaseIdx) {
+  const ph = T.phases[phaseIdx];
+  if (!ph || !T.id) return;
+  // Não regrava esqueleto sobre uma fase que já tem placar real --
+  // proteção contra chamar isso de novo por engano em cima de progresso já feito.
+  if (Object.keys(ph.results||{}).length > 0) return;
+
+  const isFinalPhase = phaseIdx === (T.numFases||3)-1;
+  const rows = [];
+  const nowIso = new Date().toISOString();
+  ph.groups.forEach((group, gi) => {
+    const grpLetter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+    groupMatches(group).forEach((match, mi) => {
+      rows.push({
+        match_id: T.id+'-'+phaseIdx+'-'+gi+'-'+mi,
+        tournament_id: T.id,
+        phase: ph.name,
+        group: grpLetter,
+        team_a: (match.a||[]).filter(Boolean).join(' / '),
+        score_a: '',
+        score_b: '',
+        team_b: (match.b||[]).filter(Boolean).join(' / '),
+        winner_team: '',
+        match_serial_number: mi+1,
+        tie_break: '',
+        tb_a: '',
+        tb_b: '',
+        saved_at: '',
+        created_at: nowIso,
+      });
+    });
+  });
+  if (!rows.length) return;
+  try {
+    const r = await PadelEyeDB.send('insert_matches', { rows });
+    if (!r || r.ok === false) console.warn('[_persistPhaseSkeletons] fase '+phaseIdx+' pode ter falhado:', r);
+  } catch(e) {
+    console.warn('[_persistPhaseSkeletons] fase '+phaseIdx+':', e.message);
+  }
 }
 
 function getPhaseConfig(phaseIdx) {
@@ -2342,6 +2647,7 @@ function advancePhase() {
   T.phases[phIdx].complete = true;
   T.currentPhase = nextPhaseIdx;
   persistT();
+  _persistPhaseSkeletons(nextPhaseIdx);
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
 }
 
@@ -2507,6 +2813,7 @@ function confirmAdvManualGroups() {
   T.currentPhase = nextPhaseIdx;
   cancelAdvManualBuilder();
   persistT();
+  _persistPhaseSkeletons(nextPhaseIdx);
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
   safeAlert(nextPhaseName+' montada manualmente. Registre os placares quando tiver.', 'ok');
 }
