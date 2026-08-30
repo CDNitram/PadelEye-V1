@@ -438,6 +438,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
       <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
       <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
+      <button class="tab-btn" onclick="showVerGrupos()"><span class="sb-ic" style="background:#e0f7ea">📋</span> Ver Grupos</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
@@ -689,7 +690,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
 
         <div class="card">
-          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div></div>
+          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div>
+          <button class="db-btn" id="btn-discard-all-local" onclick="discardAllLocalTournaments()" style="color:#c0392b;border-color:rgba(231,76,60,.35)">🗑 Descartar Todos</button></div>
           <div id="meus-torneios-local-list"></div>
         </div>
 
@@ -710,6 +712,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
           <div id="meus-torneios-backend-list"><div style="font-size:11px;color:#b0c4d8">Clique em "Listar Todos" pra buscar.</div></div>
         </div>
+      </div>
+
+      <div class="panel" id="p-vergrupos">
+        <div id="vergrupos-container"></div>
       </div>
 
       <div class="panel" id="p-tiebreak">
@@ -853,6 +859,12 @@ function freshT() {
 }
 let T = freshT();
 let T_groups = [];
+// Cache em memória (não persiste, só dura a sessão da aba) dos placares
+// digitados mas ainda NÃO salvos no banco. Existe só pra sobreviver a uma
+// re-renderização causada por salvar/desfazer OUTRA partida -- sem isso,
+// digitar os 3 placares de um grupo e clicar "Salvar" em só 1 apagava os
+// outros 2 da tela, porque renderRounds() reconstrói o HTML inteiro do zero.
+let _unsavedScoreCache = {};
 
 const GROUP_COLORS  = ['#0a1628','#1a5276','#155432','#6e2a00'];
 const GROUP_LETTERS = ['A','B','C','D','E','F','G','H'];
@@ -949,6 +961,7 @@ function refreshStepNav() {
   refreshCancelButton();
   updateLockBanners();
   renderStep1Gate();
+  applyStep1ViewMode();
 }
 function renderStep1Gate() {
   const gate = document.getElementById('step1-gate');
@@ -1006,7 +1019,7 @@ function updateLockBanners() {
   }
   const b2 = document.getElementById('step2-lock-banner'); if (b2) b2.style.display = T.playersConfirmed ? 'block' : 'none';
 }
-function goToStep(n, el) {
+async function goToStep(n, el) {
   if (el) _showResumeGate = false;
   const max = getMaxStep();
   if (n > max) { safeAlert('Complete a etapa '+max+' antes de avançar para a etapa '+n+'.', 'warn'); return; }
@@ -1024,8 +1037,43 @@ function goToStep(n, el) {
     renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
   }
   if (n === 3) renderFormationStep();
-  if (n === 4) renderRounds();
+  if (n === 4) { await syncTournamentConfigFromBackend(); renderRounds(); }
   if (n === 5) renderFinalizeStep();
+}
+// ══ SINCRONIZA CONFIGURAÇÃO COM O BANCO (evita "estado travado" local) ══
+// phaseConfig (placar máximo/tie-break por fase) é definido uma vez na
+// Etapa 1 e nunca deveria mudar depois -- mas se o organizador (ou outro
+// aparelho) editar isso direto na planilha, ou se o navegador ficou com
+// um T antigo em cache (localStorage) de antes de uma correção, o app
+// continuava aplicando o valor desatualizado sem avisar ninguém. Agora,
+// toda vez que entra na Etapa 4, busca a config mais atual do banco --
+// se divergir do que está em cache local, corrige e avisa.
+async function syncTournamentConfigFromBackend() {
+  if (!T.id) return;
+  try {
+    const res = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
+    if (!res || !res.ok || !res.rows || !res.rows.length) return;
+    const row = res.rows[0];
+    let changed = false;
+    try {
+      const pc = JSON.parse(row.phase_config_json || '[]');
+      if (pc && pc.length && JSON.stringify(pc) !== JSON.stringify(T.phaseConfig)) {
+        T.phaseConfig = pc;
+        changed = true;
+      }
+    } catch(e) {}
+    const numFasesRow = parseInt(row.num_phases, 10);
+    if (!isNaN(numFasesRow) && numFasesRow > 0 && numFasesRow !== T.numFases) {
+      T.numFases = numFasesRow;
+      changed = true;
+    }
+    if (changed) {
+      persistT();
+      safeAlert('⚠️ A configuração de placar/tie-break deste torneio estava desatualizada neste navegador — sincronizada com o banco de dados agora.', 'warn');
+    }
+  } catch(e) {
+    console.warn('[syncTournamentConfigFromBackend]', e.message);
+  }
 }
 function showTiebreakInfo() {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
@@ -1240,16 +1288,101 @@ function showMeusTorneios() {
   const searchEl = document.getElementById('search-tid-result');
   if (searchEl) searchEl.innerHTML = '';
 }
+
+// ══ VER GRUPOS — visão consolidada de todas as fases/grupos/placares ══
+// Acessível a qualquer momento depois que o torneio começa (Etapa 4 em
+// diante), independente de em qual fase o organizador está trabalhando
+// no momento -- útil pra conferir de relance quem joga com quem e o que
+// já foi decidido, sem precisar navegar fase por fase em Jogos & Rodadas.
+function showVerGrupos() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const navBtn = document.querySelector('.tab-btn[onclick^="showVerGrupos"]');
+  if (navBtn) navBtn.classList.add('on');
+  const panel = document.getElementById('p-vergrupos');
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+  renderVerGrupos();
+}
+function renderVerGrupos() {
+  const c = document.getElementById('vergrupos-container');
+  if (!c) return;
+  if (!T.started || !T.phases || !T.phases.length) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">📋</div><div>Os grupos aparecem aqui assim que forem formados (Etapa 3).</div></div>';
+    return;
+  }
+  let html = '<div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">'
+    + '<div><div class="welcome-title" style="font-size:22px">VER <em>GRUPOS</em></div><div class="welcome-sub">Todas as fases, grupos e placares — atualizado na hora.</div></div>'
+    + '</div>';
+
+  T.phases.forEach((ph, phIdx) => {
+    const isFinalPhase = phIdx === (T.numFases||3)-1;
+    html += '<div class="card-hd" style="margin:20px 0 10px"><div class="card-title" style="font-size:12px">'+ph.name+'</div>'
+      + '<div class="card-badge '+(ph.complete?'green':(phIdx===T.currentPhase?'gold':''))+'">'+(ph.complete?'✓ Concluída':(phIdx===T.currentPhase?'Em andamento':'Ainda não começou'))+'</div></div>';
+    html += '<div class="grupos-grid">';
+    ph.groups.forEach((group, gi) => {
+      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const color = GROUP_COLORS[gi % GROUP_COLORS.length];
+      const matches = groupMatches(group);
+      html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div>'
+        + '<div class="grupo-body">'
+        + group.map(name => {
+            const reg = getPlayerReg(name);
+            const isSeed = (T.seeds||[]).includes(name) && phIdx === 0;
+            return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' 🌱':'')+'</div></div>';
+          }).join('')
+        + '</div>';
+      html += '<div style="padding:8px 14px 12px;border-top:1px solid #f0f5fb">'
+        + matches.map((m, mi) => {
+            const key = phIdx+'-'+gi+'-'+mi;
+            const res = ph.results[key];
+            const played = res && res.saved;
+            const scoreText = played ? (res.sa+' x '+res.sb+(res.tb?(' <span style="color:#C9933A">(TB '+res.tba+'x'+res.tbb+')</span>'):'')) : '— x —';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:11px;color:#5a7090;border-bottom:1px solid #f8fafd">'
+              + '<span>'+(m.a||[]).filter(Boolean).join(' / ')+' <span style="color:#c0cdd8">vs</span> '+(m.b||[]).filter(Boolean).join(' / ')+'</span>'
+              + '<span style="font-weight:700;font-family:\'DM Mono\';color:'+(played?'#0a1628':'#c0cdd8')+'">'+scoreText+'</span>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    });
+    html += '</div>';
+  });
+
+  c.innerHTML = html;
+}
 function renderMeusTorneiosLocal() {
   const reg = getTournamentRegistry();
   const list = Object.values(reg).sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||''));
   const el = document.getElementById('meus-torneios-local-list');
+  const discardAllBtn = document.getElementById('btn-discard-all-local');
+  if (discardAllBtn) discardAllBtn.style.display = list.length ? 'inline-flex' : 'none';
   if (!el) return;
   el.innerHTML = list.length ? list.map(t => '<div class="torneio-row">'
       + '<div class="torneio-row-info"><div class="torneio-row-name">'+t.name+'</div><div class="torneio-row-meta">'+tournamentDisplayId(t.id,t.date,t.categoria)+'</div></div>'
       + '<div class="torneio-badge '+t.status+'">'+(TORNEIO_STATUS_LABEL[t.status]||t.status)+'</div>'
       + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(t.id).replace(/'/g,"\\'")+'\')">Abrir</button>'
+      + '<button class="btn btn-secondary btn-sm" style="color:#c0392b;border-color:rgba(231,76,60,.35)" onclick="discardLocalTournament(\''+String(t.id).replace(/'/g,"\\'")+'\',\''+t.name.replace(/'/g,"\\'")+'\')" title="Remove só desta lista — não apaga do banco de dados">Descartar</button>'
       + '</div>').join('') : '<div class="empty-panel"><div class="empty-icon">🗂</div><div>Nenhum torneio tocado neste navegador ainda.</div></div>';
+}
+// Remove só o registro LOCAL (a "lembrança" deste navegador) -- nunca mexe
+// no banco de dados. O torneio continua existindo no Google Sheets e pode
+// ser reencontrado a qualquer momento por "Buscar por ID" ou em "Listar
+// Todos", esse botão só limpa a lista de atalhos deste navegador.
+function discardLocalTournament(tid, name) {
+  const ok = confirm('Remover "'+name+'" da lista de torneios recentes deste navegador?\n\nIsso NÃO apaga o torneio do banco de dados -- só some daqui. Pra reabrir depois, use "Buscar por ID".');
+  if (!ok) return;
+  removeFromTournamentRegistry(tid);
+  renderMeusTorneiosLocal();
+}
+function discardAllLocalTournaments() {
+  const reg = getTournamentRegistry();
+  const count = Object.keys(reg).length;
+  if (!count) return;
+  const ok = confirm('Remover TODOS os '+count+' torneios da lista de recentes deste navegador?\n\nIsso NÃO apaga nada do banco de dados -- só limpa a lista de atalhos. Pra reabrir qualquer um depois, use "Buscar por ID".');
+  if (!ok) return;
+  try { localStorage.setItem('padeleye_tournaments_registry_v1', JSON.stringify({})); } catch(e) {}
+  renderMeusTorneiosLocal();
+  safeAlert('Lista de torneios recentes limpa. Nada foi apagado do banco de dados.', 'ok');
 }
 async function searchTournamentById() {
   const input = document.getElementById('search-tid-input');
@@ -1607,6 +1740,47 @@ function tournamentDisplayId(id, date, categoria) {
   if (d) parts.push(d);
   if (categoria) parts.push(categoria);
   return parts.join('_');
+}
+function toISODateForInput(dateStr) {
+  const slash = formatDateSlash(dateStr);
+  const m = slash.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? (m[3]+'-'+m[2]+'-'+m[1]) : '';
+}
+// ══ TRAVA DA ETAPA 1 ══════════════════════════════════════════════
+// Uma vez que T.status === 'open' (torneio já confirmado/aberto), a
+// configuração NÃO pode mais mudar por aqui -- só cancelando o torneio
+// inteiro. Antes disso não existia: navegar de volta pra Etapa 1 depois
+// de abrir o torneio mostrava o formulário vazio e editável de novo,
+// dando a impressão de que a configuração tinha se perdido. Agora,
+// sempre que T.status==='open', os campos vêm preenchidos com o que
+// foi salvo e ficam desabilitados; o botão de confirmar vira um aviso.
+function applyStep1ViewMode() {
+  const btnWrap = document.getElementById('trn-open-btn');
+  const locked = (T.status === 'open');
+  if (locked) {
+    const nameEl = document.getElementById('cfg-name'); if (nameEl) nameEl.value = T.name || '';
+    const dateEl = document.getElementById('cfg-date-raw'); if (dateEl) { const iso = toISODateForInput(T.date); if (iso) dateEl.value = iso; }
+    const local = T.local || '';
+    const dashIdx = local.indexOf(' - ');
+    const venueEl = document.getElementById('cfg-venue'); if (venueEl) venueEl.value = dashIdx>=0 ? local.slice(0,dashIdx) : local;
+    const cityEl = document.getElementById('cfg-city'); if (cityEl) cityEl.value = dashIdx>=0 ? local.slice(dashIdx+3) : '';
+    const catEl = document.getElementById('cfg-categoria'); if (catEl && T.categoria) catEl.value = T.categoria;
+    const courtsEl = document.getElementById('cfg-courts'); if (courtsEl) courtsEl.value = T.courts || 2;
+    [8,12,16].forEach(v => { const b = document.getElementById('canonical-btn-'+v); if (b) b.classList.toggle('sel', (T.players||[]).length===v); });
+    const badge = document.getElementById('canonical-badge');
+    if (badge && (T.players||[]).length) { badge.textContent = T.players.length+' jogadores'; badge.className = 'card-badge green'; }
+    ['f1','f2','final'].forEach((tag,i) => {
+      const cfg = (T.phaseConfig||[])[i];
+      if (!cfg) return;
+      const maxEl = document.getElementById('cfg-max-'+tag); if (maxEl) maxEl.value = cfg.maxScore;
+      const tbEl  = document.getElementById('cfg-tb-'+tag);  if (tbEl)  tbEl.value  = cfg.tbAt;
+    });
+    document.querySelectorAll('#p-step1 input, #p-step1 select, #p-step1 .canon-btn').forEach(el => el.disabled = true);
+    if (btnWrap) btnWrap.innerHTML = '<div style="width:100%;padding:14px;border-radius:10px;background:#f4f7fc;color:#7090b0;font-family:\'DM Sans\';font-size:13px;font-weight:600;text-align:center;border:1.5px dashed #dde6f0">🔒 Configuração travada — torneio em andamento. Pra mudar, cancele o torneio no topo da tela.</div>';
+  } else {
+    document.querySelectorAll('#p-step1 input, #p-step1 select, #p-step1 .canon-btn').forEach(el => el.disabled = false);
+    if (btnWrap) btnWrap.innerHTML = '<button class="btn btn-primary btn-full" onclick="openTournament()" style="font-size:15px">📋 Confirmar Configuração e Abrir Torneio →</button>';
+  }
 }
 
 function getTournamentRegistry() {
@@ -2562,6 +2736,7 @@ function unsaveMatch(key, phIdx, gi, mi) {
   }
   if (T.phases[phIdx]?.results[key]) {
     delete T.phases[phIdx].results[key];
+    delete _unsavedScoreCache[key]; // "Corrigir" começa do zero, não do que sobrou em cache
     renderRounds(); renderRanking(); renderHistorico(); refreshStepNav();
   }
 }
@@ -2626,6 +2801,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     }
   }
   T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb };
+  delete _unsavedScoreCache[key]; // já está salvo de verdade, não precisa mais do cache temporário
   persistT();
 
   if (T.id) {
@@ -2647,7 +2823,37 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
 
 function switchRoundPhase(idx) { if (!T.phases[idx]) return; T.currentPhase = idx; renderRounds(); }
 
+// Varre os inputs de placar/tie-break ATUALMENTE na tela e guarda o que
+// estiver preenchido em _unsavedScoreCache, antes que renderRounds() troque
+// todo o HTML por baixo deles. Roda sempre no início de renderRounds(),
+// então cobre qualquer motivo de re-render (salvar outra partida, desfazer,
+// trocar de fase, escolher desempate, etc).
+function captureUnsavedScores() {
+  const container = document.getElementById('rounds-container');
+  if (!container) return;
+  container.querySelectorAll('input.score-in').forEach(el => {
+    const m = el.id.match(/^sc-(.+)-(a|b)$/);
+    if (!m || el.value === '') return;
+    const key = m[1];
+    if (!_unsavedScoreCache[key]) _unsavedScoreCache[key] = {};
+    _unsavedScoreCache[key][m[2] === 'a' ? 'sa' : 'sb'] = el.value;
+  });
+  container.querySelectorAll('input.tb-in').forEach(el => {
+    const m = el.id.match(/^tb-(.+)-(a|b)$/);
+    if (!m || el.value === '') return;
+    const key = m[1];
+    if (!_unsavedScoreCache[key]) _unsavedScoreCache[key] = {};
+    _unsavedScoreCache[key][m[2] === 'a' ? 'tba' : 'tbb'] = el.value;
+  });
+  container.querySelectorAll('[id^="tb-btn-"]').forEach(el => {
+    if (el.dataset.active !== '1') return;
+    const key = el.id.replace('tb-btn-', '');
+    if (!_unsavedScoreCache[key]) _unsavedScoreCache[key] = {};
+    _unsavedScoreCache[key].tbActive = true;
+  });
+}
 function renderRounds() {
+  captureUnsavedScores();
   const c = document.getElementById('rounds-container');
   const gateEl = document.getElementById('mode-gate-container');
   if (!T.started) { if(gateEl) gateEl.innerHTML=''; c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🏸</div><div>Configure e inicie o torneio na Configuracao.</div></div>'; return; }
@@ -2695,11 +2901,15 @@ function renderRounds() {
         const match = matches[mi];
         const key = phIdx+'-'+gi+'-'+mi;
         const res = ph.results[key] || {};
-        const sa = res.sa ?? '', sb = res.sb ?? '';
+        const saved = res.saved || false;
+        // Se o placar ainda não foi salvo, recupera o que estava digitado
+        // antes desta re-renderização (ex: usuário preencheu 3 placares e
+        // clicou "Salvar" em só 1 -- os outros 2 não podem sumir da tela).
+        const cached = (!saved && _unsavedScoreCache[key]) ? _unsavedScoreCache[key] : {};
+        const sa = res.sa ?? cached.sa ?? '', sb = res.sb ?? cached.sb ?? '';
         const aWin = sa!==''&&sb!==''&&parseInt(sa)>parseInt(sb);
         const bWin = sa!==''&&sb!==''&&parseInt(sb)>parseInt(sa);
-        const saved = res.saved || false;
-        const hasTB = res.tb || false;
+        const hasTB = res.tb || cached.tbActive || false;
         const maxSc = getPhaseConfig(phIdx).maxScore ?? 9;
         const borderColor = saved ? 'rgba(39,174,96,.4)' : '#dde6f0';
 
@@ -2717,9 +2927,9 @@ function renderRounds() {
             + '<input class="score-in" type="number" min="0" max="'+maxSc+'" id="sc-'+key+'-b" value="'+sb+'" placeholder="-" oninput="liveScore(\''+key+'\')">'
             + '</div>'
             + '<div id="tb-inputs-'+key+'" style="display:'+(hasTB?'flex':'none')+';gap:3px">'
-            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-a" value="'+(res.tba??'')+'" placeholder="-">'
+            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-a" value="'+(res.tba ?? cached.tba ?? '')+'" placeholder="-">'
             + '<span style="font-size:10px;color:#e8c870">x</span>'
-            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-b" value="'+(res.tbb??'')+'" placeholder="-">'
+            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-b" value="'+(res.tbb ?? cached.tbb ?? '')+'" placeholder="-">'
             + '</div>'
             + '</div>';
 
