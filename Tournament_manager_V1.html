@@ -47,7 +47,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .mob-menu-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;border:1px solid #dde6f0;background:#f4f7fc;cursor:pointer;flex-shrink:0;}
 .mob-overlay{display:none;position:fixed;inset:0;top:56px;background:rgba(10,22,40,.4);z-index:350;opacity:0;pointer-events:none;transition:opacity .25s ease;}
 .mob-overlay.show{display:block;opacity:1;pointer-events:auto;}
-
 .app-body{display:flex;min-height:calc(100vh - 56px);}
 .sidebar-nav{width:230px;background:#fff;border-right:1px solid #dde6f0;flex-shrink:0;padding:8px 0 20px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
 .sb-section-label{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#b0c4d8;padding:14px 16px 5px;display:flex;align-items:center;gap:6px;}
@@ -102,10 +101,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tb-num.tb-manual{background:#C9933A;color:#0a1628;}
 .sb-divider{height:1px;background:#f0f5fb;margin:6px 12px;}
 .main-content{flex:1;overflow-y:auto;padding:20px;}
-
 .panel{display:none;max-width:900px;margin:0 auto;width:100%;}
 .panel.on{display:block;}
-
 .welcome{background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:16px;padding:22px 28px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
 .welcome-title{font-family:'Bebas Neue';font-size:28px;color:#fff;letter-spacing:1px;line-height:1;}
 .welcome-title em{color:#1db954;font-style:normal;}
@@ -113,7 +110,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .welcome-date{background:rgba(29,185,84,.15);border:1px solid rgba(29,185,84,.3);border-radius:12px;padding:12px 18px;text-align:center;flex-shrink:0;}
 .welcome-dd{font-family:'Bebas Neue';font-size:32px;color:#1db954;line-height:1;}
 .welcome-dm{font-size:10px;color:#93C5FD;letter-spacing:2px;margin-top:2px;}
-
 .card{background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:18px;margin-bottom:16px;}
 .card-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
 .card-title{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#7090b0;}
@@ -129,7 +125,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .podium-bar.gold-bar{background:linear-gradient(180deg,#e0a840,#C9933A);height:90px;}
 .podium-bar.silver-bar{background:linear-gradient(180deg,#c8d0da,#9aa8b8);height:65px;}
 .podium-bar.bronze-bar{background:linear-gradient(180deg,#d69a6a,#b5703a);height:45px;}
-
 .field{margin-bottom:12px;}
 .phase-cfg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
 .phase-cfg-card{background:#f8fafd;border:1px solid #dde6f0;border-radius:10px;padding:12px;}
@@ -139,30 +134,25 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .finput{width:100%;background:#f4f7fc;border:1px solid #dde6f0;border-radius:9px;color:#0d1e3a;font-family:'DM Sans';font-size:13px;padding:10px 13px;outline:none;transition:border-color .2s;}
 .finput:focus{border-color:#3a7bd5;background:#fff;}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-
 .alert{border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:none;}
 .alert.ok{background:#E8F8EE;border:1px solid #c8e8d0;color:#1a7a44;}
 .alert.warn{background:#FFF8E0;border:1px solid #e8c870;color:#865a10;}
 .alert.err{background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.25);color:#c0392b;}
-
 .btn{padding:11px 20px;border-radius:10px;border:none;font-family:'DM Sans';font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
 .btn-primary{background:#0a1628;color:#fff;}
 .btn-gold{background:linear-gradient(135deg,#C9933A,#e0a840);color:#0a1628;}
 .btn-secondary{background:transparent;color:#5a7090;border:1px solid #dde6f0;}
 .btn-sm{padding:7px 14px;font-size:11px;border-radius:8px;}
 .btn-full{width:100%;text-align:center;display:block;padding:14px;}
-
 .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
 .kpi{background:#f4f7fc;border:1px solid #dde6f0;border-radius:10px;padding:12px;text-align:center;}
 .kpi-v{font-family:'Bebas Neue';font-size:26px;color:#0a1628;line-height:1;}
 .kpi-l{font-size:10px;color:#7090b0;margin-top:2px;}
-
 .canon-btn{padding:8px 6px;border-radius:10px;border:2px solid #dde6f0;background:#f8fafd;cursor:pointer;transition:all .2s;text-align:center;font-family:'DM Sans';}
 .canon-btn .n{font-family:'Bebas Neue';font-size:22px;color:#0a1628;line-height:1;}
 .canon-btn .l{font-size:9px;font-weight:700;color:#5a7090;margin-top:2px;}
 .canon-btn.sel{border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0);}
 .canon-btn.sel .n{color:#C9933A;}
-
 .db-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
 .db-search-wrap{position:relative;flex:1;min-width:160px;}
 .db-search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9ab0c8;}
@@ -201,7 +191,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .vagas-bar-wrap{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f4f7fc;border-radius:10px;border:1px solid #dde6f0;margin-bottom:16px;}
 .vagas-bar-track{flex:1;height:6px;background:#dde6f0;border-radius:99px;overflow:hidden;}
 .vagas-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#3a7bd5,#C9933A);width:0%;transition:width .3s;}
-
 .grupos-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
 .grupo-card{background:#fff;border:2px solid #dde6f0;border-radius:14px;overflow:hidden;}
 .grupo-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
@@ -214,7 +203,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .grupo-name{font-size:13px;font-weight:600;color:#0d1e3a;flex:1;}
 .grupos-info{background:#f4f7fc;border:1px solid #dde6f0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:#5a7090;line-height:1.6;}
 .btn-reshuffle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px dashed #9ab0c8;background:#fff;color:#5a7090;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans';}
-
 .round-card{background:#fff;border:1px solid #dde6f0;border-radius:14px;padding:16px;margin-bottom:14px;}
 .round-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
 .round-label{font-family:'Bebas Neue';font-size:18px;color:#C9933A;letter-spacing:1px;}
@@ -233,7 +221,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tie-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Bebas Neue';font-size:13px;}
 .tie-override-done{margin-top:10px;background:#E8F8EE;border:1px solid #c8e8d0;border-radius:10px;padding:10px 12px;font-size:11px;color:#1a7a44;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .tie-reset-btn{background:none;border:1px solid #c8e8d0;border-radius:6px;color:#1a7a44;font-size:10px;padding:3px 8px;cursor:pointer;}
-
 .rank-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .rank-prog-bar{flex:1;height:6px;background:#dde6f0;border-radius:99px;overflow:hidden;}
 .rank-prog-fill{height:100%;background:linear-gradient(90deg,#3a7bd5,#C9933A);border-radius:99px;transition:width .4s;}
@@ -246,7 +233,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .rank-pos{font-family:'DM Mono';font-size:11px;color:#9ab0c8;}
 .points_difference-pos{color:#27AE60;}
 .points_difference-neg{color:#E74C3C;}
-
 .sc-header{background:linear-gradient(135deg,#0a1628,#1a3052);border-radius:14px;padding:18px 20px;color:#fff;}
 .sc-header-title{font-family:'Bebas Neue';font-size:22px;letter-spacing:1px;}
 .sc-header-sub{font-size:11px;color:#93C5FD;margin-top:2px;}
@@ -277,10 +263,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .sc-legend-item.gold{background:rgba(201,147,58,.15);}
 .sc-legend-pts{font-family:'Bebas Neue';font-size:20px;color:#fff;}
 .sc-legend-lbl{font-size:9px;color:#93C5FD;margin-top:3px;}
-
 .empty-panel{text-align:center;padding:60px 20px;color:#9ab0c8;}
 .empty-icon{font-size:40px;margin-bottom:12px;opacity:.4;}
-
+.mode-card{background:#fff;border:2px solid #dde6f0;border-radius:16px;padding:22px 20px;text-align:center;cursor:pointer;transition:all .18s;}
+.mode-card:hover{border-color:#3a7bd5;background:#f0f8ff;}
+.mode-card .mc-icon{font-size:34px;margin-bottom:10px;}
+.mode-card .mc-title{font-family:'Bebas Neue';font-size:19px;letter-spacing:.5px;color:#0a1628;}
+.mode-card .mc-desc{font-size:11px;color:#7090b0;margin-top:6px;line-height:1.6;}
+.mode-badge{font-family:'DM Mono';font-size:9px;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.5px;text-transform:uppercase;}
+.mode-badge.live{background:#EBF4FF;color:#185FA5;}
+.mode-badge.manual{background:#FFF8E0;color:#865a10;}
 @media(max-width:760px){
   .mob-menu-btn{display:flex;}
   .sidebar-nav{position:fixed;left:0;top:56px;height:calc(100vh - 56px);z-index:360;transform:translateX(-100%);transition:transform .25s ease;box-shadow:4px 0 20px rgba(0,0,0,.1);}
@@ -294,7 +286,9 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
   .topbar-right{gap:6px;}
   .col-gg,.col-gp{display:none;}
   .classif-table{min-width:0 !important;}
-}/* ══ SPLASH SCREEN (adaptado de PadelEye_Americano_V40_Prod.html) ══ */
+  .formation-grid{grid-template-columns:1fr;}
+}
+/* ══ SPLASH SCREEN (adaptado de PadelEye_Americano_V40_Prod.html) ══ */
 #s-splash{background:linear-gradient(160deg,#0d5c2e 0%,#1a8a45 40%,#22a855 70%,#1db954 100%);position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
 #s-splash::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:36px 36px;animation:splashGrid 1s ease forwards}
 @keyframes splashGrid{from{opacity:0}to{opacity:1}}
@@ -319,7 +313,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .splash-bar-b{height:100%;width:0;background:linear-gradient(90deg,rgba(255,255,255,.6),#fff);animation:splashBar 2.8s cubic-bezier(.4,0,.2,1) .2s forwards}
 @keyframes splashBar{0%{width:0}30%{width:45%}70%{width:75%}90%{width:92%}100%{width:100%}}
 #s-splash.splash-exit{animation:splashOut .5s ease forwards}
-@keyframes splashOut{to{opacity:0;transform:scale(1.03)}}/* ═══ SORTEIO ANIMADO (adaptado de PadelEye_Americano_V40_Prod.html) ═══ */
+@keyframes splashOut{to{opacity:0;transform:scale(1.03)}}
+/* ═══ SORTEIO ANIMADO (adaptado de PadelEye_Americano_V40_Prod.html) ═══ */
 #s-raffle{position:fixed;inset:0;z-index:9999;background:#f0f5fb;display:none;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:14px 16px 20px;}
 #s-raffle.show{display:flex;}
 .raffle-cancel-link{align-self:flex-end;background:none;border:none;color:#9ab0c8;font-family:'DM Mono';font-size:10px;letter-spacing:1px;cursor:pointer;margin-bottom:4px;text-transform:uppercase;}
@@ -340,7 +335,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .raffle-countdown.urgent{color:#c0392b;}
 .raffle-countdown-ring.urgent{background:conic-gradient(#c0392b calc(var(--pct,100)*1%), #dde6f0 0);}
 .raffle-groups{width:100%;max-width:600px;margin-bottom:10px;}
-.raffle-queue{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-width:600px;margin-bottom:12px;}
 .grupo-card.lit{border-color:#C9933A;}
 .raffle-queue-label{font-family:'DM Mono';font-size:8px;letter-spacing:2px;color:#9ab0c8;text-transform:uppercase;margin-bottom:6px;width:100%;max-width:600px;}
 .raffle-queue{display:flex;flex-wrap:wrap;gap:6px;width:100%;max-width:600px;margin-bottom:12px;max-height:9vh;overflow-y:auto;}
@@ -357,7 +351,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 </style>
 </head>
 <body>
-
 <div id="s-splash">
   <div class="splash-court-wrap">
     <svg viewBox="0 0 200 400" width="130" height="260" style="opacity:.12">
@@ -386,35 +379,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="splash-by-loc">Foz do Iguaçu · 2026</div>
   </div>
   <div class="splash-bar-wrap-b"><div class="splash-bar-b"></div></div>
-</div>
-
-<div id="s-raffle">
-  <button class="raffle-cancel-link" onclick="raffleCancel()">✕ Cancelar e voltar</button>
-  <div class="raffle-title">SORTEIO DE GRUPOS</div>
-  <div class="raffle-sub" id="raffle-sub">Preparando sorteio...</div>
-
-  <div class="raffle-reveal" id="raffle-reveal">
-    <div class="raffle-reveal-av" id="raffle-reveal-av">?</div>
-    <div class="raffle-reveal-info">
-      <div class="raffle-reveal-name" id="raffle-reveal-name">Aguardando sorteio...</div>
-      <div class="raffle-reveal-grp" id="raffle-reveal-grp"></div>
-    </div>
-    <div class="raffle-countdown-wrap">
-      <div class="raffle-countdown-ring" id="raffle-ring"><div class="raffle-countdown" id="raffle-countdown"></div></div>
-    </div>
-  </div>
-
-  <div class="raffle-groups grupos-grid" id="raffle-groups"></div>
-
-  <div class="raffle-queue-label">Fila de sorteio</div>
-  <div class="raffle-queue" id="raffle-queue"></div>
-
-  <div class="raffle-controls">
-    <button class="raffle-btn raffle-btn-secondary" onclick="raffleSkip()">⏭ Pular para o fim</button>
-    <button class="raffle-btn raffle-btn-primary" id="raffle-next-btn" onclick="raffleNext()">▶ Sortear agora</button>
-    <button class="raffle-btn raffle-btn-secondary" id="raffle-restart-btn" style="display:none" onclick="raffleRestart()">🔀 Sortear Novamente</button>
-    <button class="raffle-btn raffle-btn-start" id="raffle-start-btn" onclick="raffleFinish()">🏆 Iniciar Torneio</button>
-  </div>
 </div>
 
 <div class="screen active" id="s-login">
@@ -462,7 +426,6 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     </div>
   </div>
 
-
   <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
 
   <div class="app-body">
@@ -475,6 +438,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
       <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
       <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
+      <button class="tab-btn" onclick="showVerGrupos()"><span class="sb-ic" style="background:#e0f7ea">📋</span> Ver Grupos</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
@@ -699,6 +663,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           <button class="tb-link-btn" onclick="showTiebreakInfo()">⚖️ Ver critérios de desempate</button>
         </div>
         <div class="alert" id="alert-game"></div>
+        <div id="mode-gate-container"></div>
         <div id="rounds-container"></div>
       </div>
 
@@ -725,7 +690,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
 
         <div class="card">
-          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div></div>
+          <div class="card-hd"><div class="card-title">Torneios Recentes Neste Navegador</div>
+          <button class="db-btn" id="btn-discard-all-local" onclick="discardAllLocalTournaments()" style="color:#c0392b;border-color:rgba(231,76,60,.35)">🗑 Descartar Todos</button></div>
           <div id="meus-torneios-local-list"></div>
         </div>
 
@@ -746,6 +712,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
           </div>
           <div id="meus-torneios-backend-list"><div style="font-size:11px;color:#b0c4d8">Clique em "Listar Todos" pra buscar.</div></div>
         </div>
+      </div>
+
+      <div class="panel" id="p-vergrupos">
+        <div id="vergrupos-container"></div>
       </div>
 
       <div class="panel" id="p-tiebreak">
@@ -839,10 +809,16 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 </div>
 
 <script>
-// PadelEye - Tournament Manager - V1
+// PadelEye - Tournament Manager - V1.1
 // Modulo standalone extraido do Tournament Manager V40.1.
 // Logica critica (cross-pairing, wildcards, tiebreak, validacao de placar)
 // portada VERBATIM.
+// NOVO NESTA VERSAO (V1.1): modo de execucao por torneio -- Etapa 4 agora
+// pede ao organizador para escolher entre "App ao Vivo" (o fluxo de sempre,
+// o app calcula quem avanca) ou "Manual/Retroativo" (torneio conduzido no
+// local por um humano; placares e avanco de fase sao inseridos depois,
+// refletindo o que de fato aconteceu -- avanco de fase vira uma montagem
+// manual de grupos, igual a Etapa 3, em vez de calculo automatico).
 // Simplificacoes conscientes vs V40.1:
 //   - Sorteio de grupos e instantaneo (autoDistributeGroups), sem animacao.
 //   - Empate na classificacao so oferece "organizador escolhe".
@@ -872,6 +848,7 @@ function freshT() {
     name: '', date: '', local: '', categoria: '', courts: 2,
     players: [], seeds: [], phases: [], currentPhase: 0,
     playersConfirmed: false, groupFormationType: null,
+    executionMode: null, // 'app_live' | 'manual' -- escolhido apos formar os grupos (Etapa 3 -> 4)
     tieOverrides: {}, matchOrder: {},
     phaseConfig: [
       { playersPerGroup:4, advancePerGroup:2, wildcards:2, maxScore:6, tbAt:5 },
@@ -882,6 +859,12 @@ function freshT() {
 }
 let T = freshT();
 let T_groups = [];
+// Cache em memória (não persiste, só dura a sessão da aba) dos placares
+// digitados mas ainda NÃO salvos no banco. Existe só pra sobreviver a uma
+// re-renderização causada por salvar/desfazer OUTRA partida -- sem isso,
+// digitar os 3 placares de um grupo e clicar "Salvar" em só 1 apagava os
+// outros 2 da tela, porque renderRounds() reconstrói o HTML inteiro do zero.
+let _unsavedScoreCache = {};
 
 const GROUP_COLORS  = ['#0a1628','#1a5276','#155432','#6e2a00'];
 const GROUP_LETTERS = ['A','B','C','D','E','F','G','H'];
@@ -978,6 +961,7 @@ function refreshStepNav() {
   refreshCancelButton();
   updateLockBanners();
   renderStep1Gate();
+  applyStep1ViewMode();
 }
 function renderStep1Gate() {
   const gate = document.getElementById('step1-gate');
@@ -986,8 +970,6 @@ function renderStep1Gate() {
   if (_showResumeGate && T.status === 'open') {
     const nome = (T.name || 'Torneio sem nome').replace(/</g,'&lt;');
     if (T.finalized) {
-      // Torneio já encerrado e salvo -- não existe "continuar" um torneio
-      // finalizado, a única opção logicamente possível é abrir um novo.
       gate.innerHTML = '<div class="card" style="border-color:#1a7a44;background:linear-gradient(135deg,#eafaf0,#e0f5e8)">'
         + '<div class="card-hd"><div class="card-title">Torneio Finalizado</div><div class="card-badge green">✅ Encerrado</div></div>'
         + '<div style="font-size:13px;color:#1a5c33;margin-bottom:14px">O torneio <b>"'+nome+'"</b> já foi salvo no Google Sheets e está encerrado. Não é possível continuar um torneio finalizado — configure um novo torneio abaixo.</div>'
@@ -1037,7 +1019,7 @@ function updateLockBanners() {
   }
   const b2 = document.getElementById('step2-lock-banner'); if (b2) b2.style.display = T.playersConfirmed ? 'block' : 'none';
 }
-function goToStep(n, el) {
+async function goToStep(n, el) {
   if (el) _showResumeGate = false;
   const max = getMaxStep();
   if (n > max) { safeAlert('Complete a etapa '+max+' antes de avançar para a etapa '+n+'.', 'warn'); return; }
@@ -1050,15 +1032,48 @@ function goToStep(n, el) {
   closeMobMenu();
   refreshStepNav();
   if (n === 2 && !T.playersConfirmed) {
-    // Segurança: nunca deixar sobras de uma seleção anterior não confirmada
-    // vazarem pra cá. A lista só pode refletir o que já está confirmado em T.
     selectedPlayers = [...(T.players || [])];
     seedList = [...(T.seeds || [])];
     renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
   }
   if (n === 3) renderFormationStep();
-  if (n === 4) renderRounds();
+  if (n === 4) { await syncTournamentConfigFromBackend(); renderRounds(); }
   if (n === 5) renderFinalizeStep();
+}
+// ══ SINCRONIZA CONFIGURAÇÃO COM O BANCO (evita "estado travado" local) ══
+// phaseConfig (placar máximo/tie-break por fase) é definido uma vez na
+// Etapa 1 e nunca deveria mudar depois -- mas se o organizador (ou outro
+// aparelho) editar isso direto na planilha, ou se o navegador ficou com
+// um T antigo em cache (localStorage) de antes de uma correção, o app
+// continuava aplicando o valor desatualizado sem avisar ninguém. Agora,
+// toda vez que entra na Etapa 4, busca a config mais atual do banco --
+// se divergir do que está em cache local, corrige e avisa.
+async function syncTournamentConfigFromBackend() {
+  if (!T.id) return;
+  try {
+    const res = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
+    if (!res || !res.ok || !res.rows || !res.rows.length) return;
+    const row = res.rows[0];
+    let changed = false;
+    try {
+      const pc = JSON.parse(row.phase_config_json || '[]');
+      if (pc && pc.length && JSON.stringify(pc) !== JSON.stringify(T.phaseConfig)) {
+        T.phaseConfig = pc;
+        changed = true;
+      }
+    } catch(e) {}
+    const numFasesRow = parseInt(row.num_phases, 10);
+    if (!isNaN(numFasesRow) && numFasesRow > 0 && numFasesRow !== T.numFases) {
+      T.numFases = numFasesRow;
+      changed = true;
+    }
+    if (changed) {
+      persistT();
+      safeAlert('⚠️ A configuração de placar/tie-break deste torneio estava desatualizada neste navegador — sincronizada com o banco de dados agora.', 'warn');
+    }
+  } catch(e) {
+    console.warn('[syncTournamentConfigFromBackend]', e.message);
+  }
 }
 function showTiebreakInfo() {
   document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
@@ -1107,10 +1122,6 @@ function startNewTournament() {
 }
 
 // ══ MULTI-TORNEIO: reconstrução a partir do banco + navegação ══════
-// Reconstrói um objeto T completo a partir da linha da planilha
-// Tournaments + das partidas salvas em Matches_Tournaments. Usado
-// sempre que o organizador troca de torneio (mesmo navegador ou
-// aparelho novo) -- nunca confia em cache local pra esse momento.
 function reconstructTournamentFromBackend(row, matchRows) {
   const T2 = freshT();
   T2.id = row.tournament_id;
@@ -1122,6 +1133,7 @@ function reconstructTournamentFromBackend(row, matchRows) {
   T2.status = 'open';
   T2.playersConfirmed = true;
   T2.finalized = String(row.status||'').toLowerCase().indexOf('final') >= 0 || !!row.finalized_at;
+  T2.executionMode = row.execution_mode || null;
 
   try { T2.players = JSON.parse(row.players_json || '[]'); } catch(e) { T2.players = []; }
   try { T2.seeds = JSON.parse(row.seeds_json || '[]'); } catch(e) { T2.seeds = []; }
@@ -1130,8 +1142,6 @@ function reconstructTournamentFromBackend(row, matchRows) {
     if (pc && pc.length) T2.phaseConfig = pc;
   } catch(e) {}
 
-  // Torneios salvos antes dessa versão podem não ter players_json --
-  // nesse caso, infere a lista de jogadores a partir das próprias partidas.
   if (!T2.players.length && matchRows.length) {
     const set = new Set();
     matchRows.forEach(m => {
@@ -1141,23 +1151,47 @@ function reconstructTournamentFromBackend(row, matchRows) {
     T2.players = [...set];
   }
 
-  // Reconstrói fases/grupos/resultados a partir das partidas salvas.
-  // Fase Final é gravada com group='Z' na planilha -- cai no fallback
-  // gIdx=0 abaixo, que é sempre correto pra ela (1 grupo só).
-  const phases = [];
+  // Fonte primária da estrutura de fases/grupos: groups_json. O app grava
+  // isso assim que os grupos são formados (finalizeLaunch), mesmo ANTES de
+  // qualquer placar existir -- é o que garante que reabrir o torneio no dia
+  // seguinte (ou em outro aparelho), sem nenhuma partida jogada ainda, mostre
+  // os grupos certos em vez de aparecer como "torneio não iniciado".
+  let groupsData = [];
+  try { groupsData = JSON.parse(row.groups_json || '[]'); } catch(e) { groupsData = []; }
+
+  function phaseNameForIndex(idx) {
+    if (idx === 0) return 'Fase 1';
+    if (idx === T2.numFases - 1) return 'Final';
+    return 'Fase ' + (idx + 1);
+  }
+
+  let phases = [];
+  if (groupsData && groupsData.length) {
+    phases = groupsData.map((groups, idx) => ({
+      name: phaseNameForIndex(idx), groups: (groups||[]).map(g=>[...g]), results: {}, complete: false
+    }));
+  }
+
+  // Overlay: preenche os placares reais de cada partida já salva, por cima
+  // do esqueleto vindo de groups_json. Se groups_json estiver vazio (torneio
+  // salvo antes dessa correção), cai no fallback antigo: deriva a estrutura
+  // só a partir das próprias partidas.
   const phaseIndexByName = {};
+  phases.forEach((p,i) => { phaseIndexByName[p.name] = i; });
+
   matchRows.forEach(m => {
     const phaseName = m.phase || 'Fase 1';
-    if (!(phaseName in phaseIndexByName)) {
-      phaseIndexByName[phaseName] = phases.length;
+    let pIdx = phaseIndexByName[phaseName];
+    if (pIdx === undefined) {
+      pIdx = phases.length;
+      phaseIndexByName[phaseName] = pIdx;
       phases.push({ name: phaseName, groups: [], results: {}, complete: false });
     }
-    const pIdx = phaseIndexByName[phaseName];
     let gIdx = GROUP_LETTERS.indexOf(m.group);
     if (gIdx < 0) gIdx = 0;
     const mi = (parseInt(m.match_serial_number, 10) || 1) - 1;
 
-    if (!phases[pIdx].groups[gIdx]) {
+    if (!phases[pIdx].groups[gIdx] || !phases[pIdx].groups[gIdx].length) {
       const teamA = (m.team_a||'').split(' / ').map(s=>s.trim()).filter(Boolean);
       const teamB = (m.team_b||'').split(' / ').map(s=>s.trim()).filter(Boolean);
       phases[pIdx].groups[gIdx] = [...teamA, ...teamB];
@@ -1221,7 +1255,6 @@ async function fetchAndOpenTournament(tid) {
   }
 }
 
-// ── Portal rápido (topbar) e tela "Meus Torneios" ───────────────────
 function toggleTournamentSwitcher() {
   const pop = document.getElementById('tournament-switcher-pop');
   if (!pop) return;
@@ -1255,16 +1288,101 @@ function showMeusTorneios() {
   const searchEl = document.getElementById('search-tid-result');
   if (searchEl) searchEl.innerHTML = '';
 }
+
+// ══ VER GRUPOS — visão consolidada de todas as fases/grupos/placares ══
+// Acessível a qualquer momento depois que o torneio começa (Etapa 4 em
+// diante), independente de em qual fase o organizador está trabalhando
+// no momento -- útil pra conferir de relance quem joga com quem e o que
+// já foi decidido, sem precisar navegar fase por fase em Jogos & Rodadas.
+function showVerGrupos() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const navBtn = document.querySelector('.tab-btn[onclick^="showVerGrupos"]');
+  if (navBtn) navBtn.classList.add('on');
+  const panel = document.getElementById('p-vergrupos');
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+  renderVerGrupos();
+}
+function renderVerGrupos() {
+  const c = document.getElementById('vergrupos-container');
+  if (!c) return;
+  if (!T.started || !T.phases || !T.phases.length) {
+    c.innerHTML = '<div class="empty-panel"><div class="empty-icon">📋</div><div>Os grupos aparecem aqui assim que forem formados (Etapa 3).</div></div>';
+    return;
+  }
+  let html = '<div class="welcome" style="background:linear-gradient(135deg,#0a1628,#1a3052)">'
+    + '<div><div class="welcome-title" style="font-size:22px">VER <em>GRUPOS</em></div><div class="welcome-sub">Todas as fases, grupos e placares — atualizado na hora.</div></div>'
+    + '</div>';
+
+  T.phases.forEach((ph, phIdx) => {
+    const isFinalPhase = phIdx === (T.numFases||3)-1;
+    html += '<div class="card-hd" style="margin:20px 0 10px"><div class="card-title" style="font-size:12px">'+ph.name+'</div>'
+      + '<div class="card-badge '+(ph.complete?'green':(phIdx===T.currentPhase?'gold':''))+'">'+(ph.complete?'✓ Concluída':(phIdx===T.currentPhase?'Em andamento':'Ainda não começou'))+'</div></div>';
+    html += '<div class="grupos-grid">';
+    ph.groups.forEach((group, gi) => {
+      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const color = GROUP_COLORS[gi % GROUP_COLORS.length];
+      const matches = groupMatches(group);
+      html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div>'
+        + '<div class="grupo-body">'
+        + group.map(name => {
+            const reg = getPlayerReg(name);
+            const isSeed = (T.seeds||[]).includes(name) && phIdx === 0;
+            return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' 🌱':'')+'</div></div>';
+          }).join('')
+        + '</div>';
+      html += '<div style="padding:8px 14px 12px;border-top:1px solid #f0f5fb">'
+        + matches.map((m, mi) => {
+            const key = phIdx+'-'+gi+'-'+mi;
+            const res = ph.results[key];
+            const played = res && res.saved;
+            const scoreText = played ? (res.sa+' x '+res.sb+(res.tb?(' <span style="color:#C9933A">(TB '+res.tba+'x'+res.tbb+')</span>'):'')) : '— x —';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:11px;color:#5a7090;border-bottom:1px solid #f8fafd">'
+              + '<span>'+(m.a||[]).filter(Boolean).join(' / ')+' <span style="color:#c0cdd8">vs</span> '+(m.b||[]).filter(Boolean).join(' / ')+'</span>'
+              + '<span style="font-weight:700;font-family:\'DM Mono\';color:'+(played?'#0a1628':'#c0cdd8')+'">'+scoreText+'</span>'
+              + '</div>';
+          }).join('')
+        + '</div></div>';
+    });
+    html += '</div>';
+  });
+
+  c.innerHTML = html;
+}
 function renderMeusTorneiosLocal() {
   const reg = getTournamentRegistry();
   const list = Object.values(reg).sort((a,b) => (b.updatedAt||'').localeCompare(a.updatedAt||''));
   const el = document.getElementById('meus-torneios-local-list');
+  const discardAllBtn = document.getElementById('btn-discard-all-local');
+  if (discardAllBtn) discardAllBtn.style.display = list.length ? 'inline-flex' : 'none';
   if (!el) return;
   el.innerHTML = list.length ? list.map(t => '<div class="torneio-row">'
       + '<div class="torneio-row-info"><div class="torneio-row-name">'+t.name+'</div><div class="torneio-row-meta">'+tournamentDisplayId(t.id,t.date,t.categoria)+'</div></div>'
       + '<div class="torneio-badge '+t.status+'">'+(TORNEIO_STATUS_LABEL[t.status]||t.status)+'</div>'
       + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(t.id).replace(/'/g,"\\'")+'\')">Abrir</button>'
+      + '<button class="btn btn-secondary btn-sm" style="color:#c0392b;border-color:rgba(231,76,60,.35)" onclick="discardLocalTournament(\''+String(t.id).replace(/'/g,"\\'")+'\',\''+t.name.replace(/'/g,"\\'")+'\')" title="Remove só desta lista — não apaga do banco de dados">Descartar</button>'
       + '</div>').join('') : '<div class="empty-panel"><div class="empty-icon">🗂</div><div>Nenhum torneio tocado neste navegador ainda.</div></div>';
+}
+// Remove só o registro LOCAL (a "lembrança" deste navegador) -- nunca mexe
+// no banco de dados. O torneio continua existindo no Google Sheets e pode
+// ser reencontrado a qualquer momento por "Buscar por ID" ou em "Listar
+// Todos", esse botão só limpa a lista de atalhos deste navegador.
+function discardLocalTournament(tid, name) {
+  const ok = confirm('Remover "'+name+'" da lista de torneios recentes deste navegador?\n\nIsso NÃO apaga o torneio do banco de dados -- só some daqui. Pra reabrir depois, use "Buscar por ID".');
+  if (!ok) return;
+  removeFromTournamentRegistry(tid);
+  renderMeusTorneiosLocal();
+}
+function discardAllLocalTournaments() {
+  const reg = getTournamentRegistry();
+  const count = Object.keys(reg).length;
+  if (!count) return;
+  const ok = confirm('Remover TODOS os '+count+' torneios da lista de recentes deste navegador?\n\nIsso NÃO apaga nada do banco de dados -- só limpa a lista de atalhos. Pra reabrir qualquer um depois, use "Buscar por ID".');
+  if (!ok) return;
+  try { localStorage.setItem('padeleye_tournaments_registry_v1', JSON.stringify({})); } catch(e) {}
+  renderMeusTorneiosLocal();
+  safeAlert('Lista de torneios recentes limpa. Nada foi apagado do banco de dados.', 'ok');
 }
 async function searchTournamentById() {
   const input = document.getElementById('search-tid-input');
@@ -1592,8 +1710,6 @@ function confirmPlayersStep() {
   T.playersConfirmed = true;
   T.players = [...selectedPlayers];
   T.seeds = [...seedList];
-  // A lista de jogadores mudou (ou foi confirmada agora) — qualquer formação de
-  // grupos explorada antes (sorteio ou manual) não é mais válida.
   T.groupFormationType = null;
   T_groups = [];
   manualPool = []; manualGroups = []; _dragPlayer = null;
@@ -1608,17 +1724,6 @@ function persistT() {
   updateTournamentRegistry(T);
 }
 
-// ── REGISTRO LOCAL DE TORNEIOS (multi-torneio) ──────────────────────
-// Só guarda metadados leves (nome/data/status) pra montar a lista rápida
-// de "torneios recentes neste navegador". Os dados completos NUNCA são
-// lidos daqui na hora de abrir um torneio — sempre buscamos fresco do
-// banco (get_tournament_by_id + get_matches_tournaments), pra garantir
-// que você sempre veja o estado mais atual, inclusive vindo de outro
-// aparelho.
-// ── Identificador composto: ID + data (DD/MM/AAAA) + categoria ──────
-// Ex.: TRN-20260612-G9ZAV_31/07/2026_8a -- mais fácil pro organizador
-// reconhecer de relance qual torneio é (a categoria e a data dizem
-// muito mais que o código sozinho).
 function formatDateSlash(dateStr) {
   if (!dateStr || dateStr === '-') return '';
   const meses = {jan:'01',fev:'02',mar:'03',abr:'04',mai:'05',jun:'06',jul:'07',ago:'08',set:'09',out:'10',nov:'11',dez:'12'};
@@ -1635,6 +1740,47 @@ function tournamentDisplayId(id, date, categoria) {
   if (d) parts.push(d);
   if (categoria) parts.push(categoria);
   return parts.join('_');
+}
+function toISODateForInput(dateStr) {
+  const slash = formatDateSlash(dateStr);
+  const m = slash.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? (m[3]+'-'+m[2]+'-'+m[1]) : '';
+}
+// ══ TRAVA DA ETAPA 1 ══════════════════════════════════════════════
+// Uma vez que T.status === 'open' (torneio já confirmado/aberto), a
+// configuração NÃO pode mais mudar por aqui -- só cancelando o torneio
+// inteiro. Antes disso não existia: navegar de volta pra Etapa 1 depois
+// de abrir o torneio mostrava o formulário vazio e editável de novo,
+// dando a impressão de que a configuração tinha se perdido. Agora,
+// sempre que T.status==='open', os campos vêm preenchidos com o que
+// foi salvo e ficam desabilitados; o botão de confirmar vira um aviso.
+function applyStep1ViewMode() {
+  const btnWrap = document.getElementById('trn-open-btn');
+  const locked = (T.status === 'open');
+  if (locked) {
+    const nameEl = document.getElementById('cfg-name'); if (nameEl) nameEl.value = T.name || '';
+    const dateEl = document.getElementById('cfg-date-raw'); if (dateEl) { const iso = toISODateForInput(T.date); if (iso) dateEl.value = iso; }
+    const local = T.local || '';
+    const dashIdx = local.indexOf(' - ');
+    const venueEl = document.getElementById('cfg-venue'); if (venueEl) venueEl.value = dashIdx>=0 ? local.slice(0,dashIdx) : local;
+    const cityEl = document.getElementById('cfg-city'); if (cityEl) cityEl.value = dashIdx>=0 ? local.slice(dashIdx+3) : '';
+    const catEl = document.getElementById('cfg-categoria'); if (catEl && T.categoria) catEl.value = T.categoria;
+    const courtsEl = document.getElementById('cfg-courts'); if (courtsEl) courtsEl.value = T.courts || 2;
+    [8,12,16].forEach(v => { const b = document.getElementById('canonical-btn-'+v); if (b) b.classList.toggle('sel', (T.players||[]).length===v); });
+    const badge = document.getElementById('canonical-badge');
+    if (badge && (T.players||[]).length) { badge.textContent = T.players.length+' jogadores'; badge.className = 'card-badge green'; }
+    ['f1','f2','final'].forEach((tag,i) => {
+      const cfg = (T.phaseConfig||[])[i];
+      if (!cfg) return;
+      const maxEl = document.getElementById('cfg-max-'+tag); if (maxEl) maxEl.value = cfg.maxScore;
+      const tbEl  = document.getElementById('cfg-tb-'+tag);  if (tbEl)  tbEl.value  = cfg.tbAt;
+    });
+    document.querySelectorAll('#p-step1 input, #p-step1 select, #p-step1 .canon-btn').forEach(el => el.disabled = true);
+    if (btnWrap) btnWrap.innerHTML = '<div style="width:100%;padding:14px;border-radius:10px;background:#f4f7fc;color:#7090b0;font-family:\'DM Sans\';font-size:13px;font-weight:600;text-align:center;border:1.5px dashed #dde6f0">🔒 Configuração travada — torneio em andamento. Pra mudar, cancele o torneio no topo da tela.</div>';
+  } else {
+    document.querySelectorAll('#p-step1 input, #p-step1 select, #p-step1 .canon-btn').forEach(el => el.disabled = false);
+    if (btnWrap) btnWrap.innerHTML = '<button class="btn btn-primary btn-full" onclick="openTournament()" style="font-size:15px">📋 Confirmar Configuração e Abrir Torneio →</button>';
+  }
 }
 
 function getTournamentRegistry() {
@@ -1724,18 +1870,12 @@ function selectSorteioGroups() {
   startRaffleAnimation();
 }
 
-// ══ SORTEIO ANIMADO (adaptado de PadelEye_Americano_V40_Prod.html) ══
-// Reaproveita selectedPlayers/seedList (já confirmados na Etapa 2) e, ao
-// final, entrega T_groups pronto para finalizeLaunch() — mesma lógica de
-// negócio de sempre, só a formação dos grupos ganhou o visual cinemático.
 let _raffleQueue = [];
 let _raffleGroups = [];
 let _raffleIdx = 0;
 let _raffleTimer = null;
 let _raffleCountdown = 3;
 
-// Linha compacta de jogador -- mesmo estilo (.grupo-player/.grupo-av/.grupo-name)
-// usado em toda a parte do app onde grupos já formados são exibidos.
 function raffleRowHTML(name, isSeed) {
   const reg = getPlayerReg(name);
   return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' 🌱':'')+'</div></div>';
@@ -1918,11 +2058,9 @@ function raffleFinish() {
   finalizeLaunch();
 }
 
-
-// ── Seleção manual (drag & drop, com toque como alternativa) ──
 let manualPool = [];
 let manualGroups = [];
-let _dragPlayer = null; // {name, from:'pool'|indice do grupo}
+let _dragPlayer = null;
 
 function selectManualGroups() {
   T.groupFormationType = 'manual';
@@ -2057,26 +2195,37 @@ function finalizeLaunch() {
   }));
 
   T.phases = [{ name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }];
+  T.executionMode = null; // organizador escolhe ao entrar na Etapa 4
   persistT();
 
   if (T.id) {
     const numGrupos = T_groups.length;
     const jogPorGrupo = numGrupos>0 ? Math.ceil(T.players.length/numGrupos) : 4;
+    // CRÍTICO: grava groups_json — sem isso, se alguém reabrir o torneio em
+    // outro dia/aparelho ANTES de qualquer placar ser lançado, os grupos
+    // formados hoje ficam invisíveis pro banco (reconstructTournamentFromBackend
+    // só sabe reconstruir grupos a partir de partidas já jogadas).
     PadelEyeDB.send('upsert_tournament', { row: {
       tournament_id: T.id, tournament_name: T.name, date: T.date, venue: T.local || (currentUser && currentUser.club) || '',
       tournament_format: 'Americano - Modelo Brasileiro', group_number: numGrupos, players_per_group: jogPorGrupo,
       advance_per_group: T.phaseConfig[0].advancePerGroup, wildcards: T.phaseConfig[0].wildcards,
       num_phases: T.numFases, tournament_category: T.categoria, status: 'Em Curso',
       players_json: JSON.stringify(T.players), seeds_json: JSON.stringify(T.seeds),
-      phase_config_json: JSON.stringify(T.phaseConfig), created_at: new Date().toISOString(),
-    }}).catch(e => console.warn('[finalizeLaunch]', e.message));
+      phase_config_json: JSON.stringify(T.phaseConfig),
+      groups_json: JSON.stringify(T.phases.map(p=>p.groups)),
+      tie_overrides_json: JSON.stringify(T.tieOverrides||{}), match_order_json: JSON.stringify(T.matchOrder||{}),
+      execution_mode: T.executionMode || '',
+      created_at: new Date().toISOString(),
+    }}).then(r => {
+      if (!r || r.ok === false) console.warn('[finalizeLaunch] upsert_tournament pode ter falhado:', r);
+    }).catch(e => console.warn('[finalizeLaunch]', e.message));
   }
 
   try { renderRounds(); } catch(e) { console.warn('[finalizeLaunch] renderRounds:', e.message); }
   try { renderRanking(); } catch(e) { console.warn('[finalizeLaunch] renderRanking:', e.message); }
   try { renderHistorico(); } catch(e) { console.warn('[finalizeLaunch] renderHistorico:', e.message); }
 
-  safeAlert('Torneio iniciado! Fase 1 pronta para os jogos.', 'ok');
+  safeAlert('Torneio iniciado! Escolha como conduzir a Fase 1.', 'ok');
   goToStep(4);
 }
 
@@ -2130,13 +2279,6 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
     }); });
   });
 
-  // ── Critério 3: Mini-Tabela entre empatados ──────────────────────────
-  // Quando 3+ jogadores empatam em Vitórias+Saldo de Games, o confronto
-  // direto par-a-par pode formar um ciclo (A bate B, B bate C, C bate A)
-  // sem ordem confiável. A mini-tabela soma o saldo de confronto direto
-  // de cada jogador contra TODOS os outros empatados de uma vez só —
-  // elimina o ciclo e reflete o que realmente aconteceu em quadra entre
-  // eles. Reduz a um H2H simples quando só 2 jogadores empatam.
   function computeMiniLeague(names) {
     const mini = {};
     names.forEach(p => { mini[p] = { miniW:0, miniGD:0 }; });
@@ -2234,8 +2376,6 @@ function resetTieOverride(phIdx, gi) {
   renderRounds(); renderRanking(); refreshStepNav();
 }
 
-// Compara duas partidas possiveis: menos conflitos primeiro, depois menos "acertos no campeao"
-// (prefere que o reencontro forcado envolva o 2 colocado, nao o 1 colocado do grupo).
 function _evalSplit(groupsArr, sourceOf, rankOf) {
   let conflicts = 0, winnerHits = 0;
   groupsArr.forEach(g => {
@@ -2251,17 +2391,12 @@ function _evalSplit(groupsArr, sourceOf, rankOf) {
   return { conflicts, winnerHits };
 }
 
-// Busca exaustiva: testa todas as formas de dividir o pool em 2 grupos do tamanho pedido
-// e devolve a que tem o MENOR numero de conflitos possivel (garantido, nao so "geralmente bom"),
-// com preferencia secundaria por poupar o 1 colocado de cada grupo de origem.
-// Só cobre o caso de 2 grupos de destino (unico caso real do sistema); acima de 10 jogadores
-// no pool, ou mais de 2 grupos de destino, cai no metodo anterior por seguranca de performance.
 function bestF2Split(pool, groupSize, sourceOf, rankOf) {
   const n = pool.length;
   if (n > 10 || n !== groupSize * 2) return null;
   let bestGroups = null, bestConflicts = Infinity, bestWinnerHits = Infinity;
   for (let mask = 1; mask < (1 << n); mask++) {
-    if (!(mask & 1)) continue; // fixa pool[0] no grupo A, evita contar A/B e B/A como duas soluçoes
+    if (!(mask & 1)) continue;
     let bits = 0, m = mask;
     while (m) { bits += m & 1; m >>= 1; }
     if (bits !== groupSize) continue;
@@ -2286,8 +2421,6 @@ function advancePhase() {
   const nextPPG = nextCfg.playersPerGroup ?? 4;
 
   const qualifiers = T.phases[phIdx].groups.map((g,gi) => groupStandings(g,phIdx,gi).slice(0,advPer).map(s=>s.name));
-  // Candidatos a wildcard agora comparados pela hierarquia completa (V > Saldo > Games a Favor > Saldo TB),
-  // nao so pelo saldo de games isolado — evita empates caindo silenciosamente por ordem do grupo.
   const wcCandidates = T.phases[phIdx].groups.map((g,gi) => {
     const st = groupStandings(g,phIdx,gi);
     const s = st[advPer];
@@ -2307,7 +2440,6 @@ function advancePhase() {
     if (numNextGroups <= 1) {
       nextGroups = [pool];
     } else {
-      // Mapa jogador -> grupo de origem e rank dentro do grupo (0=1o, 1=2o, 2=wildcard/3o)
       const sourceOf = {}, rankOf = {};
       qualifiers.forEach((srcGroup, gi) => {
         srcGroup.forEach((player, rank) => { sourceOf[player] = gi; rankOf[player] = rank; });
@@ -2319,8 +2451,6 @@ function advancePhase() {
       if (optimal) {
         nextGroups = optimal;
       } else {
-        // Fallback: metodo anterior (cross-pairing + encaixe guloso de wildcard),
-        // usado só se o pool for grande demais pra busca exaustiva ou houver >2 grupos de destino.
         nextGroups = Array.from({length:numNextGroups}, () => []);
         qualifiers.forEach((srcGroup, gi) => {
           srcGroup.forEach((player, rank) => {
@@ -2348,6 +2478,212 @@ function advancePhase() {
   T.currentPhase = nextPhaseIdx;
   persistT();
   renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
+}
+
+// ══ MODO MANUAL / RETROATIVO — avanço de fase por montagem manual ═══
+// Reaproveita o mesmo padrao visual da Etapa 3 (manualPool/manualGroups),
+// mas com estado proprio (advManual*) pra nao colidir com a formacao da
+// Fase 1. O pool inicial e TODOS os jogadores da fase atual (nao so os
+// top-2 calculados), porque no modo manual quem avanca foi decidido pelo
+// organizador humano no local -- pode nao bater com o que o algoritmo
+// computaria (e essa e a razao do modo existir).
+let advManualPool = [];
+let advManualGroups = [];
+let _advDragPlayer = null;
+let _advBuilderPhaseIdx = null;
+
+function initAdvManualBuilder(phIdx) {
+  const nextPhaseIdx = phIdx + 1;
+  const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
+  const nextCfg = getPhaseConfig(nextPhaseIdx);
+  const nextPPG = nextCfg.playersPerGroup ?? 4;
+  const pool = T.phases[phIdx].groups.flat().filter(Boolean);
+  _advBuilderPhaseIdx = phIdx;
+  advManualPool = [...pool];
+  if (isFinalPhase) {
+    advManualGroups = [[]];
+  } else {
+    const numG = Math.max(1, Math.ceil(pool.length / nextPPG));
+    advManualGroups = Array.from({length:numG}, () => []);
+  }
+  _advDragPlayer = null;
+}
+function advManualGroupCapacity() {
+  const nextPhaseIdx = (_advBuilderPhaseIdx ?? T.currentPhase) + 1;
+  const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
+  if (isFinalPhase) return advManualPool.length + Math.max(...advManualGroups.map(g=>g.length),0);
+  return advManualGroups.length ? Math.ceil((advManualPool.length + advManualGroups.reduce((s,g)=>s+g.length,0)) / advManualGroups.length) : 4;
+}
+function _advManualRemoveFromOrigin(p, from) {
+  if (from === 'pool') advManualPool = advManualPool.filter(x=>x!==p);
+  else advManualGroups[from] = advManualGroups[from].filter(x=>x!==p);
+}
+function advManualMoveToGroup(gi) {
+  if (!_advDragPlayer) return;
+  const { name, from } = _advDragPlayer;
+  if (from === gi) { _advDragPlayer=null; renderAdvManualBuilder(); return; }
+  const nextPhaseIdx = (_advBuilderPhaseIdx ?? T.currentPhase) + 1;
+  const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
+  if (!isFinalPhase) {
+    const cap = advManualGroupCapacity();
+    if (advManualGroups[gi].length >= cap) { safeAlert('Grupo já tem '+cap+' jogadores — solte sobre um jogador do grupo pra trocar.', 'warn'); _advDragPlayer=null; renderAdvManualBuilder(); return; }
+  }
+  _advManualRemoveFromOrigin(name, from);
+  advManualGroups[gi].push(name);
+  _advDragPlayer = null;
+  renderAdvManualBuilder();
+}
+function advManualMoveToPool() {
+  if (!_advDragPlayer) return;
+  const { name, from } = _advDragPlayer;
+  if (from === 'pool') { _advDragPlayer=null; renderAdvManualBuilder(); return; }
+  _advManualRemoveFromOrigin(name, from);
+  advManualPool.push(name);
+  _advDragPlayer = null;
+  renderAdvManualBuilder();
+}
+function advManualSwapWith(targetName, targetFrom) {
+  if (!_advDragPlayer) return;
+  const { name, from } = _advDragPlayer;
+  if (name === targetName) { _advDragPlayer=null; renderAdvManualBuilder(); return; }
+  _advManualRemoveFromOrigin(name, from);
+  _advManualRemoveFromOrigin(targetName, targetFrom);
+  if (from === 'pool') advManualPool.push(targetName); else advManualGroups[from].push(targetName);
+  if (targetFrom === 'pool') advManualPool.push(name); else advManualGroups[targetFrom].push(name);
+  _advDragPlayer = null;
+  renderAdvManualBuilder();
+}
+function advDragStartPlayer(ev, name, from) {
+  _advDragPlayer = { name, from };
+  try { ev.dataTransfer.setData('text/plain', name); } catch(e) {}
+  ev.dataTransfer.effectAllowed = 'move';
+}
+function advDropOnPool(ev) { ev.preventDefault(); advManualMoveToPool(); }
+function advDropOnGroup(ev, gi) { ev.preventDefault(); advManualMoveToGroup(gi); }
+function advDropOnPlayerChip(ev, name, from) { ev.preventDefault(); ev.stopPropagation(); advManualSwapWith(name, from); }
+function advTapPlayerChip(name, from) {
+  if (_advDragPlayer && _advDragPlayer.name===name && _advDragPlayer.from===from) { _advDragPlayer=null; renderAdvManualBuilder(); return; }
+  if (!_advDragPlayer) { _advDragPlayer = {name, from}; renderAdvManualBuilder(); return; }
+  advManualSwapWith(name, from);
+}
+function advTapGroupArea(gi) { if (_advDragPlayer) advManualMoveToGroup(gi); }
+function advTapPoolArea() { if (_advDragPlayer) advManualMoveToPool(); }
+
+function renderAdvManualBuilder() {
+  const phIdx = _advBuilderPhaseIdx ?? T.currentPhase;
+  const nextPhaseIdx = phIdx + 1;
+  const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
+  const nextPhaseName = isFinalPhase ? 'Final' : nextPhaseIdx===1 ? 'Fase 2' : ('Fase '+(nextPhaseIdx+1));
+  const container = document.getElementById('adv-manual-container');
+  if (!container) return;
+  const cap = isFinalPhase ? null : advManualGroupCapacity();
+
+  const chip = (name, from) => {
+    const reg = getPlayerReg(name);
+    const nEsc = name.replace(/'/g,"\\'");
+    const sel = (_advDragPlayer && _advDragPlayer.name===name && String(_advDragPlayer.from)===String(from));
+    const fromArg = (from==='pool') ? "'pool'" : from;
+    return '<div class="manual-chip'+(sel?' sel':'')+'" draggable="true"'
+      + ' ondragstart="advDragStartPlayer(event,\''+nEsc+'\','+fromArg+')"'
+      + ' ondrop="advDropOnPlayerChip(event,\''+nEsc+'\','+fromArg+')" ondragover="allowDrop(event)"'
+      + ' onclick="event.stopPropagation();advTapPlayerChip(\''+nEsc+'\','+fromArg+')">'
+      + '<div class="manual-chip-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div>'
+      + '<span>'+name+'</span></div>';
+  };
+
+  let html = '<div class="card" style="border-color:rgba(201,147,58,.35);background:#fffdf7">'
+    + '<div class="card-hd"><div class="card-title">Montar '+nextPhaseName+' Manualmente</div><div class="mode-badge manual">📝 manual/retroativo</div></div>'
+    + '<div style="font-size:11.5px;color:#5a4520;margin-bottom:14px;line-height:1.6">Arraste os jogadores que <b>de fato avançaram</b> onsite para os grupos da '+nextPhaseName+'. Todos os jogadores da '+ (phIdx===0?'Fase 1':'fase anterior') +' estão disponíveis aqui, mesmo que o app calcularia uma classificação diferente — o que importa é refletir o que realmente aconteceu na quadra.</div>';
+
+  html += '<div class="card"><div class="card-hd"><div class="card-title">Jogadores Disponíveis</div><div class="card-badge" id="adv-manual-pool-badge">'+advManualPool.length+' restantes</div></div>'
+    + '<div class="manual-pool" ondragover="allowDrop(event)" ondrop="advDropOnPool(event)" onclick="if(event.target===this) advTapPoolArea()">'
+    + (advManualPool.length ? advManualPool.map(name=>chip(name,'pool')).join('') : '<span class="seed-empty">Todos os jogadores já foram distribuídos.</span>')
+    + '</div></div>';
+
+  html += '<div class="grupos-grid" id="adv-manual-groups-grid">';
+  advManualGroups.forEach((group, gi) => {
+    const color = GROUP_COLORS[gi % GROUP_COLORS.length];
+    const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+    const capLabel = isFinalPhase ? (group.length+' jogadores') : (group.length+' / '+cap+' jogadores');
+    html += '<div class="grupo-card" ondragover="allowDrop(event)" ondrop="advDropOnGroup(event,'+gi+')">'
+      + '<div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+capLabel+'</div></div></div>'
+      + '<div class="grupo-body manual-group-body" ondragover="allowDrop(event)" ondrop="advDropOnGroup(event,'+gi+')" onclick="if(event.target===this) advTapGroupArea('+gi+')">'
+      + (group.length ? group.map(name=>chip(name,gi)).join('') : '<span class="seed-empty">Arraste jogadores aqui</span>')
+      + '</div></div>';
+  });
+  html += '</div>';
+
+  const allAssigned = advManualPool.length===0 && advManualGroups.every(g=>g.length>0);
+  html += '<button class="btn btn-secondary btn-full" style="margin-bottom:8px" onclick="initAdvManualBuilder('+phIdx+');renderAdvManualBuilder()">↺ Recomeçar do zero</button>';
+  html += '<button class="btn btn-gold btn-full" onclick="confirmAdvManualGroups()"'+(allAssigned?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Confirmar '+nextPhaseName+' e Avançar →</button>';
+  html += '<button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="cancelAdvManualBuilder()">Cancelar</button>';
+  html += '</div>';
+  container.innerHTML = html;
+}
+function openAdvManualBuilder(phIdx) {
+  initAdvManualBuilder(phIdx);
+  renderAdvManualBuilder();
+  document.getElementById('adv-manual-container')?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function cancelAdvManualBuilder() {
+  _advBuilderPhaseIdx = null;
+  advManualPool = []; advManualGroups = []; _advDragPlayer = null;
+  const container = document.getElementById('adv-manual-container');
+  if (container) container.innerHTML = '';
+}
+function confirmAdvManualGroups() {
+  if (advManualPool.length>0 || advManualGroups.some(g=>g.length===0)) { safeAlert('Distribua todos os jogadores nos grupos antes de confirmar.','warn'); return; }
+  const phIdx = _advBuilderPhaseIdx ?? T.currentPhase;
+  const nextPhaseIdx = phIdx + 1;
+  const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
+  const nextPhaseName = isFinalPhase ? 'Final' : nextPhaseIdx===1 ? 'Fase 2' : ('Fase '+(nextPhaseIdx+1));
+  T.phases[nextPhaseIdx] = { name: nextPhaseName, groups: advManualGroups.map(g=>[...g]), results:{}, complete:false };
+  T.phases[phIdx].complete = true;
+  T.currentPhase = nextPhaseIdx;
+  cancelAdvManualBuilder();
+  persistT();
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard(); refreshStepNav();
+  safeAlert(nextPhaseName+' montada manualmente. Registre os placares quando tiver.', 'ok');
+}
+
+// ══ SELEÇÃO DO MODO DE EXECUÇÃO (Etapa 4) ═══════════════════════════
+function selectExecutionMode(mode) {
+  T.executionMode = mode;
+  persistT();
+  renderRounds();
+}
+function changeExecutionMode() {
+  const ok = confirm('Trocar o modo de condução não apaga placares já registrados, mas muda como as próximas fases serão avançadas. Continuar?');
+  if (!ok) return;
+  T.executionMode = null;
+  persistT();
+  renderRounds();
+}
+function renderModeGate() {
+  const el = document.getElementById('mode-gate-container');
+  if (!el) return;
+  if (T.executionMode) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="card">'
+    + '<div class="card-hd"><div class="card-title">Como este torneio vai ser conduzido?</div></div>'
+    + '<div style="font-size:11.5px;color:#5a7090;margin-bottom:14px;line-height:1.6">Escolha antes de começar a registrar placares. Vale para o torneio inteiro.</div>'
+    + '<div class="formation-grid">'
+    + '<div class="mode-card" onclick="selectExecutionMode(\'app_live\')">'
+      + '<div class="mc-icon">🖥️</div><div class="mc-title">App ao Vivo</div>'
+      + '<div class="mc-desc">Você digita cada placar em tempo real durante o torneio. O app calcula os critérios de desempate e decide sozinho quem avança de fase.</div>'
+    + '</div>'
+    + '<div class="mode-card" onclick="selectExecutionMode(\'manual\')">'
+      + '<div class="mc-icon">📝</div><div class="mc-title">Manual / Retroativo</div>'
+      + '<div class="mc-desc">O torneio roda no local, decidido por um organizador humano. Você registra os placares e monta manualmente os grupos das fases seguintes, refletindo o que realmente aconteceu — mesmo depois, no dia seguinte.</div>'
+    + '</div>'
+    + '</div></div>';
+}
+function modeBadgeHTML() {
+  if (!T.executionMode) return '';
+  const isLive = T.executionMode === 'app_live';
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">'
+    + '<span class="mode-badge '+(isLive?'live':'manual')+'">'+(isLive?'🖥️ app ao vivo':'📝 manual/retroativo')+'</span>'
+    + '<button class="tie-reset-btn" onclick="changeExecutionMode()" style="border-color:#dde6f0;color:#5a7090">Trocar modo</button>'
+    + '</div>';
 }
 
 function liveScore(key) {
@@ -2400,6 +2736,7 @@ function unsaveMatch(key, phIdx, gi, mi) {
   }
   if (T.phases[phIdx]?.results[key]) {
     delete T.phases[phIdx].results[key];
+    delete _unsavedScoreCache[key]; // "Corrigir" começa do zero, não do que sobrou em cache
     renderRounds(); renderRanking(); renderHistorico(); refreshStepNav();
   }
 }
@@ -2464,6 +2801,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
     }
   }
   T.phases[phaseIdx].results[key] = { sa, sb, saved:true, tb:hasTB, tba, tbb };
+  delete _unsavedScoreCache[key]; // já está salvo de verdade, não precisa mais do cache temporário
   persistT();
 
   if (T.id) {
@@ -2485,9 +2823,45 @@ function saveMatch(phaseIdx, groupIdx, matchIdx) {
 
 function switchRoundPhase(idx) { if (!T.phases[idx]) return; T.currentPhase = idx; renderRounds(); }
 
+// Varre os inputs de placar/tie-break ATUALMENTE na tela e guarda o que
+// estiver preenchido em _unsavedScoreCache, antes que renderRounds() troque
+// todo o HTML por baixo deles. Roda sempre no início de renderRounds(),
+// então cobre qualquer motivo de re-render (salvar outra partida, desfazer,
+// trocar de fase, escolher desempate, etc).
+function captureUnsavedScores() {
+  const container = document.getElementById('rounds-container');
+  if (!container) return;
+  container.querySelectorAll('input.score-in').forEach(el => {
+    const m = el.id.match(/^sc-(.+)-(a|b)$/);
+    if (!m || el.value === '') return;
+    const key = m[1];
+    if (!_unsavedScoreCache[key]) _unsavedScoreCache[key] = {};
+    _unsavedScoreCache[key][m[2] === 'a' ? 'sa' : 'sb'] = el.value;
+  });
+  container.querySelectorAll('input.tb-in').forEach(el => {
+    const m = el.id.match(/^tb-(.+)-(a|b)$/);
+    if (!m || el.value === '') return;
+    const key = m[1];
+    if (!_unsavedScoreCache[key]) _unsavedScoreCache[key] = {};
+    _unsavedScoreCache[key][m[2] === 'a' ? 'tba' : 'tbb'] = el.value;
+  });
+  container.querySelectorAll('[id^="tb-btn-"]').forEach(el => {
+    if (el.dataset.active !== '1') return;
+    const key = el.id.replace('tb-btn-', '');
+    if (!_unsavedScoreCache[key]) _unsavedScoreCache[key] = {};
+    _unsavedScoreCache[key].tbActive = true;
+  });
+}
 function renderRounds() {
+  captureUnsavedScores();
   const c = document.getElementById('rounds-container');
-  if (!T.started) { c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🏸</div><div>Configure e inicie o torneio na Configuracao.</div></div>'; return; }
+  const gateEl = document.getElementById('mode-gate-container');
+  if (!T.started) { if(gateEl) gateEl.innerHTML=''; c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🏸</div><div>Configure e inicie o torneio na Configuracao.</div></div>'; return; }
+
+  // Trava a Etapa 4 até o organizador escolher o modo de condução.
+  renderModeGate();
+  if (!T.executionMode) { c.innerHTML = ''; return; }
+
   const ph = T.phases[T.currentPhase];
   if (!ph) { c.innerHTML = '<div class="empty-panel"><div class="empty-icon">!</div><div>Fase nao encontrada</div></div>'; return; }
   const phIdx = T.currentPhase;
@@ -2498,7 +2872,8 @@ function renderRounds() {
     const pct = totalM>0 ? Math.round(doneM/totalM*100) : 0;
     const phaseTabs = T.phases.map((p,i) => '<div onclick="switchRoundPhase('+i+')" style="padding:6px 14px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;background:'+(i===phIdx?'#0a1628':'#f0f5fb')+';color:'+(i===phIdx?'#C9933A':'#7090b0')+';border:1.5px solid '+(i===phIdx?'#0a1628':'#dde6f0')+'">'+p.name+' '+(p.complete?'(concl.)':'')+'</div>').join('');
 
-    html = '<div class="card">'
+    html = modeBadgeHTML();
+    html += '<div class="card">'
       + '<div class="card-hd"><div class="card-title">'+T.name+'</div><div class="card-badge '+(doneM===totalM&&totalM>0?'green':'gold')+'">'+doneM+'/'+totalM+' partidas . '+pct+'%</div></div>'
       + '<div style="height:5px;background:#dde6f0;border-radius:99px;overflow:hidden;margin-bottom:12px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#3a7bd5,#C9933A)"></div></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap">'+phaseTabs+'</div>'
@@ -2526,11 +2901,15 @@ function renderRounds() {
         const match = matches[mi];
         const key = phIdx+'-'+gi+'-'+mi;
         const res = ph.results[key] || {};
-        const sa = res.sa ?? '', sb = res.sb ?? '';
+        const saved = res.saved || false;
+        // Se o placar ainda não foi salvo, recupera o que estava digitado
+        // antes desta re-renderização (ex: usuário preencheu 3 placares e
+        // clicou "Salvar" em só 1 -- os outros 2 não podem sumir da tela).
+        const cached = (!saved && _unsavedScoreCache[key]) ? _unsavedScoreCache[key] : {};
+        const sa = res.sa ?? cached.sa ?? '', sb = res.sb ?? cached.sb ?? '';
         const aWin = sa!==''&&sb!==''&&parseInt(sa)>parseInt(sb);
         const bWin = sa!==''&&sb!==''&&parseInt(sb)>parseInt(sa);
-        const saved = res.saved || false;
-        const hasTB = res.tb || false;
+        const hasTB = res.tb || cached.tbActive || false;
         const maxSc = getPhaseConfig(phIdx).maxScore ?? 9;
         const borderColor = saved ? 'rgba(39,174,96,.4)' : '#dde6f0';
 
@@ -2548,9 +2927,9 @@ function renderRounds() {
             + '<input class="score-in" type="number" min="0" max="'+maxSc+'" id="sc-'+key+'-b" value="'+sb+'" placeholder="-" oninput="liveScore(\''+key+'\')">'
             + '</div>'
             + '<div id="tb-inputs-'+key+'" style="display:'+(hasTB?'flex':'none')+';gap:3px">'
-            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-a" value="'+(res.tba??'')+'" placeholder="-">'
+            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-a" value="'+(res.tba ?? cached.tba ?? '')+'" placeholder="-">'
             + '<span style="font-size:10px;color:#e8c870">x</span>'
-            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-b" value="'+(res.tbb??'')+'" placeholder="-">'
+            + '<input class="tb-in" type="number" min="0" max="99" id="tb-'+key+'-b" value="'+(res.tbb ?? cached.tbb ?? '')+'" placeholder="-">'
             + '</div>'
             + '</div>';
 
@@ -2572,8 +2951,8 @@ function renderRounds() {
           + '</div>'
           + (!saved
             ? ('<div style="display:flex;gap:6px;padding:0 12px 10px">'
-              + '<button id="tb-btn-'+key+'" onclick="toggleTB(\''+key+'\')" data-active="'+(hasTB?'1':'0')+'" style="flex:1;padding:5px 0;border-radius:6px;border:1px solid '+(hasTB?'#C9933A':'#e8c870')+';background:'+(hasTB?'rgba(201,147,58,.12)':'#fffbf0')+';color:#865a10;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Tie-Break'+(hasTB?' (ativo)':'')+'</button>'
-              + '<button onclick="saveMatch('+phIdx+','+gi+','+mi+')" style="flex:2;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#5a7090;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Salvar Partida no DB</button>'
+              + '<button id="tb-btn-'+key+'" onclick="toggleTB(\''+key+'\')" data-active="'+(hasTB?'1':'0')+'" style="flex:0 0 auto;padding:5px 10px;border-radius:6px;border:1px solid '+(hasTB?'#C9933A':'#e8c870')+';background:'+(hasTB?'rgba(201,147,58,.12)':'#fffbf0')+';color:#865a10;font-family:\'DM Mono\';font-size:9px;cursor:pointer;white-space:nowrap">Tie-Break'+(hasTB?' (ativo)':'')+'</button>'
+              + '<button onclick="saveMatch('+phIdx+','+gi+','+mi+')" style="flex:0 0 auto;padding:5px 10px;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#5a7090;font-family:\'DM Mono\';font-size:9px;cursor:pointer;white-space:nowrap">Salvar Partida no DB</button>'
               + '</div>'
               + '<div id="warn-'+key+'" style="display:none;margin:0 12px 10px;border-radius:8px;overflow:hidden;border:1.5px solid #e8c870"></div>')
             : (ph.complete
@@ -2583,7 +2962,7 @@ function renderRounds() {
       });
 
       html += '<div style="margin-top:10px;border-top:1px solid #f0f5fb;padding-top:10px">'
-        + '<div style="font-family:\'DM Mono\';font-size:8px;color:#b0c4d8;margin-bottom:6px">CLASSIFICACAO</div>'
+        + '<div style="font-family:\'DM Mono\';font-size:8px;color:#b0c4d8;margin-bottom:6px">CLASSIFICACAO'+(T.executionMode==='manual'?' (referência — não decide quem avança neste modo)':'')+'</div>'
         + '<div style="overflow-x:auto"><table class="classif-table" style="width:100%;min-width:520px;font-size:11px;border-collapse:collapse">'
         + '<tr style="color:#9ab0c8"><td style="padding:3px 6px 3px 0">#</td><td style="padding:3px 6px">Jogador</td>'
           + '<td style="padding:3px 6px;text-align:right">J</td>'
@@ -2606,7 +2985,7 @@ function renderRounds() {
             + '</tr>').join('')
         + '</table></div>';
 
-      if (standings.tieAtCutoff) {
+      if (T.executionMode === 'app_live' && standings.tieAtCutoff) {
         const ta = standings.tieAtCutoff[0], tb2 = standings.tieAtCutoff[1];
         const isFinal = standings.isLastPhase;
         html += '<div class="tie-banner">'
@@ -2617,7 +2996,7 @@ function renderRounds() {
           + '<button class="tie-pick-btn" onclick="chooseTieWinner('+phIdx+','+gi+',\''+ta.replace(/'/g,"\\'")+'\',\''+tb2.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(ta)+'">'+_init(ta)+'</div>'+(isFinal?ta+' fica melhor':ta+' avanca')+'</button>'
           + '<button class="tie-pick-btn" onclick="chooseTieWinner('+phIdx+','+gi+',\''+tb2.replace(/'/g,"\\'")+'\',\''+ta.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(tb2)+'">'+_init(tb2)+'</div>'+(isFinal?tb2+' fica melhor':tb2+' avanca')+'</button>'
           + '</div></div></div>';
-      } else {
+      } else if (T.executionMode === 'app_live') {
         const existingOverride = (T.tieOverrides||{})[phIdx+'-'+gi];
         if (existingOverride) html += '<div class="tie-override-done">Escolha do organizador: <strong>'+existingOverride.winner+'</strong> '+(standings.isLastPhase?'fica em melhor posicao':'avanca')+'<button class="tie-reset-btn" onclick="resetTieOverride('+phIdx+','+gi+')">Refazer</button></div>';
       }
@@ -2627,10 +3006,17 @@ function renderRounds() {
     const maxPh = (T.numFases||3)-1;
     if (isPhaseComplete(phIdx) && phIdx < maxPh) {
       const nextName = (T.numFases===2 || phIdx===1) ? 'Final' : 'Fase 2';
-      html += '<div class="card" style="border-color:rgba(39,174,96,.3);background:#E8F8EE">'
-        + '<div style="font-size:12px;color:#1a7a44;margin-bottom:12px;font-weight:600">'+ph.name+' concluida! Os melhores de cada grupo avancam.</div>'
-        + '<button class="btn btn-gold btn-full" onclick="advancePhase()">Avancar para a '+nextName+' -&gt;</button>'
-        + '</div>';
+      if (T.executionMode === 'manual') {
+        html += '<div class="card" style="border-color:rgba(201,147,58,.35);background:#fffbf0">'
+          + '<div style="font-size:12px;color:#865a10;margin-bottom:12px;font-weight:600">'+ph.name+' concluida! Monte manualmente quem avança para a '+nextName+', conforme o que aconteceu onsite.</div>'
+          + '<button class="btn btn-gold btn-full" onclick="openAdvManualBuilder('+phIdx+')">🖐 Montar '+nextName+' Manualmente</button>'
+          + '</div>';
+      } else {
+        html += '<div class="card" style="border-color:rgba(39,174,96,.3);background:#E8F8EE">'
+          + '<div style="font-size:12px;color:#1a7a44;margin-bottom:12px;font-weight:600">'+ph.name+' concluida! Os melhores de cada grupo avancam.</div>'
+          + '<button class="btn btn-gold btn-full" onclick="advancePhase()">Avancar para a '+nextName+' -&gt;</button>'
+          + '</div>';
+      }
     }
     const finalIdx = (T.numFases||3)-1;
     if (isPhaseComplete(finalIdx)) {
@@ -2639,6 +3025,7 @@ function renderRounds() {
         + '<button class="btn btn-gold btn-full" onclick="goToStep(5)">Ir para Finalização →</button>'
         + '</div>';
     }
+    html += '<div id="adv-manual-container"></div>';
   } catch(e) {
     console.error('[renderRounds]', e);
     c.innerHTML = '<div style="color:red;padding:20px;font-size:12px;font-family:monospace">renderRounds error: '+e.message+'</div>';
@@ -2815,7 +3202,7 @@ const PadelEyeDB = (() => {
     const jogPorGrupo = numGrupos>0 ? Math.ceil((Tobj.players?.length||0)/numGrupos) : 4;
     return { tournament_id:Tobj.id||uid(), tournament_name:Tobj.name||'Torneio Americano', date:Tobj.date||now().slice(0,10),
       venue:Tobj.local||'', tournament_format:'Americano - Modelo Brasileiro', group_number:numGrupos, players_per_group:jogPorGrupo,
-      num_phases:Tobj.numFases||3, tournament_category:Tobj.categoria||'', status:'Finalizado',
+      num_phases:Tobj.numFases||3, tournament_category:Tobj.categoria||'', status:'Finalizado', execution_mode: Tobj.executionMode||'',
       players_json: JSON.stringify(Tobj.players||[]), seeds_json: JSON.stringify(Tobj.seeds||[]),
       phase_config_json: JSON.stringify(Tobj.phaseConfig||[]), created_at: now() };
   }
@@ -2936,10 +3323,6 @@ async function dbtTestAll() {
 
 document.getElementById('dbt-url-text').textContent = WEB_APP_URL;
 function bootstrapTournamentState() {
-  // NUNCA decide sozinho e NUNCA pousa fora da Etapa 1 automaticamente.
-  // Se houver uma configuração/torneio salvo neste navegador, a Etapa 1
-  // mostra um portal explícito ("Continuar" ou "Abrir Novo Torneio") --
-  // o usuário escolhe, em vez do app decidir por conta própria.
   restoreT();
   _showResumeGate = (T.status === 'open');
   renderSeedPicker(); updateVagas(); updateSummary();
@@ -2955,12 +3338,11 @@ function restoreT() {
     const parsed = JSON.parse(saved);
     if (!parsed) return false;
     T = parsed;
-    // Back-fill de campos que podem não existir em dados salvos por uma
-    // versão anterior do app (schema antigo) -- evita estados inconsistentes.
     if (T.phases === undefined) T.phases = [];
     if (T.seeds === undefined) T.seeds = [];
     if (T.groupFormationType === undefined) T.groupFormationType = null;
     if (T.finalized === undefined) T.finalized = false;
+    if (T.executionMode === undefined) T.executionMode = null;
     if (T.started && Array.isArray(T.players) && T.players.length >= 4 && T.playersConfirmed === undefined) {
       T.playersConfirmed = true;
     }
@@ -2995,9 +3377,6 @@ function restoreT() {
     }
   } catch(e) { console.warn('[Tournament Manager] auth restore error:', e); }
 })();
-// Splash dismiss (adaptado de PadelEye_Americano_V40_Prod.html) — some tempo depois
-// direciona para a tela de login e, apos autenticar, para a Etapa 1 (ja garantido
-// pelo bootstrapTournamentState()).
 document.addEventListener('DOMContentLoaded', () => {
   const _splash = document.getElementById('s-splash');
   if (_splash) {
