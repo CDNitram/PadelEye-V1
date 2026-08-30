@@ -2951,8 +2951,8 @@ function renderRounds() {
           + '</div>'
           + (!saved
             ? ('<div style="display:flex;gap:6px;padding:0 12px 10px">'
-              + '<button id="tb-btn-'+key+'" onclick="toggleTB(\''+key+'\')" data-active="'+(hasTB?'1':'0')+'" style="flex:1;padding:5px 0;border-radius:6px;border:1px solid '+(hasTB?'#C9933A':'#e8c870')+';background:'+(hasTB?'rgba(201,147,58,.12)':'#fffbf0')+';color:#865a10;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Tie-Break'+(hasTB?' (ativo)':'')+'</button>'
-              + '<button onclick="saveMatch('+phIdx+','+gi+','+mi+')" style="flex:2;padding:5px 0;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#5a7090;font-family:\'DM Mono\';font-size:9px;cursor:pointer">Salvar Partida no DB</button>'
+              + '<button id="tb-btn-'+key+'" onclick="toggleTB(\''+key+'\')" data-active="'+(hasTB?'1':'0')+'" style="flex:0 0 auto;padding:5px 10px;border-radius:6px;border:1px solid '+(hasTB?'#C9933A':'#e8c870')+';background:'+(hasTB?'rgba(201,147,58,.12)':'#fffbf0')+';color:#865a10;font-family:\'DM Mono\';font-size:9px;cursor:pointer;white-space:nowrap">Tie-Break'+(hasTB?' (ativo)':'')+'</button>'
+              + '<button onclick="saveMatch('+phIdx+','+gi+','+mi+')" style="flex:0 0 auto;padding:5px 10px;border-radius:6px;border:1px solid #dde6f0;background:#fff;color:#5a7090;font-family:\'DM Mono\';font-size:9px;cursor:pointer;white-space:nowrap">Salvar Partida no DB</button>'
               + '</div>'
               + '<div id="warn-'+key+'" style="display:none;margin:0 12px 10px;border-radius:8px;overflow:hidden;border:1.5px solid #e8c870"></div>')
             : (ph.complete
