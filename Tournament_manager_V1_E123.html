@@ -2638,7 +2638,14 @@ function renderAdvManualBuilder() {
   });
   html += '</div>';
 
-  const allAssigned = advManualPool.length===0 && advManualGroups.every(g=>g.length>0);
+  // O pool NUNCA precisa ficar vazio -- ele contém de propósito TODOS os
+  // jogadores da fase anterior (não só quem o app classificaria), pra que
+  // o organizador escolha manualmente quem realmente avançou onsite. Exigir
+  // pool vazio pra liberar o botão travava pra sempre qualquer avanço onde
+  // menos jogadores avançam do que jogaram a fase anterior (ex: Final, que
+  // normalmente recebe só 4 de 8+ jogadores) -- os que ficam de fora ficam
+  // no pool mesmo, isso é o esperado, não um erro.
+  const allAssigned = advManualGroups.length>0 && advManualGroups.every(g=>g.length>0);
   html += '<button class="btn btn-secondary btn-full" style="margin-bottom:8px" onclick="initAdvManualBuilder('+phIdx+');renderAdvManualBuilder()">↺ Recomeçar do zero</button>';
   html += '<button class="btn btn-gold btn-full" onclick="confirmAdvManualGroups()"'+(allAssigned?'':' disabled style="opacity:.5;cursor:not-allowed"')+'>Confirmar '+nextPhaseName+' e Avançar →</button>';
   html += '<button class="btn btn-secondary btn-full" style="margin-top:8px" onclick="cancelAdvManualBuilder()">Cancelar</button>';
@@ -2657,7 +2664,7 @@ function cancelAdvManualBuilder() {
   if (container) container.innerHTML = '';
 }
 function confirmAdvManualGroups() {
-  if (advManualPool.length>0 || advManualGroups.some(g=>g.length===0)) { safeAlert('Distribua todos os jogadores nos grupos antes de confirmar.','warn'); return; }
+  if (advManualGroups.some(g=>g.length===0)) { safeAlert('Todo grupo precisa ter pelo menos 1 jogador antes de confirmar. Jogadores que ficaram no pool são tratados como eliminados nesta fase — não precisa esvaziar o pool.','warn'); return; }
   const phIdx = _advBuilderPhaseIdx ?? T.currentPhase;
   const nextPhaseIdx = phIdx + 1;
   const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
