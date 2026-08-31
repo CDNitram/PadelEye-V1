@@ -1030,6 +1030,14 @@ async function goToStep(n, el) {
   const panel = document.getElementById('p-' + STEP_PANEL[n]);
   if (panel) panel.classList.add('on');
   closeMobMenu();
+  // Sincroniza com o banco ANTES de desenhar o conteúdo da etapa, sempre
+  // que a etapa depende de configuração que só pode mudar cancelando o
+  // torneio (Etapa 1) ou de dados usados pra validar placar (Etapa 4).
+  // "Mantenha sempre sincronizado com o banco" -- nunca confia no cache
+  // local sozinho pra essas duas telas.
+  if (T.id && T.status === 'open' && (n === 1 || n === 4)) {
+    await syncTournamentConfigFromBackend();
+  }
   refreshStepNav();
   if (n === 2 && !T.playersConfirmed) {
     selectedPlayers = [...(T.players || [])];
@@ -1037,42 +1045,57 @@ async function goToStep(n, el) {
     renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
   }
   if (n === 3) renderFormationStep();
-  if (n === 4) { await syncTournamentConfigFromBackend(); renderRounds(); }
+  if (n === 4) renderRounds();
   if (n === 5) renderFinalizeStep();
 }
 // ══ SINCRONIZA CONFIGURAÇÃO COM O BANCO (evita "estado travado" local) ══
-// phaseConfig (placar máximo/tie-break por fase) é definido uma vez na
-// Etapa 1 e nunca deveria mudar depois -- mas se o organizador (ou outro
-// aparelho) editar isso direto na planilha, ou se o navegador ficou com
-// um T antigo em cache (localStorage) de antes de uma correção, o app
-// continuava aplicando o valor desatualizado sem avisar ninguém. Agora,
-// toda vez que entra na Etapa 4, busca a config mais atual do banco --
-// se divergir do que está em cache local, corrige e avisa.
+// Toda a configuração da Etapa 1 (nome, data, local, categoria, jogadores,
+// seeds, placar/tie-break por fase) é definida uma vez e nunca deveria
+// mudar depois -- mas se o navegador ficou com um T antigo/incompleto em
+// cache (localStorage), ou o torneio foi carregado de outro jeito nesta
+// sessão, o app continuava mostrando um estado diferente do banco sem
+// avisar ninguém. Agora, toda vez que entra na Etapa 1 ou na Etapa 4,
+// busca o estado mais atual do banco -- se divergir do cache local,
+// corrige tudo de uma vez e avisa.
 async function syncTournamentConfigFromBackend() {
-  if (!T.id) return;
+  if (!T.id) return false;
   try {
     const res = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: T.id });
-    if (!res || !res.ok || !res.rows || !res.rows.length) return;
+    if (!res || !res.ok || !res.rows || !res.rows.length) return false;
     const row = res.rows[0];
     let changed = false;
+
+    if (row.tournament_name && row.tournament_name !== T.name) { T.name = row.tournament_name; changed = true; }
+    if (row.date && row.date !== T.date) { T.date = row.date; changed = true; }
+    if (row.venue !== undefined && row.venue !== '' && row.venue !== T.local) { T.local = row.venue; changed = true; }
+    if (row.tournament_category && row.tournament_category !== T.categoria) { T.categoria = row.tournament_category; changed = true; }
     try {
-      const pc = JSON.parse(row.phase_config_json || '[]');
-      if (pc && pc.length && JSON.stringify(pc) !== JSON.stringify(T.phaseConfig)) {
-        T.phaseConfig = pc;
+      const players = JSON.parse(row.players_json || '[]');
+      if (players.length && JSON.stringify(players) !== JSON.stringify(T.players)) {
+        T.players = players;
+        _canonicalSelected = [8,12,16].includes(players.length) ? players.length : _canonicalSelected;
         changed = true;
       }
     } catch(e) {}
+    try {
+      const seeds = JSON.parse(row.seeds_json || '[]');
+      if (JSON.stringify(seeds) !== JSON.stringify(T.seeds)) { T.seeds = seeds; changed = true; }
+    } catch(e) {}
+    try {
+      const pc = JSON.parse(row.phase_config_json || '[]');
+      if (pc && pc.length && JSON.stringify(pc) !== JSON.stringify(T.phaseConfig)) { T.phaseConfig = pc; changed = true; }
+    } catch(e) {}
     const numFasesRow = parseInt(row.num_phases, 10);
-    if (!isNaN(numFasesRow) && numFasesRow > 0 && numFasesRow !== T.numFases) {
-      T.numFases = numFasesRow;
-      changed = true;
-    }
+    if (!isNaN(numFasesRow) && numFasesRow > 0 && numFasesRow !== T.numFases) { T.numFases = numFasesRow; changed = true; }
+
     if (changed) {
       persistT();
-      safeAlert('⚠️ A configuração de placar/tie-break deste torneio estava desatualizada neste navegador — sincronizada com o banco de dados agora.', 'warn');
+      safeAlert('⚠️ A configuração deste torneio estava desatualizada neste navegador — sincronizada com o banco de dados agora.', 'warn');
     }
+    return changed;
   } catch(e) {
     console.warn('[syncTournamentConfigFromBackend]', e.message);
+    return false;
   }
 }
 function showTiebreakInfo() {
@@ -1756,7 +1779,9 @@ function toISODateForInput(dateStr) {
 // foi salvo e ficam desabilitados; o botão de confirmar vira um aviso.
 function applyStep1ViewMode() {
   const btnWrap = document.getElementById('trn-open-btn');
+  const badge = document.getElementById('trn-open-badge');
   const locked = (T.status === 'open');
+  if (badge) { badge.textContent = locked ? 'Aberto' : 'Novo'; badge.className = 'card-badge ' + (locked ? 'green' : 'gold'); }
   if (locked) {
     const nameEl = document.getElementById('cfg-name'); if (nameEl) nameEl.value = T.name || '';
     const dateEl = document.getElementById('cfg-date-raw'); if (dateEl) { const iso = toISODateForInput(T.date); if (iso) dateEl.value = iso; }
@@ -3006,17 +3031,17 @@ function renderRounds() {
     const maxPh = (T.numFases||3)-1;
     if (isPhaseComplete(phIdx) && phIdx < maxPh) {
       const nextName = (T.numFases===2 || phIdx===1) ? 'Final' : 'Fase 2';
-      if (T.executionMode === 'manual') {
-        html += '<div class="card" style="border-color:rgba(201,147,58,.35);background:#fffbf0">'
-          + '<div style="font-size:12px;color:#865a10;margin-bottom:12px;font-weight:600">'+ph.name+' concluida! Monte manualmente quem avança para a '+nextName+', conforme o que aconteceu onsite.</div>'
-          + '<button class="btn btn-gold btn-full" onclick="openAdvManualBuilder('+phIdx+')">🖐 Montar '+nextName+' Manualmente</button>'
-          + '</div>';
-      } else {
-        html += '<div class="card" style="border-color:rgba(39,174,96,.3);background:#E8F8EE">'
-          + '<div style="font-size:12px;color:#1a7a44;margin-bottom:12px;font-weight:600">'+ph.name+' concluida! Os melhores de cada grupo avancam.</div>'
-          + '<button class="btn btn-gold btn-full" onclick="advancePhase()">Avancar para a '+nextName+' -&gt;</button>'
-          + '</div>';
-      }
+      // Os dois caminhos ficam SEMPRE disponíveis aqui, independente do modo
+      // escolhido lá no início (App ao Vivo / Manual) -- o organizador pode
+      // trocar de estratégia fase a fase (ex: escolheu Manual no geral, mas
+      // essa fase específica não teve nenhuma zebra e dá pra deixar o
+      // sistema avançar sozinho).
+      html += '<div class="card" style="border-color:rgba(201,147,58,.35);background:#fffbf0">'
+        + '<div style="font-size:12px;color:#865a10;margin-bottom:12px;font-weight:600">'+ph.name+' concluída! Escolha como montar a '+nextName+':</div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+        + '<button class="btn btn-secondary" style="flex:1;min-width:180px;border-color:rgba(39,174,96,.4);color:#1a7a44" onclick="advancePhase()">⚡ Avançar Automático — melhores de cada grupo</button>'
+        + '<button class="btn btn-gold" style="flex:1;min-width:180px" onclick="openAdvManualBuilder('+phIdx+')">🖐 Montar '+nextName+' Manualmente</button>'
+        + '</div></div>';
     }
     const finalIdx = (T.numFases||3)-1;
     if (isPhaseComplete(finalIdx)) {
@@ -3328,6 +3353,7 @@ function bootstrapTournamentState() {
   renderSeedPicker(); updateVagas(); updateSummary();
   refreshStepNav();
   goToStep(1);
+  applyStep1ViewMode();
   if (!_canonicalSelected) setTimeout(() => applyCanonical(16), 100);
 }
 
