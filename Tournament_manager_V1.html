@@ -81,6 +81,12 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .tb-link-btn:hover{background:#eaf3ff;}
 .btn-cancel-trn{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.35);color:#c0392b;font-size:11px;font-weight:700;padding:6px 13px;border-radius:8px;cursor:pointer;font-family:'DM Sans';display:none;}
 .btn-cancel-trn:hover{background:rgba(231,76,60,.22);}
+.active-trn-banner{display:none;align-items:center;justify-content:space-between;gap:12px;background:#f4f7fc;border-bottom:1px solid #dde6f0;padding:6px 20px;font-size:11px;color:#7090b0;}
+.active-trn-banner b{color:#0a1628;font-family:'DM Mono';font-weight:700;}
+.active-trn-banner .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#1a7a44;margin-right:5px;}
+.active-trn-banner .status-dot.finalized{background:#9ab0c8;}
+.btn-new-trn-subtle{background:none;border:1px solid #dde6f0;color:#7090b0;font-size:10px;padding:4px 11px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0;transition:all .15s;}
+.btn-new-trn-subtle:hover{border-color:#C9933A;color:#C9933A;background:rgba(201,147,58,.06);}
 .torneio-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #dde6f0;border-radius:10px;margin-bottom:8px;background:#f8fafd;}
 .torneio-row-info{flex:1;min-width:0;}
 .torneio-row-name{font-size:13px;font-weight:700;color:#0d1e3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -122,7 +128,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .podium-av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';color:#fff;margin-bottom:8px;box-shadow:0 3px 10px rgba(0,0,0,.15);flex-shrink:0;}
 .podium-name{font-size:12px;font-weight:700;color:#0d1e3a;text-align:center;line-height:1.25;margin-bottom:8px;word-break:break-word;}
 .podium-bar{width:100%;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;justify-content:center;padding-top:8px;font-family:'Bebas Neue';font-size:22px;color:#fff;}
-.podium-bar.gold-bar{background:linear-gradient(180deg,#e0a840,#C9933A);height:90px;}
+.podium-bar.gold-bar{background:linear-gradient(180deg,#FFDD5C,#F0A500);height:90px;box-shadow:0 4px 18px rgba(240,165,0,.45);}
 .podium-bar.silver-bar{background:linear-gradient(180deg,#c8d0da,#9aa8b8);height:65px;}
 .podium-bar.bronze-bar{background:linear-gradient(180deg,#d69a6a,#b5703a);height:45px;}
 .field{margin-bottom:12px;}
@@ -440,6 +446,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="btn-out" onclick="doLogout()">Sair</button>
     </div>
   </div>
+  <div class="active-trn-banner" id="active-trn-banner">
+    <span><span class="status-dot" id="active-trn-dot"></span>Torneio ativo: <b id="active-trn-id">-</b> · <span id="active-trn-status">-</span></span>
+    <button class="btn-new-trn-subtle" onclick="startNewTournament()">+ Novo Torneio</button>
+  </div>
 
   <div class="mob-overlay" id="mob-overlay" onclick="toggleMobMenu()"></div>
 
@@ -452,16 +462,17 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn step-btn locked" id="stepbtn-4" onclick="goToStep(4,this)"><span class="step-num">4</span> Jogos &amp; Rodadas</button>
       <button class="tab-btn step-btn locked" id="stepbtn-5" onclick="goToStep(5,this)"><span class="step-num">5</span> Finalização</button>
       <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
-      <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
+      <div class="sb-divider"></div>
+      <div class="sb-section-label">Histórico</div>
       <button class="tab-btn" onclick="showVerGrupos()"><span class="sb-ic" style="background:#e0f7ea">📋</span> Ver Grupos</button>
       <button class="tab-btn" onclick="showHistoricoTorneio()"><span class="sb-ic" style="background:#e8e0ff">📊</span> Histórico do Torneio</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
-      <button class="tab-btn" onclick="showTab('historico',this)"><span class="sb-ic" style="background:#ffedd5">📋</span> Histórico</button>
       <button class="tab-btn" onclick="showTab('scorecard',this)"><span class="sb-ic" style="background:#fef9c3">🏅</span> Scorecard</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Sistema</div>
+      <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
       <button class="tab-btn" onclick="showTab('dbtest',this)"><span class="sb-ic" style="background:#f1f5f9">🔧</span> Test DB</button>
     </div>
 
@@ -979,6 +990,7 @@ function refreshStepNav() {
     if (i > max) btn.classList.add('locked');
   }
   refreshCancelButton();
+  updateActiveTournamentBanner();
   updateLockBanners();
   renderStep1Gate();
   applyStep1ViewMode();
@@ -1028,6 +1040,27 @@ function refreshCancelButton() {
   if (!btn) return;
   btn.style.display = (T.status === 'open' && !T.finalized) ? 'inline-block' : 'none';
 }
+// Faixa "Torneio ativo" — diferente do botão vermelho de Cancelar (que some
+// quando o torneio é finalizado), essa faixa aparece sempre que há QUALQUER
+// torneio carregado (aberto ou já finalizado), pra nunca esconder qual
+// torneio está ativo nem como abrir um novo sem se perder.
+function updateActiveTournamentBanner() {
+  const banner = document.getElementById('active-trn-banner');
+  if (!banner) return;
+  if (!T.id || !T.status) { banner.style.display = 'none'; return; }
+  banner.style.display = 'flex';
+  const idEl = document.getElementById('active-trn-id');
+  if (idEl) idEl.textContent = tournamentDisplayId(T.id, T.date, T.categoria);
+  const statusEl = document.getElementById('active-trn-status');
+  const dotEl = document.getElementById('active-trn-dot');
+  if (T.finalized) {
+    if (statusEl) statusEl.textContent = 'Finalizado';
+    if (dotEl) dotEl.classList.add('finalized');
+  } else {
+    if (statusEl) statusEl.textContent = 'Em andamento';
+    if (dotEl) dotEl.classList.remove('finalized');
+  }
+}
 function updateLockBanners() {
   const b1 = document.getElementById('step1-lock-banner');
   if (b1) {
@@ -1059,7 +1092,11 @@ async function goToStep(n, el) {
     await syncTournamentConfigFromBackend();
   }
   refreshStepNav();
-  if (n === 2 && !T.playersConfirmed) {
+  if (n === 2) {
+    // Sincroniza sempre a partir de T, mesmo já confirmado/travado --
+    // sem isso, revisitar a Etapa 2 depois de travada podia mostrar
+    // seedList/selectedPlayers desatualizados em memória, em vez do que
+    // realmente está salvo.
     selectedPlayers = [...(T.players || [])];
     seedList = [...(T.seeds || [])];
     renderDB(); renderSeedPicker(); updateVagas(); updateSummary();
@@ -1157,7 +1194,9 @@ function cancelTournament() {
   safeAlert('Torneio cancelado. Configure um novo torneio quando quiser.', 'ok');
 }
 function startNewTournament() {
-  const ok = confirm('Isso vai limpar a tela para configurar um novo torneio. O torneio anterior já está salvo no Google Sheets e não será afetado. Continuar?');
+  const idLabel = T.id ? tournamentDisplayId(T.id, T.date, T.categoria) : '(nenhum)';
+  const statusLabel = T.finalized ? 'finalizado' : (T.status === 'open' ? 'em andamento' : 'não iniciado');
+  const ok = confirm('O torneio atual ('+idLabel+') está '+statusLabel+' e já está salvo no Google Sheets — não será apagado nem afetado.\n\nIsso vai limpar esta tela pra você configurar um NOVO torneio do zero. Continuar?');
   if (!ok) return;
   resetTournamentState();
   goToStep(1);
@@ -1433,17 +1472,30 @@ function renderHistoricoTorneio() {
   c.innerHTML = html;
 }
 function histGruposHTML() {
-  let html = '';
+  // Mesma linguagem visual do "Ver Grupos"/pós-sorteio: fundo branco,
+  // cabeçalho colorido por grupo, avatar com gradiente da bandeira -- por
+  // pedido explícito, essa aba especificamente sai do tema escuro (Glass
+  // Neo) do resto da tela de Histórico.
+  let html = '<div style="background:#fff;border-radius:14px;padding:14px;margin-top:2px">';
   T.phases.forEach((ph, phIdx) => {
     const isFinalPhase = phIdx === (T.numFases||3)-1;
-    html += '<div class="hist-label">'+ph.name+(ph.complete?' — concluída':'')+'</div>';
+    html += '<div style="font-family:\'DM Mono\';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin:14px 0 8px">'+ph.name+(ph.complete?' — concluída':'')+'</div>';
+    html += '<div class="grupos-grid">';
     ph.groups.forEach((group, gi) => {
       const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
-      html += '<div class="hist-card"><div class="hist-label" style="margin-bottom:6px">Grupo '+letter+'</div>'
-        + group.map(name => '<div class="hist-player">'+name+'</div>').join('')
-        + '</div>';
+      const color = GROUP_COLORS[gi % GROUP_COLORS.length];
+      html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div>'
+        + '<div class="grupo-body">'
+        + group.map(name => {
+            const reg = getPlayerReg(name);
+            const isSeed = (T.seeds||[]).includes(name) && phIdx === 0;
+            return '<div class="grupo-player"><div class="grupo-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_init(name)+'</div><div class="grupo-name">'+name+(isSeed?' (seed)':'')+'</div></div>';
+          }).join('')
+        + '</div></div>';
     });
+    html += '</div>';
   });
+  html += '</div>';
   return html;
 }
 function histJogosHTML() {
@@ -1451,10 +1503,16 @@ function histJogosHTML() {
   let any = false;
   T.phases.forEach((ph, phIdx) => {
     const isFinalPhase = phIdx === (T.numFases||3)-1;
+    // Um único cabeçalho de fase no início da série de partidas -- não
+    // repetido em cada card, como estava antes.
+    html += '<div style="font-family:\'Bebas Neue\';font-size:18px;letter-spacing:1px;color:#fff;margin:16px 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.15)">'+ph.name.toUpperCase()+'</div>';
     ph.groups.forEach((group, gi) => {
       const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
-      groupMatches(group).forEach((m, mi) => {
-        any = true;
+      const matches = groupMatches(group);
+      if (!matches.length) return;
+      any = true;
+      if (!isFinalPhase) html += '<div class="hist-label">Grupo '+letter+'</div>';
+      matches.forEach((m, mi) => {
         const key = phIdx+'-'+gi+'-'+mi;
         const res = ph.results[key];
         const played = res && res.saved;
@@ -1462,8 +1520,7 @@ function histJogosHTML() {
         const teamB = (m.b||[]).filter(Boolean);
         const aWon = played && res.sa > res.sb;
         const bWon = played && res.sb > res.sa;
-        html += '<div class="hist-label">'+ph.name+' · Grupo '+letter+' · Partida '+(mi+1)+'</div>'
-          + '<div class="hist-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px">'
+        html += '<div class="hist-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px">'
           + '<div style="flex:1;min-width:0">'+teamA.map(n=>'<div class="hist-player'+(bWon?' dim':'')+'">'+n+'</div>').join('')+'</div>'
           + '<div class="hist-score'+(played?'':' dim')+'">'+(played?res.sa:'—')+'</div>'
           + '<div class="hist-vs">vs</div>'
@@ -1483,11 +1540,27 @@ function histResultadosHTML() {
     ph.groups.forEach((group, gi) => {
       const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
       const standings = groupStandings(group, phIdx, gi);
-      html += '<div class="hist-card"><div class="hist-label" style="margin-bottom:6px">Grupo '+letter+'</div>'
-        + standings.map((s,i) => '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0">'
-            + '<span class="hist-player'+(i===0?'':' dim')+'">'+(i+1)+'. '+s.name+'</span>'
-            + '<span class="hist-score" style="font-size:12px">'+s.w+'V · '+(s.gw-s.gl>=0?'+':'')+(s.gw-s.gl)+'</span></div>').join('')
-        + '</div>';
+      html += '<div class="hist-card" style="padding:10px 8px">'
+        + '<div class="hist-label" style="margin:0 8px 8px">Grupo '+letter+'</div>'
+        + '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-family:\'DM Mono\',monospace;font-size:10.5px;white-space:nowrap">'
+        + '<tr style="color:#8fa5c9;text-align:right"><td style="padding:4px 8px;text-align:left">Jogador</td><td style="padding:4px 6px">J</td><td style="padding:4px 6px">V</td><td style="padding:4px 6px">D</td><td style="padding:4px 6px">GW</td><td style="padding:4px 6px">GP</td><td style="padding:4px 6px">Saldo</td><td style="padding:4px 8px">Saldo TB</td></tr>'
+        + standings.map((s,i) => {
+            const j = s.w + s.l;
+            const saldo = s.gw - s.gl;
+            const saldoTb = s.tbw - s.tbl;
+            const col = i===0 ? '#fff' : '#c8d4e8';
+            return '<tr style="border-top:1px solid rgba(255,255,255,.08);text-align:right;color:'+col+'">'
+              + '<td style="padding:5px 8px;text-align:left;font-weight:'+(i===0?'700':'400')+'">'+(i+1)+'. '+s.name+'</td>'
+              + '<td style="padding:5px 6px">'+j+'</td>'
+              + '<td style="padding:5px 6px;color:#4ade80">'+s.w+'</td>'
+              + '<td style="padding:5px 6px;color:#f87171">'+s.l+'</td>'
+              + '<td style="padding:5px 6px">'+s.gw+'</td>'
+              + '<td style="padding:5px 6px">'+s.gl+'</td>'
+              + '<td style="padding:5px 6px;font-weight:700;color:'+(saldo>0?'#C9933A':col)+'">'+(saldo>=0?'+':'')+saldo+'</td>'
+              + '<td style="padding:5px 8px">'+(saldoTb>=0?'+':'')+saldoTb+'</td>'
+              + '</tr>';
+          }).join('')
+        + '</table></div></div>';
     });
   });
   if (T.finalized) {
@@ -1752,6 +1825,7 @@ function clearDB() { selectedPlayers = []; seedList = []; renderDB(); renderSeed
 function filterDB() { renderDB(); }
 
 function toggleSeed(name) {
+  if (T.started) { safeAlert('Os seeds não podem mais ser alterados — os grupos já foram formados e o torneio está em andamento.', 'warn'); return; }
   if (seedList.includes(name)) {
     seedList = seedList.filter(s=>s!==name);
     safeAlert('Seed removido: ' + name, 'ok');
@@ -1775,7 +1849,10 @@ function renderSeedPicker() {
     const active = seedList.includes(name);
     const sIdx = seedList.indexOf(name)+1;
     const reg = getPlayerReg(name);
-    return '<div class="seed-chip '+(active?'active':'')+'" onclick="toggleSeed(\''+name.replace(/'/g,"\\'")+'\')">'
+    const locked = T.started;
+    return '<div class="seed-chip '+(active?'active':'')+'" '
+      + (locked ? 'style="opacity:.55;cursor:not-allowed"' : 'onclick="toggleSeed(\''+name.replace(/'/g,"\\'")+'\')"')
+      + '>'
       + '<div class="seed-chip-av" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+';text-shadow:0 1px 3px rgba(0,0,0,.25)">'+_init(name)+'</div>'
       + '<span class="seed-chip-name">'+name+'</span>'
       + (active?'<span class="seed-chip-badge">S'+sIdx+'</span>':'')
@@ -3194,9 +3271,10 @@ function podiumHTML(winners) {
     const size = place===1 ? 56 : 44;
     const barClass = place===1?'gold-bar':place===2?'silver-bar':'bronze-bar';
     const medal = place===1?'🥇':place===2?'🥈':'🥉';
+    const reg = getPlayerReg(w.name);
     return '<div class="podium-slot">'
       + '<div class="podium-medal">'+medal+'</div>'
-      + '<div class="podium-av" style="width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*0.36)+'px;background:'+_pc(w.name)+'">'+_init(w.name)+'</div>'
+      + '<div class="podium-av" style="width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*0.36)+'px;background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+';text-shadow:0 1px 3px rgba(0,0,0,.3)">'+_init(w.name)+'</div>'
       + '<div class="podium-name">'+w.name+'</div>'
       + '<div class="podium-bar '+barClass+'">'+place+'º</div>'
       + '</div>';
