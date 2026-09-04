@@ -348,6 +348,21 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .raffle-btn-secondary:hover{border-color:#C9933A;color:#C9933A;}
 .raffle-btn-start{background:linear-gradient(135deg,#1a7a44,#2a9a54);color:#fff;display:none;}
 .raffle-btn-start.show{display:block;}
+/* ══ HISTÓRICO DO TORNEIO — visual Glass Neo ══ */
+.hist-wrap{background:linear-gradient(160deg,#0a1628,#1a3560);border-radius:20px;padding:20px;margin-bottom:20px;}
+.hist-title{font-family:'Bebas Neue';font-size:24px;color:#fff;letter-spacing:1px;margin-bottom:2px;}
+.hist-sub{font-family:'DM Mono';font-size:10px;color:#8fa5c9;letter-spacing:1px;margin-bottom:16px;}
+.hist-tabbar{display:flex;gap:6px;background:rgba(255,255,255,.08);border-radius:99px;padding:4px;margin-bottom:16px;}
+.hist-tab{flex:1;text-align:center;font-size:11px;color:#c8d4e8;padding:8px 0;border-radius:99px;cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;}
+.hist-tab.active{font-weight:700;color:#0a1628;background:#C9933A;}
+.hist-card{background:rgba(255,255,255,.07);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.hist-label{font-size:10px;color:#8fa5c9;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;}
+.hist-player{font-size:12.5px;color:#fff;padding:3px 0;}
+.hist-player.dim{color:#8fa5c9;}
+.hist-score{font-family:'DM Mono';font-size:16px;font-weight:700;color:#C9933A;padding:0 8px;}
+.hist-score.dim{color:#8fa5c9;font-weight:400;}
+.hist-vs{font-size:10px;color:#5a7099;flex-shrink:0;}
+.hist-empty{text-align:center;color:#8fa5c9;font-size:12px;padding:20px 0;}
 </style>
 </head>
 <body>
@@ -439,6 +454,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
       <button class="tab-btn" onclick="showTiebreakInfo()"><span class="sb-ic" style="background:#fee2e2">⚖️</span> Critérios de Desempate</button>
       <button class="tab-btn" onclick="showMeusTorneios()"><span class="sb-ic" style="background:#e0f0ff">🗂</span> Meus Torneios</button>
       <button class="tab-btn" onclick="showVerGrupos()"><span class="sb-ic" style="background:#e0f7ea">📋</span> Ver Grupos</button>
+      <button class="tab-btn" onclick="showHistoricoTorneio()"><span class="sb-ic" style="background:#e8e0ff">📊</span> Histórico do Torneio</button>
       <div class="sb-divider"></div>
       <div class="sb-section-label">Análise de Dados</div>
       <button class="tab-btn" onclick="showTab('ranking',this)"><span class="sb-ic" style="background:#ede9fe">📊</span> Estatísticas</button>
@@ -716,6 +732,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 
       <div class="panel" id="p-vergrupos">
         <div id="vergrupos-container"></div>
+      </div>
+
+      <div class="panel" id="p-historico-torneio">
+        <div id="historico-torneio-container"></div>
       </div>
 
       <div class="panel" id="p-tiebreak">
@@ -1372,6 +1392,108 @@ function renderVerGrupos() {
   });
 
   c.innerHTML = html;
+}
+
+// ══ HISTÓRICO DO TORNEIO — visual Glass Neo, 3 abas internas ══════════
+// Consolida Grupos, Jogos (duplas vs duplas, nunca jogador solto -- padel
+// se joga em dupla) e Resultados numa tela só. Reaproveita os mesmos dados
+// de T.phases já usados em "Ver Grupos" e nas Rodadas -- nenhuma fonte
+// nova, só uma apresentação visual diferente.
+let _histTab = 'grupos';
+function showHistoricoTorneio() {
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+  const navBtn = document.querySelector('.tab-btn[onclick^="showHistoricoTorneio"]');
+  if (navBtn) navBtn.classList.add('on');
+  const panel = document.getElementById('p-historico-torneio');
+  if (panel) panel.classList.add('on');
+  closeMobMenu();
+  renderHistoricoTorneio();
+}
+function switchHistTab(tab) {
+  _histTab = tab;
+  renderHistoricoTorneio();
+}
+function renderHistoricoTorneio() {
+  const c = document.getElementById('historico-torneio-container');
+  if (!c) return;
+  if (!T.started || !T.phases || !T.phases.length) {
+    c.innerHTML = '<div class="hist-wrap"><div class="hist-title">HISTÓRICO</div><div class="hist-empty">O histórico aparece aqui assim que o torneio começar (Etapa 3).</div></div>';
+    return;
+  }
+  const tabs = [['grupos','Grupos'],['jogos','Jogos'],['resultados','Resultados']];
+  let html = '<div class="hist-wrap">'
+    + '<div class="hist-title">HISTÓRICO</div>'
+    + '<div class="hist-sub">'+(T.id||'—')+'</div>'
+    + '<div class="hist-tabbar">'
+    + tabs.map(([id,label]) => '<button class="hist-tab'+(_histTab===id?' active':'')+'" onclick="switchHistTab(\''+id+'\')">'+label+'</button>').join('')
+    + '</div>'
+    + (_histTab==='grupos' ? histGruposHTML() : _histTab==='jogos' ? histJogosHTML() : histResultadosHTML())
+    + '</div>';
+  c.innerHTML = html;
+}
+function histGruposHTML() {
+  let html = '';
+  T.phases.forEach((ph, phIdx) => {
+    const isFinalPhase = phIdx === (T.numFases||3)-1;
+    html += '<div class="hist-label">'+ph.name+(ph.complete?' — concluída':'')+'</div>';
+    ph.groups.forEach((group, gi) => {
+      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      html += '<div class="hist-card"><div class="hist-label" style="margin-bottom:6px">Grupo '+letter+'</div>'
+        + group.map(name => '<div class="hist-player">'+name+'</div>').join('')
+        + '</div>';
+    });
+  });
+  return html;
+}
+function histJogosHTML() {
+  let html = '';
+  let any = false;
+  T.phases.forEach((ph, phIdx) => {
+    const isFinalPhase = phIdx === (T.numFases||3)-1;
+    ph.groups.forEach((group, gi) => {
+      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      groupMatches(group).forEach((m, mi) => {
+        any = true;
+        const key = phIdx+'-'+gi+'-'+mi;
+        const res = ph.results[key];
+        const played = res && res.saved;
+        const teamA = (m.a||[]).filter(Boolean);
+        const teamB = (m.b||[]).filter(Boolean);
+        const aWon = played && res.sa > res.sb;
+        const bWon = played && res.sb > res.sa;
+        html += '<div class="hist-label">'+ph.name+' · Grupo '+letter+' · Partida '+(mi+1)+'</div>'
+          + '<div class="hist-card"><div style="display:flex;justify-content:space-between;align-items:center;gap:6px">'
+          + '<div style="flex:1;min-width:0">'+teamA.map(n=>'<div class="hist-player'+(bWon?' dim':'')+'">'+n+'</div>').join('')+'</div>'
+          + '<div class="hist-score'+(played?'':' dim')+'">'+(played?res.sa:'—')+'</div>'
+          + '<div class="hist-vs">vs</div>'
+          + '<div class="hist-score'+(played?'':' dim')+'">'+(played?res.sb:'—')+'</div>'
+          + '<div style="flex:1;min-width:0;text-align:right">'+teamB.map(n=>'<div class="hist-player'+(aWon?' dim':'')+'">'+n+'</div>').join('')+'</div>'
+          + '</div></div>';
+      });
+    });
+  });
+  return any ? html : '<div class="hist-empty">Nenhuma partida gerada ainda.</div>';
+}
+function histResultadosHTML() {
+  let html = '';
+  T.phases.forEach((ph, phIdx) => {
+    const isFinalPhase = phIdx === (T.numFases||3)-1;
+    html += '<div class="hist-label">'+ph.name+(isPhaseComplete(phIdx)?' — concluída':' — em andamento')+'</div>';
+    ph.groups.forEach((group, gi) => {
+      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const standings = groupStandings(group, phIdx, gi);
+      html += '<div class="hist-card"><div class="hist-label" style="margin-bottom:6px">Grupo '+letter+'</div>'
+        + standings.map((s,i) => '<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0">'
+            + '<span class="hist-player'+(i===0?'':' dim')+'">'+(i+1)+'. '+s.name+'</span>'
+            + '<span class="hist-score" style="font-size:12px">'+s.w+'V · '+(s.gw-s.gl>=0?'+':'')+(s.gw-s.gl)+'</span></div>').join('')
+        + '</div>';
+    });
+  });
+  if (T.finalized) {
+    html += '<div class="hist-label">🏆 Torneio finalizado</div>';
+  }
+  return html;
 }
 function renderMeusTorneiosLocal() {
   const reg = getTournamentRegistry();
