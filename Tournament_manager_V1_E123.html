@@ -159,6 +159,7 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 .canon-btn .l{font-size:9px;font-weight:700;color:#5a7090;margin-top:2px;}
 .canon-btn.sel{border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0);}
 .canon-btn.sel .n{color:#C9933A;}
+.canon-btn:disabled{opacity:.55;cursor:not-allowed;}
 .db-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
 .db-search-wrap{position:relative;flex:1;min-width:160px;}
 .db-search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9ab0c8;}
@@ -1708,6 +1709,7 @@ function generateTorneiId() {
 }
 
 function applyCanonical(n) {
+  if (T.started) { safeAlert('O número de jogadores não pode mais ser alterado — os grupos já foram formados e o torneio está em andamento.', 'warn'); return; }
   const cfg = CANONICAL[n];
   if (!cfg) return;
   _canonicalSelected = n;
@@ -3089,9 +3091,20 @@ function renderRounds() {
   const gateEl = document.getElementById('mode-gate-container');
   if (!T.started) { if(gateEl) gateEl.innerHTML=''; c.innerHTML = '<div class="empty-panel"><div class="empty-icon">🏸</div><div>Configure e inicie o torneio na Configuracao.</div></div>'; return; }
 
-  // Trava a Etapa 4 até o organizador escolher o modo de condução.
-  renderModeGate();
-  if (!T.executionMode) { c.innerHTML = ''; return; }
+  // Torneio já finalizado, ou com a Fase Final inteira decidida (ex:
+  // recuperado do banco em outro navegador, sem executionMode salvo --
+  // esse campo nunca é persistido no banco, só existe localmente):
+  // não faz sentido perguntar "como conduzir" de novo, isso é só pra
+  // torneio ainda em andamento. Pula a trava e mostra os resultados direto.
+  const finalPhaseIdx = (T.numFases||3)-1;
+  const tournamentAlreadyDecided = T.finalized || (T.phases[finalPhaseIdx] && isPhaseComplete(finalPhaseIdx));
+  if (tournamentAlreadyDecided) {
+    if (gateEl) gateEl.innerHTML = '';
+  } else {
+    // Trava a Etapa 4 até o organizador escolher o modo de condução.
+    renderModeGate();
+    if (!T.executionMode) { c.innerHTML = ''; return; }
+  }
 
   const ph = T.phases[T.currentPhase];
   if (!ph) { c.innerHTML = '<div class="empty-panel"><div class="empty-icon">!</div><div>Fase nao encontrada</div></div>'; return; }
