@@ -3265,6 +3265,11 @@ function renderRounds() {
   c.innerHTML = html;
 }
 
+function categoriaLabel(cat) {
+  if (!cat) return '';
+  const n = cat.toString().replace(/[^0-9]/g,'');
+  return n ? n+'ª Categoria' : cat;
+}
 function podiumHTML(winners) {
   const slot = (w, place) => {
     if (!w) return '<div class="podium-slot"></div>';
@@ -3297,7 +3302,8 @@ function renderFinalizeStep() {
       + '</div>'
     : '<button id="btn-finalize" class="btn btn-primary btn-full" onclick="finalizeTournament()">Guardar Torneio no Banco de Dados</button>';
   c.innerHTML = '<div class="card" style="border-color:#C9933A;background:linear-gradient(135deg,#fffbf0,#fff8e0)">'
-    + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:4px;text-align:center">Torneio Concluido!</div>'
+    + '<div style="font-family:\'Bebas Neue\';font-size:26px;color:#C9933A;margin-bottom:2px;text-align:center">Torneio Concluido!</div>'
+    + '<div style="text-align:center;font-family:\'DM Mono\';font-size:11px;color:#7090b0;margin-bottom:16px">'+[categoriaLabel(T.categoria), formatDateSlash(T.date), T.local].filter(Boolean).join(' · ')+'</div>'
     + podiumHTML(winners)
     + btnHtml
     + '</div>';
