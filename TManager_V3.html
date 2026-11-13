@@ -3160,7 +3160,7 @@ function finalizeLaunch() {
   try { renderRanking(); } catch(e) { console.warn('[finalizeLaunch] renderRanking:', e.message); }
   try { renderHistorico(); } catch(e) { console.warn('[finalizeLaunch] renderHistorico:', e.message); }
 
-  safeAlert('Torneio iniciado! Escolha como conduzir a Fase 1.', 'ok');
+  safeAlert('Torneio iniciado! Confirme o score e o tie-break e escolha como conduzir a Fase 1.', 'ok');
   goToStep(4);
 }
 
@@ -3849,6 +3849,61 @@ function captureUnsavedScores() {
     _unsavedScoreCache[key].tbActive = true;
   });
 }
+// ══ Confirmação de Score máximo / Tie-Break por fase (antes de começar os jogos) ══
+function _rulesCfgIdx(i) { return ((T.numFases||3) === 2 && i === 1) ? 2 : i; }
+function _needsRulesConfirm() {
+  if (!T.started || T.finalized || T.executionMode) return false;
+  if (T.phaseConfig && T.phaseConfig[0] && T.phaseConfig[0].confirmed) return false;
+  const anySaved = (T.phases||[]).some(ph => Object.values(ph.results||{}).some(r => r && r.saved));
+  return !anySaved;
+}
+function _rulesApplyDisabled(i) {
+  const m = document.getElementById('rc-max-'+i), t = document.getElementById('rc-tb-'+i);
+  if (!m || !t) return;
+  const mv = parseInt(m.value);
+  Array.from(t.options).forEach(o => { o.disabled = parseInt(o.value) >= mv; });
+}
+function renderRulesConfirmHTML() {
+  const n = T.numFases || 3;
+  const mk = (id, opts, sel, on) => '<select class="finput" id="'+id+'"'+(on?' onchange="'+on+'"':'')+'>'
+    + opts.map(v => '<option value="'+v[0]+'"'+(v[0]==sel?' selected':'')+'>'+v[1]+'</option>').join('') + '</select>';
+  const maxOpts = [4,5,6,7,8,9].map(v => [v, v+' games']);
+  const tbOpts  = [3,4,5,6,7,8].map(v => [v, v+'x'+v]);
+  let cards = '';
+  for (let i = 0; i < n; i++) {
+    const cfg = (T.phaseConfig||[])[_rulesCfgIdx(i)] || { maxScore:6, tbAt:5 };
+    const label = (i === n-1) ? 'Fase Final' : 'Fase '+(i+1);
+    cards += '<div class="phase-cfg-card" style="border-color:#dde6f0;background:#f8fafd;margin-bottom:10px">'
+      + '<div class="phase-cfg-label">'+label+'</div>'
+      + '<div class="row2">'
+      + '<div class="field" style="margin-bottom:0"><label>Score máximo</label>'+mk('rc-max-'+i, maxOpts, cfg.maxScore, "syncMaxTb('rc-max-"+i+"','rc-tb-"+i+"')")+'</div>'
+      + '<div class="field" style="margin-bottom:0"><label>Tie-Break a partir de</label>'+mk('rc-tb-'+i, tbOpts, cfg.tbAt, '')+'</div>'
+      + '</div></div>';
+  }
+  setTimeout(() => { for (let i = 0; i < n; i++) _rulesApplyDisabled(i); }, 0);
+  return '<div class="card">'
+    + '<div class="card-hd"><div class="card-title">Score &amp; Tie-Break por Fase</div><div class="card-badge gold">Confirme antes de começar</div></div>'
+    + '<div style="font-size:12px;color:#5a7090;line-height:1.7;margin-bottom:14px">'
+    + '<b>Score máximo</b> — quem chegar primeiro a este número de games vence.<br>'
+    + '<b>TB a partir de</b> — se o placar empatar aqui, vai a Tie-Break.</div>'
+    + cards
+    + '<button class="btn btn-primary btn-full" style="margin-top:6px;font-size:15px" onclick="confirmRulesAndStart()">✅ Confirmar e iniciar os jogos →</button>'
+    + '</div>';
+}
+function confirmRulesAndStart() {
+  const n = T.numFases || 3;
+  for (let i = 0; i < n; i++) {
+    const idx = _rulesCfgIdx(i);
+    const mx = parseInt(document.getElementById('rc-max-'+i)?.value), tb = parseInt(document.getElementById('rc-tb-'+i)?.value);
+    if (!(mx > 0) || !(tb > 0) || tb >= mx) { safeAlert('Tie-Break precisa ser menor que o score máximo ('+(i===n-1?'Fase Final':'Fase '+(i+1))+').', 'warn'); return; }
+    T.phaseConfig[idx] = { ...T.phaseConfig[idx], maxScore: mx, tbAt: tb };
+  }
+  T.phaseConfig[0] = { ...T.phaseConfig[0], confirmed: true };
+  persistT();
+  syncTournamentExtras();   // grava phase_config_json (com as regras confirmadas) no banco
+  renderRounds();
+}
+
 function renderRounds() {
   captureUnsavedScores();
   const c = document.getElementById('rounds-container');
@@ -3862,6 +3917,11 @@ function renderRounds() {
   // torneio ainda em andamento. Pula a trava e mostra os resultados direto.
   const finalPhaseIdx = (T.numFases||3)-1;
   const tournamentAlreadyDecided = T.finalized || (T.phases[finalPhaseIdx] && isPhaseComplete(finalPhaseIdx));
+  if (!tournamentAlreadyDecided && _needsRulesConfirm()) {
+    if (gateEl) gateEl.innerHTML = '';
+    c.innerHTML = renderRulesConfirmHTML();
+    return;
+  }
   if (tournamentAlreadyDecided) {
     if (gateEl) gateEl.innerHTML = '';
   } else {
