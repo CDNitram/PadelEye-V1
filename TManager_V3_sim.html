@@ -1264,7 +1264,8 @@ let PLAYERS_DB_URL = localStorage.getItem('pe_players_url_SIM') ||
 // nº de fases, regras por fase (+ escolha 8/12/16 em phaseConfig[0].canon) e quadras.
 function cfgFields() {
   return { num_phases: T.numFases, phase_config_json: JSON.stringify(T.phaseConfig), courts: T.courts || 2,
-    advance_per_group: T.phaseConfig?.[0]?.advancePerGroup ?? 2, wildcards: T.phaseConfig?.[0]?.wildcards ?? 0 };
+    advance_per_group: T.phaseConfig?.[0]?.advancePerGroup ?? 2, wildcards: T.phaseConfig?.[0]?.wildcards ?? 0,
+    ...(canonFromCfg(T.phaseConfig) ? { group_number: canonFromCfg(T.phaseConfig)/4, players_per_group: 4 } : {}) };
 }
 function canonFromCfg(pc) {
   const c = pc && pc[0] && parseInt(pc[0].canon, 10);
@@ -2266,6 +2267,7 @@ function applyCanonical(n) {
       + '<div style="font-family:\'DM Mono\';font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9ab0c8">Estrutura do torneio</div>'
       + '<div style="font-family:\'DM Mono\';font-size:10px;font-weight:700;color:#C9933A">' + cfg.partidas + ' partidas</div>'
       + '</div>'
+      + '<div style="background:#0a1628;color:#C9933A;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-family:\'DM Mono\';font-size:12px;font-weight:700;letter-spacing:.5px">'+n+' JOGADORES = '+(n/4)+' GRUPOS ('+GROUP_LETTERS.slice(0,n/4).join(', ')+') DE 4 JOGADORES</div>'
       + cfg.preview.map((p,i)=>'<div style="display:flex;gap:10px;padding:8px 0;'+(i<cfg.preview.length-1?'border-bottom:1px solid #eaf0f8':'')+'">'
         + '<div style="width:22px;height:22px;border-radius:6px;background:'+(p.phase.includes('Final')?'linear-gradient(135deg,#C9933A,#e0a840)':'#0a1628')+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'
         + '<span style="font-family:\'Bebas Neue\';font-size:10px;color:'+(p.phase.includes('Final')?'#0a1628':'#C9933A')+'">'+(p.phase.includes('Final')?'Z':'F'+(i+1))+'</span>'
@@ -3192,6 +3194,12 @@ function finalizeLaunch() {
     }
   }
 
+  const _wantC = canonFromCfg(T.phaseConfig) || _canonicalSelected;
+  if (_wantC && (T_groups.length !== _wantC/4 || T_groups.some(g=>g.length!==4))) {
+    T.started = false;
+    safeAlert('Estrutura inválida: '+_wantC+' jogadores = '+(_wantC/4)+' grupos de 4, mas foram formados '+T_groups.length+' grupos. Refaça o sorteio.','err');
+    return;
+  }
   T.phases = [{ name:'Fase 1', groups: T_groups.map(g=>[...g]), results:{}, complete:false }];
   T.executionMode = null; // organizador escolhe ao entrar na Etapa 4
   persistT();
