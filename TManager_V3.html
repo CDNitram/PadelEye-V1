@@ -552,6 +552,20 @@ body.pe-viewer > *:not(#s-retro):not(#pe-viewer):not(.tn-ov){display:none !impor
 #s-retro .rt-pill{background:rgba(201,147,58,.16);border:1px solid rgba(201,147,58,.5);border-radius:999px;padding:6px 14px}
 #s-retro .rt-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
 #s-retro .rt-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 14px 5px 5px;font-size:clamp(12px,1.9vw,17px);font-weight:600}
+#s-retro .rt-chips.col{display:grid;grid-template-columns:repeat(var(--cols,1),minmax(0,300px));justify-content:center;justify-items:stretch;gap:8px 14px;width:max-content;max-width:100%;margin:16px auto 0}
+#s-retro .rt-chips.col .rt-chip{border-radius:14px;justify-content:flex-start;text-align:left}
+#s-retro .rt-chips.col .rt-chip .rt-tag{margin-left:auto}
+#s-retro .rt-pods{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin-top:18px}
+#s-retro .rt-pc{display:flex;flex-direction:column;align-items:center;width:clamp(96px,28vw,170px)}
+#s-retro .rt-pc .who{height:175px;width:100%;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
+#s-retro .rt-pc .nm{font-weight:700;font-size:clamp(11px,3vw,16px);text-align:center;line-height:1.15;margin-bottom:4px;max-width:100%;word-break:break-word}
+#s-retro .rt-pc svg{width:76px;height:auto;display:block;overflow:visible}
+#s-retro .rt-pc .blk{width:100%;border-radius:10px 10px 0 0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:40px;color:#0a1628}
+#s-retro .rt-pc .stay{animation:none}
+#s-retro .rt-pc .climb{animation:rtClimb 2.2s cubic-bezier(.4,0,.3,1) calc(var(--d,500)*1ms) both}
+#s-retro .rt-pc .climb.champ svg{animation:rtJump .7s ease-in-out 3.2s infinite alternate}
+@keyframes rtClimb{0%{transform:translate(-170px,var(--bh));opacity:0}8%{opacity:1}45%{transform:translate(-60px,var(--bh))}60%{transform:translate(-40px,calc(var(--bh)*.55)) rotate(-8deg)}78%{transform:translate(-12px,calc(var(--bh)*.15)) rotate(5deg)}100%{transform:translate(0,0) rotate(0)}}
+@keyframes rtJump{to{transform:translateY(-12px)}}
 #s-retro .rt-chip.seed{border-color:#C9933A;background:rgba(201,147,58,.16)}
 #s-retro .rt-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
 #s-retro .rt-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:12px;text-align:left}
@@ -593,6 +607,46 @@ body.pe-viewer > *:not(#s-retro):not(#pe-viewer):not(.tn-ov){display:none !impor
 #s-retro .rt-li{display:flex;gap:12px;align-items:center;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.06);margin-bottom:8px;font-size:clamp(12px,1.8vw,16px)}
 #s-retro .rt-li .r{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fde68a}
 #s-retro .rt-li.w{border-left:4px solid #1db954}#s-retro .rt-li.l{border-left:4px solid #c0392b;opacity:.8}
+
+/* toque nas laterais: direita avança, esquerda volta; segurar pausa */
+#s-retro .rt-tap{position:absolute;top:56px;bottom:112px;width:32%;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#s-retro .rt-tap.l{left:0}#s-retro .rt-tap.r{right:0}
+#s-retro .rt-tap::after{content:'';position:absolute;top:50%;width:44px;height:44px;margin-top:-22px;border-radius:50%;background:rgba(255,255,255,.0);transition:background .15s}
+#s-retro .rt-tap.l::after{left:10px}#s-retro .rt-tap.r::after{right:10px}
+#s-retro .rt-tap.flash::after{background:rgba(255,255,255,.28)}
+
+/* confronto: no celular (vertical) vira uma quadra de padel — dupla 1 em cima, rede no meio, dupla 2 embaixo */
+#s-retro .rt-court{display:none}
+@media (max-width:700px),(orientation:portrait){
+  #s-retro .rt-match{display:none}
+  #s-retro .rt-court{display:block;width:min(92vw,370px);margin:12px auto 4px;border:3px solid rgba(255,255,255,.9);border-radius:6px;background:rgba(2,18,52,.42);box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden}
+  #s-retro .ct-half{position:relative;height:clamp(128px,24vh,190px);display:flex;flex-direction:column;transition:opacity .6s,box-shadow .6s}
+  #s-retro .ct-half.top{background:linear-gradient(rgba(255,255,255,.85),rgba(255,255,255,.85)) 0 72%/100% 2px no-repeat}
+  #s-retro .ct-half.bot{background:linear-gradient(rgba(255,255,255,.85),rgba(255,255,255,.85)) 0 28%/100% 2px no-repeat}
+  #s-retro .ct-half.lose{opacity:.62}
+  #s-retro .ct-half.win{box-shadow:inset 0 0 0 3px #fde68a,inset 0 0 40px rgba(253,230,138,.25)}
+  #s-retro .ct-pls{flex:1;display:grid;grid-template-columns:1fr 1fr;align-items:center;padding:6px 6px 0}
+  #s-retro .ct-half.bot .ct-pls{order:2;padding:0 6px 6px}
+  #s-retro .ct-pl{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:700;line-height:1.15;word-break:break-word;padding:0 4px}
+  #s-retro .ct-sc{height:28%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,6.5vh,56px);line-height:1;color:#fff;letter-spacing:2px}
+  #s-retro .ct-half.win .ct-sc{color:#fde68a;text-shadow:0 0 22px rgba(253,230,138,.6)}
+  #s-retro .ct-half.top .ct-sc{order:2}
+  #s-retro .ct-net{position:relative;height:18px;border-top:2px solid #fff;border-bottom:2px solid #fff;background:repeating-linear-gradient(90deg,rgba(255,255,255,.7) 0 2px,transparent 2px 7px),repeating-linear-gradient(0deg,rgba(255,255,255,.35) 0 2px,transparent 2px 6px);display:flex;align-items:center;justify-content:center}
+  #s-retro .ct-net b{background:#fde68a;color:#0a1628;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;padding:2px 10px;border-radius:999px;font-weight:700}
+}
+#s-retro .rt-hint{position:absolute;left:0;right:0;bottom:122px;z-index:6;text-align:center;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.75);pointer-events:none;opacity:0;animation:rtHint 5s ease 1s forwards;display:none}
+#s-retro[data-theme=white] .rt-hint{color:rgba(10,22,40,.55)}
+@keyframes rtHint{0%{opacity:0}15%,75%{opacity:1}100%{opacity:0}}
+@media (pointer:coarse){#s-retro .rt-hint{display:block}}
+@media (max-width:700px){
+  #s-retro .rt-g .h{padding:6px 12px;font-size:19px}
+  #s-retro .rt-g .b{padding:4px 12px}
+  #s-retro .rt-g .p{padding:3px 0}
+  #s-retro .rt-groups{gap:10px}
+  #s-retro .rt-btns{gap:10px}
+  #s-retro .rt-btns button{min-width:58px;min-height:48px;padding:12px 16px;font-size:18px;border-radius:12px}
+  #s-retro .rt-x{padding:10px 14px;font-size:14px;min-height:40px}
+}
 #s-retro .rt-ctl{position:absolute;left:0;right:0;bottom:0;z-index:7;padding:8px 14px 10px}
 #s-retro .rt-prog{display:flex;gap:2px;height:5px;margin-bottom:8px}
 #s-retro .rt-prog i{flex:1;background:rgba(255,255,255,.18);border-radius:2px;cursor:pointer;position:relative;overflow:hidden}
@@ -2429,6 +2483,7 @@ async function loadPlayersFromDB() {
         id: p.player_id||p.id||'', nome:pname, sobrenome:psurname, nickname:pnick,
         categoria: p.player_category||p.categoria||'', genero: p.player_gender||p.genero||'',
         cidade: p.player_city||p.cidade||'', nacionalidade: p.player_nationality||p.nacionalidade||'',
+        mao: p.player_dominant_hand||p.mao_dominante||'',
         skills: parsePlayerSkills(p),
       });
     });
@@ -5358,16 +5413,24 @@ function _retroBuild(D) {
     + (seeds.length ? '<div class="rt-sub rt-in" style="--d:'+(600+players.length*180)+';margin-top:16px">★ cabeças de chave: '+_rtEsc(seeds.join(', '))+'</div>' : ''));
 
   // 4. sorteio
-  const groupCards = (groups, delay0, pIdx) => '<div class="rt-groups">'+groups.map((g,gi)=>{
-    const col = GROUP_COLORS[gi % GROUP_COLORS.length];
-    return '<div class="rt-g rt-in" style="--d:'+(delay0+gi*500)+'"><div class="h" style="background:'+col+'">GRUPO '+getGroupLetterFor(pIdx||0, gi)+'</div><div class="b">'
+  const groupCards = (groups, delay0, pIdx, gOff) => '<div class="rt-groups">'+groups.map((g,gi)=>{
+    gOff = gOff || 0; const col = GROUP_COLORS[(gi+gOff) % GROUP_COLORS.length];
+    return '<div class="rt-g rt-in" style="--d:'+(delay0+gi*500)+'"><div class="h" style="background:'+col+'">GRUPO '+getGroupLetterFor(pIdx||0, gi+gOff)+'</div><div class="b">'
       + g.map((n,i)=>'<div class="p rt-in" style="--d:'+(delay0+gi*500+250+i*220)+'">'+_rtAv(n)+'<span>'+_rtEsc(n)+(seeds.includes(n)?' ★':'')+'</span></div>').join('')+'</div></div>';
   }).join('')+'</div>';
   add('Sorteio', 3200,
     '<div class="rt-kicker rt-in" style="--d:100">Capítulo 3</div><h1 class="rt-in" style="--d:300">O SORTEIO</h1>'
     + '<div class="rt-sub rt-in" style="--d:900">'+players.length+' jogadores · '+g0+' grupos ('+letters+')'+(seeds.length?' · cabeças de chave espalhados':'')+'</div>');
-  add('Sorteio', Math.min(14000, 3500 + g0 * 500 + players.length * 260),
-    '<h2 class="rt-in" style="--d:100">GRUPOS FORMADOS</h2>'+groupCards(D.phases[0].groups, 400, 0));
+  // no máximo 2 grupos por tela (cabe no celular sem rolar)
+  const groupScreens = (ch, title, sub, groups, d0, p) => {
+    const parts = []; for (let k = 0; k < groups.length; k += 2) parts.push([k, groups.slice(k, k + 2)]);
+    parts.forEach(([off, gs], n) => {
+      const t = title + (parts.length > 1 ? ' <span style="font-size:.5em;opacity:.6;letter-spacing:2px">'+(n+1)+'/'+parts.length+'</span>' : '');
+      add(ch, Math.min(9000, 3200 + gs.length * 500 + gs.reduce((a,g)=>a+g.length,0) * 240),
+        '<h2 class="rt-in" style="--d:100">'+t+'</h2>'+(sub||'')+groupCards(gs, d0, p, off));
+    });
+  };
+  groupScreens('Sorteio', 'GRUPOS FORMADOS', '', D.phases[0].groups, 400, 0);
 
   // 5. fases
   const phaseStats = [];
@@ -5377,8 +5440,7 @@ function _retroBuild(D) {
     add(label, 3800,
       '<div class="rt-kicker rt-in" style="--d:100">Capítulo '+(4+p)+'</div><h1 class="rt-in" style="--d:300">'+(last?'A FINAL':label.toUpperCase())+'</h1>'
       + '<div class="rt-sub rt-in" style="--d:900">'+ph.groups.length+(ph.groups.length>1?' grupos':' grupo')+' · '+nM+' partidas · score máx. '+(c.maxScore||6)+' · tie-break a partir de '+(c.tbAt||5)+'x'+(c.tbAt||5)+'</div>');
-    if (p > 0) add(label, Math.min(11000, 3200 + ph.groups.length*500 + ph.groups.reduce((a,g)=>a+g.length,0)*220),
-      '<h2 class="rt-in" style="--d:100">'+(last?'OS 4 FINALISTAS':'NOVOS GRUPOS')+'</h2><div class="rt-sub rt-in" style="--d:300">Classificados da fase anterior, cruzados para evitar reencontros</div>'+groupCards(ph.groups, 500, p));
+    if (p > 0) groupScreens(label, (last?'FASE FINAL':'GRUPOS DA FASE '+(p+1)), '<div class="rt-sub rt-in" style="--d:300">Classificados da fase anterior, cruzados para evitar reencontros</div>', ph.groups, 500, p);
     const stands = [];
     ph.groups.forEach((g, gi) => {
       const gname = last ? 'FINAL' : 'GRUPO ' + getGroupLetterFor(p, gi);
@@ -5399,13 +5461,16 @@ function _retroBuild(D) {
         else narr = 'Vitória sólida de '+winners.join(' & ')+'.';
         const team = (arr, cls, win) => '<div class="rt-team '+cls+' '+(win?'win':'lose')+'">'+arr.filter(Boolean).map(n=>'<div class="pl">'+_rtAv(n,true)+'<span>'+_rtEsc(n)+'</span></div>').join('')+'</div>';
         const tbTxt = hasTb ? (res.tba!=null&&res.tbb!=null ? 'TIE-BREAK '+res.tba+'–'+res.tbb : 'TIE-BREAK') : '';
+        const half = (arr, pos, score, win) => '<div class="ct-half '+pos+' '+(win?'win':'lose')+'"><div class="ct-pls">'+arr.filter(Boolean).map(n=>'<div class="ct-pl">'+_rtAv(n,true)+'<span>'+_rtEsc(n)+'</span></div>').join('')+'</div><div class="ct-sc" data-v="'+score+'">0</div></div>';
+        const court = '<div class="rt-court rt-in" style="--d:350">'+half(m.a,'top',res.sa,aWin)+'<div class="ct-net">'+(hasTb?'<b>'+tbTxt+'</b>':'')+'</div>'+half(m.b,'bot',res.sb,!aWin)+'</div>';
         add(label, hasTb ? 5600 : 4400,
           '<div class="rt-kicker rt-in" style="--d:100">'+_rtEsc(label)+' · '+gname+' · jogo '+(k+1)+' de '+order.length+'</div>'
           + '<div class="rt-match rt-in" style="--d:350">'+team(m.a,'a',aWin)
           + '<div><div class="rt-score"><span data-v="'+res.sa+'">0</span><i>x</i><span data-v="'+res.sb+'">0</span></div>'+(hasTb?'<div class="rt-tb rt-in" style="--d:1600">'+tbTxt+'</div>':'')+'</div>'
           + team(m.b,'b',!aWin)+'</div>'
+          + court
           + '<div class="rt-narr rt-in" style="--d:'+(hasTb?2100:1500)+'">'+_rtEsc(narr)+'</div>',
-          el => { el.querySelectorAll('.rt-score span').forEach(s => { const v = +s.dataset.v, t0 = performance.now(); (function f(t){ const k2 = Math.min(1,(t-t0)/900); s.textContent = Math.round(v*k2); if (k2<1 && RT.i>=0) requestAnimationFrame(f); })(t0); }); });
+          el => { el.querySelectorAll('.rt-score span,.ct-sc').forEach(s => { const v = +s.dataset.v, t0 = performance.now(); (function f(t){ const k2 = Math.min(1,(t-t0)/900); s.textContent = Math.round(v*k2); if (k2<1 && RT.i>=0) requestAnimationFrame(f); })(t0); }); });
       });
       const st = groupStandings(g, p, gi);
       stands.push(st);
@@ -5434,7 +5499,7 @@ function _retroBuild(D) {
       const wcs = rows.filter(r => r.tag === 'wc');
       add(label, 6000 + (wcs.length ? 1500 : 0),
         '<h2 class="rt-in" style="--d:100">QUEM AVANÇOU</h2>'
-        + '<div class="rt-chips">'+rows.filter(r=>r.tag!=='no').map((r,i)=>'<span class="rt-chip rt-in'+(r.tag==='wc'?' seed':'')+'" style="--d:'+(400+i*200)+'">'+_rtAv(r.name)+_rtEsc(r.name)+' <span class="rt-tag '+r.tag+'">'+(r.tag==='wc'?'WILDCARD':r.pos+'º '+r.g)+'</span></span>').join('')+'</div>'
+        + '<div class="rt-chips col" style="--cols:'+(rows.filter(r=>r.tag!=='no').length>6?2:1)+'">'+rows.filter(r=>r.tag!=='no').map((r,i)=>'<span class="rt-chip rt-in'+(r.tag==='wc'?' seed':'')+'" style="--d:'+(400+i*200)+'">'+_rtAv(r.name)+_rtEsc(r.name)+' <span class="rt-tag '+r.tag+'">'+(r.tag==='wc'?'WILDCARD':r.pos+'º '+r.g)+'</span></span>').join('')+'</div>'
         + '<div class="rt-sub rt-in" style="--d:'+(600+rows.length*200)+';margin-top:18px">'+rows.filter(r=>r.tag==='no').length+' jogadores se despedem do torneio'+(wcs.length?' · wildcards: '+_rtEsc(wcs.map(r=>r.name).join(', ')):'')+'</div>');
     }
   });
@@ -5443,10 +5508,51 @@ function _retroBuild(D) {
   const fin = phaseStats[finalIdx][0] || [];
   const champ = fin[0], vice = fin[1], terc = fin[2];
   const manualFinal = (D.tieOverrides && D.tieOverrides[finalIdx+'-0']) || false;
+
+  // pódio animado: personagem com a camisa do Brasil sobe no degrau
+  const _natKit = (nat) => {
+    const n = (nat||'').toLowerCase();
+    if (n.includes('argentin')) return {c1:'#74acdf',c2:'#fff',stripe:true,short:'#111',col:'#111',tx:'AR'};
+    if (n.includes('paraguai')||n.includes('paraguay')) return {c1:'#d52b1e',c2:'#fff',stripe:true,short:'#0038a8',col:'#0038a8',tx:'PY'};
+    if (n.includes('uruguai')||n.includes('uruguay')) return {c1:'#75aadb',c2:'#fff',stripe:false,short:'#111',col:'#111',tx:'UY'};
+    if (n.includes('chile')||n.includes('chilen')) return {c1:'#d52b1e',c2:'#fff',stripe:false,short:'#0038a8',col:'#fff',tx:'CL'};
+    return {c1:'#f7d117',c2:'#009c3b',stripe:false,short:'#1e40af',col:'#009c3b',tx:'BR'};
+  };
+  const _isLefty = (reg) => /^(e|c|l)/i.test(String((reg && reg.mao) || '').trim());
+  const jersey = (name) => {
+    const reg = getPlayerReg(name) || {}, k = _natKit(reg.nacionalidade), lf = _isLefty(reg);
+    const stripes = k.stripe ? [0,1,2,3,4,5].filter(x=>x%2).map(x=>'<rect x="'+(17+x*4.33)+'" y="26" width="4.33" height="38" fill="'+k.c2+'"/>').join('') : '';
+    const arms = '<g'+(lf?' transform="translate(60 0) scale(-1 1)"':'')+'>'
+      + '<line x1="17" y1="29" x2="6" y2="15" stroke="'+k.c1+'" stroke-width="7" stroke-linecap="round"/>'
+      + '<line x1="9" y1="21" x2="5" y2="14" stroke="#e0a97a" stroke-width="5" stroke-linecap="round"/>'
+      + '<rect x="3.2" y="-1" width="3.6" height="14" rx="1.5" fill="#3b2a1a"/>'
+      + '<ellipse cx="5" cy="-12" rx="8" ry="11" fill="rgba(255,255,255,.28)" stroke="#f2f2f2" stroke-width="2.2"/>'
+      + '<path d="M5-23v22M-3-12h16M-1-18h12M-1-6h12" stroke="rgba(255,255,255,.6)" stroke-width=".8" fill="none"/>'
+      + '<line x1="43" y1="29" x2="50" y2="43" stroke="'+k.c1+'" stroke-width="7" stroke-linecap="round"/>'
+      + '<line x1="50" y1="43" x2="52" y2="54" stroke="#e0a97a" stroke-width="5" stroke-linecap="round"/>'
+      + '</g>';
+    return '<svg viewBox="-14 -26 88 124"><circle cx="30" cy="12" r="10" fill="#e0a97a"/><path d="M20 9c2-9 18-9 20 0-6-4-14-4-20 0z" fill="#3b2a1a"/>'
+      + '<rect x="17" y="26" width="26" height="38" rx="3" fill="'+k.c1+'"/>'+stripes
+      + '<path d="M24 24q6 7 12 0" fill="none" stroke="'+k.col+'" stroke-width="3"/>'
+      + (k.stripe ? '' : '<text x="30" y="50" text-anchor="middle" font-size="12" font-family="Bebas Neue,sans-serif" fill="'+k.col+'">'+k.tx+'</text>')
+      + '<rect x="18" y="62" width="24" height="16" fill="'+k.short+'"/><rect x="19" y="78" width="9" height="14" fill="#e0a97a"/><rect x="32" y="78" width="9" height="14" fill="#e0a97a"/><rect x="18" y="90" width="11" height="6" rx="2" fill="#fff"/><rect x="31" y="90" width="11" height="6" rx="2" fill="#fff"/>'
+      + arms + '</svg>';
+  };
+  const podStage = (who, stage) => {
+    // who: {1:champ,2:vice,3:terc}; stage = lugar que sobe agora (3,2,1)
+    const cfg = [[2,'#cbd5e1',120],[1,'#C9933A',170],[3,'#b87333',90]];
+    return '<div class="rt-pods">' + cfg.map(([pl,col,h]) => {
+      const w = who[pl]; const placed = w && pl >= stage; const cur = pl === stage;
+      const person = placed ? '<div class="'+(cur?'climb'+(pl===1?' champ':''):'stay')+'" style="--bh:'+h+'px;--d:700;position:relative"><div class="nm">'+_rtEsc(w.name)+'</div>'+jersey(w.name)+'</div>' : '';
+      return '<div class="rt-pc"><div class="who">'+person+'</div><div class="blk" style="background:'+col+';height:'+h+'px">'+pl+'º</div></div>';
+    }).join('') + '</div>';
+  };
+  const podWho = {1: champ, 2: vice, 3: terc};
   const pod = (w, place, col, delay) => w ? '<div class="rt-pd rt-in" style="--d:'+delay+'">'+_rtAv(w.name,true)+'<div style="font-weight:700;font-size:clamp(13px,2vw,20px)">'+_rtEsc(w.name)+'</div><div class="blk" style="background:'+col+';height:'+(place===1?170:place===2?120:90)+'px">'+place+'º</div></div>' : '';
-  if (terc) add('Pódio', 3500, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">3º LUGAR</h2><div class="rt-podium">'+pod(terc,3,'#b87333',700)+'</div><div class="rt-sub rt-in" style="--d:1200;margin-top:12px">'+terc.w+' vitória(s) · saldo '+_rtSg(terc.gd)+'</div>');
-  if (vice) add('Pódio', 3500, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">VICE-CAMPEÃO</h2><div class="rt-podium">'+pod(vice,2,'#cbd5e1',700)+'</div><div class="rt-sub rt-in" style="--d:1200;margin-top:12px">'+vice.w+' vitória(s) · saldo '+_rtSg(vice.gd)+'</div>');
+  if (terc) add('Pódio', 5200, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">3º LUGAR</h2>'+podStage(podWho,3)+'<div class="rt-sub rt-in" style="--d:3000;margin-top:12px">'+terc.w+' vitória(s) · saldo '+_rtSg(terc.gd)+'</div>');
+  if (vice) add('Pódio', 5200, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">VICE-CAMPEÃO</h2>'+podStage(podWho,2)+'<div class="rt-sub rt-in" style="--d:3000;margin-top:12px">'+vice.w+' vitória(s) · saldo '+_rtSg(vice.gd)+'</div>');
   if (champ) {
+    add('Pódio', 6500, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">CAMPEÃO</h2>'+podStage(podWho,1)+'<div class="rt-sub rt-in" style="--d:3200;margin-top:12px">'+champ.w+' vitória(s) · saldo '+_rtSg(champ.gd)+'</div>');
     const confetti = Array.from({length:60},(_,i)=>'<b style="left:'+((i*37)%100)+'%;background:'+['#fde68a','#1db954','#C9933A','#fff','#60a5fa'][i%5]+';animation-duration:'+(3+(i%5)*.7)+'s;animation-delay:'+((i%9)*.35)+'s"></b>').join('');
     add('Campeão', 9000,
       '<div class="rt-conf">'+confetti+'</div>'
@@ -5506,14 +5612,28 @@ function _rtEnsureDom() {
   d.innerHTML = '<div class="rt-bg"></div><div class="rt-bar-t"></div><div class="rt-bar-b"></div>'
     + '<div class="rt-hud"><span>🎬 RETROSPECTIVA</span><span class="rt-ch" id="rt-ch"></span><button class="rt-x" onclick="retroFullscreen()" title="Tela cheia (F)">⛶</button><button class="rt-x" onclick="retroClose()">✕ Fechar</button></div>'
     + '<div class="rt-stage" id="rt-stage"></div>'
+    + '<div class="rt-tap l" id="rt-tl" title="Voltar"></div><div class="rt-tap r" id="rt-tr" title="Avançar"></div>'
+    + '<div class="rt-hint" id="rt-hint">◀ toque nas laterais ▶ · segure para pausar</div>'
     + '<div class="rt-ctl"><div class="rt-prog" id="rt-prog"></div><div class="rt-btns"><button onclick="retroPrev()" title="Anterior (←)">⏮</button><button id="rt-pp" onclick="retroToggle()" title="Pausar (espaço)">⏸</button><button onclick="retroNext()" title="Próximo (→)">⏭</button><button id="rt-sp" onclick="retroSpeed()">1×</button><button onclick="retroNextChapter()" title="Próximo capítulo">⏩ Capítulo</button></div></div>';
   document.body.appendChild(d);
+  _rtBindTaps();
   document.addEventListener('keydown', e => {
     if (!document.getElementById('s-retro').classList.contains('on')) return;
     if (e.key === 'Escape') retroClose(); else if (e.key === ' ') { e.preventDefault(); retroToggle(); }
     else if (e.key === 'ArrowRight') retroNext(); else if (e.key === 'ArrowLeft') retroPrev(); else if (e.key.toLowerCase() === 'f') retroFullscreen();
   });
 }
+
+function _rtFit() {
+  // encolhe a cena (zoom) só se ela não couber na tela: nunca come a tela para baixo
+  const stage = document.getElementById('rt-stage'); const sc = stage && stage.firstElementChild; if (!sc) return;
+  sc.style.zoom = 1;
+  const hud = document.querySelector('#s-retro .rt-hud'), ctl = document.querySelector('#s-retro .rt-ctl');
+  const avail = (ctl.getBoundingClientRect().top - hud.getBoundingClientRect().bottom) - 16;   // espaço livre entre topo e controles
+  const h = sc.scrollHeight;
+  if (avail > 0 && h > avail) sc.style.zoom = Math.max(0.45, avail / h).toFixed(3);
+}
+window.addEventListener('resize', () => { const r = document.getElementById('s-retro'); if (r && r.classList.contains('on')) _rtFit(); });
 function _rtShow(i) {
   clearTimeout(RT.timer);
   if (i < 0) i = 0;
@@ -5523,6 +5643,7 @@ function _rtShow(i) {
   const stage = document.getElementById('rt-stage');
   document.getElementById('s-retro').setAttribute('data-theme', sc.theme || 'blue');
   stage.innerHTML = '<div class="rt-scene">' + sc.html + '</div>';
+  _rtFit();
   document.getElementById('rt-ch').textContent = sc.ch + '  ·  ' + (i+1) + '/' + RT.scenes.length + (RT.D && RT.D.id ? '  ·  ' + RT.D.id : '');
   const prog = document.getElementById('rt-prog');
   if (prog.children.length !== RT.scenes.length) { prog.innerHTML = RT.scenes.map((_, k) => '<i onclick="retroGo('+k+')"></i>').join(''); }
@@ -5532,6 +5653,36 @@ function _rtShow(i) {
   if (!RT.paused) RT.timer = setTimeout(() => { if (sc.last) retroClose(); else _rtShow(RT.i + 1); }, RT.rem);
 }
 function retroGo(i) { _rtShow(i); }
+
+function _rtBindTaps() {
+  const root = document.getElementById('s-retro'); if (!root || root._tapsBound) return; root._tapsBound = true;
+  const LOCK = 380; let lastNav = 0;
+  const bind = (el, dir) => {
+    let sx = 0, sy = 0, t0 = 0, held = false, hold = null, active = false;
+    el.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      active = true; sx = e.clientX; sy = e.clientY; t0 = Date.now(); held = false;
+      clearTimeout(hold);
+      hold = setTimeout(() => { if (active && !RT.paused) { held = true; retroToggle(); } }, 350);   // segurar = pausar
+    });
+    const end = (e, cancel) => {
+      if (!active) return; active = false; clearTimeout(hold);
+      if (held) { if (RT.paused) retroToggle(); return; }                 // soltou: retoma, sem navegar
+      if (cancel) return;
+      const moved = Math.hypot(e.clientX - sx, e.clientY - sy), dt = Date.now() - t0;
+      if (moved > 12 || dt > 350) return;                                  // arrastou/segurou: não é toque
+      const now = Date.now(); if (now - lastNav < LOCK) return; lastNav = now;   // anti toque duplo
+      el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 180);
+      if (dir > 0) { if (RT.i < RT.scenes.length - 1) retroNext(); }       // na última cena não fecha por acidente
+      else if (RT.i > 0) retroPrev();
+    };
+    el.addEventListener('pointerup', e => end(e, false));
+    el.addEventListener('pointercancel', e => end(e, true));
+    el.addEventListener('pointerleave', e => { if (active && !held) { active = false; clearTimeout(hold); } });
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  };
+  bind(document.getElementById('rt-tl'), -1); bind(document.getElementById('rt-tr'), 1);
+}
 function retroNext() { _rtShow(RT.i + 1); }
 function retroPrev() { _rtShow(RT.i - 1); }
 function retroNextChapter() { const c = RT.scenes[RT.i] && RT.scenes[RT.i].ch; let k = RT.i + 1; while (k < RT.scenes.length && RT.scenes[k].ch === c) k++; _rtShow(Math.min(k, RT.scenes.length - 1)); }
