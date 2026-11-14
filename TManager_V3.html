@@ -5299,11 +5299,10 @@ function _rtTn() {
 function _rtSplash(kind, D) {
   const pe = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
   return '<div class="rt-splash">'
-    + (kind === 'end' ? '<div class="rt-kicker rt-in" style="--d:100">Obrigado por jogar</div><h2 class="rt-in" style="--d:300">'+_rtEsc(D.name || 'Torneio')+'</h2>' : '<div class="rt-kicker rt-in" style="--d:100">Apresentam</div>')
+    + (kind === 'end' ? '<div class="rt-kicker rt-in" style="--d:100">Obrigado por jogar</div><h2 class="rt-in" style="--d:300">'+_rtEsc(D.name || 'Torneio')+'</h2>' : '<div class="rt-kicker rt-in" style="--d:100">Retrospectiva do torneio</div><div class="rt-sub rt-in" style="--d:250;margin:2px 0 6px">'+_rtEsc([formatDateSlash(D.date), D.local].filter(Boolean).join(' · '))+'</div>')
     + '<div class="rt-sp-logos rt-in" style="--d:500"><div class="rt-sp-logo"><img src="'+pe+'" alt="PadelEye"></div><div class="rt-sp-x">×</div>'+_rtEco()+'</div>'
     + '<div class="rt-sp-colab rt-in" style="--d:1100">C O - L A B</div>'
-    + '<div class="rt-sp-engine rt-in" style="--d:1600"><span>powered by engine</span>'+_rtTn()+'</div>'
-    + (kind === 'start' ? '<div class="rt-kicker rt-in" style="--d:2300;margin-top:10px">A retrospectiva do torneio</div>' : '')
+    + '<div class="rt-sp-engine rt-in" style="--d:1600"><span>powered by TechNigma AI Lab</span>'+_rtTn()+'</div>'
     + '</div>';
 }
 function _rtPhaseLabel(D, p) { return p === D.phases.length - 1 ? 'Final' : 'Fase ' + (p + 1); }
@@ -5524,7 +5523,7 @@ function _rtShow(i) {
   const stage = document.getElementById('rt-stage');
   document.getElementById('s-retro').setAttribute('data-theme', sc.theme || 'blue');
   stage.innerHTML = '<div class="rt-scene">' + sc.html + '</div>';
-  document.getElementById('rt-ch').textContent = sc.ch + '  ·  ' + (i+1) + '/' + RT.scenes.length;
+  document.getElementById('rt-ch').textContent = sc.ch + '  ·  ' + (i+1) + '/' + RT.scenes.length + (RT.D && RT.D.id ? '  ·  ' + RT.D.id : '');
   const prog = document.getElementById('rt-prog');
   if (prog.children.length !== RT.scenes.length) { prog.innerHTML = RT.scenes.map((_, k) => '<i onclick="retroGo('+k+')"></i>').join(''); }
   [...prog.children].forEach((el, k) => { el.className = k < i ? 'done' : (k === i ? 'cur' : ''); el.style.removeProperty('--dur'); if (k === i) { el.style.setProperty('--dur', (sc.dur/RT.speed)+'ms'); void el.offsetWidth; } });
@@ -5565,19 +5564,35 @@ function _retroFinishedOk(D) {
   if (!D || !D.phases || !D.phases.length) return false;
   const keep = T; T = D; try { return !!(D.finalized || isPhaseComplete(D.phases.length - 1)) && isPhaseComplete(D.phases.length - 1); } finally { T = keep; }
 }
-async function openRetro(tid) {
+async function retroLoad(tid) {
+  // Sempre do banco, pelo ID pedido: filtra linhas por tournament_id e confere consistência dos jogadores.
+  const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
+  if (!tRes || !tRes.ok) return { net: true, err: 'Não foi possível consultar o banco de dados.' };
+  const trows = (tRes.rows || []).filter(r => String(r.tournament_id) === String(tid));
+  if (!trows.length) return { err: 'Torneio não encontrado no banco.' };
+  const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: tid });
+  if (!mRes || !mRes.ok) return { net: true, err: 'Não foi possível consultar as partidas do torneio.' };
+  const mrows = (mRes.rows || []).filter(m => String(m.tournament_id) === String(tid));
+  const D = reconstructTournamentFromBackend(trows[0], mrows);
+  if (String(D.id) !== String(tid)) return { err: 'ID do torneio não confere (' + D.id + ' ≠ ' + tid + ').' };
   try {
-    let D = null;
-    if (T && T.id === tid && T.phases && T.phases.length) D = T;
-    else {
-      safeAlert('Carregando a retrospectiva…', 'ok');
-      const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
-      if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) { safeAlert('Torneio não encontrado no banco.', 'err'); return; }
-      const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: tid });
-      D = reconstructTournamentFromBackend(tRes.rows[0], (mRes && mRes.ok && mRes.rows) ? mRes.rows : []);
-    }
-    if (!_retroFinishedOk(D)) { safeAlert('A retrospectiva fica disponível só para torneios finalizados (Fase Final completa).', 'warn'); return; }
-    retroPlay(D);
+    const own = new Set(JSON.parse(trows[0].players_json || '[]'));
+    if (own.size) { let tot = 0, stray = 0; D.phases.forEach(ph => ph.groups.forEach(g => g.forEach(p => { tot++; if (!own.has(p)) stray++; })));
+      mrows.forEach(m => [m.team_a, m.team_b].forEach(t => String(t||'').split(' / ').forEach(p => { p = p.trim(); if (p) { tot++; if (!own.has(p)) stray++; } })));
+      if (tot && stray / tot > 0.25) return { err: 'Dados inconsistentes: as partidas gravadas incluem jogadores que não pertencem a este torneio (' + tid + '). Confira a planilha Matches_Tournaments.' }; }
+  } catch (e) {}
+  if (!_retroFinishedOk(D)) return { err: 'A retrospectiva fica disponível só para torneios finalizados (Fase Final completa).' };
+  return { D };
+}
+async function openRetro(tid) {
+  const my = RT.req = (RT.req || 0) + 1;
+  try {
+    safeAlert('Carregando a retrospectiva…', 'ok');
+    let r = await retroLoad(tid);
+    if (r.net && T && String(T.id) === String(tid) && T.phases && T.phases.length && _retroFinishedOk(T)) r = { D: T };   // sem rede: usa o torneio local, mesmo ID
+    if (my !== RT.req) return;   // outro clique mais novo venceu
+    if (r.err) { safeAlert(r.err, r.net ? 'err' : 'warn'); return; }
+    retroPlay(r.D);
   } catch (e) { console.warn('[retro]', e); safeAlert('Não foi possível montar a retrospectiva: ' + e.message, 'err'); }
 }
 
@@ -5603,12 +5618,9 @@ async function openRetro(tid) {
     viewerShow('loading');
     try {
       try { await loadPlayersFromDB(); } catch (e) {}
-      const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
-      if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) return viewerShow('err', 'Torneio não encontrado.');
-      const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: tid });
-      const D = reconstructTournamentFromBackend(tRes.rows[0], (mRes && mRes.ok && mRes.rows) ? mRes.rows : []);
-      if (!_retroFinishedOk(D)) return viewerShow('err', 'A retrospectiva só fica disponível depois que o torneio é finalizado.');
-      window.__viewerD = D; viewerShow('ready');
+      const r = await retroLoad(tid);
+      if (r.err) return viewerShow('err', r.err);
+      window.__viewerD = r.D; viewerShow('ready');
     } catch (e) { viewerShow('err', e.message); }
   })();
 })();
