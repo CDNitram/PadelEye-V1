@@ -487,6 +487,104 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
 @keyframes peSfxPop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){#pe-savefx.saving .pe-sfx-arc,#pe-savefx.saving .pe-sfx-ball{animation-duration:2.4s}}
 </style>
+<style id="retro-css">
+#s-retro{position:fixed;inset:0;z-index:100000;background:#050b16;color:#fff;display:none;flex-direction:column;font-family:'DM Sans',sans-serif;overflow:hidden;user-select:none}
+#s-retro.on{display:flex}
+#s-retro .rt-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,#12315a 0%,#08142a 55%,#030710 100%)}
+#s-retro .rt-bg::before{content:'';position:absolute;inset:-20%;background:conic-gradient(from 0deg at 50% 50%,rgba(201,147,58,.10),transparent 25%,rgba(29,185,84,.08) 50%,transparent 75%,rgba(201,147,58,.10));animation:rtSpin 40s linear infinite}
+@keyframes rtSpin{to{transform:rotate(360deg)}}
+#s-retro .rt-bar-t,#s-retro .rt-bar-b{position:absolute;left:0;right:0;height:7vh;background:#000;z-index:5}
+#s-retro .rt-bar-t{top:0}#s-retro .rt-bar-b{bottom:0}
+#s-retro .rt-hud{position:absolute;left:0;right:0;top:0;z-index:7;display:flex;align-items:center;gap:10px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.55)}
+#s-retro .rt-hud .rt-ch{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#s-retro .rt-x{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:12px}
+#s-retro .rt-stage{position:relative;flex:1;z-index:3;display:flex;align-items:center;justify-content:center;padding:9vh 5vw}
+#s-retro .rt-scene{width:100%;max-width:1100px;text-align:center;animation:rtSceneIn .7s ease both}
+@keyframes rtSceneIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+#s-retro .rt-in{opacity:0;transform:translateY(16px);animation:rtUp .6s cubic-bezier(.16,1,.3,1) forwards;animation-delay:calc(var(--d,0) * 1ms)}
+@keyframes rtUp{to{opacity:1;transform:none}}
+#s-retro .rt-kicker{font-family:'DM Mono',monospace;font-size:clamp(10px,1.6vw,14px);letter-spacing:5px;text-transform:uppercase;color:#C9933A}
+#s-retro h1{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(40px,9vw,110px);line-height:.95;letter-spacing:4px;margin:10px 0;background:linear-gradient(180deg,#fff 30%,#fde68a);-webkit-background-clip:text;background-clip:text;color:transparent}
+#s-retro h2{font-family:'Bebas Neue',sans-serif;font-weight:400;font-size:clamp(28px,5.5vw,64px);letter-spacing:4px;margin:6px 0 14px;color:#fff}
+#s-retro .rt-sub{font-family:'DM Mono',monospace;font-size:clamp(10px,1.8vw,15px);letter-spacing:2px;color:rgba(255,255,255,.6)}
+#s-retro .rt-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:18px}
+#s-retro .rt-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:16px 12px}
+#s-retro .rt-card .n{font-family:'Bebas Neue',sans-serif;font-size:clamp(34px,6vw,64px);color:#C9933A;line-height:1}
+#s-retro .rt-card .l{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.6);margin-top:6px}
+#s-retro .rt-phrow{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:clamp(12px,1.8vw,16px);color:rgba(255,255,255,.85)}
+#s-retro .rt-pill{background:rgba(201,147,58,.16);border:1px solid rgba(201,147,58,.5);border-radius:999px;padding:6px 14px}
+#s-retro .rt-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:16px}
+#s-retro .rt-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:5px 14px 5px 5px;font-size:clamp(12px,1.9vw,17px);font-weight:600}
+#s-retro .rt-chip.seed{border-color:#C9933A;background:rgba(201,147,58,.16)}
+#s-retro .rt-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+#s-retro .rt-groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:12px;text-align:left}
+#s-retro .rt-g{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:14px;overflow:hidden}
+#s-retro .rt-g .h{padding:8px 14px;font-family:"Bebas Neue",sans-serif;letter-spacing:3px;font-size:22px;color:#fff}
+#s-retro .rt-g .b{padding:8px 12px}
+#s-retro .rt-g .p{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:clamp(12px,1.7vw,15px)}
+#s-retro .rt-match{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:clamp(8px,3vw,36px);margin:22px 0 10px}
+#s-retro .rt-team{display:flex;flex-direction:column;gap:8px;transition:opacity .6s}
+#s-retro .rt-team .pl{display:flex;align-items:center;gap:10px;font-size:clamp(14px,2.6vw,26px);font-weight:700}
+#s-retro .rt-team.a .pl{justify-content:flex-end;flex-direction:row-reverse}
+#s-retro .rt-team.lose{opacity:.45}
+#s-retro .rt-team.win{text-shadow:0 0 24px rgba(253,230,138,.6)}
+#s-retro .rt-av.big{width:clamp(30px,5vw,48px);height:clamp(30px,5vw,48px);font-size:clamp(11px,1.8vw,16px)}
+#s-retro .rt-score{font-family:'Bebas Neue',sans-serif;font-size:clamp(54px,14vw,150px);line-height:1;color:#fde68a;letter-spacing:2px;display:flex;align-items:center;gap:clamp(6px,2vw,22px)}
+#s-retro .rt-score i{font-style:normal;color:rgba(255,255,255,.35);font-size:.5em}
+#s-retro .rt-tb{display:inline-block;margin-top:6px;font-family:'DM Mono',monospace;letter-spacing:3px;font-size:clamp(11px,1.8vw,15px);color:#0a1628;background:#fde68a;border-radius:999px;padding:6px 16px}
+#s-retro .rt-narr{margin-top:16px;font-size:clamp(13px,2vw,19px);color:rgba(255,255,255,.75);font-style:italic}
+#s-retro table.rt-t{width:100%;max-width:760px;margin:12px auto 0;border-collapse:collapse;font-size:clamp(12px,1.9vw,17px)}
+#s-retro .rt-t th{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.5);text-transform:uppercase;padding:6px 8px;text-align:center}
+#s-retro .rt-t td{padding:9px 8px;text-align:center;border-top:1px solid rgba(255,255,255,.1)}
+#s-retro .rt-t td:nth-child(2){text-align:left;font-weight:700}
+#s-retro .rt-t tr.q td{background:rgba(29,185,84,.14)}
+#s-retro .rt-t tr.q td:first-child{box-shadow:inset 3px 0 #1db954}
+#s-retro .rt-t tr.gold td{background:rgba(201,147,58,.2)}
+#s-retro .rt-tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1px;border-radius:6px;padding:2px 6px;margin-left:6px}
+#s-retro .rt-tag.ok{background:#1db954;color:#06210f}#s-retro .rt-tag.wc{background:#C9933A;color:#0a1628}#s-retro .rt-tag.no{background:rgba(255,255,255,.12);color:rgba(255,255,255,.55)}
+#s-retro .rt-why{margin-top:14px;font-size:clamp(12px,1.8vw,16px);color:#fde68a}
+#s-retro .rt-podium{display:flex;align-items:flex-end;justify-content:center;gap:14px;margin-top:24px}
+#s-retro .rt-pd{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:100px}
+#s-retro .rt-pd .blk{width:clamp(90px,18vw,170px);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:42px;color:#0a1628}
+#s-retro .rt-hero{font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,11vw,130px);line-height:1;color:#fde68a;letter-spacing:4px;text-shadow:0 0 40px rgba(253,230,138,.55)}
+#s-retro .rt-trophy{font-size:clamp(60px,12vw,120px);animation:rtFloat 2.4s ease-in-out infinite}
+@keyframes rtFloat{50%{transform:translateY(-10px) scale(1.04)}}
+#s-retro .rt-conf{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:4}
+#s-retro .rt-conf b{position:absolute;top:-10px;width:9px;height:14px;opacity:.9;animation:rtFall linear infinite}
+@keyframes rtFall{to{transform:translateY(110vh) rotate(720deg)}}
+#s-retro .rt-list{text-align:left;max-width:760px;margin:14px auto 0}
+#s-retro .rt-li{display:flex;gap:12px;align-items:center;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,.06);margin-bottom:8px;font-size:clamp(12px,1.8vw,16px)}
+#s-retro .rt-li .r{margin-left:auto;font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fde68a}
+#s-retro .rt-li.w{border-left:4px solid #1db954}#s-retro .rt-li.l{border-left:4px solid #c0392b;opacity:.8}
+#s-retro .rt-ctl{position:absolute;left:0;right:0;bottom:0;z-index:7;padding:8px 14px 10px}
+#s-retro .rt-prog{display:flex;gap:2px;height:5px;margin-bottom:8px}
+#s-retro .rt-prog i{flex:1;background:rgba(255,255,255,.18);border-radius:2px;cursor:pointer;position:relative;overflow:hidden}
+#s-retro .rt-prog i.done{background:#C9933A}
+#s-retro .rt-prog i.cur::after{content:'';position:absolute;inset:0;background:#fde68a;transform-origin:left;animation:rtFill var(--dur,3s) linear forwards}
+#s-retro.hold .rt-prog i.cur::after,#s-retro.paused .rt-prog i.cur::after{animation-play-state:paused}
+@keyframes rtFill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+#s-retro .rt-btns{display:flex;gap:8px;justify-content:center;align-items:center}
+#s-retro .rt-btns button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:8px 14px;font-size:14px;cursor:pointer;min-width:44px}
+#s-retro.paused .rt-in,#s-retro.paused .rt-trophy,#s-retro.paused .rt-conf b,#s-retro.paused .rt-bg::before{animation-play-state:paused}
+/* splash co-lab */
+.rt-splash{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;text-align:center}
+.rt-sp-logos{display:flex;align-items:center;justify-content:center;gap:clamp(12px,3vw,36px);flex-wrap:wrap}
+.rt-sp-logo{display:flex;align-items:center;gap:12px;font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,5vw,58px);letter-spacing:4px;line-height:1;white-space:nowrap}
+.rt-eco{font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,5vw,58px);letter-spacing:4px;white-space:nowrap}
+.rt-sp-logo img{width:clamp(48px,9vw,96px);height:clamp(48px,9vw,96px);border-radius:22%;box-shadow:0 0 40px rgba(29,185,84,.45)}
+.rt-sp-logo b{color:#fde68a;font-weight:400}
+.rt-sp-x{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,6vw,56px);color:#C9933A}
+.rt-eco{display:flex;align-items:center;gap:10px}
+.rt-eco .leaf{width:clamp(40px,7vw,76px);height:clamp(40px,7vw,76px)}
+.rt-eco .w1{color:#3ccf6a}.rt-eco .w2{color:#fff}
+.rt-sp-colab{font-family:'DM Mono',monospace;font-size:clamp(10px,1.7vw,14px);letter-spacing:8px;color:rgba(255,255,255,.55)}
+.rt-sp-engine{display:flex;flex-direction:column;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45)}
+.rt-tn{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,3.4vw,34px);letter-spacing:6px;color:#bfdbfe}
+.rt-tn small{font-family:'DM Mono',monospace;font-size:.38em;letter-spacing:4px;color:#93c5fd;margin-left:6px}
+.rt-tn img,.rt-eco img{height:clamp(34px,6vw,70px)}
+.splash-colab{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:rgba(255,255,255,.55);margin-top:12px;opacity:0;animation:splashFade .5s ease 1.2s forwards}
+@media(max-width:640px){#s-retro .rt-match{grid-template-columns:1fr;text-align:center}#s-retro .rt-team .pl,#s-retro .rt-team.a .pl{justify-content:center;flex-direction:row}#s-retro .rt-score{justify-content:center}}
+</style>
 </head>
 <body>
 <div id="s-splash">
@@ -511,9 +609,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
     <div class="splash-word-padel-b">PADEL</div>
     <div class="splash-word-eye-b">EYE</div>
     <div class="splash-tag-b">Tournament Manager</div>
+    <div class="splash-colab">× ECOTENIS · CO-LAB</div>
   </div>
   <div class="splash-byline-b">
-    <div class="splash-by-brand">TECHNIGMA</div>
+    <div class="splash-by-brand">ENGINE · TECHNIGMA AI LAB</div>
     <div class="splash-by-loc">Foz do Iguaçu · 2026</div>
   </div>
   <div class="splash-bar-wrap-b"><div class="splash-bar-b"></div></div>
@@ -2079,8 +2178,9 @@ function renderMeusTorneiosLocal() {
   el.innerHTML = list.length ? list.map(t => '<div class="torneio-row">'
       + '<div class="torneio-row-info"><div class="torneio-row-name">'+t.name+'</div><div class="torneio-row-meta">'+tournamentDisplayId(t.id,t.date,t.categoria)+'</div></div>'
       + '<div class="torneio-badge '+t.status+'">'+(TORNEIO_STATUS_LABEL[t.status]||t.status)+'</div>'
+      + (t.status==='finalizado' ? '<button class="btn btn-gold btn-sm" onclick="openRetro(\''+String(t.id).replace(/'/g,"\\'")+'\')">🎬 Retrospectiva</button>' : '')
       + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(t.id).replace(/'/g,"\\'")+'\')">Abrir</button>'
-      + '<button class="btn btn-secondary btn-sm" style="color:#c0392b;border-color:rgba(231,76,60,.35)" onclick="discardLocalTournament(\''+String(t.id).replace(/'/g,"\\'")+'\',\''+t.name.replace(/'/g,"\\'")+'\')" title="Remove só desta lista — não apaga do banco de dados">Descartar</button>'
+      + '<button class="btn btn-secondary btn-sm" style="color:#c0392b";border-color:rgba(231,76,60,.35)" onclick="discardLocalTournament(\''+String(t.id).replace(/'/g,"\\'")+'\',\''+t.name.replace(/'/g,"\\'")+'\')" title="Remove só desta lista — não apaga do banco de dados">Descartar</button>'
       + '</div>').join('') : '<div class="empty-panel"><div class="empty-icon">🗂</div><div>Nenhum torneio tocado neste navegador ainda.</div></div>';
 }
 // Remove só o registro LOCAL (a "lembrança" deste navegador) -- nunca mexe
@@ -2128,6 +2228,7 @@ async function listAllTournamentsFromBackend() {
   const rows = (res.rows||[]).slice().sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
   el.innerHTML = rows.length ? rows.map(r => '<div class="torneio-row">'
       + '<div class="torneio-row-info"><div class="torneio-row-name">'+(r.tournament_name||'Sem nome')+'</div><div class="torneio-row-meta">'+tournamentDisplayId(r.tournament_id,r.date,r.tournament_category)+'</div></div>'
+      + (/final/i.test(String(r.status||'')) || r.finalized_at ? '<button class="btn btn-gold btn-sm" onclick="openRetro(\''+String(r.tournament_id).replace(/'/g,"\\'")+'\')">🎬 Retrospectiva</button>' : '')
       + '<button class="btn btn-primary btn-sm" onclick="fetchAndOpenTournament(\''+String(r.tournament_id).replace(/'/g,"\\'")+'\')">Abrir</button>'
       + '</div>').join('') : '<div style="font-size:12px;color:#b0c4d8">Nenhum torneio encontrado no banco.</div>';
 }
@@ -2494,6 +2595,7 @@ async function openTournament() {
       tournament_id: idForThisSave, tournament_name: localName, date: localDate, venue: localVenue,
       tournament_format: 'Americano - Modelo Brasileiro', tournament_category: _cat,
       num_phases: _s1.numFases, phase_config_json: JSON.stringify(_s1.phaseConfig), courts: _s1.courts,
+      group_number: (canonFromCfg(_s1.phaseConfig)||_canonicalSelected||0)/4 || undefined, players_per_group: 4,
       advance_per_group: _s1.phaseConfig[0].advancePerGroup, wildcards: _s1.phaseConfig[0].wildcards,
       status: 'Iniciado', created_at: new Date().toISOString(),
     }});
@@ -2993,15 +3095,21 @@ function raffleSkip() {
 
 function raffleAllDone() {
   clearInterval(_raffleTimer);
+  // Sorteio concluído = grupos gravados NA HORA (local + banco). Não há volta: refresh não perde nada.
+  if (!T.started) {
+    T_groups = _raffleGroups.map(g => g.map(p => p.name));
+    try { finalizeLaunch({deferNav:true}); } catch(e) { console.warn('[raffleAllDone]', e.message); }
+  }
   document.getElementById('raffle-countdown').textContent = '';
   document.getElementById('raffle-ring').style.setProperty('--pct', 0);
   document.getElementById('raffle-next-btn').style.display = 'none';
-  document.getElementById('raffle-restart-btn').style.display = 'block';
+  document.getElementById('raffle-restart-btn').style.display = T.started ? 'none' : 'block';
   document.getElementById('raffle-start-btn').classList.add('show');
-  document.getElementById('raffle-sub').textContent = '✅ Sorteio concluído!';
+  document.getElementById('raffle-sub').textContent = T.started ? '✅ Sorteio concluído e GRAVADO no banco. Não pode ser refeito.' : '✅ Sorteio concluído!';
 }
 
 function raffleRestart() {
+  if (T.started) { safeAlert('O sorteio já foi gravado e não pode ser refeito.','warn'); return; }
   clearInterval(_raffleTimer);
   startRaffleAnimation(true);
 }
@@ -3017,8 +3125,9 @@ function raffleCancel() {
 function raffleFinish() {
   clearInterval(_raffleTimer);
   document.getElementById('s-raffle').classList.remove('show');
-  T_groups = _raffleGroups.map(g => g.map(p => p.name));
-  finalizeLaunch();
+  if (!T.started) { T_groups = _raffleGroups.map(g => g.map(p => p.name)); finalizeLaunch(); return; }
+  safeAlert('Torneio iniciado! Confirme o score e o tie-break e escolha como conduzir a Fase 1.', 'ok');
+  goToStep(4);
 }
 
 let manualPool = [];
@@ -3135,7 +3244,7 @@ function confirmManualGroups() {
 }
 
 // ── Confirmação final da Etapa 3 → cria Fase 1 e libera a Etapa 4 ──
-function finalizeLaunch() {
+function finalizeLaunch(opts) {
   if (T.started) { safeAlert('O torneio já foi iniciado — grupos e jogadores não podem mais ser alterados. Para recomeçar, cancele o torneio no topo da tela.', 'warn'); goToStep(4); return; }
   const n = selectedPlayers.length;
   if (n < 4) { safeAlert('Selecione pelo menos 4 jogadores para iniciar.','err'); return; }
@@ -3198,6 +3307,7 @@ function finalizeLaunch() {
   try { renderRanking(); } catch(e) { console.warn('[finalizeLaunch] renderRanking:', e.message); }
   try { renderHistorico(); } catch(e) { console.warn('[finalizeLaunch] renderHistorico:', e.message); }
 
+  if (opts && opts.deferNav) return;
   safeAlert('Torneio iniciado! Confirme o score e o tie-break e escolha como conduzir a Fase 1.', 'ok');
   goToStep(4);
 }
@@ -4216,6 +4326,7 @@ function renderFinalizeStep() {
   const btnHtml = T.finalized
     ? '<div style="width:100%;padding:11px 0;border-radius:10px;background:#0a1628;color:#1db954;font-weight:700;font-size:14px;text-align:center;margin-bottom:10px">✅ Torneio salvo no Database — encerrado</div>'
       + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+      + '<button class="btn btn-gold" style="flex:1;min-width:200px" onclick="openRetro(T.id)">🎬 Ver Retrospectiva</button>'
       + '<button class="btn btn-primary" style="flex:1;min-width:200px" onclick="goToHistoricoFromFinalize()">📋 Ir para Histórico do Torneio</button>'
       + '<button class="btn btn-gold" style="flex:1;min-width:200px" onclick="startNewTournament()">🔄 Iniciar Novo Torneio</button>'
       + '</div>'
@@ -4355,7 +4466,8 @@ const PadelEyeDB = (() => {
       created_at: now(), active:true };
   }
   function mapTorneio(Tobj, organizador) {
-    const numGrupos = T_groups?.length||0;
+    // group_number = grupos da FASE 1 (nunca o da fase corrente)
+    const numGrupos = (Tobj.phases?.[0]?.groups||[]).length || (canonFromCfg(Tobj.phaseConfig)/4) || 0;
     const jogPorGrupo = numGrupos>0 ? Math.ceil((Tobj.players?.length||0)/numGrupos) : 4;
     return { tournament_id:Tobj.id||uid(), tournament_name:Tobj.name||'Torneio Americano', date:Tobj.date||now().slice(0,10),
       venue:Tobj.local||'', tournament_format:'Americano - Modelo Brasileiro', group_number:numGrupos, players_per_group:jogPorGrupo,
@@ -4859,6 +4971,303 @@ document.addEventListener('click', (ev) => {
   const isInsidePop = ev.target.closest('.switcher-popover');
   if (!isSwitchBtn && !isInsidePop) pop.classList.remove('show');
 });
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════════
+//  RETROSPECTIVA CINEMÁTICA — filme do torneio (só torneios finalizados)
+//  Para usar logos oficiais: cole data-URIs em RETRO_LOGOS (vazio = wordmark).
+// ══════════════════════════════════════════════════════════════════
+const RETRO_LOGOS = { ecotenis: '', technigma: '' };
+const RT = { scenes: [], i: -1, timer: null, paused: false, speed: 1, D: null, t0: 0, rem: 0, building: false };
+function _rtEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function _rtAv(name, big) {
+  const reg = getPlayerReg(name);
+  return '<span class="rt-av'+(big?' big':'')+'" style="background:'+flagGrad(reg.nacionalidade)+';color:'+flagTextCol(reg.nacionalidade)+'">'+_rtEsc(_init(name))+'</span>';
+}
+function _rtEco() {
+  if (RETRO_LOGOS.ecotenis) return '<img alt="EcoTenis" src="'+RETRO_LOGOS.ecotenis+'">';
+  return '<div class="rt-eco"><svg class="leaf" viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="none" stroke="#3ccf6a" stroke-width="3"/><path d="M18 40c0-14 10-22 28-22 0 16-8 26-22 26-2 0-4-1-6-4z" fill="#3ccf6a"/><path d="M18 46c8-10 16-16 24-20" stroke="#06210f" stroke-width="2" fill="none"/></svg><span class="w1">ECO</span><span class="w2">TENIS</span></div>';
+}
+function _rtTn() {
+  if (RETRO_LOGOS.technigma) return '<img alt="TechNigma AI Lab" src="'+RETRO_LOGOS.technigma+'">';
+  return '<div class="rt-tn">TECHNIGMA<small>AI LAB</small></div>';
+}
+function _rtSplash(kind, D) {
+  const pe = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
+  return '<div class="rt-splash">'
+    + (kind === 'end' ? '<div class="rt-kicker rt-in" style="--d:100">Obrigado por jogar</div><h2 class="rt-in" style="--d:300">'+_rtEsc(D.name || 'Torneio')+'</h2>' : '<div class="rt-kicker rt-in" style="--d:100">Apresentam</div>')
+    + '<div class="rt-sp-logos rt-in" style="--d:500"><div class="rt-sp-logo"><img src="'+pe+'" alt=""><span>PADEL<b>EYE</b></span></div><div class="rt-sp-x">×</div>'+_rtEco()+'</div>'
+    + '<div class="rt-sp-colab rt-in" style="--d:1100">C O - L A B</div>'
+    + '<div class="rt-sp-engine rt-in" style="--d:1600"><span>powered by engine</span>'+_rtTn()+'</div>'
+    + (kind === 'start' ? '<div class="rt-kicker rt-in" style="--d:2300;margin-top:10px">A retrospectiva do torneio</div>' : '')
+    + '</div>';
+}
+function _rtPhaseLabel(D, p) { return p === D.phases.length - 1 ? 'Final' : 'Fase ' + (p + 1); }
+function _rtSg(n) { return (n > 0 ? '+' : '') + n; }
+
+function _rtWhy(a, b, manual) {
+  if (!a || !b) return '';
+  if (a.w !== b.w) return 'mais vitórias ('+a.w+' x '+b.w+')';
+  if (a.gd !== b.gd) return 'melhor saldo de games ('+_rtSg(a.gd)+' x '+_rtSg(b.gd)+')';
+  if (manual) return 'desempate decidido pelo organizador';
+  if (a._bucket !== b._bucket) return 'critérios de desempate (confronto direto, games e tie-break)';
+  return 'desempate decidido pelo organizador';
+}
+
+function _retroBuild(D) {
+  const S = [];
+  const add = (ch, dur, html, enter) => S.push({ ch, dur, html, enter });
+  const nF = D.phases.length, finalIdx = nF - 1, pcs = D.phaseConfig || [];
+  const players = (D.players && D.players.length) ? D.players : [...new Set([].concat(...D.phases[0].groups))];
+  const seeds = (D.seeds || []).filter(s => players.includes(s));
+  const g0 = D.phases[0].groups.length;
+  const letters = GROUP_LETTERS.slice(0, g0).join(', ');
+  let totalMatches = 0;
+  D.phases.forEach(ph => ph.groups.forEach(g => { totalMatches += groupMatches(g).length; }));
+
+  // 1. abertura
+  add('Abertura', 5200,
+    '<div class="rt-kicker rt-in" style="--d:200">'+_rtEsc(categoriaLabel(D.categoria) || 'Torneio')+'</div>'
+    + '<h1 class="rt-in" style="--d:500">'+_rtEsc(D.name)+'</h1>'
+    + '<div class="rt-sub rt-in" style="--d:1000">'+_rtEsc([formatDateSlash(D.date), D.local].filter(Boolean).join(' · '))+'</div>'
+    + '<div class="rt-sub rt-in" style="--d:1400;margin-top:10px;opacity:.6">'+_rtEsc(D.id || '')+'</div>');
+
+  // 2. configuração
+  const cards = [[players.length,'Jogadores'],[g0,'Grupos na Fase 1'],[nF,'Fases'],[totalMatches,'Partidas'],[D.courts||2,'Quadras']];
+  const phrows = D.phases.map((ph, p) => {
+    const c = pcs[p] || {}; const last = p === finalIdx;
+    return '<div class="rt-phrow rt-in" style="--d:'+(1200+p*350)+'"><span class="rt-pill">'+_rtEsc(_rtPhaseLabel(D,p))+'</span>'
+      + '<span>'+ph.groups.length+(ph.groups.length>1?' grupos':' grupo')+' de '+(c.playersPerGroup||4)+'</span>'
+      + (last ? '<span>· 3 jogos · pódio</span>' : '<span>· top-'+(c.advancePerGroup||2)+' avançam'+(c.wildcards?' + '+c.wildcards+' wildcard(s)':'')+'</span>')
+      + '<span>· score máx. '+(c.maxScore||6)+' · tie-break a partir de '+(c.tbAt||5)+'x'+(c.tbAt||5)+'</span></div>';
+  }).join('');
+  add('Configuração', 8500,
+    '<div class="rt-kicker rt-in" style="--d:100">Capítulo 1</div><h2 class="rt-in" style="--d:250">A CONFIGURAÇÃO</h2>'
+    + '<div class="rt-cards">'+cards.map((c,i)=>'<div class="rt-card rt-in" style="--d:'+(400+i*130)+'"><div class="n">'+c[0]+'</div><div class="l">'+c[1]+'</div></div>').join('')+'</div>'
+    + phrows);
+
+  // 3. jogadores
+  add('Jogadores', Math.min(9000, 4000 + players.length * 250),
+    '<div class="rt-kicker rt-in" style="--d:100">Capítulo 2</div><h2 class="rt-in" style="--d:250">OS '+players.length+' JOGADORES</h2>'
+    + '<div class="rt-chips">'+players.map((n,i)=>'<span class="rt-chip rt-in'+(seeds.includes(n)?' seed':'')+'" style="--d:'+(500+i*180)+'">'+_rtAv(n)+_rtEsc(n)+(seeds.includes(n)?' ★':'')+'</span>').join('')+'</div>'
+    + (seeds.length ? '<div class="rt-sub rt-in" style="--d:'+(600+players.length*180)+';margin-top:16px">★ cabeças de chave: '+_rtEsc(seeds.join(', '))+'</div>' : ''));
+
+  // 4. sorteio
+  const groupCards = (groups, delay0) => '<div class="rt-groups">'+groups.map((g,gi)=>{
+    const col = GROUP_COLORS[gi % GROUP_COLORS.length];
+    return '<div class="rt-g rt-in" style="--d:'+(delay0+gi*500)+'"><div class="h" style="background:'+col+'">GRUPO '+GROUP_LETTERS[gi]+'</div><div class="b">'
+      + g.map((n,i)=>'<div class="p rt-in" style="--d:'+(delay0+gi*500+250+i*220)+'">'+_rtAv(n)+'<span>'+_rtEsc(n)+(seeds.includes(n)?' ★':'')+'</span></div>').join('')+'</div></div>';
+  }).join('')+'</div>';
+  add('Sorteio', 3200,
+    '<div class="rt-kicker rt-in" style="--d:100">Capítulo 3</div><h1 class="rt-in" style="--d:300">O SORTEIO</h1>'
+    + '<div class="rt-sub rt-in" style="--d:900">'+players.length+' jogadores · '+g0+' grupos ('+letters+')'+(seeds.length?' · cabeças de chave espalhados':'')+'</div>');
+  add('Sorteio', Math.min(14000, 3500 + g0 * 500 + players.length * 260),
+    '<h2 class="rt-in" style="--d:100">GRUPOS FORMADOS</h2>'+groupCards(D.phases[0].groups, 400));
+
+  // 5. fases
+  const phaseStats = [];
+  D.phases.forEach((ph, p) => {
+    const c = pcs[p] || {}; const last = p === finalIdx; const label = _rtPhaseLabel(D, p);
+    const nM = ph.groups.reduce((a,g)=>a+groupMatches(g).length,0);
+    add(label, 3800,
+      '<div class="rt-kicker rt-in" style="--d:100">Capítulo '+(4+p)+'</div><h1 class="rt-in" style="--d:300">'+(last?'A FINAL':label.toUpperCase())+'</h1>'
+      + '<div class="rt-sub rt-in" style="--d:900">'+ph.groups.length+(ph.groups.length>1?' grupos':' grupo')+' · '+nM+' partidas · score máx. '+(c.maxScore||6)+' · tie-break a partir de '+(c.tbAt||5)+'x'+(c.tbAt||5)+'</div>');
+    if (p > 0) add(label, Math.min(11000, 3200 + ph.groups.length*500 + ph.groups.reduce((a,g)=>a+g.length,0)*220),
+      '<h2 class="rt-in" style="--d:100">'+(last?'OS 4 FINALISTAS':'NOVOS GRUPOS')+'</h2><div class="rt-sub rt-in" style="--d:300">Classificados da fase anterior, cruzados para evitar reencontros</div>'+groupCards(ph.groups, 500));
+    const stands = [];
+    ph.groups.forEach((g, gi) => {
+      const gname = last ? 'FINAL' : 'GRUPO ' + GROUP_LETTERS[gi];
+      const order = getMatchOrder(p, gi);
+      const ms = groupMatches(g);
+      const run = {}; g.forEach(n => run[n] = 0);
+      order.forEach((mi, k) => {
+        const m = ms[mi]; const res = ph.results[p+'-'+gi+'-'+mi];
+        if (!m || !res || !res.saved) return;
+        const aWin = res.sa > res.sb, margin = Math.abs(res.sa - res.sb);
+        const winners = (aWin ? m.a : m.b).filter(Boolean), losers = (aWin ? m.b : m.a).filter(Boolean);
+        winners.forEach(n => run[n] = (run[n]||0) + 1);
+        const hasTb = !!res.tb;
+        let narr;
+        if (hasTb) narr = 'Decidido no tie-break — '+winners.join(' & ')+' seguram a pressão.';
+        else if (margin >= 4) narr = winners.join(' & ')+' passam o rolo: '+Math.max(res.sa,res.sb)+' a '+Math.min(res.sa,res.sb)+'.';
+        else if (margin <= 1) narr = 'Jogo apertado até o último game.';
+        else narr = 'Vitória sólida de '+winners.join(' & ')+'.';
+        const team = (arr, cls, win) => '<div class="rt-team '+cls+' '+(win?'win':'lose')+'">'+arr.filter(Boolean).map(n=>'<div class="pl">'+_rtAv(n,true)+'<span>'+_rtEsc(n)+'</span></div>').join('')+'</div>';
+        const tbTxt = hasTb ? (res.tba!=null&&res.tbb!=null ? 'TIE-BREAK '+res.tba+'–'+res.tbb : 'TIE-BREAK') : '';
+        add(label, hasTb ? 5600 : 4400,
+          '<div class="rt-kicker rt-in" style="--d:100">'+_rtEsc(label)+' · '+gname+' · jogo '+(k+1)+' de '+order.length+'</div>'
+          + '<div class="rt-match rt-in" style="--d:350">'+team(m.a,'a',aWin)
+          + '<div><div class="rt-score"><span data-v="'+res.sa+'">0</span><i>x</i><span data-v="'+res.sb+'">0</span></div>'+(hasTb?'<div class="rt-tb rt-in" style="--d:1600">'+tbTxt+'</div>':'')+'</div>'
+          + team(m.b,'b',!aWin)+'</div>'
+          + '<div class="rt-narr rt-in" style="--d:'+(hasTb?2100:1500)+'">'+_rtEsc(narr)+'</div>',
+          el => { el.querySelectorAll('.rt-score span').forEach(s => { const v = +s.dataset.v, t0 = performance.now(); (function f(t){ const k2 = Math.min(1,(t-t0)/900); s.textContent = Math.round(v*k2); if (k2<1 && RT.i>=0) requestAnimationFrame(f); })(t0); }); });
+      });
+      const st = groupStandings(g, p, gi);
+      stands.push(st);
+      const adv = last ? 0 : (c.advancePerGroup || 2);
+      const manual = !!(D.tieOverrides && D.tieOverrides[p+'-'+gi]);
+      const whyTxt = last
+        ? (st[0] && st[1] ? '🏆 '+_rtEsc(st[0].name)+' sai na frente de '+_rtEsc(st[1].name)+' por '+_rtWhy(st[0], st[1], manual)+'.' : '')
+        : (st[adv-1] && st[adv] ? 'Na linha de corte: '+_rtEsc(st[adv-1].name)+' à frente de '+_rtEsc(st[adv].name)+' por '+_rtWhy(st[adv-1], st[adv], manual)+'.' : '');
+      const hasTbCol = st.some(s => s.tbw || s.tbl);
+      add(label, 6500,
+        '<div class="rt-kicker rt-in" style="--d:100">'+_rtEsc(label)+' · '+gname+'</div><h2 class="rt-in" style="--d:250">CLASSIFICAÇÃO</h2>'
+        + '<table class="rt-t"><tr><th>#</th><th>Jogador</th><th>V</th><th>D</th><th>Games</th><th>Saldo</th>'+(hasTbCol?'<th>TB</th>':'')+'</tr>'
+        + st.map((s,i)=>'<tr class="rt-in '+(last&&i===0?'gold':(i<adv?'q':''))+'" style="--d:'+(600+i*350)+'"><td>'+(i+1)+'º</td><td>'+_rtEsc(s.name)+(i<adv?'<span class="rt-tag ok">AVANÇA</span>':'')+'</td><td>'+s.w+'</td><td>'+s.l+'</td><td>'+s.gw+'–'+s.gl+'</td><td>'+_rtSg(s.gd)+'</td>'+(hasTbCol?'<td>'+_rtSg(s.tbsaldo)+'</td>':'')+'</tr>').join('')
+        + '</table><div class="rt-why rt-in" style="--d:'+(700+st.length*350)+'">'+whyTxt+'</div>');
+    });
+    phaseStats.push(stands);
+    // quem avançou (fases intermediárias)
+    if (!last && D.phases[p+1]) {
+      const nextSet = new Set([].concat(...D.phases[p+1].groups));
+      const adv = c.advancePerGroup || 2;
+      const rows = [];
+      ph.groups.forEach((g, gi) => stands[gi].forEach((s, i) => {
+        const inNext = nextSet.has(s.name);
+        rows.push({ g: GROUP_LETTERS[gi], pos: i+1, name: s.name, tag: i < adv ? 'ok' : (inNext ? 'wc' : 'no') });
+      }));
+      const wcs = rows.filter(r => r.tag === 'wc');
+      add(label, 6000 + (wcs.length ? 1500 : 0),
+        '<h2 class="rt-in" style="--d:100">QUEM AVANÇOU</h2>'
+        + '<div class="rt-chips">'+rows.filter(r=>r.tag!=='no').map((r,i)=>'<span class="rt-chip rt-in'+(r.tag==='wc'?' seed':'')+'" style="--d:'+(400+i*200)+'">'+_rtAv(r.name)+_rtEsc(r.name)+' <span class="rt-tag '+r.tag+'">'+(r.tag==='wc'?'WILDCARD':r.pos+'º '+r.g)+'</span></span>').join('')+'</div>'
+        + '<div class="rt-sub rt-in" style="--d:'+(600+rows.length*200)+';margin-top:18px">'+rows.filter(r=>r.tag==='no').length+' jogadores se despedem do torneio'+(wcs.length?' · wildcards: '+_rtEsc(wcs.map(r=>r.name).join(', ')):'')+'</div>');
+    }
+  });
+
+  // 6. pódio e campeão
+  const fin = phaseStats[finalIdx][0] || [];
+  const champ = fin[0], vice = fin[1], terc = fin[2];
+  const manualFinal = !!(D.tieOverrides && D.tieOverrides[finalIdx+'-0']);
+  const pod = (w, place, col, delay) => w ? '<div class="rt-pd rt-in" style="--d:'+delay+'">'+_rtAv(w.name,true)+'<div style="font-weight:700;font-size:clamp(13px,2vw,20px)">'+_rtEsc(w.name)+'</div><div class="blk" style="background:'+col+';height:'+(place===1?170:place===2?120:90)+'px">'+place+'º</div></div>' : '';
+  if (terc) add('Pódio', 3500, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">3º LUGAR</h2><div class="rt-podium">'+pod(terc,3,'#b87333',700)+'</div><div class="rt-sub rt-in" style="--d:1200;margin-top:12px">'+terc.w+' vitória(s) · saldo '+_rtSg(terc.gd)+'</div>');
+  if (vice) add('Pódio', 3500, '<div class="rt-kicker rt-in" style="--d:100">Pódio</div><h2 class="rt-in" style="--d:300">VICE-CAMPEÃO</h2><div class="rt-podium">'+pod(vice,2,'#cbd5e1',700)+'</div><div class="rt-sub rt-in" style="--d:1200;margin-top:12px">'+vice.w+' vitória(s) · saldo '+_rtSg(vice.gd)+'</div>');
+  if (champ) {
+    const confetti = Array.from({length:60},(_,i)=>'<b style="left:'+((i*37)%100)+'%;background:'+['#fde68a','#1db954','#C9933A','#fff','#60a5fa'][i%5]+';animation-duration:'+(3+(i%5)*.7)+'s;animation-delay:'+((i%9)*.35)+'s"></b>').join('');
+    add('Campeão', 9000,
+      '<div class="rt-conf">'+confetti+'</div>'
+      + '<div class="rt-trophy rt-in" style="--d:100">🏆</div><div class="rt-kicker rt-in" style="--d:600">Campeão'+(D.name?' · '+_rtEsc(D.name):'')+'</div>'
+      + '<div class="rt-hero rt-in" style="--d:1000">'+_rtEsc(champ.name)+'</div>'
+      + '<div class="rt-sub rt-in" style="--d:1800;margin-top:12px">'+champ.w+' vitória(s) · '+champ.l+' derrota(s) · games '+champ.gw+'–'+champ.gl+' (saldo '+_rtSg(champ.gd)+')</div>'
+      + (vice ? '<div class="rt-why rt-in" style="--d:2600">Como se definiu: sai na frente de '+_rtEsc(vice.name)+' por '+_rtWhy(champ, vice, manualFinal)+'.</div>' : ''));
+    // jornada do campeão
+    const jr = [];
+    D.phases.forEach((ph, p) => ph.groups.forEach((g, gi) => groupMatches(g).forEach((m, mi) => {
+      const res = ph.results[p+'-'+gi+'-'+mi]; if (!res || !res.saved) return;
+      const inA = m.a.includes(champ.name), inB = m.b.includes(champ.name); if (!inA && !inB) return;
+      const mine = inA ? m.a : m.b, opp = inA ? m.b : m.a, my = inA ? res.sa : res.sb, th = inA ? res.sb : res.sa;
+      const partner = mine.filter(n => n && n !== champ.name)[0];
+      jr.push({ lab: _rtPhaseLabel(D,p)+(p===finalIdx?'':' · '+GROUP_LETTERS[gi]), partner, opp: opp.filter(Boolean), my, th, tb: res.tb });
+    })));
+    if (jr.length) add('Campeão', Math.min(14000, 3500 + jr.length*700),
+      '<div class="rt-kicker rt-in" style="--d:100">A jornada de</div><h2 class="rt-in" style="--d:250">'+_rtEsc(champ.name)+'</h2>'
+      + '<div class="rt-list">'+jr.map((r,i)=>'<div class="rt-li rt-in '+(r.my>r.th?'w':'l')+'" style="--d:'+(600+i*450)+'"><span style="font-family:DM Mono;font-size:10px;letter-spacing:1px;opacity:.7;min-width:78px">'+_rtEsc(r.lab)+'</span><span>'+(r.partner?'com <b>'+_rtEsc(r.partner)+'</b> · ':'')+'vs '+_rtEsc(r.opp.join(' & '))+(r.tb?' · TB':'')+'</span><span class="r">'+r.my+'x'+r.th+'</span></div>').join('')+'</div>');
+  }
+
+  // 7. números do torneio
+  let games = 0, tbs = 0, big = null, tight = null; const pw = {}, pg = {};
+  D.phases.forEach((ph, p) => ph.groups.forEach((g, gi) => groupMatches(g).forEach((m, mi) => {
+    const res = ph.results[p+'-'+gi+'-'+mi]; if (!res || !res.saved) return;
+    games += res.sa + res.sb; if (res.tb) tbs++;
+    const mg = Math.abs(res.sa - res.sb);
+    const desc = m.a.filter(Boolean).join(' & ')+' '+res.sa+'x'+res.sb+' '+m.b.filter(Boolean).join(' & ');
+    if (!big || mg > big.mg) big = { mg, desc };
+    if (!tight || mg < tight.mg) tight = { mg, desc };
+    (res.sa > res.sb ? m.a : m.b).filter(Boolean).forEach(n => pw[n] = (pw[n]||0) + 1);
+    m.a.filter(Boolean).forEach(n => pg[n] = (pg[n]||0) + res.sa); m.b.filter(Boolean).forEach(n => pg[n] = (pg[n]||0) + res.sb);
+  })));
+  const top = o => Object.entries(o).sort((a,b)=>b[1]-a[1])[0];
+  const tw = top(pw), tg = top(pg);
+  add('Números', 8000,
+    '<div class="rt-kicker rt-in" style="--d:100">Epílogo</div><h2 class="rt-in" style="--d:250">OS NÚMEROS</h2>'
+    + '<div class="rt-cards">'
+    + [[totalMatches,'Partidas'],[games,'Games jogados'],[tbs,'Tie-breaks'],[tw?tw[1]:0,'Mais vitórias · '+(tw?_rtEsc(tw[0]):'-')],[tg?tg[1]:0,'Mais games · '+(tg?_rtEsc(tg[0]):'-')]].map((c,i)=>'<div class="rt-card rt-in" style="--d:'+(400+i*150)+'"><div class="n">'+c[0]+'</div><div class="l">'+c[1]+'</div></div>').join('')+'</div>'
+    + (big ? '<div class="rt-why rt-in" style="--d:1400">Maior vitória: '+_rtEsc(big.desc)+'</div>' : '')
+    + (tight ? '<div class="rt-sub rt-in" style="--d:1800;margin-top:8px">Jogo mais apertado: '+_rtEsc(tight.desc)+'</div>' : ''));
+
+  S.unshift({ ch: 'Abertura', dur: 6500, html: _rtSplash('start', D) });
+  S.push({ ch: 'Fim', dur: 7000, html: _rtSplash('end', D), last: true });
+  return S;
+}
+
+function retroBuild(D) { const keep = T; T = D; try { return _retroBuild(D); } finally { T = keep; } }
+
+function _rtEnsureDom() {
+  if (document.getElementById('s-retro')) return;
+  const d = document.createElement('div'); d.id = 's-retro';
+  d.innerHTML = '<div class="rt-bg"></div><div class="rt-bar-t"></div><div class="rt-bar-b"></div>'
+    + '<div class="rt-hud"><span>🎬 RETROSPECTIVA</span><span class="rt-ch" id="rt-ch"></span><button class="rt-x" onclick="retroFullscreen()" title="Tela cheia (F)">⛶</button><button class="rt-x" onclick="retroClose()">✕ Fechar</button></div>'
+    + '<div class="rt-stage" id="rt-stage"></div>'
+    + '<div class="rt-ctl"><div class="rt-prog" id="rt-prog"></div><div class="rt-btns"><button onclick="retroPrev()" title="Anterior (←)">⏮</button><button id="rt-pp" onclick="retroToggle()" title="Pausar (espaço)">⏸</button><button onclick="retroNext()" title="Próximo (→)">⏭</button><button id="rt-sp" onclick="retroSpeed()">1×</button><button onclick="retroNextChapter()" title="Próximo capítulo">⏩ Capítulo</button></div></div>';
+  document.body.appendChild(d);
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('s-retro').classList.contains('on')) return;
+    if (e.key === 'Escape') retroClose(); else if (e.key === ' ') { e.preventDefault(); retroToggle(); }
+    else if (e.key === 'ArrowRight') retroNext(); else if (e.key === 'ArrowLeft') retroPrev(); else if (e.key.toLowerCase() === 'f') retroFullscreen();
+  });
+}
+function _rtShow(i) {
+  clearTimeout(RT.timer);
+  if (i < 0) i = 0;
+  if (i >= RT.scenes.length) { retroClose(); return; }
+  RT.i = i; const sc = RT.scenes[i];
+  { const _r = document.getElementById('s-retro'); _r.classList.remove('paused'); _r.classList.toggle('hold', RT.paused); }
+  const stage = document.getElementById('rt-stage');
+  stage.innerHTML = '<div class="rt-scene">' + sc.html + '</div>';
+  document.getElementById('rt-ch').textContent = sc.ch + '  ·  ' + (i+1) + '/' + RT.scenes.length;
+  const prog = document.getElementById('rt-prog');
+  if (prog.children.length !== RT.scenes.length) { prog.innerHTML = RT.scenes.map((_, k) => '<i onclick="retroGo('+k+')"></i>').join(''); }
+  [...prog.children].forEach((el, k) => { el.className = k < i ? 'done' : (k === i ? 'cur' : ''); el.style.removeProperty('--dur'); if (k === i) { el.style.setProperty('--dur', (sc.dur/RT.speed)+'ms'); void el.offsetWidth; } });
+  if (sc.enter) try { sc.enter(stage); } catch (e) {}
+  RT.t0 = Date.now(); RT.rem = sc.dur / RT.speed;
+  if (!RT.paused) RT.timer = setTimeout(() => { if (sc.last) retroClose(); else _rtShow(RT.i + 1); }, RT.rem);
+}
+function retroGo(i) { _rtShow(i); }
+function retroNext() { _rtShow(RT.i + 1); }
+function retroPrev() { _rtShow(RT.i - 1); }
+function retroNextChapter() { const c = RT.scenes[RT.i] && RT.scenes[RT.i].ch; let k = RT.i + 1; while (k < RT.scenes.length && RT.scenes[k].ch === c) k++; _rtShow(Math.min(k, RT.scenes.length - 1)); }
+function retroToggle() {
+  const root = document.getElementById('s-retro');
+  RT.paused = !RT.paused; root.classList.toggle('paused', RT.paused); if (!RT.paused) root.classList.remove('hold');
+  document.getElementById('rt-pp').textContent = RT.paused ? '▶' : '⏸';
+  if (RT.paused) { clearTimeout(RT.timer); RT.rem = Math.max(300, RT.rem - (Date.now() - RT.t0)); }
+  else { RT.t0 = Date.now(); const sc = RT.scenes[RT.i]; RT.timer = setTimeout(() => { if (sc.last) retroClose(); else _rtShow(RT.i + 1); }, RT.rem); }
+}
+function retroSpeed() { RT.speed = RT.speed === 1 ? 1.5 : RT.speed === 1.5 ? 2 : 1; document.getElementById('rt-sp').textContent = RT.speed + '×'; _rtShow(RT.i); }
+function retroFullscreen() { const el = document.getElementById('s-retro'); try { (document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen()); } catch (e) {} }
+function retroClose() {
+  clearTimeout(RT.timer); RT.i = -1;
+  const root = document.getElementById('s-retro'); if (root) { root.classList.remove('on', 'paused', 'hold'); document.getElementById('rt-stage').innerHTML = ''; }
+  try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+}
+function retroPlay(D) {
+  _rtEnsureDom();
+  RT.D = D; RT.paused = false; RT.speed = 1;
+  RT.scenes = retroBuild(D);
+  const root = document.getElementById('s-retro');
+  root.classList.remove('paused'); root.classList.add('on');
+  document.getElementById('rt-pp').textContent = '⏸'; document.getElementById('rt-sp').textContent = '1×';
+  document.getElementById('rt-prog').innerHTML = '';
+  _rtShow(0);
+}
+function _retroFinishedOk(D) {
+  if (!D || !D.phases || !D.phases.length) return false;
+  const keep = T; T = D; try { return !!(D.finalized || isPhaseComplete(D.phases.length - 1)) && isPhaseComplete(D.phases.length - 1); } finally { T = keep; }
+}
+async function openRetro(tid) {
+  try {
+    let D = null;
+    if (T && T.id === tid && T.phases && T.phases.length) D = T;
+    else {
+      safeAlert('Carregando a retrospectiva…', 'ok');
+      const tRes = await PadelEyeDB.send('get_tournament_by_id', { tournament_id: tid });
+      if (!tRes || !tRes.ok || !tRes.rows || !tRes.rows.length) { safeAlert('Torneio não encontrado no banco.', 'err'); return; }
+      const mRes = await PadelEyeDB.send('get_matches_tournaments', { tournament_id: tid });
+      D = reconstructTournamentFromBackend(tRes.rows[0], (mRes && mRes.ok && mRes.rows) ? mRes.rows : []);
+    }
+    if (!_retroFinishedOk(D)) { safeAlert('A retrospectiva fica disponível só para torneios finalizados (Fase Final completa).', 'warn'); return; }
+    retroPlay(D);
+  } catch (e) { console.warn('[retro]', e); safeAlert('Não foi possível montar a retrospectiva: ' + e.message, 'err'); }
+}
 </script>
 </body>
 </html>
