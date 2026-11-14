@@ -1104,10 +1104,10 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
         </div>
         <div class="step-info">
           <div class="step-info-title">📖 Como funciona</div>
-          Quando dois ou mais jogadores terminam um grupo empatados, o sistema aplica os critérios abaixo em ordem, um de cada vez, até o empate ser resolvido. Se persistir empate em <b>todos</b> os critérios, o organizador decide manualmente quem fica na frente (isso aparece como um aviso de empate na tela de Jogos & Rodadas).
+          Quando dois ou mais jogadores terminam um grupo empatados, o sistema aplica os critérios abaixo em ordem, um de cada vez, até o empate ser resolvido. Se persistir empate em <b>todos</b> os critérios, o organizador decide manualmente quem fica na frente (isso aparece como um aviso de empate na tela de Jogos & Rodadas).<br><b>Fase Final:</b> se o empate resistir a todos os critérios do grupo, entra a <b>campanha ao longo do torneio</b> (desempenho nas fases anteriores) antes de chegar ao organizador.
         </div>
         <div class="card">
-          <div class="card-hd"><div class="card-title">Hierarquia de Critérios</div><div class="card-badge gold">5 critérios + decisão manual</div></div>
+          <div class="card-hd"><div class="card-title">Hierarquia de Critérios</div><div class="card-badge gold">6 critérios + decisão manual</div></div>
           <table class="tiebreak-table">
             <tr><th style="width:36px">#</th><th>Critério</th><th>Como é calculado</th></tr>
             <tr><td><div class="tb-num">1</div></td><td><b>Vitórias</b></td><td>Número de partidas vencidas dentro do grupo.</td></tr>
@@ -1115,7 +1115,8 @@ body{font-family:'DM Sans',sans-serif;font-size:14px;color:#0d1e3a;background:#f
             <tr><td><div class="tb-num">3</div></td><td><b>Mini-Tabela entre Empatados</b></td><td>Quando 3 ou mais jogadores empatam, recalcula-se uma mini-tabela só com os jogos entre eles mesmos (soma do confronto direto contra cada um dos outros empatados). Evita ciclos tipo "A bate B, B bate C, C bate A".</td></tr>
             <tr><td><div class="tb-num">4</div></td><td><b>Games Ganhos</b></td><td>Total de games vencidos (valor absoluto, não é saldo).</td></tr>
             <tr><td><div class="tb-num">5</div></td><td><b>Saldo de Tie-Break</b></td><td>Pontos ganhos menos pontos perdidos nos mini-jogos de tie-break (ex.: vencer 7x0 pesa mais que vencer 7x6) — não é só contagem de tie-breaks vencidos.</td></tr>
-            <tr><td><div class="tb-num tb-manual">✋</div></td><td><b>Decisão do Organizador</b></td><td>Se o empate persistir após os 5 critérios acima, o organizador escolhe manualmente quem fica na frente, direto na tela de Jogos & Rodadas.</td></tr>
+            <tr style="background:rgba(201,147,58,.10)"><td><div class="tb-num">6</div></td><td><b>Campanha ao Longo do Torneio</b> <span style="font-size:10px;color:#C9933A;font-weight:700">(só na Fase Final)</span></td><td>Se dois ou mais jogadores continuarem empatados na <b>Fase Final</b> depois dos 5 critérios acima, vale a campanha somada de <b>todas as fases anteriores</b> (Fase 1 e Fase 2), nesta ordem: <b>1º</b> mais vitórias; <b>2º</b> melhor saldo de games; <b>3º</b> mais games ganhos. Só se ainda empatar, passa para o organizador.</td></tr>
+            <tr><td><div class="tb-num tb-manual">✋</div></td><td><b>Decisão do Organizador</b></td><td>Se o empate persistir após todos os critérios acima, o organizador escolhe manualmente quem fica na frente, direto na tela de Jogos & Rodadas.</td></tr>
           </table>
         </div>
       </div>
@@ -1839,6 +1840,16 @@ function reconstructTournamentFromBackend(row, matchRows) {
     return offset;
   });
 
+  // Onde o alfabeto de cada fase começa: usa groups_json quando a fase está lá; senão,
+  // a menor letra gravada nas linhas daquela fase (Fase 2 de 16 jogadores → 'E' = 4).
+  // Torneios antigos (Fase 2 com A,B) dão 0 e continuam lendo certo.
+  const _minLetterByPhase = {};
+  matchRows.forEach(m => {
+    if (m.group === 'Z') return;
+    const ri = GROUP_LETTERS.indexOf(m.group); if (ri < 0) return;
+    const pn = m.phase || 'Fase 1';
+    if (_minLetterByPhase[pn] === undefined || ri < _minLetterByPhase[pn]) _minLetterByPhase[pn] = ri;
+  });
   matchRows.forEach(m => {
     const phaseName = m.phase || 'Fase 1';
     let pIdx = phaseIndexByName[phaseName];
@@ -1852,7 +1863,7 @@ function reconstructTournamentFromBackend(row, matchRows) {
       gIdx = 0;
     } else {
       const rawIdx = GROUP_LETTERS.indexOf(m.group);
-      const offset = phaseLetterOffsets[pIdx] || 0;
+      const offset = (phaseLetterOffsets[pIdx] !== undefined) ? phaseLetterOffsets[pIdx] : (_minLetterByPhase[phaseName] || 0);
       const offsetIdx = rawIdx - offset;
       gIdx = (offsetIdx >= 0 && offsetIdx < 8) ? offsetIdx : (rawIdx >= 0 ? rawIdx : 0);
     }
@@ -2003,7 +2014,7 @@ function renderVerGrupos() {
       + '<div class="card-badge '+(ph.complete?'green':(phIdx===T.currentPhase?'gold':''))+'">'+(ph.complete?'✓ Concluída':(phIdx===T.currentPhase?'Em andamento':'Ainda não começou'))+'</div></div>';
     html += '<div class="grupos-grid">';
     ph.groups.forEach((group, gi) => {
-      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const letter = getGroupLetterFor(phIdx, gi);
       const color = GROUP_COLORS[gi % GROUP_COLORS.length];
       const matches = groupMatches(group);
       html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div>'
@@ -2082,7 +2093,7 @@ function histGruposHTML() {
     html += '<div style="font-family:\'DM Mono\';font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#9ab0c8;margin:14px 0 8px">'+ph.name+(ph.complete?' — concluída':'')+'</div>';
     html += '<div class="grupos-grid">';
     ph.groups.forEach((group, gi) => {
-      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const letter = getGroupLetterFor(phIdx, gi);
       const color = GROUP_COLORS[gi % GROUP_COLORS.length];
       html += '<div class="grupo-card"><div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+group.length+' jogadores</div></div></div>'
         + '<div class="grupo-body">'
@@ -2107,7 +2118,7 @@ function histJogosHTML() {
     // repetido em cada card, como estava antes.
     html += '<div style="font-family:\'Bebas Neue\';font-size:18px;letter-spacing:1px;color:#fff;margin:16px 0 10px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.15)">'+ph.name.toUpperCase()+'</div>';
     ph.groups.forEach((group, gi) => {
-      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const letter = getGroupLetterFor(phIdx, gi);
       const matches = groupMatches(group);
       if (!matches.length) return;
       any = true;
@@ -2138,7 +2149,7 @@ function histResultadosHTML() {
     const isFinalPhase = phIdx === (T.numFases||3)-1;
     html += '<div class="hist-label">'+ph.name+(isPhaseComplete(phIdx)?' — concluída':' — em andamento')+'</div>';
     ph.groups.forEach((group, gi) => {
-      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const letter = getGroupLetterFor(phIdx, gi);
       const standings = groupStandings(group, phIdx, gi);
       html += '<div class="hist-card" style="padding:10px 8px">'
         + '<div class="hist-label" style="margin:0 8px 8px">Grupo '+letter+'</div>'
@@ -2888,7 +2899,7 @@ function _introBuild() {
     else tx += ' · decide o <b>pódio</b>';
     return '<div class="in-rule" style="animation-delay:'+(0.15+i*0.14)+'s"><div class="tag">'+p.label.toUpperCase()+'</div><div class="tx">'+tx+'</div></div>';
   });
-  rules.push('<div class="in-rule" style="animation-delay:'+(0.15+phases.length*0.14)+'s"><div class="tag">⚖️</div><div class="tx">Desempate: <b>vitórias</b> → <b>saldo de games</b> → <b>mini-tabela</b> → <b>games ganhos</b> → <b>saldo de tie-break</b> → decisão do organizador</div></div>');
+  rules.push('<div class="in-rule" style="animation-delay:'+(0.15+phases.length*0.14)+'s"><div class="tag">⚖️</div><div class="tx">Desempate: <b>vitórias</b> → <b>saldo de games</b> → <b>mini-tabela</b> → <b>games ganhos</b> → <b>saldo de tie-break</b> → <b>campanha no torneio</b> (só na Final) → decisão do organizador</div></div>');
   document.getElementById('in-s2').innerHTML =
     '<div class="in-kicker">Regras do torneio</div>'
     + '<div class="in-title">COMO <em>SE JOGA</em></div>'
@@ -3331,7 +3342,7 @@ async function _persistPhaseSkeletons(phaseIdx) {
   const rows = [];
   const nowIso = new Date().toISOString();
   ph.groups.forEach((group, gi) => {
-    const grpLetter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+    const grpLetter = getGroupLetterFor(phaseIdx, gi);
     groupMatches(group).forEach((match, mi) => {
       rows.push({
         match_id: T.id+'-'+phaseIdx+'-'+gi+'-'+mi,
@@ -3386,6 +3397,20 @@ function isPhaseComplete(phaseIdx) {
   return ph.groups.every((g,gi) => groupMatches(g).every((_,mi) => ph.results[phaseIdx+'-'+gi+'-'+mi]?.saved));
 }
 
+// Campanha de um jogador nas fases ANTERIORES a upto: vitórias, saldo e games ganhos.
+function campaignStats(name, upto) {
+  const c = { w:0, l:0, gw:0, gl:0, gd:0 };
+  (T.phases||[]).forEach((ph, p) => {
+    if (p >= upto || !ph) return;
+    (ph.groups||[]).forEach((g, gi) => groupMatches(g).forEach((m, mi) => {
+      const res = ph.results && ph.results[p+'-'+gi+'-'+mi]; if (!res || !res.saved) return;
+      const inA = m.a.includes(name), inB = m.b.includes(name); if (!inA && !inB) return;
+      const my = inA ? res.sa : res.sb, th = inA ? res.sb : res.sa;
+      c.gw += my; c.gl += th; if (my > th) c.w++; else c.l++;
+    }));
+  });
+  c.gd = c.gw - c.gl; return c;
+}
 function groupStandings(groupPlayers, phaseIdx, groupIdx) {
   const phase = T.phases[phaseIdx];
   const stats = {};
@@ -3456,7 +3481,17 @@ function groupStandings(groupPlayers, phaseIdx, groupIdx) {
         [...t2].sort((a,b) => (b.gw-a.gw) || (b.tbsaldo-a.tbsaldo)),
         (a,b) => a.gw===b.gw && a.tbsaldo===b.tbsaldo
       );
-      tier3.forEach(t3 => { const bk = _bucket++; t3.forEach(s => s._bucket = bk); finalOrder.push(...t3); });
+      tier3.forEach(t3 => {
+        // 6º critério — SÓ na Fase Final: campanha ao longo do torneio (fases anteriores)
+        if (t3.length > 1 && phaseIdx > 0 && phaseIdx === (T.numFases||3) - 1) {
+          t3.forEach(s => { s._camp = campaignStats(s.name, phaseIdx); });
+          t3.sort((a,b) => (b._camp.w-a._camp.w) || (b._camp.gd-a._camp.gd) || (b._camp.gw-a._camp.gw));
+          partitionBy(t3, (a,b) => a._camp.w===b._camp.w && a._camp.gd===b._camp.gd && a._camp.gw===b._camp.gw)
+            .forEach(t4 => { const bk4 = _bucket++; t4.forEach(s => s._bucket = bk4); });
+          finalOrder.push(...t3); return;
+        }
+        const bk = _bucket++; t3.forEach(s => s._bucket = bk); finalOrder.push(...t3);
+      });
     });
   });
   const sorted = finalOrder;
@@ -3737,7 +3772,7 @@ function renderAdvManualBuilder() {
   html += '<div class="grupos-grid" id="adv-manual-groups-grid">';
   advManualGroups.forEach((group, gi) => {
     const color = GROUP_COLORS[gi % GROUP_COLORS.length];
-    const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+    const letter = getGroupLetterFor(nextPhaseIdx, gi);
     const capLabel = isFinalPhase ? (group.length+' jogadores') : (group.length+' / '+cap+' jogadores');
     html += '<div class="grupo-card" ondragover="allowDrop(event)" ondrop="advDropOnGroup(event,'+gi+')">'
       + '<div class="grupo-header" style="background:'+color+'"><div><div class="grupo-letter">Grupo '+letter+'</div><div class="grupo-count">'+capLabel+'</div></div></div>'
@@ -3965,7 +4000,7 @@ function saveMatch(phaseIdx, groupIdx, matchIdx, noTB) {
     const m = matches[matchIdx];
     PadelEyeDB.upsertPartida({
       match_id: T.id+'-'+key, tournament_id: T.id, phase: ph.name,
-      group: (phaseIdx===(T.numFases||3)-1) ? 'Z' : GROUP_LETTERS[groupIdx],
+      group: getGroupLetterFor(phaseIdx, groupIdx),
       team_a: (m?.a||[]).join(' / '), score_a: sa, score_b: sb, team_b: (m?.b||[]).join(' / '),
       winner_team: sa>sb ? (m?.a||[]).join(' / ') : (m?.b||[]).join(' / '),
       match_serial_number: matchIdx+1, tie_break: finalHasTB?'Sim':'Nao', tb_a: tba??'', tb_b: tbb??'',
@@ -4138,7 +4173,7 @@ function renderRounds() {
 
     ph.groups.forEach((group, gi) => {
       const isFinalPhase = (phIdx === (T.numFases||3)-1);
-      const letter = isFinalPhase ? 'Z' : GROUP_LETTERS[gi];
+      const letter = getGroupLetterFor(phIdx, gi);
       const color = GROUP_COLORS[gi % GROUP_COLORS.length];
       const matches = groupMatches(group);
       const allSaved = matches.every((_,mi) => ph.results[phIdx+'-'+gi+'-'+mi]?.saved);
@@ -4251,7 +4286,7 @@ function renderRounds() {
         html += '<div class="tie-banner">'
           + '<div class="tie-banner-head">EMPATE - '+ta+' e '+tb2+'</div>'
           + '<div class="tie-banner-body">'
-          + '<div style="font-size:11px;color:#5a3a00;margin-bottom:8px">Empatados em todos os criterios. O organizador decide quem '+(isFinal?'fica melhor colocado':'avanca')+'.</div>'
+          + '<div style="font-size:11px;color:#5a3a00;margin-bottom:8px">Empatados em todos os criterios'+(isFinal?', inclusive a campanha ao longo do torneio':'')+'. O organizador decide quem '+(isFinal?'fica melhor colocado':'avanca')+'.</div>'
           + '<div class="tie-pick-btns">'
           + '<button class="tie-pick-btn" onclick="chooseTieWinner('+phIdx+','+gi+',\''+ta.replace(/'/g,"\\'")+'\',\''+tb2.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(ta)+'">'+_init(ta)+'</div>'+(isFinal?ta+' fica melhor':ta+' avanca')+'</button>'
           + '<button class="tie-pick-btn" onclick="chooseTieWinner('+phIdx+','+gi+',\''+tb2.replace(/'/g,"\\'")+'\',\''+ta.replace(/'/g,"\\'")+'\')"><div class="tie-av" style="background:'+_pc(tb2)+'">'+_init(tb2)+'</div>'+(isFinal?tb2+' fica melhor':tb2+' avanca')+'</button>'
@@ -4392,7 +4427,7 @@ function renderHistorico() {
       hasAny = true;
       const sa = res.sa, sb = res.sb, aWin = sa > sb;
       phHtml += '<div style="background:#fff;border:1px solid '+(aWin?'rgba(39,174,96,.3)':'#dde6f0')+';border-radius:10px;overflow:hidden;margin-bottom:8px">'
-        + '<div style="padding:5px 12px;border-bottom:1px solid #f0f5fb;font-size:9px;color:#9ab0c8;text-transform:uppercase">'+ph.name+(phIdx===(T.numFases||3)-1?'':' . Grupo '+GROUP_LETTERS[gi])+' . Partida '+(mi+1)+'</div>'
+        + '<div style="padding:5px 12px;border-bottom:1px solid #f0f5fb;font-size:9px;color:#9ab0c8;text-transform:uppercase">'+ph.name+(phIdx===(T.numFases||3)-1?'':' . Grupo '+getGroupLetterFor(phIdx,gi))+' . Partida '+(mi+1)+'</div>'
         + '<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 12px;gap:8px">'
         + '<div>'+match.a.map(p=>'<div style="font-size:13px;font-weight:600;color:'+(aWin?'#0a1628':'#9ab0c8')+'">'+p+'</div>').join('')+'</div>'
         + '<div style="text-align:center"><span style="font-size:22px;font-weight:700;color:'+(aWin?'#0a1628':'#9ab0c8')+'">'+sa+'</span> x <span style="font-size:22px;font-weight:700;color:'+(!aWin?'#0a1628':'#9ab0c8')+'">'+sb+'</span>'+(res.tb?(' <sup style="color:#C9933A;font-size:9px">TB '+res.tba+'x'+res.tbb+'</sup>'):'')+'</div>'
@@ -4484,7 +4519,7 @@ const PadelEyeDB = (() => {
         matches.forEach((m,mi) => {
           const key = phIdx+'-'+gi+'-'+mi, res = ph.results?.[key]||{};
           rows.push({ match_id:uid(), tournament_id:torneioId, phase:ph.name,
-            group:(phIdx===(Tobj.numFases||3)-1)?'Z':GROUP_LETTERS[gi], team_a:m.a.join(' / '),
+            group:getGroupLetterForT(Tobj,phIdx,gi), team_a:m.a.join(' / '),
             score_a:res.sa??'', score_b:res.sb??'', team_b:m.b.join(' / '),
             winner_team: res.saved ? (res.sa>res.sb?m.a.join(' / '):m.b.join(' / ')) : '',
             match_serial_number:mi+1, tie_break:res.tb?'Sim':'Nao', tb_a:res.tba??'', tb_b:res.tbb??'',
@@ -4687,7 +4722,18 @@ function _showSyncToast(msg, ok) {
 
 // ══ SUBSTITUIÇÃO DE JOGADOR (no-show) ═══════════════════════════════
 // Letra do grupo no padrão do app: grupos da Final = 'Z', demais A,B,C... por fase
-function getGroupLetterFor(phaseIdx, groupIdx) { return (phaseIdx === (T.numFases||3)-1) ? 'Z' : GROUP_LETTERS[groupIdx]; }
+// Letras de grupo NÃO se repetem no torneio: cada fase continua o alfabeto
+// (Fase 1: A,B,C,D → Fase 2: E,F → Final sempre Z).
+function getGroupLetterOffsetFor(Tobj, phaseIdx) {
+  let offset = 0;
+  for (let i = 0; i < phaseIdx; i++) offset += (Tobj.phases[i] && Tobj.phases[i].groups && Tobj.phases[i].groups.length) || 0;
+  return offset;
+}
+function getGroupLetterForT(Tobj, phaseIdx, groupIdx) {
+  if (phaseIdx === (Tobj.numFases||3)-1) return 'Z';
+  return GROUP_LETTERS[getGroupLetterOffsetFor(Tobj, phaseIdx) + groupIdx] || GROUP_LETTERS[groupIdx];
+}
+function getGroupLetterFor(phaseIdx, groupIdx) { return getGroupLetterForT(T, phaseIdx, groupIdx); }
 let _subMode = 'db';
 function setSubMode(mode) {
   _subMode = mode;
@@ -5009,6 +5055,7 @@ function _rtWhy(a, b, manual) {
   if (!a || !b) return '';
   if (a.w !== b.w) return 'mais vitórias ('+a.w+' x '+b.w+')';
   if (a.gd !== b.gd) return 'melhor saldo de games ('+_rtSg(a.gd)+' x '+_rtSg(b.gd)+')';
+  if (a._camp && b._camp && a._bucket !== b._bucket) { const x=a._camp,y=b._camp; return x.w!==y.w ? 'melhor campanha no torneio ('+x.w+' x '+y.w+' vitórias nas fases anteriores)' : (x.gd!==y.gd ? 'melhor campanha no torneio (saldo '+_rtSg(x.gd)+' x '+_rtSg(y.gd)+' nas fases anteriores)' : 'melhor campanha no torneio (games ganhos '+x.gw+' x '+y.gw+')'); }
   if (manual) return 'desempate decidido pelo organizador';
   if (a._bucket !== b._bucket) return 'critérios de desempate (confronto direto, games e tie-break)';
   return 'desempate decidido pelo organizador';
@@ -5053,16 +5100,16 @@ function _retroBuild(D) {
     + (seeds.length ? '<div class="rt-sub rt-in" style="--d:'+(600+players.length*180)+';margin-top:16px">★ cabeças de chave: '+_rtEsc(seeds.join(', '))+'</div>' : ''));
 
   // 4. sorteio
-  const groupCards = (groups, delay0) => '<div class="rt-groups">'+groups.map((g,gi)=>{
+  const groupCards = (groups, delay0, pIdx) => '<div class="rt-groups">'+groups.map((g,gi)=>{
     const col = GROUP_COLORS[gi % GROUP_COLORS.length];
-    return '<div class="rt-g rt-in" style="--d:'+(delay0+gi*500)+'"><div class="h" style="background:'+col+'">GRUPO '+GROUP_LETTERS[gi]+'</div><div class="b">'
+    return '<div class="rt-g rt-in" style="--d:'+(delay0+gi*500)+'"><div class="h" style="background:'+col+'">GRUPO '+getGroupLetterFor(pIdx||0, gi)+'</div><div class="b">'
       + g.map((n,i)=>'<div class="p rt-in" style="--d:'+(delay0+gi*500+250+i*220)+'">'+_rtAv(n)+'<span>'+_rtEsc(n)+(seeds.includes(n)?' ★':'')+'</span></div>').join('')+'</div></div>';
   }).join('')+'</div>';
   add('Sorteio', 3200,
     '<div class="rt-kicker rt-in" style="--d:100">Capítulo 3</div><h1 class="rt-in" style="--d:300">O SORTEIO</h1>'
     + '<div class="rt-sub rt-in" style="--d:900">'+players.length+' jogadores · '+g0+' grupos ('+letters+')'+(seeds.length?' · cabeças de chave espalhados':'')+'</div>');
   add('Sorteio', Math.min(14000, 3500 + g0 * 500 + players.length * 260),
-    '<h2 class="rt-in" style="--d:100">GRUPOS FORMADOS</h2>'+groupCards(D.phases[0].groups, 400));
+    '<h2 class="rt-in" style="--d:100">GRUPOS FORMADOS</h2>'+groupCards(D.phases[0].groups, 400, 0));
 
   // 5. fases
   const phaseStats = [];
@@ -5073,10 +5120,10 @@ function _retroBuild(D) {
       '<div class="rt-kicker rt-in" style="--d:100">Capítulo '+(4+p)+'</div><h1 class="rt-in" style="--d:300">'+(last?'A FINAL':label.toUpperCase())+'</h1>'
       + '<div class="rt-sub rt-in" style="--d:900">'+ph.groups.length+(ph.groups.length>1?' grupos':' grupo')+' · '+nM+' partidas · score máx. '+(c.maxScore||6)+' · tie-break a partir de '+(c.tbAt||5)+'x'+(c.tbAt||5)+'</div>');
     if (p > 0) add(label, Math.min(11000, 3200 + ph.groups.length*500 + ph.groups.reduce((a,g)=>a+g.length,0)*220),
-      '<h2 class="rt-in" style="--d:100">'+(last?'OS 4 FINALISTAS':'NOVOS GRUPOS')+'</h2><div class="rt-sub rt-in" style="--d:300">Classificados da fase anterior, cruzados para evitar reencontros</div>'+groupCards(ph.groups, 500));
+      '<h2 class="rt-in" style="--d:100">'+(last?'OS 4 FINALISTAS':'NOVOS GRUPOS')+'</h2><div class="rt-sub rt-in" style="--d:300">Classificados da fase anterior, cruzados para evitar reencontros</div>'+groupCards(ph.groups, 500, p));
     const stands = [];
     ph.groups.forEach((g, gi) => {
-      const gname = last ? 'FINAL' : 'GRUPO ' + GROUP_LETTERS[gi];
+      const gname = last ? 'FINAL' : 'GRUPO ' + getGroupLetterFor(p, gi);
       const order = getMatchOrder(p, gi);
       const ms = groupMatches(g);
       const run = {}; g.forEach(n => run[n] = 0);
@@ -5124,7 +5171,7 @@ function _retroBuild(D) {
       const rows = [];
       ph.groups.forEach((g, gi) => stands[gi].forEach((s, i) => {
         const inNext = nextSet.has(s.name);
-        rows.push({ g: GROUP_LETTERS[gi], pos: i+1, name: s.name, tag: i < adv ? 'ok' : (inNext ? 'wc' : 'no') });
+        rows.push({ g: getGroupLetterFor(p, gi), pos: i+1, name: s.name, tag: i < adv ? 'ok' : (inNext ? 'wc' : 'no') });
       }));
       const wcs = rows.filter(r => r.tag === 'wc');
       add(label, 6000 + (wcs.length ? 1500 : 0),
@@ -5156,7 +5203,7 @@ function _retroBuild(D) {
       const inA = m.a.includes(champ.name), inB = m.b.includes(champ.name); if (!inA && !inB) return;
       const mine = inA ? m.a : m.b, opp = inA ? m.b : m.a, my = inA ? res.sa : res.sb, th = inA ? res.sb : res.sa;
       const partner = mine.filter(n => n && n !== champ.name)[0];
-      jr.push({ lab: _rtPhaseLabel(D,p)+(p===finalIdx?'':' · '+GROUP_LETTERS[gi]), partner, opp: opp.filter(Boolean), my, th, tb: res.tb });
+      jr.push({ lab: _rtPhaseLabel(D,p)+(p===finalIdx?'':' · '+getGroupLetterFor(p, gi)), partner, opp: opp.filter(Boolean), my, th, tb: res.tb });
     })));
     if (jr.length) add('Campeão', Math.min(14000, 3500 + jr.length*700),
       '<div class="rt-kicker rt-in" style="--d:100">A jornada de</div><h2 class="rt-in" style="--d:250">'+_rtEsc(champ.name)+'</h2>'
