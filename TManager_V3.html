@@ -668,7 +668,7 @@ body.pe-viewer > *:not(#s-retro):not(#pe-viewer):not(.tn-ov){display:none !impor
 .rt-eco{display:flex;align-items:center;gap:10px}
 .rt-eco .leaf{width:clamp(40px,7vw,76px);height:clamp(40px,7vw,76px)}
 .rt-eco .w1{color:#3ccf6a}.rt-eco .w2{color:#fff}
-.rt-sp-colab{font-family:'DM Mono',monospace;font-size:clamp(10px,1.7vw,14px);letter-spacing:8px;color:rgba(255,255,255,.55)}
+.rt-sp-colab{font-family:'DM Mono',monospace;font-size:clamp(10px,1.7vw,14px);letter-spacing:clamp(3px,.9vw,8px);white-space:nowrap;text-transform:uppercase;color:rgba(255,255,255,.55)}
 .rt-sp-engine{display:flex;flex-direction:column;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:clamp(9px,1.4vw,12px);letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.45)}
 .rt-tn{font-family:'Bebas Neue',sans-serif;font-size:clamp(22px,3.4vw,34px);letter-spacing:6px;color:#bfdbfe}
 .rt-tn small{font-family:'DM Mono',monospace;font-size:.38em;letter-spacing:4px;color:#93c5fd;margin-left:6px}
@@ -5353,12 +5353,17 @@ function _rtTn() {
 }
 function _rtSplash(kind, D) {
   const pe = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
-  return '<div class="rt-splash">'
-    + (kind === 'end' ? '<div class="rt-kicker rt-in" style="--d:100">Obrigado por jogar</div><h2 class="rt-in" style="--d:300">'+_rtEsc(D.name || 'Torneio')+'</h2>' : '<div class="rt-kicker rt-in" style="--d:100">Retrospectiva do torneio</div><div class="rt-sub rt-in" style="--d:250;margin:2px 0 6px">'+_rtEsc([formatDateSlash(D.date), D.local].filter(Boolean).join(' · '))+'</div>')
+  const logos = '<div class="rt-sp-logos rt-in" style="--d:300"><div class="rt-sp-logo"><img src="'+pe+'" alt="PadelEye"></div><div class="rt-sp-x">×</div>'+_rtEco()+'</div>';
+  const info = _rtEsc([formatDateSlash(D.date), D.local].filter(Boolean).join(' · '));
+  if (kind === 'end') return '<div class="rt-splash"><div class="rt-kicker rt-in" style="--d:100">Obrigado por jogar</div><h2 class="rt-in" style="--d:300">'+_rtEsc(D.name || 'Torneio')+'</h2>'
     + '<div class="rt-sp-logos rt-in" style="--d:500"><div class="rt-sp-logo"><img src="'+pe+'" alt="PadelEye"></div><div class="rt-sp-x">×</div>'+_rtEco()+'</div>'
-    + '<div class="rt-sp-colab rt-in" style="--d:1100">C O - L A B</div>'
-    + '<div class="rt-sp-engine rt-in" style="--d:1600"><span>powered by TechNigma AI Lab</span>'+_rtTn()+'</div>'
-    + '</div>';
+    + '<div class="rt-sp-engine rt-in" style="--d:1600"><span>Powered by</span>'+_rtTn()+'</div></div>';
+  return '<div class="rt-splash">' + logos
+    + '<div class="rt-sp-colab rt-in" style="--d:1300">C O - L A B &nbsp;·&nbsp; apresentam</div>'
+    + '<div class="rt-kicker rt-in" style="--d:2300;margin-top:6px">Retrospectiva</div>'
+    + '<h2 class="rt-in" style="--d:2500">'+_rtEsc(D.name || 'Torneio')+'</h2>'
+    + (info ? '<div class="rt-sub rt-in" style="--d:2800;margin:2px 0 6px">'+info+'</div>' : '')
+    + '<div class="rt-sp-engine rt-in" style="--d:3800"><span>Powered by</span>'+_rtTn()+'</div></div>';
 }
 function _rtPhaseLabel(D, p) { return p === D.phases.length - 1 ? 'Final' : 'Fase ' + (p + 1); }
 function _rtSg(n) { return (n > 0 ? '+' : '') + n; }
@@ -5595,7 +5600,7 @@ function _retroBuild(D) {
     + (big ? '<div class="rt-why rt-in" style="--d:1400">Maior vitória: '+_rtEsc(big.desc)+'</div>' : '')
     + (tight ? '<div class="rt-sub rt-in" style="--d:1800;margin-top:8px">Jogo mais apertado: '+_rtEsc(tight.desc)+'</div>' : ''));
 
-  S.unshift({ ch: 'Abertura', dur: 6500, html: _rtSplash('start', D) });
+  S.unshift({ ch: 'Abertura', dur: 8000, html: _rtSplash('start', D) });
   S.push({ ch: 'Fim', dur: 7000, html: _rtSplash('end', D), last: true });
   // tema de fundo: splash (abertura/fim) = branco; capítulos alternam azul → verde → saibro
   { const cyc = ['blue','green','clay']; let k = -1, last = null;
