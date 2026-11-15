@@ -5422,6 +5422,40 @@ function _retroBuild(D) {
   let totalMatches = 0;
   D.phases.forEach(ph => ph.groups.forEach(g => { totalMatches += groupMatches(g).length; }));
 
+  // 0. regras e critérios de desempate (logo depois da splash, antes da abertura)
+  { const rule = (i, t, d0, d) => '<div class="rt-li rt-in" style="--d:'+(d0+i*350)+'"><span class="pos">'+t[0]+'</span><span class="nm">'+t[1]+'<small style="text-transform:none;letter-spacing:.2px;font-size:11px;line-height:1.35;margin-top:2px">'+t[2]+'</small></span></div>';
+    const fmt = D.phases.map((ph, p) => { const c = pcs[p] || {}; const last = p === finalIdx;
+      return [_rtPhaseLabel(D,p)==='Final'?'F':'F'+(p+1), _rtPhaseLabel(D,p).replace('Fase ','Fase '),
+        (last ? 'Grupo único · 3 jogos · define o pódio' : ph.groups.length+(ph.groups.length>1?' grupos':' grupo')+' de '+(c.playersPerGroup||4)+' · top-'+(c.advancePerGroup||2)+' avançam'+(c.wildcards?' + '+c.wildcards+' wildcard(s)':''))
+        + ' · até '+(c.maxScore||6)+' games, tie-break em '+(c.tbAt||5)+'x'+(c.tbAt||5)+'.']; });
+    add('Regras', 11000,
+      '<div class="rt-kicker rt-in" style="--d:100">Antes de começar</div><h2 class="rt-in" style="--d:250">AS REGRAS DO TORNEIO</h2>'
+      + '<div class="rt-sc">'
+      + rule(0, ['🎾','Americano — modelo brasileiro','Grupos de 4: 3 partidas por jogador, trocando de dupla — todos jogam ao lado de todos.'], 600)
+      + rule(1, ['1','Pontuação individual','Vitória da dupla = 1 vitória para cada jogador; a classificação é individual.'], 600)
+      + fmt.map((r, i) => rule(i+2, ['▸', r[1], r[2]], 600)).join('')
+      + '</div>');
+    add('Regras', 12000,
+      '<div class="rt-kicker rt-in" style="--d:100">Regras · Desempate</div><h2 class="rt-in" style="--d:250">CRITÉRIOS DE DESEMPATE</h2>'
+      + '<div class="rt-sub rt-in" style="--d:600">Aplicados nesta ordem, em todas as fases, quando há empate na classificação do grupo</div>'
+      + '<div class="rt-sc">'
+      + [['1','Vitórias','Quem ganhou mais jogos fica à frente.'],
+         ['2','Saldo de games','Games ganhos menos games perdidos.'],
+         ['3','Mini-tabela (confronto direto)','Só entre os empatados: vitórias e saldo de games nos jogos entre eles.'],
+         ['4','Games ganhos','Total de games vencidos na fase.'],
+         ['5','Saldo de tie-break','Pontos ganhos menos pontos perdidos nos tie-breaks da fase.']].map((r, i) => rule(i, r, 1000)).join('')
+      + '</div>');
+    add('Regras', 12000,
+      '<div class="rt-kicker rt-in" style="--d:100">Regras · Desempate</div><h2 class="rt-in" style="--d:250">SE O EMPATE PERSISTIR NA FINAL</h2>'
+      + '<div class="rt-sub rt-in" style="--d:600">Critérios extras, só para definir o pódio da Fase Final</div>'
+      + '<div class="rt-sc">'
+      + [['6','Confronto direto no torneio','Os jogos entre os empatados, em lados opostos, ao longo de todas as fases (inclusive a Final).'],
+         ['7','Campanha no torneio','Vitórias, saldo de games e games ganhos somados nas fases anteriores.'],
+         ['8','Decisão do organizador','O organizador decide e registra o desempate.'],
+         ['9','Sorteio do sistema ou quiz','Sorteio feito pelo app ou quiz de perguntas sobre as regras do padel — acionado pelo organizador.']].map((r, i) => rule(i, r, 1000)).join('')
+      + '</div>');
+  }
+
   // 1. abertura
   add('Abertura', 5200,
     '<div class="rt-kicker rt-in" style="--d:200">'+_rtEsc(categoriaLabel(D.categoria) || 'Torneio')+'</div>'
