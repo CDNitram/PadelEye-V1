@@ -3996,12 +3996,27 @@ let advManualGroups = [];
 let _advDragPlayer = null;
 let _advBuilderPhaseIdx = null;
 
-function initAdvManualBuilder(phIdx) {
+let _advBuilderOnlyQ = false;
+// só os classificados: top-N de cada grupo (+ wildcards, exceto para a Final), na mesma regra do avanço automático
+function advQualifiedPool(phIdx) {
+  const cfg = getPhaseConfig(phIdx), advPer = cfg.advancePerGroup ?? 2, wc = cfg.wildcards ?? 0;
+  const isFinalNext = (phIdx + 1) === (T.numFases||3)-1;
+  const stands = T.phases[phIdx].groups.map((g,gi) => groupStandings(g,phIdx,gi));
+  const q = stands.map(st => st.slice(0,advPer).map(s=>s.name)).flat();
+  let w = [];
+  if (!isFinalNext && wc > 0) {
+    w = stands.map((st,gi) => { const s = st[advPer]; return s ? { name:s.name, w:s.w, gd:s.gw-s.gl, gw:s.gw, tb:s.tbw-s.tbl } : null; }).filter(Boolean)
+      .sort((a,b) => (b.w-a.w) || (b.gd-a.gd) || (b.gw-a.gw) || (b.tb-a.tb)).slice(0,wc).map(x=>x.name);
+  }
+  return [...q, ...w].filter(Boolean);
+}
+function initAdvManualBuilder(phIdx, onlyQ) {
+  if (onlyQ !== undefined) _advBuilderOnlyQ = !!onlyQ;
   const nextPhaseIdx = phIdx + 1;
   const isFinalPhase = nextPhaseIdx === (T.numFases||3)-1;
   const nextCfg = getPhaseConfig(nextPhaseIdx);
   const nextPPG = nextCfg.playersPerGroup ?? 4;
-  const pool = T.phases[phIdx].groups.flat().filter(Boolean);
+  const pool = _advBuilderOnlyQ ? advQualifiedPool(phIdx) : T.phases[phIdx].groups.flat().filter(Boolean);
   _advBuilderPhaseIdx = phIdx;
   advManualPool = [...pool];
   if (isFinalPhase) {
@@ -4097,7 +4112,7 @@ function renderAdvManualBuilder() {
 
   let html = '<div class="card" style="border-color:rgba(201,147,58,.35);background:#fffdf7">'
     + '<div class="card-hd"><div class="card-title">Montar '+nextPhaseName+' Manualmente</div><div class="mode-badge manual">📝 manual/retroativo</div></div>'
-    + '<div style="font-size:11.5px;color:#5a4520;margin-bottom:14px;line-height:1.6">Arraste os jogadores que <b>de fato avançaram</b> onsite para os grupos da '+nextPhaseName+'. Todos os jogadores da '+ (phIdx===0?'Fase 1':'fase anterior') +' estão disponíveis aqui, mesmo que o app calcularia uma classificação diferente — o que importa é refletir o que realmente aconteceu na quadra.</div>';
+    + '<div style="font-size:11.5px;color:#5a4520;margin-bottom:14px;line-height:1.6">Arraste os jogadores que <b>de fato avançaram</b> onsite para os grupos da '+nextPhaseName+'. '+(_advBuilderOnlyQ ? 'Aqui aparecem <b>só os melhores colocados</b> (os classificados de cada grupo'+(((getPhaseConfig(phIdx).wildcards||0)&&!isFinalPhase)?' + wildcards':'')+') — você escolhe como distribuí-los.' : 'Todos os jogadores da '+ (phIdx===0?'Fase 1':'fase anterior') +' estão disponíveis aqui, mesmo que o app calcularia uma classificação diferente — o que importa é refletir o que realmente aconteceu na quadra.')+'</div>';
 
   html += '<div class="card"><div class="card-hd"><div class="card-title">Jogadores Disponíveis</div><div class="card-badge" id="adv-manual-pool-badge">'+advManualPool.length+' restantes</div></div>'
     + '<div class="manual-pool" ondragover="allowDrop(event)" ondrop="advDropOnPool(event)" onclick="if(event.target===this) advTapPoolArea()">'
@@ -4131,9 +4146,9 @@ function renderAdvManualBuilder() {
   html += '</div>';
   container.innerHTML = html;
 }
-function openAdvManualBuilder(phIdx) {
+function openAdvManualBuilder(phIdx, onlyQ) {
   if (nextPhaseLocked(phIdx)) { safeAlert(NEXT_LOCK_MSG,'warn'); return; }
-  initAdvManualBuilder(phIdx);
+  initAdvManualBuilder(phIdx, !!onlyQ);
   renderAdvManualBuilder();
   document.getElementById('adv-manual-container')?.scrollIntoView({ behavior:'smooth', block:'start' });
 }
@@ -4523,6 +4538,7 @@ function renderRounds() {
         + '<div><div class="round-label">Grupo '+letter+'</div><div style="font-size:10px;color:#9ab0c8">'+group.join(' . ')+'</div></div>'
         + '</div>'
         + '<div style="display:flex;align-items:center;gap:8px">'
+        + (!T.phases[phIdx]?.complete && !T.finalized && canSwapInPhase(phIdx) && !_grpHasResults(phIdx, gi) ? '<button class="btn-sub-group" style="background:#5a7090" onclick="openSwapModal('+phIdx+','+gi+')">⇄ Swap</button>' : '')
         + (!T.phases[phIdx]?.complete && !T.finalized ? '<button class="btn-sub-group" style="background:'+color+'" onclick="openSubModal('+phIdx+','+gi+')">🔄 Sub</button>' : '')
         + '<div class="round-status '+(allSaved?'done':'')+'">'+(allSaved?'Concluido':'3 partidas . max '+getPhaseConfig(phIdx).maxScore)+'</div>'
         + '</div>'
@@ -4652,7 +4668,8 @@ function renderRounds() {
         + '<div style="font-size:12px;color:#865a10;margin-bottom:12px;font-weight:600">'+ph.name+' concluída! Escolha como montar a '+nextName+':</div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
         + '<button class="btn btn-secondary" style="flex:1;min-width:180px;border-color:rgba(39,174,96,.4);color:#1a7a44" onclick="advancePhase()">⚡ Avançar Automático — melhores de cada grupo</button>'
-        + '<button class="btn btn-gold" style="flex:1;min-width:180px" onclick="openAdvManualBuilder('+phIdx+')">🖐 Montar '+nextName+' Manualmente</button>'
+        + '<button class="btn btn-gold" style="flex:1;min-width:180px" onclick="openAdvManualBuilder('+phIdx+',true)">🏅 Montar '+nextName+' Manualmente — só os melhores colocados</button>'
+        + '<button class="btn btn-secondary" style="flex:1;min-width:180px;border-color:rgba(201,147,58,.5);color:#865a10" onclick="openAdvManualBuilder('+phIdx+',false)">🖐 Montar '+nextName+' Manualmente — todos os jogadores</button>'
         + '</div></div>';
     }
     const finalIdx = (T.numFases||3)-1;
@@ -5260,6 +5277,80 @@ async function confirmSub() {
   }
 }
 
+
+// ══ TROCA DE JOGADORES ENTRE GRUPOS (qualquer fase, só em grupos sem resultado lançado) ═══
+function _grpHasResults(pi, gi) {
+  const ph = T.phases[pi]; if (!ph) return true;
+  const pre = pi+'-'+gi+'-';
+  return Object.keys(ph.results||{}).some(k => k.indexOf(pre) === 0 && ph.results[k] && ph.results[k].saved);
+}
+function swapEligibleGroups(pi) {
+  const ph = T.phases[pi]; if (!ph) return [];
+  return ph.groups.map((g,gi) => gi).filter(gi => !_grpHasResults(pi, gi));
+}
+function canSwapInPhase(pi) {
+  if (T.finalized || !T.phases[pi]) return false;
+  if (T.phases[pi+1] && T.phases[pi+1].groups && T.phases[pi+1].groups.length) return false;   // fase seguinte já montada
+  return swapEligibleGroups(pi).length >= 2;
+}
+function closeSwapModal() { const m = document.getElementById('swap-modal'); if (m) m.remove(); }
+function openSwapModal(pi, gi) {
+  if (!canSwapInPhase(pi)) { safeAlert('Só é possível trocar jogadores entre grupos que ainda não têm nenhum resultado lançado (e antes de montar a fase seguinte).', 'warn'); return; }
+  closeSwapModal();
+  const el = swapEligibleGroups(pi), ph = T.phases[pi];
+  const ga = el.includes(gi) ? gi : el[0], gb = el.find(x => x !== ga);
+  const m = document.createElement('div'); m.id = 'swap-modal'; m.className = 'sub-modal-overlay show';
+  m.onclick = e => { if (e.target === m) closeSwapModal(); };
+  const gOpts = sel => el.map(i => '<option value="'+i+'"'+(i===sel?' selected':'')+'>Grupo '+getGroupLetterFor(pi,i)+' — '+ph.groups[i].join(', ')+'</option>').join('');
+  m.innerHTML = '<div class="sub-modal-box" data-pi="'+pi+'">'
+    + '<div class="sub-modal-title">⇄ Swap de jogadores entre grupos</div>'
+    + '<div class="sub-modal-sub">'+_rtEsc(ph.name)+' · só grupos sem resultado lançado</div>'
+    + '<div class="sub-field"><label>Grupo 1</label><select class="sub-select" id="sw-ga" onchange="swapFillPlayers()">'+gOpts(ga)+'</select></div>'
+    + '<div class="sub-field"><label>Jogador do grupo 1</label><select class="sub-select" id="sw-pa"></select></div>'
+    + '<div style="text-align:center;font-size:22px;color:#C9933A;margin:2px 0 6px">⇅</div>'
+    + '<div class="sub-field"><label>Grupo 2</label><select class="sub-select" id="sw-gb" onchange="swapFillPlayers()">'+gOpts(gb)+'</select></div>'
+    + '<div class="sub-field"><label>Jogador do grupo 2</label><select class="sub-select" id="sw-pb"></select></div>'
+    + '<div id="sw-warn" style="display:none;color:#c0392b;font-size:12px;margin:8px 0"></div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-secondary" style="flex:1" onclick="closeSwapModal()">Cancelar</button><button class="btn btn-gold" style="flex:1" onclick="confirmSwap()">Fazer swap</button></div>'
+    + '</div>';
+  document.body.appendChild(m); swapFillPlayers();
+}
+function swapFillPlayers() {
+  const box = document.querySelector('#swap-modal .sub-modal-box'); if (!box) return;
+  const pi = +box.dataset.pi, ph = T.phases[pi];
+  [['sw-ga','sw-pa'],['sw-gb','sw-pb']].forEach(([g,p]) => { const gi = +document.getElementById(g).value; const sel = document.getElementById(p);
+    sel.innerHTML = (ph.groups[gi]||[]).map(n => '<option value="'+_rtEsc(n)+'">'+_rtEsc(n)+'</option>').join(''); });
+}
+function confirmSwap() {
+  const box = document.querySelector('#swap-modal .sub-modal-box'); if (!box) return;
+  const pi = +box.dataset.pi, ph = T.phases[pi], warn = document.getElementById('sw-warn');
+  const showWarn = t => { warn.textContent = t; warn.style.display = 'block'; };
+  const ga = +document.getElementById('sw-ga').value, gb = +document.getElementById('sw-gb').value;
+  const pa = document.getElementById('sw-pa').value, pb = document.getElementById('sw-pb').value;
+  if (ga === gb) { showWarn('Escolha dois grupos diferentes.'); return; }
+  if (!pa || !pb) { showWarn('Selecione um jogador em cada grupo.'); return; }
+  if (!canSwapInPhase(pi) || _grpHasResults(pi, ga) || _grpHasResults(pi, gb)) { showWarn('Um dos grupos já tem resultado lançado — a troca está bloqueada.'); return; }
+  const A = ph.groups[ga], B = ph.groups[gb], ia = A.indexOf(pa), ib = B.indexOf(pb);
+  if (ia < 0 || ib < 0) { showWarn('Jogador não encontrado no grupo.'); return; }
+  A[ia] = pb; B[ib] = pa;
+  if (pi === 0 && typeof T_groups !== 'undefined' && T_groups[ga] && T_groups[gb]) {
+    const x = T_groups[ga].indexOf(pa), y = T_groups[gb].indexOf(pb);
+    if (x >= 0 && y >= 0) { T_groups[ga][x] = pb; T_groups[gb][y] = pa; }
+  }
+  [ga, gb].forEach(gi => [0,1,2].forEach(mi => { delete _unsavedScoreCache[pi+'-'+gi+'-'+mi]; }));
+  persistT(); syncTournamentExtras();
+  const now = new Date().toISOString();
+  const ups = [];
+  [ga, gb].forEach(gi => groupMatches(ph.groups[gi]).forEach((match, mi) => {
+    ups.push(PadelEyeDB.upsertPartida({ match_id: T.id+'-'+pi+'-'+gi+'-'+mi, tournament_id: T.id, phase: ph.name, group: getGroupLetterFor(pi, gi),
+      team_a: (match.a||[]).filter(Boolean).join(' / '), score_a: '', score_b: '', team_b: (match.b||[]).filter(Boolean).join(' / '),
+      winner_team: '', match_serial_number: mi+1, tie_break: '', tb_a: '', tb_b: '', saved_at: '', created_at: now }));
+  }));
+  closeSwapModal();
+  renderRounds(); renderRanking(); renderHistorico(); renderScorecard();
+  Promise.all(ups).then(() => _showSyncToast('✓ '+pa+' ⇄ '+pb+' · DB atualizado', true))
+    .catch(e => _showSyncToast('Troca local ok · erro no DB: '+String(e.message||e).slice(0,30), false));
+}
 
 function syncTournamentExtras() {
   if (!T.id || !T.started) return;
